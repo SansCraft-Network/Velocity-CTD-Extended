@@ -388,6 +388,11 @@ public final class VelocityCommand {
           }
         }
       } else {
+        if (playerName.startsWith("-") && playerName.length() > 1) {
+          source.sendMessage(Component.translatable("velocity.command.sudo.invalid-proxy")
+              .arguments(Component.text(playerName.substring(1))));
+          return Command.SINGLE_SUCCESS;
+        }
         if (this.server.getMultiProxyHandler().isRedisEnabled()) {
           RemotePlayerInfo info = this.server.getMultiProxyHandler().getPlayerInfo(playerName);
           if (info == null) {

@@ -151,7 +151,7 @@ public class TransferCommand {
     final String normalizedProxyId = normalizeProxyId(proxyId);
 
     ProxyAddress address = server.getConfiguration().getProxyAddresses().stream()
-        .filter(proxy -> proxy.proxyId().equalsIgnoreCase(normalizedProxyId))
+        .filter(proxy -> proxy.proxyId().equalsIgnoreCase(proxyId))
         .findFirst()
         .orElse(null);
 

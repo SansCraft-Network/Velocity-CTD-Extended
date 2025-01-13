@@ -281,24 +281,37 @@ public class TransferCommand {
           sender = p.getUniqueId();
         }
 
-        if (this.server.getMultiProxyHandler().getPlayerInfo(player).getUsername() == null) {
-          return Command.SINGLE_SUCCESS;
+        RemotePlayerInfo playerInfo = this.server.getMultiProxyHandler().getPlayerInfo(player);
+
+        if (playerInfo == null || playerInfo.getName() == null || playerInfo.getProxyId() == null) {
+          context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
+              .arguments(Component.text(player)));
+          return -1;
         }
+
         context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
-            .arguments(Component.text(this.server.getMultiProxyHandler().getPlayerInfo(player).getUsername()),
-                Component.text(normalizedProxyId)));
-        this.server.getRedisManager().send(new RedisTransferCommandRequest(sender, this.server.getMultiProxyHandler()
-            .getPlayerInfo(player).getUsername(), proxyId, address.ip(), address.port()));
+            .arguments(Component.text(playerInfo.getName()), Component.text(normalizedProxyId)));
+
+        this.server.getRedisManager().send(new RedisTransferCommandRequest(
+            sender, playerInfo.getName(), proxyId, address.ip(), address.port()
+        ));
       } else {
-        this.server.getPlayer(player).ifPresent(p -> {
-          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
-          if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
-          } else {
-            context.getSource().sendMessage(Component.translatable("velocity.command.transfer.invalid-version")
-                .arguments(Component.text(connectedPlayer.getUsername())));
-          }
-        });
+        Optional<Player> maybePlayer = this.server.getPlayer(player);
+        if (maybePlayer.isEmpty()) {
+          context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
+              .arguments(Component.text(player)));
+          return -1;
+        }
+
+        ConnectedPlayer connectedPlayer = (ConnectedPlayer) maybePlayer.get();
+        if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
+          context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
+              .arguments(Component.text(connectedPlayer.getUsername()), Component.text(normalizedProxyId)));
+          connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
+        } else {
+          context.getSource().sendMessage(Component.translatable("velocity.command.transfer.invalid-version")
+              .arguments(Component.text(connectedPlayer.getUsername())));
+        }
       }
     }
 

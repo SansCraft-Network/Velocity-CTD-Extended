@@ -37,7 +37,10 @@ import com.velocitypowered.proxy.queue.ServerQueueStatus;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
@@ -233,19 +236,22 @@ public class QueueAdminCommand {
     }
 
     if (serverName.equalsIgnoreCase("all")) {
-      int amount = 0;
+      Set<UUID> uniquePlayers = new HashSet<>();
 
       for (ServerQueueStatus status : this.server.getQueueManager().getAll()) {
-        amount += status.getSize();
+        for (ServerQueueEntry entry : status.getAllEntries()) {
+          uniquePlayers.add(entry.getPlayer());
+        }
       }
 
-      if (amount == 1) {
-        ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.global")
-            .arguments(Component.text(amount)));
+      int uniquePlayerCount = uniquePlayers.size();
+
+      if (uniquePlayerCount == 1) {
+        ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.global-singular")
+            .arguments(Component.text(uniquePlayerCount)));
       } else {
-        ctx.getSource().sendMessage(Component.translatable(
-            "velocity.queue.command.list.global-plural")
-            .arguments(Component.text(amount)));
+        ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.global-plural")
+            .arguments(Component.text(uniquePlayerCount)));
       }
 
       for (RegisteredServer s : this.server.getAllServers()) {
@@ -402,6 +408,18 @@ public class QueueAdminCommand {
       return -1;
     }
 
+    if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
+      for (ServerQueueStatus status : this.server.getQueueManager().getAll()) {
+        if (status.isQueued(player.getUniqueId())) {
+          ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
+              .arguments(
+                  Component.text(player.getUsername()),
+                  Component.text(status.getServerName())));
+          return -1;
+        }
+      }
+    }
+
     ServerConnection conn = player.getCurrentServer().orElse(null);
     if (conn != null && conn.getServerInfo().getName().equalsIgnoreCase(server.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-connected")
@@ -444,6 +462,18 @@ public class QueueAdminCommand {
       return -1;
     }
 
+    if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
+      for (ServerQueueStatus status : this.server.getQueueManager().getAll()) {
+        if (status.isQueued(player.getUuid())) {
+          ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
+              .arguments(
+                  Component.text(player.getUsername()),
+                  Component.text(status.getServerName())));
+          return -1;
+        }
+      }
+    }
+
     String conn = player.getServerName();
     if (conn != null && conn.equalsIgnoreCase(server.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-connected")
@@ -475,6 +505,7 @@ public class QueueAdminCommand {
     if (this.server.getMultiProxyHandler().isRedisEnabled()) {
       return addAllRedis(ctx);
     }
+
     VelocityRegisteredServer from = VelocityCommands.getServer(this.server, ctx, "from", true);
     if (from == null) {
       return -1;
@@ -494,6 +525,13 @@ public class QueueAdminCommand {
     for (Player player : this.server.getAllPlayers()) {
       ServerConnection conn = player.getCurrentServer().orElse(null);
       if (conn != null && conn.getServerInfo().getName().equalsIgnoreCase(from.getServerInfo().getName())) {
+        if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
+          boolean alreadyQueued = this.server.getQueueManager().getAll().stream()
+              .anyMatch(status -> status.isQueued(player.getUniqueId()));
+          if (alreadyQueued) {
+            continue;
+          }
+        }
         if (!to.getQueueStatus().isQueued(player.getUniqueId())) {
           connected.add(player);
         }
@@ -509,9 +547,6 @@ public class QueueAdminCommand {
       return -1;
     }
     for (Player player : connected) {
-      if (to.getQueueStatus().isQueued(player.getUniqueId())) {
-        continue;
-      }
       to.getQueueStatus().queue(player.getUniqueId(), player.getQueuePriority(to.getServerInfo().getName()),
           player.hasPermission("velocity.queue.full.bypass"),
           player.hasPermission("velocity.queue.bypass")
@@ -549,6 +584,13 @@ public class QueueAdminCommand {
     for (RemotePlayerInfo player : this.server.getMultiProxyHandler().getAllPlayers()) {
       String conn = player.getServerName();
       if (conn != null && conn.equalsIgnoreCase(from.getServerInfo().getName())) {
+        if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
+          boolean alreadyQueued = this.server.getQueueManager().getAll().stream()
+              .anyMatch(status -> status.isQueued(player.getUuid()));
+          if (alreadyQueued) {
+            continue;
+          }
+        }
         if (!to.getQueueStatus().isQueued(player.getUuid())) {
           connected.add(player);
         }
@@ -564,9 +606,6 @@ public class QueueAdminCommand {
       return -1;
     }
     for (RemotePlayerInfo player : connected) {
-      if (to.getQueueStatus().isQueued(player.getUuid())) {
-        continue;
-      }
       to.getQueueStatus().queue(player.getUuid(), player.getQueuePriority().get(to.getServerInfo().getName()),
           player.isFullQueueBypass(),
           player.isQueueBypass());
@@ -787,5 +826,4 @@ public class QueueAdminCommand {
 
     return Command.SINGLE_SUCCESS;
   }
-
 }

@@ -282,46 +282,45 @@ public abstract class QueueManager {
       return;
     }
 
+    String targetServerName = server.getServerInfo().getName();
+
+    ServerQueueStatus targetQueueStatus = getQueue(targetServerName);
+    if (targetQueueStatus != null && targetQueueStatus.isQueued(player.getUniqueId())) {
+      player.sendMessage(Component.translatable("velocity.queue.error.already-queued")
+          .arguments(Component.text(targetServerName)));
+      return;
+    }
+
     if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
       for (ServerQueueStatus status : this.cache.getAll()) {
         if (status.isQueued(player.getUniqueId())) {
-          player.sendMessage(Component.translatable("velocity.queue.error.already-queued")
-              .arguments(
-                  Component.text(status.getServerName())
-              )
-          );
           status.dequeue(player.getUniqueId(), false);
+          player.sendMessage(Component.translatable("velocity.queue.error.queued-swap")
+              .arguments(
+                  Component.text(status.getServerName()),
+                  Component.text(targetServerName)));
+          break;
         }
       }
     }
 
-    String serverName = server.getServerInfo().getName();
-    ServerQueueStatus status = getQueue(serverName);
+    ServerQueueStatus status = getQueue(targetServerName);
     if (status == null) {
-      throw new IllegalArgumentException("No queue found for server '" + serverName + "'");
+      throw new IllegalArgumentException("No queue found for server '" + targetServerName + "'");
     }
 
     if (status.isPaused() && !this.server.getConfiguration().getQueue().isAllowPausedQueueJoining()) {
       player.sendMessage(Component.translatable("velocity.queue.error.paused")
-          .arguments(Component.text(serverName)));
+          .arguments(Component.text(targetServerName)));
       return;
     }
-
-    if (status.isQueued(player.getUniqueId())) {
-      player.sendMessage(Component.translatable("velocity.queue.error.already-queued")
-          .arguments(
-              Component.text(serverName)
-          )
-      );
-      return;
-    }
-
-    player.sendMessage(Component.translatable("velocity.queue.command.queued")
-        .arguments(Component.text(serverName)));
 
     status.queue(player.getUniqueId(), player.getQueuePriority(server.getServerInfo().getName()),
         player.hasPermission("velocity.queue.full.bypass"),
         player.hasPermission("velocity.queue.bypass"));
+
+    player.sendMessage(Component.translatable("velocity.queue.command.queued")
+        .arguments(Component.text(targetServerName)));
   }
 
   /**

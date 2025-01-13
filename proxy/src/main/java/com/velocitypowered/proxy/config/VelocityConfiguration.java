@@ -143,16 +143,16 @@ public final class VelocityConfiguration implements ProxyConfig {
 
   private VelocityConfiguration(final String bind, final String motd, final List<String> motdHover,
                                 final int showMaxPlayers, final boolean onlineMode,
-      final boolean preventClientProxyConnections, final boolean announceForge,
-      final PlayerInfoForwarding playerInfoForwardingMode, final byte[] forwardingSecret,
-      final boolean onlineModeKickExistingPlayers, final PingPassthroughMode pingPassthrough,
-      final boolean enablePlayerAddressLogging, final Servers servers, final ForcedHosts forcedHosts,
-      final Commands commands, final Advanced advanced, final Query query, final Metrics metrics, final boolean forceKeyAuthentication,
-      final boolean logPlayerConnections, final boolean logPlayerDisconnections,
-      final boolean logOfflineConnections, final boolean disableForge, final boolean enforceChatSigning,
-      final boolean translateHeaderFooter, final boolean logMinimumVersion, final String minimumVersion,
-      final Redis redis, final Queue queue, final Map<String, List<String>> slashServers, List<ServerLink> serverLinks,
-                                List<ProxyAddress> proxyAddresses, String dynamicProxyFilter, Map<String, Integer> playerCaps) {
+                                final boolean preventClientProxyConnections, final boolean announceForge,
+                                final PlayerInfoForwarding playerInfoForwardingMode, final byte[] forwardingSecret,
+                                final boolean onlineModeKickExistingPlayers, final PingPassthroughMode pingPassthrough,
+                                final boolean enablePlayerAddressLogging, final Servers servers, final ForcedHosts forcedHosts,
+                                final Commands commands, final Advanced advanced, final Query query, final Metrics metrics,
+                                final boolean forceKeyAuthentication, final boolean logPlayerConnections, final boolean logPlayerDisconnections,
+                                final boolean logOfflineConnections, final boolean disableForge, final boolean enforceChatSigning,
+                                final boolean translateHeaderFooter, final boolean logMinimumVersion, final String minimumVersion, final Redis redis,
+                                final Queue queue, final Map<String, List<String>> slashServers, final List<ServerLink> serverLinks,
+                                final List<ProxyAddress> proxyAddresses, final String dynamicProxyFilter, final Map<String, Integer> playerCaps) {
     this.bind = bind;
     this.motd = motd;
     this.motdHover = motdHover;
@@ -722,12 +722,10 @@ public final class VelocityConfiguration implements ProxyConfig {
       final CommentedConfig serverLinksConfig = config.get("server-links");
       final CommentedConfig proxyAddressesConfig = config.get("proxy-addresses");
       final CommentedConfig playerCapsConfig = config.get("playercaps");
-
       final PlayerInfoForwarding forwardingMode = config.getEnumOrElse(
               "player-info-forwarding-mode", PlayerInfoForwarding.NONE);
       final PingPassthroughMode pingPassthroughMode = config.getEnumOrElse("ping-passthrough",
               PingPassthroughMode.DISABLED);
-
       final String bind = config.getOrElse("bind", "0.0.0.0:25565");
       final int maxPlayers = config.getIntOrElse("show-max-players", 500);
       final boolean onlineMode = config.getOrElse("online-mode", true);
@@ -971,7 +969,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     private Servers(final Map<String, String> servers, final List<String> attemptConnectionOrder,
-        final Map<String, PlayerInfoForwarding> serverForwardingModes) {
+                    final Map<String, PlayerInfoForwarding> serverForwardingModes) {
       this.servers = servers;
       this.attemptConnectionOrder = attemptConnectionOrder;
     }
@@ -995,7 +993,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     public String getDynamicFallbackFilter() {
       return dynamicFallbackFilter;
     }
-
 
     public void setAttemptConnectionOrder(final List<String> attemptConnectionOrder) {
       this.attemptConnectionOrder = attemptConnectionOrder;

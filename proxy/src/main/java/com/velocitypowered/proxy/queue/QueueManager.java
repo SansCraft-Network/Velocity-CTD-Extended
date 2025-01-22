@@ -342,6 +342,7 @@ public abstract class QueueManager {
     this.config = server.getConfiguration().getQueue();
     for (ServerQueueStatus server : this.cache.getAll()) {
       server.reloadConfig();
+      this.server.getRedisManager().addOrUpdateQueue(server);
     }
     restartTasks();
   }

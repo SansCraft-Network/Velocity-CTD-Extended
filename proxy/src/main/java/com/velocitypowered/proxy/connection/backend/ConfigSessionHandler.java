@@ -54,7 +54,6 @@ import com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket;
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.TagsUpdatePacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.key.Key;
@@ -183,7 +182,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
         serverConn.getConnection().write(new ResourcePackResponsePacket(
                 packet.getId(), packet.getHash(), PlayerResourcePackStatusEvent.Status.DECLINED));
       }
-    }, playerConnection.eventLoop()).exceptionally((ex) -> {
+    }, playerConnection.eventLoop()).exceptionallyAsync((ex) -> {
       if (serverConn.getConnection() != null) {
         serverConn.getConnection().write(new ResourcePackResponsePacket(
                 packet.getId(), packet.getHash(), PlayerResourcePackStatusEvent.Status.DECLINED));
@@ -215,7 +214,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
         }
         playerConnection.write(packet);
       }
-    }, playerConnection.eventLoop()).exceptionally((ex) -> {
+    }, playerConnection.eventLoop()).exceptionallyAsync((ex) -> {
       logger.error("Exception while handling resource pack remove for {}", playerConnection, ex);
       return null;
     });
@@ -264,6 +263,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
               server.getConfiguration().getServerBrand(),
               server.getConfiguration().getProxyBrandCustom(),
               server.getConfiguration().getBackendBrandCustom(),
+              serverConn.getServer().getServerInfo().getName(),
               ProtocolVersion.getVersionByName(server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn()));
     } else {
       serverConn.getPlayer().getConnection().write(packet.retain());
@@ -337,8 +337,8 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void disconnected() {
-    resultFuture.completeExceptionally(
-        new IOException("Unexpectedly disconnected from remote server"));
+    final ConnectedPlayer player = serverConn.getPlayer();
+    player.teardown();
   }
 
   @Override

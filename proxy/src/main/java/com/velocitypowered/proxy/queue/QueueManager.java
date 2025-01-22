@@ -37,7 +37,7 @@ import net.kyori.adventure.text.Component;
  */
 public abstract class QueueManager {
   protected final VelocityServer server;
-  protected final VelocityConfiguration.Queue config;
+  protected VelocityConfiguration.Queue config;
   protected ScheduledTask tickMessageTaskHandle;
   protected ScheduledTask tickPingingBackendTaskHandle;
 
@@ -62,6 +62,13 @@ public abstract class QueueManager {
       return;
     }
 
+    restartTasks();
+  }
+
+  /**
+   * Restarts all scheduled tasks for the queue manager.
+   */
+  public void restartTasks() {
     this.schedulePingingBackend();
     this.scheduleTickMessage();
     this.rescheduleTimerTask();
@@ -101,6 +108,7 @@ public abstract class QueueManager {
 
     this.tickMessageTaskHandle = server.getScheduler()
         .buildTask(VelocityVirtualPlugin.INSTANCE, this::tickMessageForAllPlayers)
+        .delay((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
         .repeat((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
         .schedule();
   }
@@ -116,6 +124,7 @@ public abstract class QueueManager {
 
     this.tickPingingBackendTaskHandle = server.getScheduler()
         .buildTask(VelocityVirtualPlugin.INSTANCE, this::tickPingingBackend)
+        .delay((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
         .repeat((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
         .schedule();
   }
@@ -130,9 +139,9 @@ public abstract class QueueManager {
       this.sendingTaskHandle.cancel();
     }
 
-    this.sendingTaskHandle = this.server.getScheduler()
+    this.sendingTaskHandle = server.getScheduler()
         .buildTask(VelocityVirtualPlugin.INSTANCE, this::tickSending)
-        .repeat((long) (this.config.getSendDelay() * 1000), TimeUnit.MILLISECONDS)
+        .repeat((long) (config.getSendDelay() * 1000), TimeUnit.MILLISECONDS)
         .schedule();
   }
 
@@ -147,9 +156,8 @@ public abstract class QueueManager {
     if (timeout == -1) {
       removeFromAll(player);
     } else {
-      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        removeFromAll(player);
-      }).delay(getTimeoutInSeconds(player), TimeUnit.SECONDS).schedule();
+      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, ()
+          -> removeFromAll(player)).delay(getTimeoutInSeconds(player), TimeUnit.SECONDS).schedule();
     }
   }
 
@@ -191,7 +199,6 @@ public abstract class QueueManager {
         }
       }
     });
-
   }
 
   /**
@@ -205,7 +212,7 @@ public abstract class QueueManager {
         continue;
       }
 
-      s.ping().whenComplete((result, th) -> {
+      s.ping().whenCompleteAsync((result, th) -> {
         double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
 
         if (th != null) {
@@ -332,10 +339,11 @@ public abstract class QueueManager {
    * Reloads the config for every server that has a queue.
    */
   public void reloadConfig() {
+    this.config = server.getConfiguration().getQueue();
     for (ServerQueueStatus server : this.cache.getAll()) {
       server.reloadConfig();
-      this.server.getRedisManager().addOrUpdateQueue(server);
     }
+    restartTasks();
   }
 
   /**
@@ -353,6 +361,10 @@ public abstract class QueueManager {
 
     if (tickPingingBackendTaskHandle != null) {
       tickPingingBackendTaskHandle.cancel();
+    }
+
+    if (sendingTaskHandle != null) {
+      sendingTaskHandle.cancel();
     }
   }
 

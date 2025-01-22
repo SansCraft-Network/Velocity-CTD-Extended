@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -66,8 +67,10 @@ public final class VelocityConfiguration implements ProxyConfig {
   private String bind = "0.0.0.0:25565";
   @Expose
   private String motd = "<aqua>A Velocity Server";
+  private net.kyori.adventure.text.@MonotonicNonNull Component motdAsComponent;
   @Expose
   private List<String> motdHover = List.of("");
+  private List<net.kyori.adventure.text.@MonotonicNonNull Component> motdHoverComponents;
   @Expose
   private int showMaxPlayers = 500;
   @Expose
@@ -98,7 +101,6 @@ public final class VelocityConfiguration implements ProxyConfig {
   private final Queue queue;
   @Expose
   private boolean enablePlayerAddressLogging = true;
-  private net.kyori.adventure.text.@MonotonicNonNull Component motdAsComponent;
   private @Nullable Favicon favicon;
   @Expose
   private boolean forceKeyAuthentication = true; // Added in 1.19
@@ -130,7 +132,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   private Map<String, Integer> playerCaps;
 
   private VelocityConfiguration(final Servers servers, final ForcedHosts forcedHosts, final Commands commands,
-      final Advanced advanced, final Query query, final Metrics metrics, final Redis redis, final Queue queue) {
+                                final Advanced advanced, final Query query, final Metrics metrics, final Redis redis, final Queue queue) {
     this.servers = servers;
     this.forcedHosts = forcedHosts;
     this.commands = commands;
@@ -307,6 +309,13 @@ public final class VelocityConfiguration implements ProxyConfig {
       valid = false;
     }
 
+    try {
+      getMotdHover();
+    } catch (Exception e) {
+      logger.error("Can't parse your MOTD hover", e);
+      valid = false;
+    }
+
     if (advanced.compressionLevel < -1 || advanced.compressionLevel > 9) {
       logger.error("Invalid compression level {}", advanced.compressionLevel);
       valid = false;
@@ -376,8 +385,14 @@ public final class VelocityConfiguration implements ProxyConfig {
     return motdAsComponent;
   }
 
-  public List<String> getMotdHover() {
-    return this.motdHover;
+  @Override
+  public List<net.kyori.adventure.text.Component> getMotdHover() {
+    if (motdHoverComponents == null) {
+      motdHoverComponents = motdHover.stream()
+          .map(MiniMessage.miniMessage()::deserialize)
+          .toList();
+    }
+    return motdHoverComponents;
   }
 
   @Override
@@ -689,18 +704,18 @@ public final class VelocityConfiguration implements ProxyConfig {
       }
 
       String forwardingSecretString = System.getenv().getOrDefault(
-              "VELOCITY_FORWARDING_SECRET", "");
+          "VELOCITY_FORWARDING_SECRET", "");
       if (forwardingSecretString.isEmpty()) {
         final String forwardSecretFile = config.get("forwarding-secret-file");
         final Path secretPath = forwardSecretFile == null
-                ? defaultForwardingSecretPath
-                : Path.of(forwardSecretFile);
+            ? defaultForwardingSecretPath
+            : Path.of(forwardSecretFile);
         if (Files.exists(secretPath)) {
           if (Files.isRegularFile(secretPath)) {
             forwardingSecretString = String.join("", Files.readAllLines(secretPath));
           } else {
             throw new RuntimeException(
-                    "The file " + forwardSecretFile + " is not a valid file or it is a directory.");
+                "The file " + forwardSecretFile + " is not a valid file or it is a directory.");
           }
         } else {
           throw new RuntimeException("The forwarding-secret-file does not exist.");
@@ -776,7 +791,6 @@ public final class VelocityConfiguration implements ProxyConfig {
           CommentedConfig link = entry.getValue();
           links.add(ServerLink.serverLink(MiniMessage.miniMessage().deserialize(link.get("label")),
               link.get("link")));
-
         }
       }
 
@@ -792,8 +806,8 @@ public final class VelocityConfiguration implements ProxyConfig {
 
           CommentedConfig link = entry.getValue();
           addresses.add(new ProxyAddress(link.get("proxy-id"),
-                  link.get("ip"),
-                  link.get("port")));
+              link.get("ip"),
+              link.get("port")));
         }
       }
 
@@ -931,7 +945,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         Map<String, PlayerInfoForwarding> serverForwardingModes = new HashMap<>();
         for (UnmodifiableConfig.Entry entry : config.entrySet()) {
           if (entry.getKey().equalsIgnoreCase("dynamic-fallbacks-filter")) {
-            continue;
+            continue; // Intended despite uselessness.
           } else if (entry.getValue() instanceof String) {
             servers.put(cleanServerName(entry.getKey()), entry.getValue());
           } else if (entry.getValue() instanceof UnmodifiableConfig) {
@@ -1211,8 +1225,10 @@ public final class VelocityConfiguration implements ProxyConfig {
     private boolean allowIllegalCharactersInChat = false;
     @Expose
     private String serverBrand = "{backend-brand} ({proxy-brand})";
+    private String serverBrandAsString;
     @Expose
     private String fallbackVersionPing = "{proxy-brand} {protocol-min}-{protocol-max}";
+    private String fallbackVersionPingAsString;
     @Expose
     private boolean alwaysFallBackPing = true;
     @Expose
@@ -1250,6 +1266,12 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.proxyBrandCustom = config.getOrElse("custom-brand-proxy", "Velocity");
         this.backendBrandCustom = config.getOrElse("custom-brand-backend", "Paper");
       }
+
+      this.serverBrandAsString = LegacyComponentSerializer.legacySection()
+          .serialize(MiniMessage.miniMessage().deserialize(this.serverBrand));
+
+      this.fallbackVersionPingAsString = LegacyComponentSerializer.legacySection()
+          .serialize(MiniMessage.miniMessage().deserialize(this.fallbackVersionPing));
     }
 
     public int getCompressionThreshold() {
@@ -1313,17 +1335,16 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     public String getServerBrand() {
-      return serverBrand;
+      return this.serverBrandAsString;
     }
 
     public String getFallbackVersionPing() {
-      return this.fallbackVersionPing;
+      return this.fallbackVersionPingAsString;
     }
 
     public boolean getAlwaysFallBackPing() {
       return this.alwaysFallBackPing;
     }
-
 
     public String getProxyBrandCustom() {
       return this.proxyBrandCustom;
@@ -1531,7 +1552,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       return proxyId;
     }
 
-
     @Override
     public String toString() {
       return "Redis{"
@@ -1556,8 +1576,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     private List<String> noQueueServers;
     @Expose
     private boolean allowMultiQueue;
-    @Expose
-    private String multipleServerMessagingSelection;
     @Expose
     private double sendDelay;
     @Expose
@@ -1593,7 +1611,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       this.enabled = config.getOrElse("enabled", false);
       this.noQueueServers = config.getOrElse("no-queue-servers", List.of());
       this.allowMultiQueue = config.getOrElse("allow-multi-queue", false);
-      this.multipleServerMessagingSelection = config.getOrElse("multiple-server-messaging-selection", "last");
       this.sendDelay = config.getOrElse("send-delay", 1.0);
       this.queueDelay = config.getOrElse("queue-delay", 0.0);
       this.messageDelay = config.getOrElse("message-delay", 1.0);
@@ -1654,10 +1671,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       return backendPingInterval;
     }
 
-    public String getMultipleServerMessagingSelection() {
-      return multipleServerMessagingSelection;
-    }
-
     public boolean isAllowMultiQueue() {
       return allowMultiQueue;
     }
@@ -1693,7 +1706,6 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", messageDelay=" + messageDelay
           + ", sendDelay=" + sendDelay
           + ", queueDelay=" + queueDelay
-          + ", multipleServerMessagingSelection=" + multipleServerMessagingSelection
           + ", allowMultiQueue=" + allowMultiQueue
           + ", noQueueServers=" + noQueueServers
           + ", overrideBungeeMessaging=" + overrideBungeeMessaging

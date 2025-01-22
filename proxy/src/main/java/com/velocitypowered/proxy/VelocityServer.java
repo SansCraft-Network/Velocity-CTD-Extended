@@ -184,6 +184,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private final VelocityCommandManager commandManager;
   private final AtomicBoolean shutdownInProgress = new AtomicBoolean(false);
   private boolean shutdown = false;
+  private boolean startedShutdown = false;
   private final VelocityPluginManager pluginManager;
 
   private final Map<UUID, ConnectedPlayer> connectionsByUuid = new ConcurrentHashMap<>();
@@ -255,6 +256,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     return new ProxyVersion(implName, implVendor, implVersion);
+  }
+
+  public boolean isStartedShutdown() {
+    return this.startedShutdown;
   }
 
   private VelocityPluginContainer createVirtualPlugin() {
@@ -611,7 +616,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         Optional<RegisteredServer> next = player.getNextServerToTry();
         if (next.isPresent()) {
           player.createConnectionRequest(next.get()).connectWithIndication()
-              .whenComplete((success, ex) -> {
+              .whenCompleteAsync((success, ex) -> {
                 if (ex != null || success == null || !success) {
                   player.disconnect(Component.text("Your server has been changed, but we could "
                       + "not move you to any fallback servers."));
@@ -808,6 +813,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     Runnable shutdownProcess = () -> {
+      startedShutdown = true;
       logger.info("Shutting down the proxy...");
 
       // Shutdown the connection manager, this should be
@@ -820,9 +826,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       ImmutableList<ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
 
       if (this.getQueueManager().isQueueEnabled()) {
-        players.forEach(p -> {
-          this.getQueueManager().removeFromAll(p);
-        });
+        players.forEach(p -> this.getQueueManager().removeFromAll(p));
       }
 
       if (!getConfiguration().isAcceptTransfers()) {
@@ -1131,6 +1135,11 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   @Override
   public VelocityChannelRegistrar getChannelRegistrar() {
     return channelRegistrar;
+  }
+
+  @Override
+  public boolean isShuttingDown() {
+    return shutdownInProgress.get();
   }
 
   @Override

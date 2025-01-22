@@ -242,7 +242,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
             PlayerResourcePackStatusEvent.Status.DECLINED
         ));
       }
-    }, playerConnection.eventLoop()).exceptionally((ex) -> {
+    }, playerConnection.eventLoop()).exceptionallyAsync((ex) -> {
       if (serverConn.getConnection() != null) {
         serverConn.getConnection().write(new ResourcePackResponsePacket(
             packet.getId(),
@@ -275,7 +275,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
         }
         playerConnection.write(packet);
       }
-    }, playerConnection.eventLoop()).exceptionally((ex) -> {
+    }, playerConnection.eventLoop()).exceptionallyAsync((ex) -> {
       logger.error("Exception while handling resource pack remove for {}", playerConnection, ex);
       return null;
     });
@@ -300,6 +300,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
           server.getConfiguration().getServerBrand(),
           server.getConfiguration().getProxyBrandCustom(),
           server.getConfiguration().getBackendBrandCustom(),
+          serverConn.getServer().getServerInfo().getName(),
           ProtocolVersion.getVersionByName(server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn());
       playerConnection.write(rewritten);
       return true;
@@ -320,10 +321,10 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     server.getEventManager().fire(event).thenAcceptAsync(pme -> {
       if (pme.getResult().isAllowed() && !playerConnection.isClosed()) {
         PluginMessagePacket copied = new PluginMessagePacket(
-                packet.getChannel(), Unpooled.wrappedBuffer(copy));
+            packet.getChannel(), Unpooled.wrappedBuffer(copy));
         playerConnection.write(copied);
       }
-    }, playerConnection.eventLoop()).exceptionally((ex) -> {
+    }, playerConnection.eventLoop()).exceptionallyAsync((ex) -> {
       logger.error("Exception while handling plugin message {}", packet, ex);
       return null;
     });
@@ -367,7 +368,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     server.getEventManager().fire(
             new PlayerAvailableCommandsEvent(serverConn.getPlayer(), rootNode))
         .thenAcceptAsync(event -> playerConnection.write(commands), playerConnection.eventLoop())
-        .exceptionally((ex) -> {
+        .exceptionallyAsync((ex) -> {
           logger.error("Exception while handling available commands for {}", playerConnection, ex);
           return null;
         });

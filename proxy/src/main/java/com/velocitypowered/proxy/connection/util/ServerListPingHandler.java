@@ -34,6 +34,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import net.kyori.adventure.text.Component;
 
 /**
  * Common utilities for handling server list ping results.
@@ -74,7 +75,7 @@ public class ServerListPingHandler {
     }
 
     List<ServerPing.SamplePlayer> samplePlayers = new ArrayList<>();
-    for (String s : server.getConfiguration().getMotdHover()) {
+    for (Component s : server.getConfiguration().getMotdHover()) {
       samplePlayers.add(new ServerPing.SamplePlayer(
           s,
           UUID.randomUUID()));
@@ -128,7 +129,7 @@ public class ServerListPingHandler {
         (ex) -> fallback);
     switch (mode) {
       case ALL:
-        return pingResponses.thenApply(responses -> {
+        return pingResponses.thenApplyAsync(responses -> {
           // Find the first non-fallback
           for (ServerPing response : responses) {
             if (response == fallback) {
@@ -139,7 +140,7 @@ public class ServerListPingHandler {
           return fallback;
         });
       case MODS:
-        return pingResponses.thenApply(responses -> {
+        return pingResponses.thenApplyAsync(responses -> {
           // Find the first non-fallback that contains a mod list
           for (ServerPing response : responses) {
             if (response == fallback) {
@@ -153,7 +154,7 @@ public class ServerListPingHandler {
           return fallback;
         });
       case DESCRIPTION:
-        return pingResponses.thenApply(responses -> {
+        return pingResponses.thenApplyAsync(responses -> {
           // Find the first non-fallback. If it includes a modlist, add it too.
           for (ServerPing response : responses) {
             if (response == fallback) {

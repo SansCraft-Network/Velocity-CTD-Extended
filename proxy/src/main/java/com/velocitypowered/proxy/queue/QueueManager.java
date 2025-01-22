@@ -342,7 +342,6 @@ public abstract class QueueManager {
     this.config = server.getConfiguration().getQueue();
     for (ServerQueueStatus server : this.cache.getAll()) {
       server.reloadConfig();
-      this.server.getRedisManager().addOrUpdateQueue(server);
     }
     restartTasks();
   }
@@ -352,7 +351,6 @@ public abstract class QueueManager {
    */
   public void clearQueue() {
     for (ServerQueueStatus status : this.cache.getAll()) {
-
       status.stop();
     }
 
@@ -362,10 +360,6 @@ public abstract class QueueManager {
 
     if (tickPingingBackendTaskHandle != null) {
       tickPingingBackendTaskHandle.cancel();
-    }
-
-    if (sendingTaskHandle != null) {
-      sendingTaskHandle.cancel();
     }
   }
 

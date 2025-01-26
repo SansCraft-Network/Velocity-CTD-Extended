@@ -136,6 +136,7 @@ dependencies, useful performance improvements, and more.
 ## Special Notes
 To proficiently review the stability and performance of your proxy in addition to spark,
 consider utilizing JProfiler to enhance your experience and report any ongoing issues.
+
 [![JProfiler](https://github.com/user-attachments/assets/d4f6a94b-8da2-484a-85c8-537a4d19d188)](https://www.ej-technologies.com/jprofiler)
 
 ## Building

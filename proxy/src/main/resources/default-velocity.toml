@@ -236,6 +236,24 @@ accepts-transfers = false
 # threads. Disabled by default. Requires Linux or macOS.
 enable-reuse-port = false
 
+# How fast (in milliseconds) are clients allowed to send commands after the last command
+# By default this is 50ms (20 commands per second)
+command-rate-limit = 50
+
+# Should we no longer accept commands from a player if they are rate limited?
+cancel-commands-if-rate-limited = true
+
+# How many commands are allowed to be sent after the rate limit is hit before the player is kicked?
+# Setting this to 0 or lower will disable this feature.
+kick-after-rate-limited-commands = 5
+
+# How fast (in milliseconds) are clients allowed to send tab completions after the last tab completion
+tab-complete-rate-limit = 25
+
+# How many tab completions are allowed to be sent after the rate limit is hit before the player is kicked?
+# Setting this to 0 or lower will disable this feature.
+kick-after-rate-limited-tab-completes = 5
+
 # Enables the execution of illegal characters in chat and only allows
 # or denies illegal characters that are executed through the proxy.
 allow-illegal-characters-in-chat = false

@@ -60,7 +60,6 @@ import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.jedis.JedisPubSub;
 import redis.clients.jedis.exceptions.JedisDataException;
-import redis.clients.jedis.exceptions.JedisException;
 
 /**
  * Manages Redis connectivity and communication within the Velocity proxy.
@@ -80,6 +79,7 @@ public class RedisManagerImpl {
 
   private @MonotonicNonNull JedisPool jedisPool;
   private final VelocityPubSub pubSub;
+  private final AsyncPlayerCache asyncPlayerCache;
 
   /**
    * Constructs a Redis manager using the given Velocity server instance to retrieve
@@ -94,6 +94,9 @@ public class RedisManagerImpl {
     if (redisConfig.isEnabled()) {
       this.start(redisConfig, velocityServer);
     }
+
+    int threadPoolSize = Math.max(1, Runtime.getRuntime().availableProcessors() / 8);
+    asyncPlayerCache = new AsyncPlayerCache(CACHE_KEY, jedisPool, gson, threadPoolSize);
 
     registerListeners(velocityServer);
   }
@@ -270,15 +273,11 @@ public class RedisManagerImpl {
    * @param player The player to update.
    */
   public void addOrUpdatePlayer(final RemotePlayerInfo player) {
-    String json = gson.toJson(player);
-
-    try (Jedis jedis = this.jedisPool.getResource()) {
-      jedis.hset(CACHE_KEY, player.getUuid().toString(), json);
-    } catch (JedisDataException ignored) {
-      // Ignore raw hash due to redundant logging.
-    } catch (Exception e) {
-      e.printStackTrace();
+    if (this.jedisPool == null) {
+      return;
     }
+
+    asyncPlayerCache.addOrUpdatePlayer(player);
   }
 
   /**
@@ -287,11 +286,10 @@ public class RedisManagerImpl {
    * @param info The player to update.
    */
   public void removePlayer(final RemotePlayerInfo info) {
-    try (Jedis jedis = this.jedisPool.getResource()) {
-      jedis.hdel(CACHE_KEY, info.getUuid().toString());
-    } catch (Exception e) {
-      e.printStackTrace();
+    if (this.jedisPool == null) {
+      return;
     }
+    asyncPlayerCache.removePlayer(info);
   }
 
   /**
@@ -300,14 +298,10 @@ public class RedisManagerImpl {
    * @return the list of players.
    */
   public List<RemotePlayerInfo> getCache() {
-    try (Jedis jedis = this.jedisPool.getResource()) {
-      Map<String, String> playerMap = jedis.hgetAll(CACHE_KEY);
-      return playerMap.values().stream()
-          .map(json -> gson.fromJson(json, RemotePlayerInfo.class))
-          .collect(Collectors.toList());
-    } catch (Exception e) {
+    if (this.jedisPool == null) {
       return new ArrayList<>();
     }
+    return asyncPlayerCache.getCache();
   }
 
   /**
@@ -408,7 +402,10 @@ public class RedisManagerImpl {
       poolConfig.setTestOnBorrow(true);
       poolConfig.setTestOnReturn(true);
       poolConfig.setTestWhileIdle(true);
-
+      poolConfig.setMinEvictableIdleTimeMillis(30000); // 30 seconds before removing stale connections
+      poolConfig.setTimeBetweenEvictionRunsMillis(15000); // Check stale connections every 15 sec
+      poolConfig.setNumTestsPerEvictionRun(-1); // Test all idle connections
+      
       JedisClientConfig clientConfig = DefaultJedisClientConfig.builder()
           .ssl(redisConfig.isUseSsl())
           .credentials(new DefaultRedisCredentials(redisConfig.getUsername(),
@@ -420,7 +417,7 @@ public class RedisManagerImpl {
       Thread thread = new Thread(() -> {
         try (Jedis jedis = this.jedisPool.getResource()) {
           jedis.subscribe(this.pubSub, CHANNEL);
-        } catch (JedisException e) {
+        } catch (Exception e) {
           logger.error("Error in pubsub listener", e);
         }
       });

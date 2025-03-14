@@ -186,7 +186,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
         serverConn.getConnection().write(new ResourcePackResponsePacket(
                 packet.getId(), packet.getHash(), PlayerResourcePackStatusEvent.Status.DECLINED));
       }
-    }, playerConnection.eventLoop()).exceptionallyAsync((ex) -> {
+    }, playerConnection.eventLoop()).exceptionally((ex) -> {
       if (serverConn.getConnection() != null) {
         serverConn.getConnection().write(new ResourcePackResponsePacket(
                 packet.getId(), packet.getHash(), PlayerResourcePackStatusEvent.Status.DECLINED));
@@ -218,7 +218,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
         }
         playerConnection.write(packet);
       }
-    }, playerConnection.eventLoop()).exceptionallyAsync((ex) -> {
+    }, playerConnection.eventLoop()).exceptionally((ex) -> {
       logger.error("Exception while handling resource pack remove for {}", playerConnection, ex);
       return null;
     });

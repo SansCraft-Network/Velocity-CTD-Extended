@@ -537,8 +537,8 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
-  public boolean isCancelCommandsIfRateLimited() {
-    return advanced.isCancelCommandsIfRateLimited();
+  public boolean isForwardCommandsIfRateLimited() {
+    return advanced.isForwardCommandsIfRateLimited();
   }
 
   @Override
@@ -1258,15 +1258,15 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private boolean enableReusePort = false;
     @Expose
-    private int commandRateLimit = 50;
+    private int commandRateLimit = 25;
     @Expose
-    private boolean cancelCommandsIfRateLimited = true;
+    private boolean forwardCommandsIfRateLimited = true;
     @Expose
-    private int kickAfterRateLimitedCommands = 5;
+    private int kickAfterRateLimitedCommands = 0;
     @Expose
-    private int tabCompleteRateLimit = 50;
+    private int tabCompleteRateLimit = 10;
     @Expose
-    private int kickAfterRateLimitedTabCompletes = 10;
+    private int kickAfterRateLimitedTabCompletes = 0;
     @Expose
     private boolean allowIllegalCharactersInChat = false;
     @Expose
@@ -1306,11 +1306,11 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.logCommandExecutions = config.getOrElse("log-command-executions", false);
         this.acceptTransfers = config.getOrElse("accepts-transfers", false);
         this.enableReusePort = config.getOrElse("enable-reuse-port", false);
-        this.commandRateLimit = config.getIntOrElse("command-rate-limit", 50);
-        this.cancelCommandsIfRateLimited = config.getOrElse("cancel-commands-if-rate-limited", true);
-        this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 5);
-        this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 25); // very lenient
-        this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 10);
+        this.commandRateLimit = config.getIntOrElse("command-rate-limit", 25);
+        this.forwardCommandsIfRateLimited = config.getOrElse("forward-commands-if-rate-limited", true);
+        this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 0);
+        this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10); // very lenient
+        this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 0);
         this.allowIllegalCharactersInChat = config.getOrElse("allow-illegal-characters-in-chat", false);
         this.serverBrand = config.getOrElse("server-brand", "{backend-brand} ({proxy-brand})");
         this.fallbackVersionPing = config.getOrElse("fallback-version-ping", "{proxy-brand} {protocol-min}-{protocol-max}");
@@ -1390,8 +1390,8 @@ public final class VelocityConfiguration implements ProxyConfig {
       return commandRateLimit;
     }
 
-    public boolean isCancelCommandsIfRateLimited() {
-      return cancelCommandsIfRateLimited;
+    public boolean isForwardCommandsIfRateLimited() {
+      return forwardCommandsIfRateLimited;
     }
 
     public int getKickAfterRateLimitedCommands() {

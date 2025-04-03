@@ -1268,7 +1268,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private boolean enableReusePort = false;
     @Expose
-    private int commandRateLimit = 25;
+    private int commandRateLimit = 50;
     @Expose
     private boolean forwardCommandsIfRateLimited = true;
     @Expose
@@ -1316,7 +1316,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.logCommandExecutions = config.getOrElse("log-command-executions", false);
         this.acceptTransfers = config.getOrElse("accepts-transfers", false);
         this.enableReusePort = config.getOrElse("enable-reuse-port", false);
-        this.commandRateLimit = config.getIntOrElse("command-rate-limit", 25);
+        this.commandRateLimit = config.getIntOrElse("command-rate-limit", 50);
         this.forwardCommandsIfRateLimited = config.getOrElse("forward-commands-if-rate-limited", true);
         this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 0);
         this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10); // very lenient

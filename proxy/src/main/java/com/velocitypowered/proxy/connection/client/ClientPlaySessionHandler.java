@@ -316,11 +316,11 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
             + "ready. Channel: {}. Packet discarded.", packet.getChannel());
       } else if (PluginMessageUtil.isRegister(packet)) {
         List<String> channels = PluginMessageUtil.getChannels(packet);
-        player.getClientsideChannels().addAll(channels);
         if (channels.size() > server.getConfiguration().getChannelRegisterLimit()) {
           player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
           return true;
         }
+        player.getClientsideChannels().addAll(channels);
         List<ChannelIdentifier> channelIdentifiers = new ArrayList<>();
         for (String channel : channels) {
           try {

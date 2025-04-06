@@ -550,6 +550,11 @@ public final class VelocityConfiguration implements ProxyConfig {
     return advanced.getKickAfterRateLimitedCommands();
   }
 
+  @Override
+  public int getChannelRegisterLimit() {
+    return advanced.getChannelRegisterLimit();
+  }
+
   public boolean isProxyProtocol() {
     return advanced.isProxyProtocol();
   }
@@ -1282,6 +1287,8 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private int kickAfterRateLimitedTabCompletes = 0;
     @Expose
+    private int channelRegisterLimit = 128;
+    @Expose
     private boolean allowIllegalCharactersInChat = false;
     @Expose
     private boolean enableConfigurationPhase = true;
@@ -1325,8 +1332,9 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.commandRateLimit = config.getIntOrElse("command-rate-limit", 50);
         this.forwardCommandsIfRateLimited = config.getOrElse("forward-commands-if-rate-limited", true);
         this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 0);
-        this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10); // very lenient
+        this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10);
         this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 0);
+        this.channelRegisterLimit = config.getIntOrElse("channel-register-limit", 128);
         this.allowIllegalCharactersInChat = config.getOrElse("allow-illegal-characters-in-chat", false);
         this.enableConfigurationPhase = config.getOrElse("enable-configuration-phase", true);
         this.serverBrand = config.getOrElse("server-brand", "{backend-brand} ({proxy-brand})");
@@ -1423,6 +1431,10 @@ public final class VelocityConfiguration implements ProxyConfig {
       return kickAfterRateLimitedTabCompletes;
     }
 
+    public int getChannelRegisterLimit() {
+      return channelRegisterLimit;
+    }
+
     public boolean isAllowIllegalCharactersInChat() {
       return allowIllegalCharactersInChat;
     }
@@ -1468,6 +1480,12 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", logCommandExecutions=" + logCommandExecutions
           + ", acceptTransfers=" + acceptTransfers
           + ", enableReusePort=" + enableReusePort
+          + ", commandRateLimit=" + commandRateLimit
+          + ", forwardCommandsIfRateLimited=" + forwardCommandsIfRateLimited
+          + ", kickAfterRateLimitedCommands=" + kickAfterRateLimitedCommands
+          + ", tabCompleteRateLimit=" + tabCompleteRateLimit
+          + ", kickAfterRateLimitedTabCompletes=" + kickAfterRateLimitedTabCompletes
+          + ", channelRegisterLimit=" + channelRegisterLimit
           + ", allowIllegalCharactersInChat=" + allowIllegalCharactersInChat
           + ", enableConfigurationPhase=" + enableConfigurationPhase
           + '}';
@@ -1803,6 +1821,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", removePlayerOnServerSwitch=" + removePlayerOnServerSwitch
           + ", maxSendRetries=" + maxSendRetries
           + ", messageDelay=" + messageDelay
+          + ", backendPingInterval=" + backendPingInterval
           + ", sendDelay=" + sendDelay
           + ", queueDelay=" + queueDelay
           + ", allowMultiQueue=" + allowMultiQueue
@@ -1811,6 +1830,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", leaveQueueAliases=" + leaveQueueAliases
           + ", queueAdminAliases=" + queueAdminAliases
           + ", masterProxyIds=" + masterProxyIds
+          + ", bannedReason=" + bannedReason
           + '}';
     }
   }

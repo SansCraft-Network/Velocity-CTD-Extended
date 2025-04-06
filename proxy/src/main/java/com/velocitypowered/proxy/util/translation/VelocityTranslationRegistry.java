@@ -54,6 +54,11 @@ public final class VelocityTranslationRegistry implements TranslationRegistry {
   }
 
   @Override
+  public boolean contains(@NotNull String key, @NotNull Locale locale) {
+    return false;
+  }
+
+  @Override
   public @NotNull Key name() {
     return backedRegistry.name();
   }

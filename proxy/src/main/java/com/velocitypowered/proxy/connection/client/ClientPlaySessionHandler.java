@@ -316,6 +316,10 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
             + "ready. Channel: {}. Packet discarded.", packet.getChannel());
       } else if (PluginMessageUtil.isRegister(packet)) {
         List<String> channels = PluginMessageUtil.getChannels(packet);
+        if (channels.size() > server.getConfiguration().getChannelRegisterLimit()) {
+          player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
+          return true;
+        }
         List<ChannelIdentifier> channelIdentifiers = new ArrayList<>();
         for (String channel : channels) {
           try {
@@ -329,6 +333,10 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
                 new PlayerChannelRegisterEvent(player, ImmutableList.copyOf(channelIdentifiers)));
         backendConn.write(packet.retain());
       } else if (PluginMessageUtil.isUnregister(packet)) {
+        if (PluginMessageUtil.getChannels(packet).size() > server.getConfiguration().getChannelRegisterLimit()) {
+          player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
+          return true;
+        }
         backendConn.write(packet.retain());
       } else if (PluginMessageUtil.isMcBrand(packet)) {
         String brand = PluginMessageUtil.readBrandMessage(packet.content());

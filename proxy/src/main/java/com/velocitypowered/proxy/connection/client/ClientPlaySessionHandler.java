@@ -103,6 +103,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class ClientPlaySessionHandler implements MinecraftSessionHandler {
 
   private static final Logger logger = LogManager.getLogger(ClientPlaySessionHandler.class);
+  private static final int MAX_CLIENTSIDE_PLUGIN_CHANNELS = 1024;
 
   private final ConnectedPlayer player;
   private boolean spawned = false;
@@ -320,7 +321,12 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
           player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
           return true;
         }
-        player.getClientsideChannels().addAll(channels);
+        Collection<String> current = player.getClientsideChannels();
+        if (current.size() + channels.size() > MAX_CLIENTSIDE_PLUGIN_CHANNELS) {
+          player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
+          return true;
+        }
+        current.addAll(channels);
         List<ChannelIdentifier> channelIdentifiers = new ArrayList<>();
         for (String channel : channels) {
           try {
@@ -614,6 +620,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
     if (!channels.isEmpty()) {
       serverMc.delayedWrite(constructChannelsPacket(serverVersion, channels));
     }
+
     // Tell the server about this client's plugin message channels.
     if (!player.getClientsideChannels().isEmpty()) {
       serverMc.delayedWrite(constructChannelsPacket(serverVersion, player.getClientsideChannels()));

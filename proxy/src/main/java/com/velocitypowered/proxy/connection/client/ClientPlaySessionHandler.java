@@ -103,7 +103,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class ClientPlaySessionHandler implements MinecraftSessionHandler {
 
   private static final Logger logger = LogManager.getLogger(ClientPlaySessionHandler.class);
-  private static final int MAX_CLIENTSIDE_PLUGIN_CHANNELS = 1024;
 
   private final ConnectedPlayer player;
   private boolean spawned = false;
@@ -317,16 +316,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
             + "ready. Channel: {}. Packet discarded.", packet.getChannel());
       } else if (PluginMessageUtil.isRegister(packet)) {
         List<String> channels = PluginMessageUtil.getChannels(packet);
-        if (channels.size() > server.getConfiguration().getChannelRegisterLimit()) {
-          player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
-          return true;
-        }
-        Collection<String> current = player.getClientsideChannels();
-        if (current.size() + channels.size() > MAX_CLIENTSIDE_PLUGIN_CHANNELS) {
-          player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
-          return true;
-        }
-        current.addAll(channels);
+        player.getClientsideChannels().addAll(channels);
         List<ChannelIdentifier> channelIdentifiers = new ArrayList<>();
         for (String channel : channels) {
           try {
@@ -340,10 +330,6 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
                 new PlayerChannelRegisterEvent(player, ImmutableList.copyOf(channelIdentifiers)));
         backendConn.write(packet.retain());
       } else if (PluginMessageUtil.isUnregister(packet)) {
-        if (PluginMessageUtil.getChannels(packet).size() > server.getConfiguration().getChannelRegisterLimit()) {
-          player.disconnect(Component.translatable("velocity.kick.channel-register-limit"));
-          return true;
-        }
         player.getClientsideChannels().removeAll(PluginMessageUtil.getChannels(packet));
         backendConn.write(packet.retain());
       } else if (PluginMessageUtil.isMcBrand(packet)) {

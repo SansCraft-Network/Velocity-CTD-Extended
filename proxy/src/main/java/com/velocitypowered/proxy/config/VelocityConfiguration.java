@@ -1287,7 +1287,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private int kickAfterRateLimitedTabCompletes = 0;
     @Expose
-    private int channelRegisterLimit = 128;
+    private int channelRegisterLimit = 1024;
     @Expose
     private boolean allowIllegalCharactersInChat = false;
     @Expose
@@ -1334,7 +1334,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 0);
         this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10);
         this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 0);
-        this.channelRegisterLimit = config.getIntOrElse("channel-register-limit", 128);
+        this.channelRegisterLimit = config.getIntOrElse("channel-register-limit", 1024);
         this.allowIllegalCharactersInChat = config.getOrElse("allow-illegal-characters-in-chat", false);
         this.enableConfigurationPhase = config.getOrElse("enable-configuration-phase", true);
         this.serverBrand = config.getOrElse("server-brand", "{backend-brand} ({proxy-brand})");

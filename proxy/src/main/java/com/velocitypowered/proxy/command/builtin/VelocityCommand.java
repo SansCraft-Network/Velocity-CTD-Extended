@@ -17,6 +17,7 @@
 
 package com.velocitypowered.proxy.command.builtin;
 
+import com.google.common.base.Suppliers;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.Command;
@@ -60,6 +61,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -479,50 +481,59 @@ public final class VelocityCommand {
     }
   }
 
-  private record Info(ProxyServer server) implements Command<CommandSource> {
+  private static final class Info implements Command<CommandSource> {
 
     private static final TextColor VELOCITY_COLOR = TextColor.color(0xff3a4c);
+    private final Supplier<Component> infoSupplier;
+
+    private Info(final ProxyServer server) {
+      final ProxyVersion version = server.getVersion();
+      this.infoSupplier = Suppliers.memoize(() -> {
+        final TextComponent.Builder infoBuilder = Component.text();
+        final Component velocity = Component.text()
+            .content(version.getName() + " ")
+            .decoration(TextDecoration.BOLD, true)
+            .color(VELOCITY_COLOR)
+            .append(Component.text()
+                .content(version.getVersion())
+                .decoration(TextDecoration.BOLD, false))
+            .build();
+        final Component copyright = Component
+            .translatable("velocity.command.version-copyright",
+                Component.text(version.getVendor()),
+                Component.text(version.getName()),
+                Component.text(LocalDate.now().getYear()));
+        infoBuilder.append(velocity)
+            .appendNewline()
+            .append(copyright);
+        if (version.getName().equals("Velocity")) {
+          final TextComponent embellishment = Component.text()
+              .append(Component.text()
+                  .content("discord.gg/beer")
+                  .color(NamedTextColor.RED)
+                  .clickEvent(
+                      ClickEvent.openUrl("https://discord.gg/beer"))
+                  .build())
+                  .append(Component.text(" - "))
+                  .append(Component.text()
+                      .content("GitHub")
+                      .color(NamedTextColor.RED)
+                      .decoration(TextDecoration.UNDERLINED, true)
+                      .clickEvent(ClickEvent.openUrl(
+                          "https://github.com/GemstoneGG/Velocity-CTD"))
+                      .build())
+                  .build();
+          infoBuilder.appendNewline().append(embellishment);
+        }
+
+        return infoBuilder.build();
+      });
+    }
 
     @Override
     public int run(final CommandContext<CommandSource> context) {
       final CommandSource source = context.getSource();
-      final ProxyVersion version = server.getVersion();
-
-      final Component velocity = Component.text()
-          .content(version.getName() + " ")
-          .decoration(TextDecoration.BOLD, true)
-          .color(VELOCITY_COLOR)
-          .append(Component.text()
-                  .content(version.getVersion())
-                  .decoration(TextDecoration.BOLD, false))
-          .build();
-      final Component copyright = Component
-          .translatable("velocity.command.version-copyright",
-              Component.text(version.getVendor()),
-                  Component.text(version.getName()),
-                  Component.text(LocalDate.now().getYear()));
-      source.sendMessage(velocity);
-      source.sendMessage(copyright);
-
-      if (version.getName().equals("Velocity")) {
-        final TextComponent embellishment = Component.text()
-            .append(Component.text()
-                .content("discord.gg/beer")
-                .color(NamedTextColor.RED)
-                .clickEvent(
-                    ClickEvent.openUrl("https://discord.gg/beer"))
-                .build())
-            .append(Component.text(" - "))
-            .append(Component.text()
-                .content("GitHub")
-                .color(NamedTextColor.RED)
-                .decoration(TextDecoration.UNDERLINED, true)
-                .clickEvent(ClickEvent.openUrl(
-                    "https://github.com/GemstoneGG/Velocity-CTD"))
-                .build())
-            .build();
-        source.sendMessage(embellishment);
-      }
+      source.sendMessage(infoSupplier.get());
       return Command.SINGLE_SUCCESS;
     }
   }
@@ -601,7 +612,6 @@ public final class VelocityCommand {
 
   private record Dump(ProxyServer server) implements Command<CommandSource> {
     private static final Logger logger = LogManager.getLogger(Dump.class);
-
 
     @Override
     public int run(final CommandContext<CommandSource> context) {

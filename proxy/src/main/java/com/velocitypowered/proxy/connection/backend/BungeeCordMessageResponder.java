@@ -21,6 +21,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
@@ -504,9 +505,9 @@ public class BungeeCordMessageResponder {
     }));
   }
 
-  static String getBungeeCordChannel(final ProtocolVersion version) {
-    return version.noLessThan(ProtocolVersion.MINECRAFT_1_13) ? MODERN_CHANNEL.getId()
-        : LEGACY_CHANNEL.getId();
+  static ChannelIdentifier getBungeeCordChannel(final ProtocolVersion version) {
+    return version.noLessThan(ProtocolVersion.MINECRAFT_1_13) ? MODERN_CHANNEL
+        : LEGACY_CHANNEL;
   }
 
   // Note: this method will always release the buffer!
@@ -517,8 +518,8 @@ public class BungeeCordMessageResponder {
   // Note: this method will always release the buffer!
   private static void sendServerResponse(final ConnectedPlayer player, final ByteBuf buf) {
     MinecraftConnection serverConnection = player.ensureAndGetCurrentServer().ensureConnected();
-    String chan = getBungeeCordChannel(serverConnection.getProtocolVersion());
-    PluginMessagePacket msg = new PluginMessagePacket(chan, buf);
+    ChannelIdentifier chan = getBungeeCordChannel(serverConnection.getProtocolVersion());
+    PluginMessagePacket msg = new PluginMessagePacket(chan.getId(), buf);
     serverConnection.write(msg);
   }
 

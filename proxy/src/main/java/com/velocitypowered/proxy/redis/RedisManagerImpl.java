@@ -302,8 +302,8 @@ public class RedisManagerImpl {
     try (Jedis jedis = this.jedisPool.getResource()) {
       Map<String, String> playerMap = jedis.hgetAll(CACHE_KEY);
       return playerMap.values().stream()
-              .map(json -> gson.fromJson(json, RemotePlayerInfo.class))
-              .collect(Collectors.toList());
+          .map(json -> gson.fromJson(json, RemotePlayerInfo.class))
+          .collect(Collectors.toList());
     } catch (Exception e) {
       return new ArrayList<>();
     }

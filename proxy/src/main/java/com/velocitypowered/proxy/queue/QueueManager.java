@@ -19,6 +19,7 @@ package com.velocitypowered.proxy.queue;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -40,18 +41,15 @@ import net.kyori.adventure.text.Component;
 public abstract class QueueManager {
   protected final VelocityServer server;
   protected VelocityConfiguration.Queue config;
-  protected ScheduledFuture<?> tickMessageTaskHandle;
-  protected ScheduledFuture<?> tickPingingBackendTaskHandle;
-  private ScheduledFuture<?> sendingTaskHandle;
-
-  private static final int THREAD_COUNT = Math.max(1, Runtime.getRuntime().availableProcessors() / 8);
-  private static final ScheduledExecutorService SERVICE = Executors.newScheduledThreadPool(THREAD_COUNT);
+  protected ScheduledTask tickMessageTaskHandle;
+  protected ScheduledTask tickPingingBackendTaskHandle;
 
   private final boolean enabled;
 
   protected QueueCacheRetriever cache = null;
 
   protected static Map<String, Long> LAST_TURNED_ONLINE_TIME = new HashMap<>();
+  private ScheduledTask sendingTaskHandle = null;
 
   /**
    * Initializes a new Queue Manager with the proxy and config.
@@ -112,13 +110,14 @@ public abstract class QueueManager {
    */
   public void scheduleTickMessage() {
     if (this.tickMessageTaskHandle != null) {
-      this.tickMessageTaskHandle.cancel(true);
+      this.tickMessageTaskHandle.cancel();
     }
 
-    this.tickMessageTaskHandle = SERVICE.scheduleAtFixedRate(this::tickMessageForAllPlayers,
-        (long) (config.getMessageDelay() * 1000),
-        (long) (config.getMessageDelay() * 1000),
-        TimeUnit.MILLISECONDS);
+    this.tickMessageTaskHandle = server.getScheduler()
+        .buildTask(VelocityVirtualPlugin.INSTANCE, this::tickMessageForAllPlayers)
+        .delay((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
+        .repeat((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
+        .schedule();
   }
 
   /**
@@ -127,13 +126,14 @@ public abstract class QueueManager {
    */
   public void schedulePingingBackend() {
     if (this.tickPingingBackendTaskHandle != null) {
-      this.tickPingingBackendTaskHandle.cancel(true);
+      this.tickPingingBackendTaskHandle.cancel();
     }
 
-    this.tickPingingBackendTaskHandle = SERVICE.scheduleAtFixedRate(this::tickPingingBackend,
-        (long) (config.getBackendPingInterval() * 1000),
-        (long) (config.getBackendPingInterval() * 1000),
-        TimeUnit.MILLISECONDS);
+    this.tickPingingBackendTaskHandle = server.getScheduler()
+        .buildTask(VelocityVirtualPlugin.INSTANCE, this::tickPingingBackend)
+        .delay((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
+        .repeat((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
+        .schedule();
   }
 
   /**
@@ -143,13 +143,13 @@ public abstract class QueueManager {
    */
   public void rescheduleTimerTask() {
     if (this.sendingTaskHandle != null) {
-      this.sendingTaskHandle.cancel(true);
+      this.sendingTaskHandle.cancel();
     }
 
-    this.sendingTaskHandle = SERVICE.scheduleAtFixedRate(this::tickSending,
-        (long) (config.getSendDelay() * 1000),
-        (long) (config.getSendDelay() * 1000),
-        TimeUnit.MILLISECONDS);
+    this.sendingTaskHandle = server.getScheduler()
+        .buildTask(VelocityVirtualPlugin.INSTANCE, this::tickSending)
+        .repeat((long) (config.getSendDelay() * 1000), TimeUnit.MILLISECONDS)
+        .schedule();
   }
 
   /**
@@ -362,15 +362,11 @@ public abstract class QueueManager {
     }
 
     if (tickMessageTaskHandle != null) {
-      tickMessageTaskHandle.cancel(true);
+      tickMessageTaskHandle.cancel();
     }
 
     if (tickPingingBackendTaskHandle != null) {
-      tickPingingBackendTaskHandle.cancel(true);
-    }
-
-    if (sendingTaskHandle != null) {
-      sendingTaskHandle.cancel(true);
+      tickPingingBackendTaskHandle.cancel();
     }
   }
 

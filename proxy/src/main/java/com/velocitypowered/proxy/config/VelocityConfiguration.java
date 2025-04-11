@@ -551,6 +551,16 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
+  public int getMaxPacketsPerSecond() {
+    return advanced.getMaxPacketsPerSecond();
+  }
+
+  @Override
+  public int getMaxPacketDataPerSecond() {
+    return advanced.getMaxPacketDataPerSecond();
+  }
+
+  @Override
   public int getChannelRegisterLimit() {
     return advanced.getChannelRegisterLimit();
   }
@@ -1287,6 +1297,10 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private int kickAfterRateLimitedTabCompletes = 0;
     @Expose
+    private int maxPacketsPerSecond = 1 << 12;
+    @Expose
+    private int maxPacketDataPerSecond = 1 << 25;
+    @Expose
     private int channelRegisterLimit = 1024;
     @Expose
     private boolean allowIllegalCharactersInChat = false;
@@ -1334,6 +1348,8 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 0);
         this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10);
         this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 0);
+        this.maxPacketsPerSecond = config.getIntOrElse("max-packets-per-second", 1 << 12);
+        this.maxPacketDataPerSecond = config.getIntOrElse("max-packet-data-per-second", 1 << 25);
         this.channelRegisterLimit = config.getIntOrElse("channel-register-limit", 1024);
         this.allowIllegalCharactersInChat = config.getOrElse("allow-illegal-characters-in-chat", false);
         this.enableConfigurationPhase = config.getOrElse("enable-configuration-phase", true);
@@ -1431,6 +1447,14 @@ public final class VelocityConfiguration implements ProxyConfig {
       return kickAfterRateLimitedTabCompletes;
     }
 
+    public int getMaxPacketsPerSecond() {
+      return maxPacketsPerSecond;
+    }
+
+    public int getMaxPacketDataPerSecond() {
+      return maxPacketDataPerSecond;
+    }
+
     public int getChannelRegisterLimit() {
       return channelRegisterLimit;
     }
@@ -1485,6 +1509,8 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", kickAfterRateLimitedCommands=" + kickAfterRateLimitedCommands
           + ", tabCompleteRateLimit=" + tabCompleteRateLimit
           + ", kickAfterRateLimitedTabCompletes=" + kickAfterRateLimitedTabCompletes
+          + ", maxPacketsPerSecond=" + maxPacketsPerSecond
+          + ", maxPacketDataPerSecond=" + maxPacketDataPerSecond
           + ", channelRegisterLimit=" + channelRegisterLimit
           + ", allowIllegalCharactersInChat=" + allowIllegalCharactersInChat
           + ", enableConfigurationPhase=" + enableConfigurationPhase

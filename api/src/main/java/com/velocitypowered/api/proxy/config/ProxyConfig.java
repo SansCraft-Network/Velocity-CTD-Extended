@@ -217,4 +217,18 @@ public interface ProxyConfig {
    * @return a channel limit that a client can register
    */
   int getChannelRegisterLimit();
+
+  /**
+    * Get the maximum number of packets that can be sent per second.
+    *
+    * @return the maximum packets per second
+    */
+  int getMaxPacketsPerSecond();
+
+  /**
+    * Get the maximum packet data size that can be sent per second.
+    *
+    * @return the maximum data packets per second
+    */
+  int getMaxPacketDataPerSecond();
 }

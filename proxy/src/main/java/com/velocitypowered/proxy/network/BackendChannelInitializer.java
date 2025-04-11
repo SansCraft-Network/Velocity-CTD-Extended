@@ -57,7 +57,7 @@ public class BackendChannelInitializer extends ChannelInitializer<Channel> {
                 TimeUnit.MILLISECONDS))
         .addLast(FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE)
         .addLast(MINECRAFT_DECODER,
-            new MinecraftDecoder(ProtocolUtils.Direction.CLIENTBOUND))
+            new MinecraftDecoder(ProtocolUtils.Direction.CLIENTBOUND, null))
         .addLast(FLOW_HANDLER, new AutoReadHolderHandler())
         .addLast(MINECRAFT_ENCODER,
             new MinecraftEncoder(ProtocolUtils.Direction.SERVERBOUND));

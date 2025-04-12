@@ -26,6 +26,7 @@ import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.util.ProxyVersion;
+import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
@@ -33,7 +34,6 @@ import com.velocitypowered.proxy.util.except.QuietDecoderException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -97,11 +97,14 @@ public final class PluginMessageUtil {
   /**
    * Fetches all the channels in a register or unregister plugin message.
    *
+   * @param existingChannels the number of channels already registered
    * @param message the message to get the channels from
    * @return the channels, as an immutable list
    */
-  public static List<ChannelIdentifier> getChannels(final PluginMessagePacket message,
-                                                    final ProtocolVersion protocolVersion) {
+  public static List<ChannelIdentifier> getChannels(final int existingChannels,
+                                                    final PluginMessagePacket message,
+                                                    final ProtocolVersion protocolVersion,
+                                                    final VelocityServer server) {
     checkNotNull(message, "message");
     checkArgument(isRegister(message) || isUnregister(message), "Unknown channel type %s",
         message.getChannel());
@@ -111,8 +114,11 @@ public final class PluginMessageUtil {
       return ImmutableList.of();
     }
     String payload = message.content().toString(StandardCharsets.UTF_8);
+    checkArgument(payload.length() <= Short.MAX_VALUE, "payload too long: %s", payload.length());
     String[] channels = payload.split("\0");
-    List<ChannelIdentifier> channelIdentifiers = new ArrayList<>();
+    checkArgument(existingChannels + channels.length <= server.getConfiguration().getChannelRegisterLimit(),
+        "too many channels: %s + %s > %s", existingChannels, channels.length, server.getConfiguration().getChannelRegisterLimit());
+    ImmutableList.Builder<ChannelIdentifier> channelIdentifiers = ImmutableList.builderWithExpectedSize(channels.length);
     try {
       for (String channel : channels) {
         if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_13)) {
@@ -128,7 +134,7 @@ public final class PluginMessageUtil {
         throw ILLEGAL_CHANNEL;
       }
     }
-    return ImmutableList.copyOf(channelIdentifiers);
+    return channelIdentifiers.build();
   }
 
   /**

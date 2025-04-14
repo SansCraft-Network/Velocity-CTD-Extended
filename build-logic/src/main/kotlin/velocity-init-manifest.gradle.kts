@@ -3,6 +3,7 @@ import org.gradle.kotlin.dsl.withType
 import java.io.ByteArrayOutputStream
 
 val currentShortRevision = ByteArrayOutputStream().use {
+    @Suppress("DEPRECATION")
     exec {
         executable = "git"
         args = listOf("rev-parse", "HEAD")

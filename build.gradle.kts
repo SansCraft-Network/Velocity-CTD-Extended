@@ -17,7 +17,10 @@ subprojects {
     }
 
     dependencies {
-        testImplementation(rootProject.libs.junit)
+        testImplementation(rootProject.libs.junit.jupiter.api)
+        testRuntimeOnly(rootProject.libs.junit.jupiter.engine)
+        testImplementation(rootProject.libs.junit.platform.launcher)
+        testImplementation(rootProject.libs.junit.platform.engine)
     }
 
     tasks {

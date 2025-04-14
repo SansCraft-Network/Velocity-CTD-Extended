@@ -45,7 +45,6 @@ import com.velocitypowered.proxy.protocol.packet.BossBarPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import com.velocitypowered.proxy.protocol.packet.JoinGamePacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
-import com.velocitypowered.proxy.protocol.packet.ObjectivePacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
 import com.velocitypowered.proxy.protocol.packet.ResourcePackResponsePacket;
 import com.velocitypowered.proxy.protocol.packet.RespawnPacket;
@@ -585,13 +584,6 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
       player.getConnection().delayedWrite(deletePacket);
     }
     serverBossBars.clear();
-    for (String serverObjective : serverObjectives) {
-      ObjectivePacket deletePacket = new ObjectivePacket();
-      deletePacket.setName(serverObjective);
-      deletePacket.setAction(ObjectivePacket.REMOVE);
-      player.getConnection().delayedWrite(deletePacket);
-    }
-    serverObjectives.clear();
 
     // Tell the server about the proxy's plugin message channels.
     ProtocolVersion serverVersion = serverMc.getProtocolVersion();
@@ -666,10 +658,6 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
 
   public List<UUID> getServerBossBars() {
     return serverBossBars;
-  }
-
-  public Set<String> getServerObjectives() {
-    return serverObjectives;
   }
 
   private boolean handleCommandTabComplete(final TabCompleteRequestPacket packet) {

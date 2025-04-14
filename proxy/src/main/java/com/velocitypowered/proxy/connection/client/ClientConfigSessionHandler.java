@@ -23,7 +23,6 @@ import com.velocitypowered.api.event.player.PlayerClientBrandEvent;
 import com.velocitypowered.api.event.player.configuration.PlayerConfigurationEvent;
 import com.velocitypowered.api.event.player.configuration.PlayerFinishConfigurationEvent;
 import com.velocitypowered.api.event.player.configuration.PlayerFinishedConfigurationEvent;
-import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -172,20 +171,13 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(final KnownPacksPacket packet) {
-    if (server.getConfiguration().isEnableConfigurationPhase() || player.getProtocolVersion().greaterThan(ProtocolVersion.MINECRAFT_1_21_4)) {
-      if (player.getConnectionInFlightOrConnectedServer() != null) {
-        callConfigurationEvent().thenRunAsync(() ->
-                player.getConnectionInFlightOrConnectedServer().ensureConnected().write(packet)).exceptionally(ex -> {
-                  logger.error("Error forwarding known packs response to backend:", ex);
-                  return null;
-                });
-        return true;
-      }
-    } else {
-      if (player.getConnectionInFlight() != null) {
-        player.getConnectionInFlight().ensureConnected().write(packet);
-        return true;
-      }
+    if (player.getConnectionInFlightOrConnectedServer() != null) {
+      callConfigurationEvent().thenRunAsync(() ->
+          player.getConnectionInFlightOrConnectedServer().ensureConnected().write(packet)).exceptionally(ex -> {
+            logger.error("Error forwarding known packs response to backend:", ex);
+            return null;
+          });
+      return true;
     }
 
     return false;

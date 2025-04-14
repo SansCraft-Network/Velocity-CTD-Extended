@@ -247,7 +247,8 @@ public class MultiProxyHandler {
       return;
     }
 
-    if (getPlayerInfo(player.getUniqueId()).isBeingTransferred()) {
+    RemotePlayerInfo info = getPlayerInfo(player.getUniqueId());
+    if (info != null && info.isBeingTransferred()) {
       return;
     }
 

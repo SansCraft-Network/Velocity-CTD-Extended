@@ -170,7 +170,7 @@ public class MultiProxyHandler {
       if (!this.server.getRedisManager().containsPlayer(player.getUniqueId())) {
         try {
           handleJoin(createPlayerInfo((ConnectedPlayer) player, ((ConnectedPlayer) player).getConnectedServer()
-                  .getServer().getServerInfo().getName()));
+              .getServer().getServerInfo().getName()));
         } catch (NullPointerException ex) {
           handleJoin(createPlayerInfo((ConnectedPlayer) player));
         }
@@ -298,7 +298,7 @@ public class MultiProxyHandler {
     return true;
   }
 
-  private RemotePlayerInfo createPlayerInfo(final ConnectedPlayer player, String serverName) {
+  private RemotePlayerInfo createPlayerInfo(final ConnectedPlayer player, final String serverName) {
     Map<String, Integer> queuePriorities = new HashMap<>();
 
     for (RegisteredServer s : this.server.getAllServers()) {
@@ -307,10 +307,10 @@ public class MultiProxyHandler {
     queuePriorities.put("all", player.getQueuePriority("all"));
 
     RemotePlayerInfo info = new RemotePlayerInfo(
-            this.config.getProxyId(), player.getUniqueId(), player.getUsername(),
-            queuePriorities,
-            server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.full.bypass"),
-            server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.bypass")
+        this.config.getProxyId(), player.getUniqueId(), player.getUsername(),
+        queuePriorities,
+        server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.full.bypass"),
+        server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.bypass")
     );
     info.setServerName(serverName);
     return info;

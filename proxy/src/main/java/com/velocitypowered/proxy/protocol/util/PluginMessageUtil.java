@@ -121,20 +121,10 @@ public final class PluginMessageUtil {
     ImmutableList.Builder<ChannelIdentifier> channelIdentifiers = ImmutableList.builderWithExpectedSize(channels.length);
     try {
       for (String channel : channels) {
-        if (channel == null || channel.trim().isEmpty()) {
-          continue;
-        }
-
-        try {
-          if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_13)) {
-            channelIdentifiers.add(MinecraftChannelIdentifier.from(channel));
-          } else {
-            channelIdentifiers.add(new LegacyChannelIdentifier(channel));
-          }
-        } catch (IllegalArgumentException e) {
-          if (MinecraftDecoder.DEBUG) {
-            throw e;
-          }
+        if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_13)) {
+          channelIdentifiers.add(MinecraftChannelIdentifier.from(channel));
+        } else {
+          channelIdentifiers.add(new LegacyChannelIdentifier(channel));
         }
       }
     } catch (IllegalArgumentException e) {

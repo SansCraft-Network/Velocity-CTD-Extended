@@ -301,7 +301,7 @@ public class RedisManagerImpl {
    *
    * @return whether the player exists or not.
    */
-  public boolean containsPlayer(UUID uniqueId) {
+  public boolean containsPlayer(final UUID uniqueId) {
     try (Jedis jedis = this.jedisPool.getResource()) {
       return jedis.hexists(CACHE_KEY, uniqueId.toString());
     } catch (Exception e) {
@@ -524,8 +524,6 @@ public class RedisManagerImpl {
   public boolean isEnabled() {
     return jedisPool != null;
   }
-
-
 
   /**
    * Manages subscriptions and incoming message handling on a Redis channel.

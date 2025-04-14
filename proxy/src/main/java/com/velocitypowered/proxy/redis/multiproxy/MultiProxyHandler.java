@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.redis.multiproxy;
 
 import com.velocitypowered.api.command.CommandSource;
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.VelocityCommand;
@@ -79,6 +80,8 @@ public class MultiProxyHandler {
 
     Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()
         -> totalPlayerCount = redisManager.getCache().size(), 100, 100, TimeUnit.MILLISECONDS);
+
+    Executors.newScheduledThreadPool(1).scheduleAtFixedRate(this::resyncPlayers, 1, 1, TimeUnit.MINUTES);
 
     redisManager.listen(RedisShuttingDownAnnouncement.ID, RedisShuttingDownAnnouncement.class, it -> {
       handleShutdown(it.proxyId());
@@ -160,6 +163,27 @@ public class MultiProxyHandler {
     });
 
     redisManager.send(new RedisStartupRequest(config.getProxyId()));
+  }
+
+  private void resyncPlayers() {
+    for (Player player : this.server.getAllPlayers()) {
+      if (!this.server.getRedisManager().containsPlayer(player.getUniqueId())) {
+        try {
+          handleJoin(createPlayerInfo((ConnectedPlayer) player, ((ConnectedPlayer) player).getConnectedServer()
+                  .getServer().getServerInfo().getName()));
+        } catch (NullPointerException ex) {
+          handleJoin(createPlayerInfo((ConnectedPlayer) player));
+        }
+      }
+    }
+
+    for (RemotePlayerInfo info : this.server.getRedisManager().getCache()) {
+      if (info.getProxyId().equalsIgnoreCase(getOwnProxyId())) {
+        if (this.server.getPlayer(info.getUuid()).isEmpty()) {
+          this.server.getRedisManager().removePlayer(info);
+        }
+      }
+    }
   }
 
   public Map<UUID, String> getTransferringServers() {
@@ -272,6 +296,24 @@ public class MultiProxyHandler {
 
     this.server.getMultiProxyHandler().handleJoin(createPlayerInfo(player));
     return true;
+  }
+
+  private RemotePlayerInfo createPlayerInfo(final ConnectedPlayer player, String serverName) {
+    Map<String, Integer> queuePriorities = new HashMap<>();
+
+    for (RegisteredServer s : this.server.getAllServers()) {
+      queuePriorities.put(s.getServerInfo().getName(), player.getQueuePriority(s.getServerInfo().getName()));
+    }
+    queuePriorities.put("all", player.getQueuePriority("all"));
+
+    RemotePlayerInfo info = new RemotePlayerInfo(
+            this.config.getProxyId(), player.getUniqueId(), player.getUsername(),
+            queuePriorities,
+            server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.full.bypass"),
+            server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.bypass")
+    );
+    info.setServerName(serverName);
+    return info;
   }
 
   private RemotePlayerInfo createPlayerInfo(final ConnectedPlayer player) {

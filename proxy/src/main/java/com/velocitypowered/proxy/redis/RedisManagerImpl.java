@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -294,6 +295,22 @@ public class RedisManagerImpl {
   }
 
   /**
+   * Checks if a player exists in the Redis cache.
+   *
+   * @param uniqueId the players UUID.
+   *
+   * @return whether the player exists or not.
+   */
+  public boolean containsPlayer(UUID uniqueId) {
+    try (Jedis jedis = this.jedisPool.getResource()) {
+      return jedis.hexists(CACHE_KEY, uniqueId.toString());
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return false;
+  }
+
+  /**
    * Get the cache of players.
    *
    * @return the list of players.
@@ -507,6 +524,8 @@ public class RedisManagerImpl {
   public boolean isEnabled() {
     return jedisPool != null;
   }
+
+
 
   /**
    * Manages subscriptions and incoming message handling on a Redis channel.

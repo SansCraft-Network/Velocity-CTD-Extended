@@ -367,6 +367,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
               if (pme.getResult().isAllowed()) {
                 PluginMessagePacket message = new PluginMessagePacket(packet.getChannel(), safeCopy);
                 if (!player.getPhase().consideredComplete() || !serverConn.getPhase().consideredComplete()) {
+                  // We're still processing the connection (see above), enqueue the packet for now.
                   loginPluginMessages.add(message.retain());
                 } else {
                   backendConn.write(message);

@@ -62,11 +62,19 @@ public class MinecraftCompressorAndLengthEncoder extends MessageToByteEncoder<By
     ByteBuf compatibleIn = MoreByteBufUtils.ensureCompatible(ctx.alloc(), compressor, msg);
 
     int startCompressed = out.writerIndex();
+    boolean successful = false;
     try {
       compressor.deflate(compatibleIn, out);
+      successful = true;
     } finally {
       compatibleIn.release();
+
+      // If something failed during deflating, reset writer index to avoid an invalid packet.
+      if (!successful) {
+        out.writerIndex(startCompressed);
+      }
     }
+
     int compressedLength = out.writerIndex() - startCompressed;
     if (compressedLength >= 1 << 21) {
       throw new DataFormatException("The server sent a very large (over 2MiB compressed) packet.");

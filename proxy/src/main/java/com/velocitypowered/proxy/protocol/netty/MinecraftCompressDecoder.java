@@ -66,16 +66,24 @@ public class MinecraftCompressDecoder extends MessageToMessageDecoder<ByteBuf> {
         "Uncompressed size %s exceeds hard threshold of %s", claimedUncompressedSize,
         UNCOMPRESSED_CAP);
 
-    ByteBuf compatibleIn = ensureCompatible(ctx.alloc(), compressor, in);
-    ByteBuf uncompressed = preferredBuffer(ctx.alloc(), compressor, claimedUncompressedSize);
+    ByteBuf compatibleIn = null;
+    ByteBuf uncompressed = null;
     try {
+      compatibleIn = ensureCompatible(ctx.alloc(), compressor, in);
+      uncompressed = preferredBuffer(ctx.alloc(), compressor, claimedUncompressedSize);
       compressor.inflate(compatibleIn, uncompressed, claimedUncompressedSize);
       out.add(uncompressed);
+      // Intended implementation despite viewable redundancy.
+      uncompressed = null;
     } catch (Exception e) {
-      uncompressed.release();
+      if (uncompressed != null && uncompressed.refCnt() > 0) {
+        uncompressed.release();
+      }
       throw e;
     } finally {
-      compatibleIn.release();
+      if (compatibleIn != null && compatibleIn.refCnt() > 0) {
+        compatibleIn.release();
+      }
     }
   }
 

@@ -315,19 +315,15 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
       return false;
     }
 
-    ByteBuf original = packet.content();
-    ByteBuf copy = original.copy();
-
-    byte[] contentBytes = ByteBufUtil.getBytes(copy);
+    byte[] contentBytes = new byte[packet.content().readableBytes()];
+    packet.content().getBytes(packet.content().readerIndex(), contentBytes);
     PluginMessageEvent event = new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, contentBytes);
     server.getEventManager().fire(event).thenAcceptAsync(pme -> {
       if (pme.getResult().isAllowed() && !playerConnection.isClosed()) {
-        playerConnection.write(new PluginMessagePacket(packet.getChannel(), copy));
-      } else {
-        copy.release();
+        ByteBuf unpooled = io.netty.buffer.Unpooled.copiedBuffer(contentBytes);
+        playerConnection.write(new PluginMessagePacket(packet.getChannel(), unpooled));
       }
     }, playerConnection.eventLoop()).exceptionally((ex) -> {
-      copy.release();
       logger.error("Exception while handling plugin message {}", packet, ex);
       return null;
     });

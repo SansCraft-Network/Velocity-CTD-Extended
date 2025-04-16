@@ -57,7 +57,7 @@ import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.TagsUpdatePacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.key.Key;
@@ -270,8 +270,8 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
               serverConn.getServer().getServerInfo().getName(),
               ProtocolVersion.getVersionByName(server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn()));
     } else {
-      ByteBuf safeCopy = packet.content().copy();
-      byte[] bytes = ByteBufUtil.getBytes(safeCopy);
+      byte[] bytes = new byte[packet.content().readableBytes()];
+      packet.content().getBytes(packet.content().readerIndex(), bytes);
       ChannelIdentifier id = this.server.getChannelRegistrar().getFromId(packet.getChannel());
 
       if (id == null) {
@@ -286,14 +286,12 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
           .fire(new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, bytes))
           .thenAcceptAsync(pme -> {
             if (pme.getResult().isAllowed() && !serverConn.getPlayer().getConnection().isClosed()) {
-              serverConn.getPlayer().getConnection().write(new PluginMessagePacket(
-                  pme.getIdentifier().getId(), safeCopy));
-            } else {
-              safeCopy.release();
+              ByteBuf sendBuf = Unpooled.copiedBuffer(bytes);
+              serverConn.getPlayer().getConnection().write(
+                  new PluginMessagePacket(pme.getIdentifier().getId(), sendBuf));
             }
             this.serverConn.getConnection().setAutoReading(true);
           }, serverConn.ensureConnected().eventLoop()).exceptionally((ex) -> {
-            safeCopy.release();
             logger.error("Exception while handling plugin message {}", packet, ex);
             return null;
           });

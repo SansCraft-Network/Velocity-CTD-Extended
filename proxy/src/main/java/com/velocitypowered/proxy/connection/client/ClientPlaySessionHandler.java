@@ -73,7 +73,7 @@ import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import com.velocitypowered.proxy.util.CharacterUtil;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -359,24 +359,22 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
               backendConn.write(packet.retain());
             }
           } else {
-            ByteBuf safeCopy = packet.content().copy();
-            byte[] contents = ByteBufUtil.getBytes(safeCopy);
+            byte[] contents = new byte[packet.content().readableBytes()];
+            packet.content().getBytes(packet.content().readerIndex(), contents);
+            ByteBuf unpooled = Unpooled.copiedBuffer(contents);
 
             PluginMessageEvent event = new PluginMessageEvent(player, serverConn, id, contents);
             server.getEventManager().fire(event).thenAcceptAsync(pme -> {
               if (pme.getResult().isAllowed()) {
-                PluginMessagePacket message = new PluginMessagePacket(packet.getChannel(), safeCopy);
+                PluginMessagePacket message = new PluginMessagePacket(packet.getChannel(), unpooled);
                 if (!player.getPhase().consideredComplete() || !serverConn.getPhase().consideredComplete()) {
                   // We're still processing the connection (see above), enqueue the packet for now.
-                  loginPluginMessages.add(message.retain());
+                  loginPluginMessages.add(message);
                 } else {
                   backendConn.write(message);
                 }
-              } else {
-                safeCopy.release();
               }
             }, backendConn.eventLoop()).exceptionally((ex) -> {
-              safeCopy.release();
               logger.error("Exception while handling plugin message packet for {}", player, ex);
               return null;
             });

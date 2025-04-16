@@ -228,8 +228,9 @@ public abstract class QueueManager {
           LAST_TURNED_ONLINE_TIME.put(queue.getServerName(), System.currentTimeMillis());
         }
 
-        if (th == null && System.currentTimeMillis()
-            >= LAST_TURNED_ONLINE_TIME.get(queue.getServerName()) + queueDelay
+        final Long lastOnlineTime = LAST_TURNED_ONLINE_TIME.get(queue.getServerName());
+        if (th == null && lastOnlineTime != null
+            && System.currentTimeMillis() >= lastOnlineTime + queueDelay
             && queue.getStatus() == ServerStatus.WAITING) {
           queue.setStatus(ServerStatus.ONLINE);
         }

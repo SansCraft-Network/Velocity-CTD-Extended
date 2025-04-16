@@ -26,9 +26,9 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.queue.cache.QueueCacheRetriever;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 
@@ -45,7 +45,7 @@ public abstract class QueueManager {
 
   protected QueueCacheRetriever cache = null;
 
-  protected static Map<String, Long> LAST_TURNED_ONLINE_TIME = new HashMap<>();
+  protected static final Map<String, Long> LAST_TURNED_ONLINE_TIME = new ConcurrentHashMap<>();
   private ScheduledTask sendingTaskHandle = null;
 
   /**

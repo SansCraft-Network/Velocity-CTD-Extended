@@ -70,6 +70,7 @@ import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.handler.timeout.ReadTimeoutException;
 import java.net.InetSocketAddress;
@@ -320,7 +321,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     PluginMessageEvent event = new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, contentBytes);
     server.getEventManager().fire(event).thenAcceptAsync(pme -> {
       if (pme.getResult().isAllowed() && !playerConnection.isClosed()) {
-        ByteBuf unpooled = io.netty.buffer.Unpooled.copiedBuffer(contentBytes);
+        ByteBuf unpooled = Unpooled.copiedBuffer(contentBytes);
         playerConnection.write(new PluginMessagePacket(packet.getChannel(), unpooled));
       }
     }, playerConnection.eventLoop()).exceptionally((ex) -> {

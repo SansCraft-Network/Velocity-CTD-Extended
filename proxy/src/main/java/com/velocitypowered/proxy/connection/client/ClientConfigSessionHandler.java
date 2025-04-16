@@ -146,7 +146,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
           .thenAcceptAsync(pme -> {
             if (pme.getResult().isAllowed() && serverConn.getConnection() != null) {
               serverConn.ensureConnected().write(new PluginMessagePacket(
-                  pme.getIdentifier().getId(), Unpooled.wrappedBuffer(bytes)));
+                  pme.getIdentifier().getId(), Unpooled.copiedBuffer(bytes)));
             }
             serverConn.getPlayer().getConnection().setAutoReading(true);
           }, player.getConnection().eventLoop()).exceptionally((ex) -> {

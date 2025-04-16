@@ -879,21 +879,25 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                   }
 
                   if (this.server.getConfiguration().getQueue().isQueueOnShutdown()) {
-                    TextComponent kickMsg = (TextComponent) originalEvent.getServerKickReason().orElse(Component.empty());
-                    ServerQueueStatus s = this.server.getQueueManager().getQueue(originalEvent.getServer().getServerInfo().getName());
+                    String targetServerName = originalEvent.getServer().getServerInfo().getName();
 
-                    // Checks if the kick reason is valid for a re-queue
-                    // This is done to make sure players don't get constantly sent over and over again in a kick loop
-                    boolean isValidReason = this.server.getConfiguration().getQueue().getBannedReason()
-                        .stream()
-                        .noneMatch(text -> containsString(kickMsg, text));
+                    if (!this.server.getConfiguration().getQueue().getNoQueueServers().contains(targetServerName)) {
+                      TextComponent kickMsg = (TextComponent) originalEvent.getServerKickReason().orElse(Component.empty());
+                      ServerQueueStatus s = this.server.getQueueManager().getQueue(targetServerName);
 
-                    if (isValidReason && (!s.isPaused() || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
-                      s.queue(getUniqueId(),
-                          getQueuePriority(originalEvent.getServer().getServerInfo().getName()),
-                          server.getQueueManager().isQueueEnabled() && hasPermission("velocity.queue.full.bypass"),
-                          server.getQueueManager().isQueueEnabled() && hasPermission("velocity.queue.bypass")
-                      );
+                      // Checks if the kick reason is valid for a re-queue
+                      // This is done to make sure players don't get constantly sent over and over again in a kick loop
+                      boolean isValidReason = this.server.getConfiguration().getQueue().getBannedReason()
+                          .stream()
+                          .noneMatch(text -> containsString(kickMsg, text));
+
+                      if (isValidReason && (!s.isPaused() || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
+                        s.queue(getUniqueId(),
+                            getQueuePriority(targetServerName),
+                            server.getQueueManager().isQueueEnabled() && hasPermission("velocity.queue.full.bypass"),
+                            server.getQueueManager().isQueueEnabled() && hasPermission("velocity.queue.bypass")
+                        );
+                      }
                     }
                   }
                   break;

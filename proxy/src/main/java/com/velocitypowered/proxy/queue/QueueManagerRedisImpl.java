@@ -49,21 +49,20 @@ public class QueueManagerRedisImpl extends QueueManager {
   private void registerRedisListeners() {
     RedisManagerImpl redisManager = this.server.getRedisManager();
 
-    redisManager.listen(RedisQueueSendRequest.ID, RedisQueueSendRequest.class, it -> {
-      server.getPlayer(it.playerUuid()).ifPresent(player -> {
-        RegisteredServer foundServer = server.getServer(it.serverName()).orElse(null);
-        if (foundServer == null) {
-          throw new IllegalArgumentException("Server not found while attempting to send player in queue. '" + it.serverName() + "'");
-        }
+    redisManager.listen(RedisQueueSendRequest.ID, RedisQueueSendRequest.class, it
+        -> server.getPlayer(it.playerUuid()).ifPresent(player -> {
+          RegisteredServer foundServer = server.getServer(it.serverName()).orElse(null);
+          if (foundServer == null) {
+            throw new IllegalArgumentException("Server not found while attempting to send player in queue. '" + it.serverName() + "'");
+          }
 
-        ServerQueueEntry entry = getQueue(foundServer.getServerInfo().getName()).getEntry(it.playerUuid()).orElse(null);
-        if (entry == null) {
-          return;
-        }
+          ServerQueueEntry entry = getQueue(foundServer.getServerInfo().getName()).getEntry(it.playerUuid()).orElse(null);
+          if (entry == null) {
+            return;
+          }
 
-        entry.handleSending();
-      });
-    });
+          entry.handleSending();
+        }));
 
     redisManager.listen(RedisSendActionBarRequest.ID, RedisSendActionBarRequest.class, it -> {
       Component component = it.component();

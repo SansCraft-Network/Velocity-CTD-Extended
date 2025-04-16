@@ -74,7 +74,6 @@ import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import com.velocitypowered.proxy.util.CharacterUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
-import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -360,21 +359,23 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
               backendConn.write(packet.retain());
             }
           } else {
-            byte[] copy = ByteBufUtil.getBytes(packet.content());
-            PluginMessageEvent event = new PluginMessageEvent(player, serverConn, id, copy);
+            ByteBuf safeCopy = packet.content().copy();
+            byte[] contents = ByteBufUtil.getBytes(safeCopy);
+
+            PluginMessageEvent event = new PluginMessageEvent(player, serverConn, id, contents);
             server.getEventManager().fire(event).thenAcceptAsync(pme -> {
               if (pme.getResult().isAllowed()) {
-                PluginMessagePacket message = new PluginMessagePacket(packet.getChannel(),
-                    Unpooled.wrappedBuffer(copy));
-                if (!player.getPhase().consideredComplete() || !serverConn.getPhase()
-                    .consideredComplete()) {
-                  // We're still processing the connection (see above), enqueue the packet for now.
+                PluginMessagePacket message = new PluginMessagePacket(packet.getChannel(), safeCopy);
+                if (!player.getPhase().consideredComplete() || !serverConn.getPhase().consideredComplete()) {
                   loginPluginMessages.add(message.retain());
                 } else {
                   backendConn.write(message);
                 }
+              } else {
+                safeCopy.release();
               }
             }, backendConn.eventLoop()).exceptionally((ex) -> {
+              safeCopy.release();
               logger.error("Exception while handling plugin message packet for {}", player, ex);
               return null;
             });

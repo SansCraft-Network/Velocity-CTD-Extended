@@ -144,8 +144,25 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   }
 
   private static void serializeNode(final CommandNode<CommandSource> node, final ByteBuf buf,
-      final Object2IntMap<CommandNode<CommandSource>> idMappings, final ProtocolVersion protocolVersion) {
-    byte flags = getFlags(node);
+                                    final Object2IntMap<CommandNode<CommandSource>> idMappings, final ProtocolVersion protocolVersion) {
+    byte flags = 0;
+    if (node.getRedirect() != null) {
+      flags |= FLAG_IS_REDIRECT;
+    }
+    if (node.getCommand() != null) {
+      flags |= FLAG_EXECUTABLE;
+    }
+
+    if (node instanceof LiteralCommandNode<?>) {
+      flags |= NODE_TYPE_LITERAL;
+    } else if (node instanceof ArgumentCommandNode<?, ?>) {
+      flags |= NODE_TYPE_ARGUMENT;
+      if (((ArgumentCommandNode<CommandSource, ?>) node).getCustomSuggestions() != null) {
+        flags |= FLAG_HAS_SUGGESTIONS;
+      }
+    } else if (!(node instanceof RootCommandNode<?>)) {
+      throw new IllegalArgumentException("Unknown node type " + node.getClass().getName());
+    }
 
     buf.writeByte(flags);
     ProtocolUtils.writeVarInt(buf, node.getChildren().size());
@@ -173,28 +190,6 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     } else if (node instanceof LiteralCommandNode<?>) {
       ProtocolUtils.writeString(buf, node.getName());
     }
-  }
-
-  private static byte getFlags(CommandNode<CommandSource> node) {
-    byte flags = 0;
-    if (node.getRedirect() != null) {
-      flags |= FLAG_IS_REDIRECT;
-    }
-    if (node.getCommand() != null) {
-      flags |= FLAG_EXECUTABLE;
-    }
-
-    if (node instanceof LiteralCommandNode<?>) {
-      flags |= NODE_TYPE_LITERAL;
-    } else if (node instanceof ArgumentCommandNode<?, ?>) {
-      flags |= NODE_TYPE_ARGUMENT;
-      if (((ArgumentCommandNode<CommandSource, ?>) node).getCustomSuggestions() != null) {
-        flags |= FLAG_HAS_SUGGESTIONS;
-      }
-    } else if (!(node instanceof RootCommandNode<?>)) {
-      throw new IllegalArgumentException("Unknown node type " + node.getClass().getName());
-    }
-    return flags;
   }
 
   @Override

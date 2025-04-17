@@ -217,8 +217,6 @@ public abstract class QueueManager {
       }
 
       s.ping().whenComplete((result, th) -> {
-        double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
-
         if (th != null) {
           queue.setStatus(ServerStatus.OFFLINE);
         }
@@ -228,11 +226,17 @@ public abstract class QueueManager {
           LAST_TURNED_ONLINE_TIME.put(queue.getServerName(), System.currentTimeMillis());
         }
 
-        final Long lastOnlineTime = LAST_TURNED_ONLINE_TIME.get(queue.getServerName());
-        if (th == null && lastOnlineTime != null
-            && System.currentTimeMillis() >= lastOnlineTime + queueDelay
-            && queue.getStatus() == ServerStatus.WAITING) {
+        if (th == null && queue.getQueue().stream().anyMatch(ServerQueueEntry::isQueueBypass)) {
           queue.setStatus(ServerStatus.ONLINE);
+        }
+
+        final Long lastOnlineTime = LAST_TURNED_ONLINE_TIME.get(queue.getServerName());
+
+        if (th == null && lastOnlineTime != null && queue.getStatus() == ServerStatus.WAITING) {
+          double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
+          if (System.currentTimeMillis() >= lastOnlineTime + queueDelay) {
+            queue.setStatus(ServerStatus.ONLINE);
+          }
         }
 
         ServerStatus temp = queue.getStatus();

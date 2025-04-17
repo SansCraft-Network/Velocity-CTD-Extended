@@ -317,13 +317,13 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
       return false;
     }
 
-    byte[] contentBytes = new byte[packet.content().readableBytes()];
-    packet.content().getBytes(packet.content().readerIndex(), contentBytes);
-    PluginMessageEvent event = new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, contentBytes);
+    byte[] copy = ByteBufUtil.getBytes(packet.content());
+    PluginMessageEvent event = new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, copy);
     server.getEventManager().fire(event).thenAcceptAsync(pme -> {
       if (pme.getResult().isAllowed() && !playerConnection.isClosed()) {
-        ByteBuf unpooled = Unpooled.copiedBuffer(contentBytes);
-        playerConnection.write(new PluginMessagePacket(packet.getChannel(), unpooled));
+        PluginMessagePacket copied = new PluginMessagePacket(
+            packet.getChannel(), Unpooled.wrappedBuffer(copy));
+        playerConnection.write(copied);
       }
     }, playerConnection.eventLoop()).exceptionally((ex) -> {
       logger.error("Exception while handling plugin message {}", packet, ex);
@@ -464,9 +464,9 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     int size = buf.readableBytes();
 
     if (size >= MAX_PLUGIN_MESSAGE_SIZE) {
-      System.out.println("PACKET WITH SIZE OVER 8KB DISCARDED");
       return;
     }
+
     playerConnection.delayedWrite(buf.retain());
     if (++packetsFlushed >= MAXIMUM_PACKETS_TO_FLUSH) {
       playerConnection.flush();

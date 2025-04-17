@@ -73,6 +73,7 @@ import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import com.velocitypowered.proxy.util.CharacterUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import java.time.Instant;
@@ -359,17 +360,16 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
               backendConn.write(packet.retain());
             }
           } else {
-            byte[] contents = new byte[packet.content().readableBytes()];
-            packet.content().getBytes(packet.content().readerIndex(), contents);
-            ByteBuf unpooled = Unpooled.copiedBuffer(contents);
-
-            PluginMessageEvent event = new PluginMessageEvent(player, serverConn, id, contents);
+            byte[] copy = ByteBufUtil.getBytes(packet.content());
+            PluginMessageEvent event = new PluginMessageEvent(player, serverConn, id, copy);
             server.getEventManager().fire(event).thenAcceptAsync(pme -> {
               if (pme.getResult().isAllowed()) {
-                PluginMessagePacket message = new PluginMessagePacket(packet.getChannel(), unpooled);
-                if (!player.getPhase().consideredComplete() || !serverConn.getPhase().consideredComplete()) {
+                PluginMessagePacket message = new PluginMessagePacket(packet.getChannel(),
+                    Unpooled.wrappedBuffer(copy));
+                if (!player.getPhase().consideredComplete() || !serverConn.getPhase()
+                    .consideredComplete()) {
                   // We're still processing the connection (see above), enqueue the packet for now.
-                  loginPluginMessages.add(message);
+                  loginPluginMessages.add(message.retain());
                 } else {
                   backendConn.write(message);
                 }

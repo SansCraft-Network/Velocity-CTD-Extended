@@ -257,7 +257,10 @@ public abstract class QueueManager {
             playerCount = this.server.getMultiProxyHandler().getAllPlayers().stream().filter(info -> info.getServerName() != null
                 && info.getServerName().equalsIgnoreCase(queue.getServerName())).count();
           } else {
-            playerCount = server.getPlayerCount();
+            playerCount = this.server.getAllPlayers().stream().filter(p -> p.getCurrentServer()
+                .map((serverConnection) -> serverConnection.getServerInfo().getName().equalsIgnoreCase(queue.getServerName()))
+                .orElse(false))
+                .count();
           }
           queue.setFull(playerCount >= maxPlayers);
         }

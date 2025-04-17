@@ -44,6 +44,7 @@ import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.KnownPacksPacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -129,8 +130,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
     } else if (BungeeCordMessageResponder.isBungeeCordMessage(packet)) {
       return true;
     } else if (serverConn != null) {
-      byte[] bytes = new byte[packet.content().readableBytes()];
-      packet.content().getBytes(packet.content().readerIndex(), bytes);
+      byte[] bytes = ByteBufUtil.getBytes(packet.content());
       ChannelIdentifier id = this.server.getChannelRegistrar().getFromId(packet.getChannel());
 
       if (id == null) {
@@ -145,12 +145,11 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
           .fire(new PluginMessageEvent(serverConn.getPlayer(), serverConn, id, bytes))
           .thenAcceptAsync(pme -> {
             if (pme.getResult().isAllowed() && serverConn.getConnection() != null) {
-              ByteBuf safeCopy = Unpooled.copiedBuffer(bytes);
               serverConn.ensureConnected().write(new PluginMessagePacket(
-                  pme.getIdentifier().getId(), safeCopy));
+                  pme.getIdentifier().getId(), Unpooled.wrappedBuffer(bytes)));
             }
             serverConn.getPlayer().getConnection().setAutoReading(true);
-          }, player.getConnection().eventLoop()).exceptionally(ex -> {
+          }, player.getConnection().eventLoop()).exceptionally((ex) -> {
             logger.error("Exception while handling plugin message packet for {}", player, ex);
             return null;
           });

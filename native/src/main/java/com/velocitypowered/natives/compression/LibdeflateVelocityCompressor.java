@@ -65,7 +65,6 @@ public class LibdeflateVelocityCompressor implements VelocityCompressor {
   public void deflate(final ByteBuf source, final ByteBuf destination) throws DataFormatException {
     ensureNotDisposed();
 
-    int originalWriterIndex = destination.writerIndex();
     while (true) {
       long sourceAddress = source.memoryAddress() + source.readerIndex();
       long destinationAddress = destination.memoryAddress() + destination.writerIndex();
@@ -77,15 +76,8 @@ public class LibdeflateVelocityCompressor implements VelocityCompressor {
         break;
       } else if (produced == 0) {
         // Insufficient room - enlarge the buffer.
-        try {
-          destination.capacity(destination.capacity() * 2);
-        } catch (Throwable t) {
-          // Rollback writer index to prevent buffer corruption.
-          destination.writerIndex(originalWriterIndex);
-          throw t;
-        }
+        destination.capacity(destination.capacity() * 2);
       } else {
-        destination.writerIndex(originalWriterIndex);
         throw new DataFormatException("libdeflate returned unknown code " + produced);
       }
     }

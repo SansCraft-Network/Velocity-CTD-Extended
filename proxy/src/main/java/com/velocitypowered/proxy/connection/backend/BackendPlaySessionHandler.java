@@ -90,6 +90,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
       Boolean.getBoolean("velocity.log-server-backpressure");
   private static final int MAXIMUM_PACKETS_TO_FLUSH =
       Integer.getInteger("velocity.max-packets-per-flush", 8192);
+  private static final int MAX_PLUGIN_MESSAGE_SIZE = 512 * 1024; // 512 KB - any packet over this size is likely an exploit or a poorly coded plugin
 
   private final VelocityServer server;
   private final VelocityServerConnection serverConn;
@@ -460,6 +461,12 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void handleUnknown(final ByteBuf buf) {
+    int size = buf.readableBytes();
+
+    if (size >= MAX_PLUGIN_MESSAGE_SIZE) {
+      System.out.println("PACKET WITH SIZE OVER 8KB DISCARDED");
+      return;
+    }
     playerConnection.delayedWrite(buf.retain());
     if (++packetsFlushed >= MAXIMUM_PACKETS_TO_FLUSH) {
       playerConnection.flush();

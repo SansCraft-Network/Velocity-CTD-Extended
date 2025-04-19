@@ -76,7 +76,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   private final String minimumVersion;
 
   AuthSessionHandler(final VelocityServer server, final LoginInboundConnection inbound,
-      final GameProfile profile, final boolean onlineMode) {
+                     final GameProfile profile, final boolean onlineMode) {
     this.server = Preconditions.checkNotNull(server, "server");
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
     this.profile = Preconditions.checkNotNull(profile, "profile");

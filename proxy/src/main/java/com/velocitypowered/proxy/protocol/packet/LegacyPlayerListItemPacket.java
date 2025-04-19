@@ -183,7 +183,7 @@ public class LegacyPlayerListItemPacket implements MinecraftPacket {
   }
 
   private void writeDisplayName(final ByteBuf buf, @Nullable final Component displayName,
-      final ProtocolVersion version) {
+                                final ProtocolVersion version) {
     buf.writeBoolean(displayName != null);
     if (displayName != null) {
       ProtocolUtils.writeString(buf, ProtocolUtils.getJsonChatSerializer(version)

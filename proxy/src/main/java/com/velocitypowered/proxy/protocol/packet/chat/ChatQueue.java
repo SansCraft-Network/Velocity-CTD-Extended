@@ -79,7 +79,8 @@ public class ChatQueue implements AutoCloseable {
    * @param timestamp        the new {@link Instant} timestamp of this packet to update the internal chat state.
    * @param lastSeenMessages the new {@link LastSeenMessages} last seen messages to update the internal chat state.
    */
-  public void queuePacket(final Function<LastSeenMessages, CompletableFuture<MinecraftPacket>> nextPacket, @Nullable final Instant timestamp, @Nullable final LastSeenMessages lastSeenMessages) {
+  public void queuePacket(final Function<LastSeenMessages, CompletableFuture<MinecraftPacket>> nextPacket,
+                          @Nullable final Instant timestamp, @Nullable final LastSeenMessages lastSeenMessages) {
     queueTask((chatState, smc) -> {
       LastSeenMessages newLastSeenMessages = chatState.updateFromMessage(timestamp, lastSeenMessages);
       return nextPacket.apply(newLastSeenMessages).thenCompose(packet -> writePacket(packet, smc));

@@ -37,8 +37,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * ResourcePackHandler.
  */
-public abstract sealed class ResourcePackHandler
-        permits LegacyResourcePackHandler, ModernResourcePackHandler {
+public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandler, ModernResourcePackHandler {
   protected final ConnectedPlayer player;
   protected final VelocityServer server;
 
@@ -55,8 +54,7 @@ public abstract sealed class ResourcePackHandler
    *
    * @return a new ResourcePackHandler
    */
-  public static @NotNull ResourcePackHandler create(final ConnectedPlayer player,
-                                           final VelocityServer server) {
+  public static @NotNull ResourcePackHandler create(final ConnectedPlayer player, final VelocityServer server) {
     final ProtocolVersion protocolVersion = player.getProtocolVersion();
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_17)) {
       return new LegacyResourcePackHandler(player, server);
@@ -110,8 +108,7 @@ public abstract sealed class ResourcePackHandler
       request.setHash("");
     }
     request.setRequired(queued.getShouldForce());
-    request.setPrompt(queued.getPrompt() == null ? null :
-            new ComponentHolder(player.getProtocolVersion(), queued.getPrompt()));
+    request.setPrompt(queued.getPrompt() == null ? null : new ComponentHolder(player.getProtocolVersion(), queued.getPrompt()));
 
     player.getConnection().write(request);
   }
@@ -123,11 +120,11 @@ public abstract sealed class ResourcePackHandler
    * <ul>
    *
    * <li><b>DOWNLOADED</b>
-   * In this case the resource pack is downloaded and will be applied to the client,
+   * In this case, the resource pack is downloaded and will be applied to the client;
    * no action is required in Velocity.
    *
    * <li><b>INVALID_URL</b>
-   * In this case, the client has received a resource pack request
+   * In this case, the client has received a resource pack request,
    * and the first check it performs is if the URL is valid, if not,
    * it will return this value
    *
@@ -146,10 +143,8 @@ public abstract sealed class ResourcePackHandler
   public abstract boolean onResourcePackResponse(
           @NotNull ResourcePackResponseBundle bundle);
 
-  protected boolean handleResponseResult(
-          final @Nullable ResourcePackInfo queued,
-          final @NotNull ResourcePackResponseBundle bundle
-  ) {
+  protected boolean handleResponseResult(final @Nullable ResourcePackInfo queued,
+                                         final @NotNull ResourcePackResponseBundle bundle) {
     // If Velocity, through a plugin, has sent a resource pack to the client,
     // there is no need to report the status of the response to the server
     // since it has no information that a resource pack has been sent

@@ -18,7 +18,7 @@
 package com.velocitypowered.proxy.queue;
 
 /**
- * server status.
+ * Enumerates the status the backend server may be in for queuing.
  */
 public enum ServerStatus {
   OFFLINE,

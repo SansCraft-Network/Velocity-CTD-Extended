@@ -93,6 +93,7 @@ import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
+import com.velocitypowered.proxy.queue.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.tablist.InternalTabList;
 import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
@@ -962,6 +963,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         return Optional.empty();
       }
 
+      ServerQueueStatus queue = server.getQueueManager().getQueue(serverName);
+      if (queue.getStatus() != ServerStatus.ONLINE) {
+        continue;
+      }
+
       if ((connectedServer != null && hasSameName(connectedServer.getServer(), serverName))
           || (connectionInFlight != null && hasSameName(connectionInFlight.getServer(), serverName))
           || (current != null && hasSameName(current, serverName))) {
@@ -1046,8 +1052,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       if (connectedPlayer.get().getCurrentServer().isEmpty()) {
         status = LoginStatus.PRE_SERVER_JOIN;
       } else {
-        status = connectedPlayer.get() == this ? LoginStatus.SUCCESSFUL_LOGIN
-            : LoginStatus.CONFLICTING_LOGIN;
+        status = connectedPlayer.get() == this ? LoginStatus.SUCCESSFUL_LOGIN : LoginStatus.CONFLICTING_LOGIN;
       }
     } else {
       status = connection.isKnownDisconnect() ? LoginStatus.CANCELLED_BY_PROXY : LoginStatus.CANCELLED_BY_USER;

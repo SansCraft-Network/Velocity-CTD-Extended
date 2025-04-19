@@ -97,17 +97,17 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     int bitsToKeep = Integer.numberOfTrailingZeros(atStop) + 1;
     buffer.skipBytes(bitsToKeep >> 3);
 
-    // remove all bits we don't need to keep, a trick from
+    // Remove all bits we don't need to keep, a trick from
     // https://github.com/netty/netty/pull/14050#issuecomment-2107750734:
     //
-    // > The idea is that thisVarintMask has 0s above the first one of firstOneOnStop, and 1s at
+    // > The idea is that thisVarintMask has 0 s above the first one of firstOneOnStop, and 1 s at
     // > and below it. For example, if firstOneOnStop is 0x800080 (where the last 0x80 is the only
     // > one that matters), then thisVarintMask is 0xFF.
     //
-    // this is also documented in Hacker's Delight, section 2-1 "Manipulating Rightmost Bits"
+    // This is also documented in Hacker's Delight, section 2-1 "Manipulating Rightmost Bits."
     int preservedBytes = wholeOrMore & (atStop ^ (atStop - 1));
 
-    // merge together using this trick: https://github.com/netty/netty/pull/14050#discussion_r1597896639
+    // merge using this trick: https://github.com/netty/netty/pull/14050#discussion_r1597896639
     preservedBytes = (preservedBytes & 0x007F007F) | ((preservedBytes & 0x00007F00) >> 1);
     preservedBytes = (preservedBytes & 0x00003FFF) | ((preservedBytes & 0x3FFF0000) >> 2);
     return preservedBytes;

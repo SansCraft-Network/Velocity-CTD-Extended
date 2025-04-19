@@ -108,7 +108,7 @@ public class SessionPlayerChatPacket implements MinecraftPacket {
   }
 
   /**
-   * Creates a new {@code SessionPlayerChatPacket} with the specified last seen messages.
+   * Creates a new {@code SessionPlayerChatPacket} with the specified last-seen messages.
    *
    * <p>This method constructs a new {@code SessionPlayerChatPacket} instance that retains the
    * current packet's properties, while updating the last seen messages.</p>

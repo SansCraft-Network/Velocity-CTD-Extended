@@ -331,7 +331,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
 
   /**
    * Gets the current "phase" of the connection, mostly used for tracking modded negotiation for
-   * legacy forge servers and provides methods for performing phase specific actions.
+   * legacy forge servers and provides methods for performing phase-specific actions.
    *
    * @return The {@link BackendConnectionPhase}
    */

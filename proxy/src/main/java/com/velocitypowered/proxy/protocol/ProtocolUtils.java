@@ -584,7 +584,7 @@ public enum ProtocolUtils {
   public static byte[] readByteArray17(final ByteBuf buf) {
     // Read in a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet
+    // No vanilla packet should give a 3-byte packet
     int len = readExtendedForgeShort(buf);
 
     checkArgument(len <= FORGE_MAX_ARRAY_LENGTH,
@@ -596,7 +596,7 @@ public enum ProtocolUtils {
   }
 
   /**
-   * Reads a retained {@link ByteBuf} slice of the specified {@code buf} with the 1.7 style length.
+   * Reads a retained {@link ByteBuf} slice of the specified {@code buf} with the 1.7-style length.
    *
    * @param buf the buffer to read from
    * @return the retained slice
@@ -604,7 +604,7 @@ public enum ProtocolUtils {
   public static ByteBuf readRetainedByteBufSlice17(final ByteBuf buf) {
     // Read in a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet
+    // No vanilla packet should give a 3-byte packet
     int len = readExtendedForgeShort(buf);
 
     checkFrame(len <= FORGE_MAX_ARRAY_LENGTH,
@@ -631,8 +631,8 @@ public enum ProtocolUtils {
     }
     // Write a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet, this method will still retain vanilla
-    // behaviour.
+    // No vanilla packet should give a 3-byte packet, this method will still retain vanilla
+    // behavior.
     writeExtendedForgeShort(buf, b.length);
     buf.writeBytes(b);
   }
@@ -655,8 +655,8 @@ public enum ProtocolUtils {
     }
     // Write a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet, this method will still retain vanilla
-    // behaviour.
+    // No vanilla packet should give a 3-byte packet, this method will still retain vanilla
+    // behavior.
     writeExtendedForgeShort(buf, b.readableBytes());
     buf.writeBytes(b);
   }
@@ -696,8 +696,9 @@ public enum ProtocolUtils {
   }
 
   /**
-   * Reads a non length-prefixed string from the {@code buf}. We need this for the legacy 1.7
-   * version, being inconsistent when sending the brand.
+   * Reads a non-length-prefixed string from the {@code buf}.
+   * We need this for the legacy 1.7 version, being
+   * inconsistent when sending the brand.
    *
    * @param buf the buffer to read from
    * @return the decoded string

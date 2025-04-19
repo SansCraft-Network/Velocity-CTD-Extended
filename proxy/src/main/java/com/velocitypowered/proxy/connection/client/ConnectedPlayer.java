@@ -144,7 +144,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a player that is connected to the proxy.
+ * Represents a player connected to the proxy.
  */
 public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, KeyIdentifiable,
     VelocityInboundConnection {
@@ -156,6 +156,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private static final ComponentLogger logger = ComponentLogger.logger(ConnectedPlayer.class);
 
   private final Identity identity = new IdentityImpl();
+
   /**
    * The actual Minecraft connection. This is actually a wrapper object around the Netty channel.
    */
@@ -165,7 +166,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private final HandshakeIntent handshakeIntent;
   private GameProfile profile;
   private PermissionFunction permissionFunction;
-  private int tryIndex = 0;
   private long ping = -1;
   private final boolean onlineMode;
   private @Nullable VelocityServerConnection connectedServer;
@@ -265,7 +265,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    * This should be used on server switches, or whenever the client resets its own 'last seen' state.
    */
   public void discardChatQueue() {
-    // No need for atomic swap, should only be called from event loop
+    // No need for atomic swap should only be called from event loop
     final ChatQueue oldChatQueue = chatQueue;
     chatQueue = new ChatQueue(this);
     oldChatQueue.close();
@@ -999,7 +999,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   public void setConnectedServer(@Nullable final VelocityServerConnection serverConnection) {
     this.connectedServer = serverConnection;
-    this.tryIndex = 0; // reset since we got connected to a server
 
     if (serverConnection == connectionInFlight) {
       connectionInFlight = null;
@@ -1382,7 +1381,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
   /**
    * Sends a {@link KeepAlivePacket} packet to the player with a random ID.
-   * The response will be ignored by Velocity as it will not match
+   * Velocity will ignore the response as it will not match
    * the ID last sent by the server.
    */
   public void sendKeepAlive() {
@@ -1395,7 +1394,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   /**
-   * Forwards the keep alive packet to the backend server it belongs to.
+   * Forwards the keepalive packet to the backend server it belongs to.
    * This is either the connection in flight or the connected server.
    */
   public boolean forwardKeepAlive(final KeepAlivePacket packet) {

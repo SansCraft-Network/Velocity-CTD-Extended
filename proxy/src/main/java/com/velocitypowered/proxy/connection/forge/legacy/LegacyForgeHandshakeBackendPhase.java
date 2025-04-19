@@ -64,7 +64,7 @@ public enum LegacyForgeHandshakeBackendPhase implements BackendConnectionPhase {
   },
 
   /**
-   * The mod list from the client has been accepted and a server mod list has been sent. Waiting for
+   * The mod list from the client has been accepted, and a server mod list has been sent. Waiting for
    * the client to acknowledge.
    */
   SENT_MOD_LIST(LegacyForgeConstants.REGISTRY_DISCRIMINATOR) {
@@ -161,7 +161,7 @@ public enum LegacyForgeHandshakeBackendPhase implements BackendConnectionPhase {
   }
 
   /**
-   * Gets the next phase, if any (will return self if we are at the end of the handshake).
+   * Gets the next phase if any (returns self if we are at the end of the handshake).
    *
    * @return The next phase
    */

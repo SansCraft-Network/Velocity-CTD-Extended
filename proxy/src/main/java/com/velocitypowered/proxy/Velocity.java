@@ -77,7 +77,7 @@ public class Velocity {
     server.getConsoleCommandSource().start();
 
     // If we don't have a console available (because SimpleTerminalConsole returned), then we still
-    // need to wait, otherwise the JVM will reap us as no non-daemon threads will be active once the
+    // need to wait; otherwise the JVM will reap us as no non-daemon threads will be active once the
     // main thread exits.
     server.awaitProxyShutdown();
   }

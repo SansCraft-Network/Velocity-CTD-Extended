@@ -109,7 +109,7 @@ public abstract class GenericTitlePacket implements MinecraftPacket {
   }
 
   /**
-   * Creates a version and type dependent TitlePacket.
+   * Creates a version and type-dependent TitlePacket.
    *
    * @param type    Action the packet should invoke
    * @param version Protocol version of the target player

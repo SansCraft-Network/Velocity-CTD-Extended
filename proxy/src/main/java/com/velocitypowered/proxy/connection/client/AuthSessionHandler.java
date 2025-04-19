@@ -137,7 +137,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           .fire(new PermissionsSetupEvent(player, ConnectedPlayer.DEFAULT_PERMISSIONS))
           .thenAcceptAsync(event -> {
             if (!mcConnection.isClosed()) {
-              // wait for permissions to load, then set the players permission function
+              // wait for permissions to load, then set the player permission function
               final PermissionFunction function = event.createFunction(player);
               if (function == null) {
                 logger.error("A plugin permission provider {} provided an invalid permission "
@@ -244,7 +244,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           if (event.getResult().isAllowed()) {
             // The received cookie must have been requested by a proxy plugin in login phase,
             // because if a backend server requests a cookie in login phase, the client is already
-            // in config phase. Therefore, the only way, we receive a CookieResponsePacket from a
+            // in config phase.
+            // Therefore, the only way we receive a CookieResponsePacket from a
             // client in login phase is when a proxy plugin requested a cookie in login phase.
             throw new IllegalStateException(
                 "A cookie was requested by a proxy plugin in login phase but the response wasn't handled");

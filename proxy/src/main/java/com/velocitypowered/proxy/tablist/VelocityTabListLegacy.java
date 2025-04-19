@@ -95,7 +95,7 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
             entry.setLatencyInternal(item.getLatency());
           }
         } else {
-          UUID uuid = UUID.randomUUID(); // Use a fake uuid to preserve function of custom entries
+          UUID uuid = UUID.randomUUID(); // Use a fake uuid to preserve the function of custom entries
           nameMapping.put(item.getName(), uuid);
           entries.put(uuid, (KeyedVelocityTabListEntry) TabListEntry.builder()
               .tabList(this)

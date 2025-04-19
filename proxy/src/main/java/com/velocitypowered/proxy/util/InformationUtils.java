@@ -255,8 +255,7 @@ public enum InformationUtils {
 
   private static JsonElement serializeObject(final Object toSerialize, final boolean withExcludes) {
     return JsonParser.parseString(
-        withExcludes ? GSON_WITH_EXCLUDES.toJson(toSerialize) :
-            GSON_WITHOUT_EXCLUDES.toJson(toSerialize));
+        withExcludes ? GSON_WITH_EXCLUDES.toJson(toSerialize) : GSON_WITHOUT_EXCLUDES.toJson(toSerialize));
   }
 
   private static final Gson GSON_WITH_EXCLUDES = new GsonBuilder()

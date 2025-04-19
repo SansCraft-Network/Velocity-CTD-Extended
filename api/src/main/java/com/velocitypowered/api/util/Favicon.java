@@ -21,7 +21,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Represents a Minecraft server favicon. A Minecraft server favicon is a 64x64 image that can be
- * displayed to a remote client that sends a Server List Ping packet, and is automatically displayed
+ * displayed to a remote client that sends a Server List a Ping packet, and is automatically displayed
  * in the Minecraft client.
  */
 public final class Favicon {

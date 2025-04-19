@@ -61,8 +61,8 @@ public final class ShutdownCommand {
                 try {
                   reasonComponent = GsonComponentSerializer.gson()
                       .deserializeOrNull(reason);
-                } catch (JsonSyntaxException expected) {
-
+                } catch (JsonSyntaxException ignored) {
+                    // This is always ignored; thus, can be labeled as such.
                 }
               }
 

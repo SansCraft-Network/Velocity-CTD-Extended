@@ -44,8 +44,8 @@ public class ServerDataPacket implements MinecraftPacket {
   /**
    * Constructs a new {@code ServerDataPacket} with the given server description, favicon, and secure chat enforcement status.
    *
-   * @param description the server description (may be null)
-   * @param favicon the server favicon (may be null)
+   * @param description the server description (maybe null)
+   * @param favicon the server favicon (maybe null)
    * @param secureChatEnforced whether secure chat is enforced (for versions 1.19.1 to 1.20.5)
    */
   public ServerDataPacket(@Nullable final ComponentHolder description, @Nullable final Favicon favicon,

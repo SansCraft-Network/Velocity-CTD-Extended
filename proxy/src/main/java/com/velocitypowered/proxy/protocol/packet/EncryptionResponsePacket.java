@@ -32,7 +32,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Represents the encryption response packet in Minecraft, which is sent by the client
  * during the encryption handshake process. This packet contains the shared secret
- * and verify token that are used to establish secure communication between the client
+ * and verifies the token used to establish secure communication between the client
  * and the server.
  *
  * <p>The packet structure varies depending on the Minecraft protocol version, with additional
@@ -131,7 +131,7 @@ public class EncryptionResponsePacket implements MinecraftPacket {
     }
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19)) {
       // Verify token is twice as long on 1.19+
-      // Additional 1 byte for left <> right and 8 bytes for salt
+      // Additional 1 byte for the left <> right and 8 bytes for salt
       base += 128 + 8 + 1;
     }
     return base;

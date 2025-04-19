@@ -13,7 +13,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Provides a small, useful selection of utilities for working with Minecraft UUIDs.
+ * Provides a small, useful set of utilities for working with Minecraft UUIDs.
  */
 public final class UuidUtils {
 

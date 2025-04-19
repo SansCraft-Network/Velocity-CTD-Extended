@@ -247,7 +247,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     }
 
     void validate(final WireNode[] wireNodes) {
-      // Ensure all children exist. Note that we delay checking if the node has been built yet;
+      // Ensure all children exist. Note that we delay checking if the node has already been built;
       // that needs to come after this node is built.
       for (int child : children) {
         if (child < 0 || child >= wireNodes.length) {

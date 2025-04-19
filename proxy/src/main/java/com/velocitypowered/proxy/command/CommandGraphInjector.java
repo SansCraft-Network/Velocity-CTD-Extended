@@ -53,13 +53,13 @@ public final class CommandGraphInjector<S> {
   }
 
   // The term "source" is ambiguous here. We use "origin" when referring to
-  // the root node we are copying nodes from to the destination node.
+  // the root node, we are copying nodes from the destination node.
 
   /**
    * Adds the node from the root node of this injector to the given root node, respecting the
    * requirements satisfied by the given source.
    *
-   * <p>Prior to adding a literal with the same name as one previously contained
+   * <p>Before adding a literal with the same name as one previously contained
    * in the destination node, the old node is removed from the destination node.
    *
    * @param dest   the root node to add the permissible nodes to
@@ -90,7 +90,7 @@ public final class CommandGraphInjector<S> {
         final VelocityArgumentCommandNode<S, ?> argsNode =
             VelocityCommands.getArgumentsNode(asLiteral);
         if (argsNode == null) {
-          // This literal is associated to a BrigadierCommand, filter normally.
+          // This literal is associated with a BrigadierCommand, filter normally.
           this.copyChildren(node, copy, source, done);
         } else {
           // Copy all children nodes (arguments node and hints)
@@ -111,7 +111,8 @@ public final class CommandGraphInjector<S> {
     }
     // We only check the non-context requirement when filtering alias nodes.
     // Otherwise, we would need to manually craft context builder and reader instances,
-    // which is both incorrect and inefficient. The reason why we can do so for alias
+    // which are both incorrect and inefficient.
+    // The reason why we can do so for alias
     // literals is due to the empty string being a valid and expected input by
     // the context-aware requirement (when suggesting the literal name).
     if (!node.canUse(source)) {
@@ -121,7 +122,7 @@ public final class CommandGraphInjector<S> {
     if (node.getRedirect() != null) {
       // Redirects to non-Brigadier commands are not supported. Luckily,
       // we don't expose the root node to API users, so they can't access
-      // nodes associated to other commands.
+      // nodes associated with other commands.
       final CommandNode<S> target = this.filterNode(node.getRedirect(), source, done);
       builder.forward(target, builder.getRedirectModifier(), builder.isFork());
     }

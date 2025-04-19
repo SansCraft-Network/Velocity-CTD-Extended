@@ -88,7 +88,7 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
         && packet.getChannel().equals(PlayerDataForwarding.CHANNEL)) {
 
       int requestedForwardingVersion = PlayerDataForwarding.MODERN_DEFAULT;
-      // Check version
+      // Check the forwarding version
       if (packet.content().readableBytes() == 1) {
         requestedForwardingVersion = packet.content().readByte();
       }

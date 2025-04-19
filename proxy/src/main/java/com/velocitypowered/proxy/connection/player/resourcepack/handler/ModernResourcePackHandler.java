@@ -168,7 +168,7 @@ public final class ModernResourcePackHandler extends ResourcePackHandler {
         pendingResourcePacks.remove(uuid);
         appliedResourcePacks.remove(uuid);
       }
-      // The other cases in which no action is taken are documented in the javadocs.
+      // The other cases in which no action is taken are documented in the Javadocs.
       default -> {
       }
     }

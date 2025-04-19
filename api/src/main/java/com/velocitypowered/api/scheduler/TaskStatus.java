@@ -16,7 +16,7 @@ public enum TaskStatus {
    */
   SCHEDULED,
   /**
-   * The task was cancelled with {@link ScheduledTask#cancel()}.
+   * The task was canceled with {@link ScheduledTask#cancel()}.
    */
   CANCELLED,
   /**

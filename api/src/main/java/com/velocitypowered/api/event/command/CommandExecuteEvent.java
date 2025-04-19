@@ -26,13 +26,13 @@ public final class CommandExecuteEvent implements ResultedEvent<CommandResult> {
   private final CommandSource commandSource;
   private final String command;
   private CommandResult result;
-  private InvocationInfo invocationInfo;
+  private final InvocationInfo invocationInfo;
 
   /**
    * Constructs a CommandExecuteEvent.
    *
    * @param commandSource the source executing the command
-   * @param command the command being executed without first slash
+   * @param command the command being executed without a first slash
    */
   public CommandExecuteEvent(final CommandSource commandSource, final String command) {
     this(commandSource, command, new InvocationInfo(SignedState.UNSUPPORTED, Source.API));
@@ -42,7 +42,7 @@ public final class CommandExecuteEvent implements ResultedEvent<CommandResult> {
    * Constructs a CommandExecuteEvent.
    *
    * @param commandSource the source executing the command
-   * @param command the command being executed without first slash
+   * @param command the command being executed without a first slash
    * @param invocationInfo the invocation info of this command
    */
   public CommandExecuteEvent(final CommandSource commandSource, final String command, final InvocationInfo invocationInfo) {

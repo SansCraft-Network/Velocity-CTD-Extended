@@ -110,7 +110,8 @@ public final class PluginMessageUtil {
         message.getChannel());
     if (!message.content().isReadable()) {
       // If we try to split this, we will get a one-element array with the empty string, which
-      // has caused issues with 1.13+ compatibility. Just return an empty list.
+      // has caused issues with 1.13+ compatibility.
+      // Return an empty list.
       return ImmutableList.of();
     }
     String payload = message.content().toString(StandardCharsets.UTF_8);
@@ -258,7 +259,7 @@ public final class PluginMessageUtil {
         "bungeecord:main";
       default -> {
         // This is very likely a legacy name, so transform it. Velocity uses the same scheme as
-        // BungeeCord does to transform channels, but also removes clearly invalid characters as
+        // BungeeCord does to transform channels, but removes clearly invalid characters as
         // well.
         String lower = name.toLowerCase(Locale.ROOT);
         yield "legacy:" + INVALID_IDENTIFIER_REGEX.matcher(lower).replaceAll("");

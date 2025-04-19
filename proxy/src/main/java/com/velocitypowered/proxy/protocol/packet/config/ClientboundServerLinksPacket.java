@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Represents a packet that is sent from the server to the client, containing server-related links.
+ * Represents a packet sent from the server to the client, containing server-related links.
  * This packet carries a list of links (e.g., URLs or other resources) associated with the server.
  */
 public class ClientboundServerLinksPacket implements MinecraftPacket {

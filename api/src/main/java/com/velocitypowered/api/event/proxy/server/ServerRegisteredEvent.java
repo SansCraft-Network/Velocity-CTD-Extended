@@ -13,7 +13,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This event is fired by the proxy after a backend server is registered to the server map.
+ * The proxy fires this event after a backend server is registered to the server map.
  * Currently, it may occur when a server is registered dynamically at runtime or when a server is
  * replaced due to configuration reload.
  *

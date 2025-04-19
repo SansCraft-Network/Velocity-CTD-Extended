@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents a packet that is sent from the server to the client, containing custom report details.
+ * Represents a packet sent from the server to the client, containing custom report details.
  * This packet carries a map of key-value pairs, where each key and value are strings.
  */
 public class ClientboundCustomReportDetailsPacket implements MinecraftPacket {

@@ -13,7 +13,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Represents a connection that is in the login phase. This is most useful in conjunction
- * for login plugin messages.
+ *  with login plugin messages.
  */
 public interface LoginPhaseConnection extends InboundConnection, KeyIdentifiable {
 

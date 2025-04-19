@@ -138,7 +138,7 @@ public class EventTest {
     int result;
 
     @Subscribe(async = false)
-    void sync(TestEvent event) {
+    void sync(final TestEvent event) {
       result++;
       thread = Thread.currentThread();
     }
@@ -162,19 +162,19 @@ public class EventTest {
     int result;
 
     @Subscribe(async = true, order = PostOrder.EARLY)
-    void firstAsync(TestEvent event) {
+    void firstAsync(final TestEvent event) {
       result++;
       threadA = Thread.currentThread();
     }
 
     @Subscribe
-    EventTask secondAsync(TestEvent event) {
+    EventTask secondAsync(final TestEvent event) {
       threadB = Thread.currentThread();
       return EventTask.async(() -> result++);
     }
 
     @Subscribe(order = PostOrder.LATE)
-    void thirdAsync(TestEvent event) {
+    void thirdAsync(final TestEvent event) {
       result++;
       threadC = Thread.currentThread();
     }
@@ -200,13 +200,13 @@ public class EventTest {
     int result;
 
     @Subscribe(order = PostOrder.EARLY, async = false)
-    void notAsync(TestEvent event) {
+    void notAsync(final TestEvent event) {
       result++;
       threadA = Thread.currentThread();
     }
 
     @Subscribe
-    EventTask notAsyncUntilTask(TestEvent event) {
+    EventTask notAsyncUntilTask(final TestEvent event) {
       threadB = Thread.currentThread();
       return EventTask.async(() -> {
         threadC = Thread.currentThread();
@@ -215,7 +215,7 @@ public class EventTest {
     }
 
     @Subscribe(order = PostOrder.LATE, async = false)
-    void stillAsyncAfterTask(TestEvent event) {
+    void stillAsyncAfterTask(final TestEvent event) {
       threadD = Thread.currentThread();
       result++;
     }
@@ -240,7 +240,7 @@ public class EventTest {
     final AtomicInteger value = new AtomicInteger();
 
     @Subscribe(order = PostOrder.EARLY)
-    EventTask continuation(TestEvent event) {
+    EventTask continuation(final TestEvent event) {
       threadA = Thread.currentThread();
       return EventTask.withContinuation(continuation -> {
         value.incrementAndGet();
@@ -258,7 +258,7 @@ public class EventTest {
     }
 
     @Subscribe(order = PostOrder.LATE)
-    void afterContinuation(TestEvent event) {
+    void afterContinuation(final TestEvent event) {
       threadC = Thread.currentThread();
     }
   }
@@ -282,7 +282,7 @@ public class EventTest {
     int result;
 
     @Subscribe(order = PostOrder.EARLY)
-    EventTask continuation(TestEvent event) {
+    EventTask continuation(final TestEvent event) {
       threadA = Thread.currentThread();
       return EventTask.withContinuation(continuation -> {
         threadB = Thread.currentThread();
@@ -292,7 +292,7 @@ public class EventTest {
     }
 
     @Subscribe(order = PostOrder.LATE)
-    void afterContinuation(TestEvent event) {
+    void afterContinuation(final TestEvent event) {
       threadC = Thread.currentThread();
       result++;
     }
@@ -317,14 +317,14 @@ public class EventTest {
     final AtomicInteger result = new AtomicInteger();
 
     @Subscribe
-    void resume(TestEvent event, Continuation continuation) {
+    void resume(final TestEvent event, final Continuation continuation) {
       threadA = Thread.currentThread();
       result.incrementAndGet();
       continuation.resume();
     }
 
     @Subscribe(order = PostOrder.LATE)
-    void resumeFromCustomThread(TestEvent event, Continuation continuation) {
+    void resumeFromCustomThread(final TestEvent event, final Continuation continuation) {
       threadB = Thread.currentThread();
       new Thread(() -> {
         try {
@@ -338,7 +338,7 @@ public class EventTest {
     }
 
     @Subscribe(order = PostOrder.LAST)
-    void afterCustomThread(TestEvent event, Continuation continuation) {
+    void afterCustomThread(final TestEvent event, final Continuation continuation) {
       threadC = Thread.currentThread();
       result.incrementAndGet();
       continuation.resume();
@@ -406,7 +406,7 @@ public class EventTest {
     int result;
 
     @Subscribe
-    void continuation(TestEvent event, FancyContinuation continuation) {
+    void continuation(final TestEvent event, final FancyContinuation continuation) {
       result++;
       continuation.resume();
     }

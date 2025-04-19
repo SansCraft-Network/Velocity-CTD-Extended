@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * This event is fired when velocity executed a command. This event is called after the event
  * is handled.
  *
- * <p>Commands can be cancelled or forwarded to backend servers in {@link CommandExecuteEvent}.
+ * <p>Commands can be canceled or forwarded to backend servers in {@link CommandExecuteEvent}.
  * This will prevent firing this event.</p>
  *
  * @since 3.3.0
@@ -31,7 +31,7 @@ public final class PostCommandInvocationEvent {
    * Constructs a PostCommandInvocationEvent.
    *
    * @param commandSource the source executing the command
-   * @param command the command being executed without first slash
+   * @param command the command being executed without a first slash
    * @param result the result of this command
    */
   public PostCommandInvocationEvent(

@@ -80,7 +80,7 @@ public final class PlayerDataForwarding {
         ProtocolUtils.writePlayerKey(forwarded, key);
 
         // Provide the signer UUID since the UUID may differ from the
-        // assigned UUID. Doing that breaks the signatures anyway but the server
+        // assigned UUID. Doing that breaks the signatures anyway, but the server
         // should be able to verify the key independently.
         if (actualVersion >= MODERN_WITH_KEY_V2) {
           if (key.getSignatureHolder() != null) {
@@ -88,7 +88,7 @@ public final class PlayerDataForwarding {
             ProtocolUtils.writeUuid(forwarded, key.getSignatureHolder());
           } else {
             // Should only not be provided if the player was connected
-            // as offline-mode and the signer UUID was not back-filled
+            // as offline-mode and the signer UUID was not backfilled
             forwarded.writeBoolean(false);
           }
         }
@@ -126,7 +126,7 @@ public final class PlayerDataForwarding {
       if (key != null) {
         return switch (key.getKeyRevision()) {
           case GENERIC_V1 -> MODERN_WITH_KEY;
-          // Since V2 is not backwards compatible we have to throw the key if v2 and requested is v1
+          // Since V2 is not backwards compatible, we have to throw the key if v2 and requested is v1
           case LINKED_V2 -> requested >= MODERN_WITH_KEY_V2
                   ? MODERN_WITH_KEY_V2
                   : MODERN_DEFAULT;

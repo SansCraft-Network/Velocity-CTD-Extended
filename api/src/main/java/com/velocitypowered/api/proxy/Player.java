@@ -42,7 +42,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a player who is connected to the proxy.
+ * Represents a player connected to the proxy.
  */
 public interface Player extends
     /* Fundamental Velocity interfaces */
@@ -358,7 +358,7 @@ public interface Player extends
   /**
    * Remove custom chat completion suggestions shown to the player while typing a message.
    *
-   * <p>Online player names can't be removed with this method, it will only affect
+   * <p>Online player names can't be removed with this method; it will only affect
    * custom completions added by {@link #addCustomChatCompletions(Collection)}
    * or {@link #setCustomChatCompletions(Collection)}.
    *

@@ -23,15 +23,11 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.util.except.QuietRuntimeException;
-import com.velocitypowered.proxy.util.ratelimit.PacketLimiter;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.CorruptedFrameException;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Decodes Minecraft packets.
@@ -42,10 +38,8 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
   private static final QuietRuntimeException DECODE_FAILED =
       new QuietRuntimeException("A packet did not decode successfully (invalid data). For more "
           + "information, launch Velocity with -Dvelocity.packet-decode-logging=true to see more.");
-  private static final Logger logger = LogManager.getLogger(MinecraftDecoder.class);
 
   private final ProtocolUtils.Direction direction;
-  @Nullable private final PacketLimiter packetLimiter;
   private StateRegistry state;
   private StateRegistry.PacketRegistry.ProtocolRegistry registry;
 
@@ -54,9 +48,8 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
    *
    * @param direction the direction from which we decode from
    */
-  public MinecraftDecoder(final ProtocolUtils.Direction direction, @Nullable final PacketLimiter packetLimiter) {
+  public MinecraftDecoder(final ProtocolUtils.Direction direction) {
     this.direction = Preconditions.checkNotNull(direction, "direction");
-    this.packetLimiter = packetLimiter;
     this.registry = StateRegistry.HANDSHAKE.getProtocolRegistry(
         direction, ProtocolVersion.MINIMUM_VERSION);
     this.state = StateRegistry.HANDSHAKE;
@@ -104,20 +97,13 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
   }
 
   private void doLengthSanityChecks(final ByteBuf buf, final MinecraftPacket packet) throws Exception {
-    int readableBytes = buf.readableBytes();
-
-    if (packetLimiter != null && !packetLimiter.incrementAndCheck(readableBytes)) {
-      throw new IllegalStateException("Packet rate limit exceeded (" + packetLimiter.getCounter()
-          + " packets and " + packetLimiter.getDataCounter() + " bytes per second)");
-    }
-
     int expectedMinLen = packet.expectedMinLength(buf, direction, registry.version);
     int expectedMaxLen = packet.expectedMaxLength(buf, direction, registry.version);
-    if (expectedMaxLen != -1 && readableBytes > expectedMaxLen) {
-      throw handleOverflow(packet, expectedMaxLen, readableBytes);
+    if (expectedMaxLen != -1 && buf.readableBytes() > expectedMaxLen) {
+      throw handleOverflow(packet, expectedMaxLen, buf.readableBytes());
     }
-    if (readableBytes < expectedMinLen) {
-      throw handleUnderflow(packet, expectedMaxLen, readableBytes);
+    if (buf.readableBytes() < expectedMinLen) {
+      throw handleUnderflow(packet, expectedMaxLen, buf.readableBytes());
     }
   }
 
@@ -164,9 +150,5 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
 
   public ProtocolUtils.Direction getDirection() {
     return direction;
-  }
-
-  public PacketLimiter getPacketLimiter() {
-    return packetLimiter;
   }
 }

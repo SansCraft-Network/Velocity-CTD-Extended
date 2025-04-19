@@ -65,7 +65,7 @@ public class VelocityArgumentCommandNode<S, T> extends ArgumentCommandNode<S, St
   @Override
   public void parse(final StringReader reader, final CommandContextBuilder<S> contextBuilder)
       throws CommandSyntaxException {
-    // Same as super, except we use the rich ArgumentType
+    // Same as "super", except we use the rich ArgumentType
     final int start = reader.getCursor();
     final T result = this.type.parse(reader);
     if (reader.canRead()) {

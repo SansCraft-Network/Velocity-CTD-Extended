@@ -35,7 +35,7 @@ public final class Once {
    * Calls {@code runnable.run()} exactly once if this instance is being called for the first time,
    * otherwise the invocation shall wait until {@code runnable.run()} completes. The first runnable
    * used when this function is called is run. Future calls to this method once the initial runnable
-   * completes are no-ops - a new instance should be used instead.
+   * completions are no-ops - a new instance should be used instead.
    *
    * @param runnable the runnable to run
    */

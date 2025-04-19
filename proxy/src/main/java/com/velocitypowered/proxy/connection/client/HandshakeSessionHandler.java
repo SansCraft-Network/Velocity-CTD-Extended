@@ -48,6 +48,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The initial handler used when a connection is established to the proxy. This will either
@@ -137,7 +138,7 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
 
   private void handleLogin(final HandshakePacket handshake, final InitialInboundConnection ic) {
     if (!handshake.getProtocolVersion().isSupported()) {
-      // Bump connection into correct protocol state so that we can send the disconnect packet.
+      // Bump connection into the correct protocol state so that we can send the disconnect packet.
       // By choice, instead of returning the standard disconnection message, we return the modern
       // forwarder. This particular value cannot adequately log the user's username; thus, forcing
       // us to deactivate logging altogether, unlike in the AuthSessionHandler, where logging is by choice.
@@ -149,7 +150,7 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
 
     final InetAddress address = ((InetSocketAddress) connection.getRemoteAddress()).getAddress();
     if (!server.getIpAttemptLimiter().attempt(address)) {
-      // Bump connection into correct protocol state so that we can send the disconnect packet.
+      // Bump connection into the correct protocol state so that we can send the disconnect packet.
       connection.setState(StateRegistry.LOGIN);
       ic.disconnectQuietly(Component.translatable("velocity.error.logging-in-too-fast"));
       return;
@@ -161,7 +162,7 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
     // and lower otherwise IP information will never get forwarded.
     if (server.getConfiguration().getPlayerInfoForwardingMode() == PlayerInfoForwarding.MODERN
         && handshake.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_13)) {
-      // Bump connection into correct protocol state so that we can send the disconnect packet.
+      // Bump connection into the correct protocol state so that we can send the disconnect packet.
       connection.setState(StateRegistry.LOGIN);
       ic.disconnectQuietly(Component.translatable("velocity.error.modern-forwarding-needs-new-client"));
       return;
@@ -276,7 +277,7 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
       final boolean isPlayerAddressLoggingEnabled = connection.server.getConfiguration()
           .isPlayerAddressLoggingEnabled();
       final String playerIp =

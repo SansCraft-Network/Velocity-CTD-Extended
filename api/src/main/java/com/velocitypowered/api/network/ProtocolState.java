@@ -34,13 +34,13 @@ public enum ProtocolState {
   /**
    * Authentication State of a connection.
    *
-   * <p>At this moment the player is authenticating with the authentication servers.</p>
+   * <p>At this moment, the player is authenticating with the authentication servers.</p>
    */
   LOGIN,
   /**
    * Configuration State of a connection.
    *
-   * <p>At this point the player allows the server to send information
+   * <p>At this point, the player allows the server to send information
    * such as resource packs and plugin messages, at the same time the player
    * will send his client brand and the respective plugin messages
    * if it is a modded client.</p>

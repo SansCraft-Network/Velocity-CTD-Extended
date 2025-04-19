@@ -51,7 +51,7 @@ public final class PingOptions {
   /**
    * The maximum period of time to wait for a response from the remote server.
    *
-   * @return the server ping timeout in milliseconds
+   * @return the server ping's timeout in milliseconds
    */
   public long getTimeout() {
     return this.timeout;

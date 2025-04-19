@@ -38,19 +38,19 @@ public class ClickCallbackManager {
   private final Cache<UUID, RegisteredCallback> registrations = Caffeine.newBuilder()
       .expireAfter(new Expiry<UUID, RegisteredCallback>() {
         @Override
-        public long expireAfterCreate(UUID key, RegisteredCallback value, long currentTime) {
+        public long expireAfterCreate(final UUID key, final RegisteredCallback value, final long currentTime) {
           return value.duration().toNanos();
         }
 
         @Override
-        public long expireAfterUpdate(UUID key, RegisteredCallback value, long currentTime,
-                                      @NonNegative long currentDuration) {
+        public long expireAfterUpdate(final UUID key, final RegisteredCallback value, final long currentTime,
+                                      @NonNegative final long currentDuration) {
           return currentDuration;
         }
 
         @Override
-        public long expireAfterRead(UUID key, RegisteredCallback value, long currentTime,
-                                    @NonNegative long currentDuration) {
+        public long expireAfterRead(final UUID key, final RegisteredCallback value, final long currentTime,
+                                    @NonNegative final long currentDuration) {
           final AtomicInteger remainingUses = value.remainingUses();
           if (remainingUses != null && remainingUses.get() <= 0) {
             return 0;

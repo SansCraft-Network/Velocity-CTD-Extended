@@ -143,6 +143,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Implementation of {@link ProxyServer}.
  */
+@SuppressWarnings({"unchecked"})
 public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   public static final String VELOCITY_URL = "https://github.com/GemstoneGG/Velocity-CTD";

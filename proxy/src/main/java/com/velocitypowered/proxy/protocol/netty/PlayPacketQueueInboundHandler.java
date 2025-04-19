@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Queues up any pending PLAY packets while the client is in the CONFIG state.
  *
- * <p>Much of the Velocity API (i.e. chat messages) utilize PLAY packets, however the client is
+ * <p>Much of the Velocity API (i.e., chat messages) utilize PLAY packets; however, the client is
  * incapable of receiving these packets during the CONFIG state. Certain events such as the
  * ServerPreConnectEvent may be called during this time, and we need to ensure that any API that
  * uses these packets will work as expected.

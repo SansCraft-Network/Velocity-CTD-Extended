@@ -296,7 +296,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(final PluginMessagePacket packet) {
-    // Handling edge case when packet with FML client handshake (state COMPLETE)
+    // Handling an edge case, when a packet with FML client handshake (state COMPLETE)
     // arrives after JoinGame packet from destination server
     VelocityServerConnection serverConn =
         (player.getConnectedServer() == null
@@ -504,7 +504,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
     if (!writable) {
       // We might have packets queued from the server, so flush them now to free up memory. Make
       // sure to do it on a future invocation of the event loop, otherwise while the issue will
-      // fix itself, we'll still disable auto-reading and instead of backpressure resolution, we
+      // fix itself, we'll still disable auto-reading, and instead of backpressure resolution, we
       // get client timeouts.
       player.getConnection().eventLoop().execute(() -> player.getConnection().flush());
     }
@@ -557,8 +557,8 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
     final MinecraftConnection serverMc = destination.ensureConnected();
 
     if (!spawned) {
-      // The player wasn't spawned in yet, so we don't need to do anything special. Just send
-      // JoinGame.
+      // The player wasn't spawned in yet, so we don't need to do anything special.
+      // Send JoinGame.
       spawned = true;
       player.getConnection().delayedWrite(joinGame);
       // Required for Legacy Forge
@@ -576,7 +576,8 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
       }
     }
 
-    // Remove previous boss bars. These don't get cleared when sending JoinGame, thus the need to
+    // Remove previous boss bars.
+    // These don't get cleared when sending JoinGame, thus is needed to
     // track them.
     for (UUID serverBossBar : serverBossBars) {
       BossBarPacket deletePacket = new BossBarPacket();
@@ -622,7 +623,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
     // In order to handle switching to another server, you will need to send two packets:
     //
     // - The join game packet from the backend server, with a different dimension
-    // - A respawn with the correct dimension
+    // - A respawn with the correct dimension,
     //
     // Most notably, by having the client accept the join game packet, we can work around the need
     // to perform entity ID rewrites, eliminating potential issues from rewriting packets and
@@ -640,9 +641,9 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
   }
 
   private void doSafeClientServerSwitch(final JoinGamePacket joinGame) {
-    // Some clients do not behave well with the "fast" respawn sequence. In this case we will use
-    // a "safe" respawn sequence that involves sending three packets to the client. They have the
-    // same effect but tend to work better with buggier clients (Forge 1.8 in particular).
+    // Some clients do not behave well with the "fast" respawn sequence.
+    // In this case, we will use a "safe" respawn sequence that involves sending three packets to the client.
+    // They have the same effect but tend to work better with buggier clients (Forge 1.8 in particular).
 
     // Send the JoinGame packet itself, unmodified.
     player.getConnection().delayedWrite(joinGame);

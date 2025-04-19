@@ -54,7 +54,7 @@ public final class VelocityTranslationRegistry implements TranslationRegistry {
   }
 
   @Override
-  public boolean contains(@NotNull String key, @NotNull Locale locale) {
+  public boolean contains(@NotNull final String key, @NotNull final Locale locale) {
     return false;
   }
 
@@ -69,10 +69,7 @@ public final class VelocityTranslationRegistry implements TranslationRegistry {
   }
 
   @Override
-  public @Nullable Component translate(
-          @NotNull final TranslatableComponent component,
-          @NotNull final Locale locale
-  ) {
+  public @Nullable Component translate(@NotNull final TranslatableComponent component, @NotNull final Locale locale) {
     final MessageFormat translationFormat = backedRegistry.translate(component.key(), locale);
 
     if (translationFormat == null) {

@@ -34,13 +34,13 @@ import java.nio.file.StandardCopyOption;
 /**
  * Enumerates all supported natives for Velocity.
  */
-public class Natives {
+public final class Natives {
 
   private Natives() {
     throw new AssertionError();
   }
 
-  private static Runnable copyAndLoadNative(String path) {
+  private static Runnable copyAndLoadNative(final String path) {
     return () -> {
       try {
         InputStream nativeLib = Natives.class.getResourceAsStream(path);
@@ -69,7 +69,7 @@ public class Natives {
     };
   }
 
-  private static Path createTemporaryNativeFilename(String ext) throws IOException {
+  private static Path createTemporaryNativeFilename(final String ext) throws IOException {
     String temporaryFolderPath = System.getProperty("velocity.natives-tmpdir");
     if (temporaryFolderPath != null) {
       return Files.createTempFile(Path.of(temporaryFolderPath), "native-", ext);

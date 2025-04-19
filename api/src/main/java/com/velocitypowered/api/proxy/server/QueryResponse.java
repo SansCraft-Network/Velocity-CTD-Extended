@@ -56,7 +56,7 @@ public final class QueryResponse {
 
   /**
    * Get hostname which will be used to reply to the query. By default, it is {@link
-   * ProxyConfig#getMotd()} in plain text without colour codes.
+   * ProxyConfig#getMotd()} in plain text without color codes.
    *
    * @return hostname
    */
@@ -65,7 +65,7 @@ public final class QueryResponse {
   }
 
   /**
-   * Get game version which will be used to reply to the query. By default, supported Minecraft
+   * Get a game version which will be used to reply to the query. By default, supported Minecraft
    * versions range is sent.
    *
    * @return game version
@@ -85,7 +85,7 @@ public final class QueryResponse {
   }
 
   /**
-   * Get current online player count which will be used to reply to the query.
+   * Get the current online player count which will be used to reply to the query.
    *
    * @return online player count
    */
@@ -121,7 +121,7 @@ public final class QueryResponse {
   }
 
   /**
-   * Get collection of players which will be used to reply to the query.
+   * Get a collection of players which will be used to reply to the query.
    *
    * @return collection of players
    */
@@ -139,7 +139,7 @@ public final class QueryResponse {
   }
 
   /**
-   * Get list of plugins which will be used to reply to the query.
+   * Get a list of plugins which will be used to reply to the query.
    *
    * @return collection of plugins
    */
@@ -368,7 +368,7 @@ public final class QueryResponse {
     }
 
     /**
-     * Adds the specified plugins to the plugins list.
+     * Adds the specified plugins to the plugin list.
      *
      * @param plugins the plugins to add
      * @return this builder, for chaining
@@ -379,7 +379,7 @@ public final class QueryResponse {
     }
 
     /**
-     * Adds the specified plugins to the plugins list.
+     * Adds the specified plugins to the plugin list.
      *
      * @param plugins the plugins to add
      * @return this builder, for chaining

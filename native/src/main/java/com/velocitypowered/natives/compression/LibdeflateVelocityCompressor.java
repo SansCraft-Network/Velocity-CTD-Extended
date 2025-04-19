@@ -25,7 +25,7 @@ import java.util.zip.DataFormatException;
 /**
  * Implements deflate compression using the {@code libdeflate} native C library.
  */
-public class LibdeflateVelocityCompressor implements VelocityCompressor {
+public final class LibdeflateVelocityCompressor implements VelocityCompressor {
 
   public static final VelocityCompressorFactory FACTORY = LibdeflateVelocityCompressor::new;
 
@@ -48,7 +48,7 @@ public class LibdeflateVelocityCompressor implements VelocityCompressor {
       throws DataFormatException {
     ensureNotDisposed();
 
-    // libdeflate recommends we work with a known uncompressed size - so we work strictly within
+    // Libdeflate recommends we work with a known uncompressed size - so we work strictly within
     // those parameters. If the uncompressed size doesn't match the compressed size, then we will
     // throw an exception from native code.
     destination.ensureWritable(uncompressedSize);

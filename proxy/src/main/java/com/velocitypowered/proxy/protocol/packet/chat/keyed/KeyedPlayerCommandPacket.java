@@ -104,7 +104,7 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
     if (mapSize > MAX_NUM_ARGUMENTS) {
       throw LIMITS_VIOLATION;
     }
-    // Mapped as Argument : signature
+    // Mapped as "Argument : signature"
     ImmutableMap.Builder<String, byte[]> entries = ImmutableMap.builderWithExpectedSize(mapSize);
     for (int i = 0; i < mapSize; i++) {
       entries.put(ProtocolUtils.readString(buf, MAX_LENGTH_ARGUMENTS),

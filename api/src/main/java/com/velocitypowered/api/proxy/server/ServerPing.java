@@ -213,7 +213,7 @@ public final class ServerPing {
      * @param players collection of SamplePlayers to add
      * @return this builder, for chaining
      */
-    public Builder samplePlayers(Collection<SamplePlayer> players) {
+    public Builder samplePlayers(final Collection<SamplePlayer> players) {
       this.samplePlayers.addAll(players);
       return this;
     }
@@ -285,7 +285,7 @@ public final class ServerPing {
     }
 
     /**
-     * Enables nulling Players in the response.
+     * Enables nullifying Players in the response.
      * This will display the player count as {@code ???}.
      *
      * @return this builder, for chaining

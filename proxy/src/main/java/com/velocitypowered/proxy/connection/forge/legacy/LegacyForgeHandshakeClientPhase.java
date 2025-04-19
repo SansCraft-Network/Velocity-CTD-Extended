@@ -47,7 +47,7 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
     public void onFirstJoin(final ConnectedPlayer player) {
       // We have something special to do for legacy Forge servers - during first connection the FML
       // handshake will getNewPhase to complete regardless. Thus, we need to ensure that a reset
-      // packet is ALWAYS sent on first switch.
+      // packet is ALWAYS sent on the first switch.
       //
       // As we know that calling this branch only happens on first join, we set that if we are a
       // Forge client that we must reset on the next switch.
@@ -114,7 +114,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
   },
 
   /**
-   * Waiting on the server to send another ACK. Transition to {@link #PENDING_COMPLETE} when client
+   * Waiting on the server to send another ACK.
+   * Transition to {@link #PENDING_COMPLETE} when the client
    * sends another ACK
    */
   WAITING_SERVER_COMPLETE(LegacyForgeConstants.ACK_DISCRIMINATOR) {
@@ -125,7 +126,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
   },
 
   /**
-   * Waiting on the server to send yet another ACK. Transition to {@link #COMPLETE} when client
+   * Waiting on the server to send another ACK.
+   * Transition to {@link #COMPLETE} when the client
    * sends another ACK
    */
   PENDING_COMPLETE(LegacyForgeConstants.ACK_DISCRIMINATOR) {
@@ -235,7 +237,7 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
   }
 
   /**
-   * Gets the next phase, if any (will return self if we are at the end of the handshake).
+   * Gets the next phase if any (returns self if we are at the end of the handshake).
    *
    * @return The next phase
    */

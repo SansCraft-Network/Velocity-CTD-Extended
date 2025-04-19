@@ -16,9 +16,9 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
- * This event is fired when the downstream server tries to remove a resource pack from player
+ * This event is fired when the downstream server tries to remove a resource pack from the player
  * or clear all of them. The proxy will wait on this event to finish before forwarding the
- * action to the user. If this event is denied, no resource packs will be removed from player.
+ * action to the user. If this event is denied, no resource packs will be removed from the player.
  */
 @AwaitingEvent
 public class ServerResourcePackRemoveEvent implements ResultedEvent<ResultedEvent.GenericResult> {
@@ -37,7 +37,7 @@ public class ServerResourcePackRemoveEvent implements ResultedEvent<ResultedEven
   }
 
   /**
-   * Returns the id of the resource pack, if it's null all the resource packs
+   * Returns the id of the resource pack, if it's null, all the resource packs
    * from player will be cleared.
    *
    * @return the id
@@ -48,7 +48,7 @@ public class ServerResourcePackRemoveEvent implements ResultedEvent<ResultedEven
   }
 
   /**
-   * Returns the server that tries to remove a resource pack from player or clear all of them.
+   * Returns the server that tries to remove a resource pack from the player or clear all of them.
    *
    * @return the server connection
    */

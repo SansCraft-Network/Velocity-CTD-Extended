@@ -104,7 +104,7 @@ public final class ConnectionRequestResults {
     }
 
     /**
-     * Returns whether it is safe to attempt a reconnect.
+     * Returns whether it is safe to attempt reconnecting.
      *
      * @return whether we can try to reconnect
      */

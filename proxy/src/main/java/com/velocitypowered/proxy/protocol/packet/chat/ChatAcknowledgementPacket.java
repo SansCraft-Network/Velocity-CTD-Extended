@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Represents a packet that is sent to acknowledge the receipt of a chat message.
+ * Represents a packet sent to acknowledge the receipt of a chat message.
  * This packet is used to confirm that a player or client has received and processed
  * a chat message from the server.
  */

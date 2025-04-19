@@ -23,7 +23,7 @@ public class PlayerInfo {
    * @param username The username of the player.
    * @param uuid The UUID of the player.
    */
-  public PlayerInfo(String username, UUID uuid) {
+  public PlayerInfo(final String username, final UUID uuid) {
     this.username = username;
     this.uuid = uuid;
   }

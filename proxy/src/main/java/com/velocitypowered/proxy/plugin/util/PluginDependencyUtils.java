@@ -54,7 +54,7 @@ public final class PluginDependencyUtils {
     sortedCandidates.sort(Comparator.comparing(PluginDescription::getId));
 
     // Create a graph and populate it with plugin dependencies. Specifically, each graph has plugin
-    // nodes, and edges that represent the dependencies that plugin relies on. Non-existent plugins
+    // nodes and edges that represent the dependencies that plugin relies on. Non-existent plugins
     // are ignored.
     MutableGraph<PluginDescription> graph = GraphBuilder.directed()
         .allowsSelfLoops(false)
@@ -77,7 +77,7 @@ public final class PluginDependencyUtils {
 
     // Now we do the depth-first search. The most accessible description of the algorithm is on
     // Wikipedia: https://en.wikipedia.org/w/index.php?title=Topological_sorting&oldid=1036420482,
-    // section "Depth-first search." Apparently this algorithm originates from "Introduction to
+    // section "Depth-first search." Apparently, this algorithm originates from "Introduction to
     // Algorithms" (2nd ed.)
     List<PluginDescription> sorted = new ArrayList<>();
     Map<PluginDescription, Mark> marks = new HashMap<>();

@@ -71,7 +71,7 @@ public interface Scheduler {
 
     /**
      * Specifies that the task should continue running after waiting for the specified amount, until
-     * it is cancelled.
+     * it is canceled.
      *
      * @param time the time to delay by
      * @param unit the unit of time for {@code time}
@@ -81,7 +81,7 @@ public interface Scheduler {
 
     /**
      * Specifies that the task should continue running after waiting for the specified amount, until
-     * it is cancelled.
+     * it is canceled.
      *
      * @param duration the duration of the delay
      * @return this builder, for chaining

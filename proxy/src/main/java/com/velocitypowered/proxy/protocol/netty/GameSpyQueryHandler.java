@@ -128,7 +128,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
 
     switch (type) {
       case QUERY_TYPE_HANDSHAKE: {
-        // Generate new challenge token and put it into the sessions cache
+        // Generate a new challenge token and put it into the session cache
         int challengeToken = random.nextInt();
         sessions.put(senderAddress, challengeToken);
 
@@ -237,10 +237,10 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
     // Writes k/v to stat packet body if this writer is initialized
     // for full stat response. Otherwise, this follows
     // GS4QueryHandler#QUERY_BASIC_RESPONSE_CONTENTS to decide what
-    // to write into packet body
+    // to write into the packet body
     void write(final String key, final Object value) {
       if (isBasic) {
-        // Basic contains only specific set of data
+        // Basic contains only specific-set of data
         if (!QUERY_BASIC_RESPONSE_CONTENTS.contains(key)) {
           return;
         }
@@ -257,7 +257,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
       }
     }
 
-    // Ends packet k/v body writing and writes stat player list to
+    // Ends packet k/v body writing and writes a stat player list to
     // the packet if this writer is initialized for full stat response
     void writePlayers(final Collection<String> players) {
       if (isBasic) {

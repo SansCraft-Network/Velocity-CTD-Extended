@@ -56,7 +56,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
       return null;
     }
     if (server.getConfiguration().enforceChatSigning() && packet.isSigned()) {
-      // Any signed message produced by the client *must* be passed through to the server in order to maintain a
+      // Any signed message produced by the client *must* be passed through to the server to maintain a
       // consistent state for future messages.
       logger.fatal("A plugin tried to deny a command with signable component(s). This is not supported. "
           + "Disconnecting player {}. Command packet: {}",

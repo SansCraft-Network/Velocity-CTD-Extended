@@ -161,7 +161,7 @@ public final class PreLoginEvent implements ResultedEvent<PreLoginEvent.PreLogin
 
     /**
      * Returns a result indicating the connection will be allowed through the proxy, but the
-     * connection will be forced to use online mode provided that the proxy is in offline mode. This
+     * connection will be forced to use online mode if the proxy is in offline mode. This
      * acts similarly to {@link #allowed()} on an online-mode proxy.
      *
      * @return the result

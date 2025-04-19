@@ -266,7 +266,7 @@ public class BrigadierCommandTests extends CommandTestSuite {
   }
 
   // The following 2 tests ensure we strictly follow Brigadier's behavior, even
-  // if it doesn't make much sense.
+  // if it makes little sense.
 
   @Test
   void testSuggestsEvenIfImpermissible() {

@@ -145,12 +145,12 @@ public class ChatQueue implements AutoCloseable {
    *     <li>If we last forwarded a chat or command packet from the client, we have a known 'last seen' that we can
    *     reuse.</li>
    *     <li>If we last forwarded a {@link ChatAcknowledgementPacket}, the previous 'last seen' cannot be reused. We
-   *     cannot predict an up-to-date 'last seen', as we do not know which messages the client actually saw.</li>
+   *     cannot predict an up to date 'last seen', as we do not know which messages the client actually saw.</li>
    *     <li>Therefore, we need to hold back any acknowledgement packets so that we can continue to reuse the last valid
    *     'last seen' state.</li>
    *     <li>However, there is a limit to the number of messages that can remain unacknowledged on the server.</li>
    *     <li>To address this, we know that if the client has moved its 'last seen' window far enough, we can fill in the
-   *     gap with dummy 'last seen', and it will never be checked.</li>
+   *     gap with stub 'last seen', and it will never be checked.</li>
    * </ul>
    *
    * <p>Note that this is effectively unused for 1.20.5+ clients, as commands without any signature do not send 'last seen'

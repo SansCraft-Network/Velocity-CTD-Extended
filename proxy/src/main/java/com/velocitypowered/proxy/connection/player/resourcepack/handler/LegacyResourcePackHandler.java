@@ -102,7 +102,7 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler
       // Check if the player declined a resource pack once already
       if (previousResourceResponse != null && !previousResourceResponse) {
         // If that happened we can flush the queue right away.
-        // Unless its 1.17+ and forced it will come back denied anyway
+        // Unless it is 1.17+ and forced, it will come back denied anyway
         while (!outstandingResourcePacks.isEmpty()) {
           queued = outstandingResourcePacks.peek();
           if (queued.getShouldForce() && player.getProtocolVersion()

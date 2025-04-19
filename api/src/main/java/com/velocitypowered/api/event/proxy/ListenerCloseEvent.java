@@ -12,7 +12,7 @@ import com.velocitypowered.api.network.ListenerType;
 import java.net.InetSocketAddress;
 
 /**
- * This event is fired by the proxy before the proxy stops accepting connections.
+ * The proxy fires this event before the proxy stops accepting connections.
  */
 public final class ListenerCloseEvent {
 

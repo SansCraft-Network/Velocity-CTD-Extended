@@ -91,7 +91,7 @@ public final class VelocityCommandMeta implements CommandMeta {
 
   /**
    * Creates a node to use for hinting the arguments of a {@link Command}. Hint nodes are sent to
-   * 1.13+ clients and the proxy uses them for providing suggestions.
+   * 1.13+ clients, and the proxy uses them for providing suggestions.
    *
    * <p>A hint node is used to provide suggestions if and only if the requirements of
    * the corresponding {@link CommandNode} are satisfied. The requirement predicate of the returned

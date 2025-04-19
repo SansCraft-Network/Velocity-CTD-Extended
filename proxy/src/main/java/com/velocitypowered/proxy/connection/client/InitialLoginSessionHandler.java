@@ -257,7 +257,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
               mcConnection.setActiveSessionHandler(StateRegistry.LOGIN,
                   new AuthSessionHandler(server, inbound, profile, true));
             } else if (response.statusCode() == 204) {
-              // Apparently an offline-mode user logged onto this online-mode proxy.
+              // Apparently, an offline-mode user logged onto this online-mode proxy.
               inbound.disconnect(
                   Component.translatable("velocity.error.online-mode-only", NamedTextColor.RED));
             } else {

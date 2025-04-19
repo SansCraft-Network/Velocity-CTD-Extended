@@ -12,7 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Indicates that the {@link Plugin} depends on another plugin in order to enable.
+ * Indicates that the {@link Plugin} depends on another plugin to enable.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({})

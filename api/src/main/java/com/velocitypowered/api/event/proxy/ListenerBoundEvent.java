@@ -12,7 +12,7 @@ import com.velocitypowered.api.network.ListenerType;
 import java.net.InetSocketAddress;
 
 /**
- * This event is fired by the proxy after a listener starts accepting connections.
+ * The proxy fires this event after a listener starts accepting connections.
  */
 public final class ListenerBoundEvent {
 

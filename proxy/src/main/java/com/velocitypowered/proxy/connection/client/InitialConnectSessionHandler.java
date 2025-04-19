@@ -85,7 +85,7 @@ public class InitialConnectSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void disconnected() {
-    // the user cancelled the login process
+    // the user canceled the login process
     player.teardown();
   }
 }

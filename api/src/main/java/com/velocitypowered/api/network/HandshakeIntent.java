@@ -26,7 +26,7 @@ public enum HandshakeIntent {
   }
 
   /**
-   * Obtain the HandshakeIntent by ID.
+   * Get the HandshakeIntent by ID.
    *
    * @param id the intent id
    * @return the HandshakeIntent desired

@@ -38,7 +38,7 @@ public final class DimensionInfo {
    * @param levelName          the level name as displayed in the F3 menu and logs
    * @param isFlat             if true will set world lighting below surface-level to not display
    *                           fog
-   * @param isDebugType        if true constrains the world to the very limited debug-type world
+   * @param isDebugType        if true, constrains the world to the very limited debug-type world
    */
   public DimensionInfo(final String registryIdentifier, @Nullable final String levelName,
                        final boolean isFlat, final boolean isDebugType, final ProtocolVersion protocolVersion) {

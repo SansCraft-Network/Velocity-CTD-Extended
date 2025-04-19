@@ -117,7 +117,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
           try {
             List<String> offers = this.server.getCommandManager()
                 .offerSuggestions(this, parsedLine.line())
-                .join(); // Console doesn't get harmed much by this...
+                .join(); // The console doesn't get harmed much by this...
             for (String offer : offers) {
               list.add(new Candidate(offer));
             }

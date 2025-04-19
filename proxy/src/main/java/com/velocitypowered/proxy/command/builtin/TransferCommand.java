@@ -75,66 +75,66 @@ public class TransferCommand {
     }
 
     final LiteralCommandNode<CommandSource> transfer = BrigadierCommand.literalArgumentBuilder("transfer")
-            .requires(source -> source.getPermissionValue("velocity.command.transfer") == Tristate.TRUE)
-            .executes(ctx -> VelocityCommands.emitUsage(ctx, "transfer"))
-            .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-                    .suggests((ctx, builder) -> {
-                      final String argument = ctx.getArguments().containsKey("player")
-                              ? ctx.getArgument("player", String.class)
-                              : "";
+        .requires(source -> source.getPermissionValue("velocity.command.transfer") == Tristate.TRUE)
+        .executes(ctx -> VelocityCommands.emitUsage(ctx, "transfer"))
+        .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
+        .suggests((ctx, builder) -> {
+          final String argument = ctx.getArguments().containsKey("player")
+                  ? ctx.getArgument("player", String.class)
+                  : "";
 
-                      if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
-                        builder.suggest("all");
-                      }
-                      if ("current".regionMatches(true, 0, argument, 0, argument.length())
-                          && ctx.getSource() instanceof Player) {
-                        builder.suggest("current");
-                      }
+          if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
+            builder.suggest("all");
+          }
+          if ("current".regionMatches(true, 0, argument, 0, argument.length())
+              && ctx.getSource() instanceof Player) {
+            builder.suggest("current");
+          }
 
-                      if (argument.isEmpty() || argument.startsWith("+")) {
-                        for (final RegisteredServer server : server.getAllServers()) {
-                          final String serverName = server.getServerInfo().getName();
+          if (argument.isEmpty() || argument.startsWith("+")) {
+            for (final RegisteredServer server : server.getAllServers()) {
+              final String serverName = server.getServerInfo().getName();
 
-                          if (serverName.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
-                            builder.suggest("+" + serverName);
-                          }
-                        }
-                      }
+              if (serverName.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
+                builder.suggest("+" + serverName);
+              }
+            }
+          }
 
-                      if (server.getMultiProxyHandler().isRedisEnabled()) {
-                        for (RemotePlayerInfo info : server.getMultiProxyHandler().getAllPlayers()) {
-                          if (info.getName().regionMatches(true, 0, argument, 0, argument.length())) {
-                            builder.suggest(info.getName());
-                          }
-                        }
+          if (server.getMultiProxyHandler().isRedisEnabled()) {
+            for (RemotePlayerInfo info : server.getMultiProxyHandler().getAllPlayers()) {
+              if (info.getName().regionMatches(true, 0, argument, 0, argument.length())) {
+                builder.suggest(info.getName());
+              }
+            }
 
-                        return builder.buildFuture();
-                      }
+            return builder.buildFuture();
+          }
 
-                      for (final Player player : server.getAllPlayers()) {
-                        final String playerName = player.getUsername();
-                        if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
-                          builder.suggest(playerName);
-                        }
-                      }
+          for (final Player player : server.getAllPlayers()) {
+            final String playerName = player.getUsername();
+            if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
+              builder.suggest(playerName);
+            }
+          }
 
-                      return builder.buildFuture();
-                    })
-                    .executes(ctx -> VelocityCommands.emitUsage(ctx, "transfer"))
-                    .then(BrigadierCommand.requiredArgumentBuilder("proxy-id", StringArgumentType.word())
-                            .suggests((ctx, builder) -> {
-                              final String argument = ctx.getArguments().containsKey("proxy")
-                                  ? ctx.getArgument("proxy", String.class)
-                                  : "";
-                              for (ProxyAddress address : server.getConfiguration().getProxyAddresses()) {
-                                if (address.proxyId().regionMatches(true, 0, argument, 0, argument.length())) {
-                                  builder.suggest(address.proxyId());
-                                }
-                              }
-                              return builder.buildFuture();
-                            })
-                            .executes(this::transfer)))
-            .build();
+          return builder.buildFuture();
+        })
+        .executes(ctx -> VelocityCommands.emitUsage(ctx, "transfer"))
+        .then(BrigadierCommand.requiredArgumentBuilder("proxy-id", StringArgumentType.word())
+        .suggests((ctx, builder) -> {
+          final String argument = ctx.getArguments().containsKey("proxy")
+              ? ctx.getArgument("proxy", String.class)
+              : "";
+          for (ProxyAddress address : server.getConfiguration().getProxyAddresses()) {
+            if (address.proxyId().regionMatches(true, 0, argument, 0, argument.length())) {
+              builder.suggest(address.proxyId());
+            }
+          }
+          return builder.buildFuture();
+        })
+        .executes(this::transfer)))
+        .build();
 
     final BrigadierCommand command = new BrigadierCommand(transfer);
     server.getCommandManager().register(

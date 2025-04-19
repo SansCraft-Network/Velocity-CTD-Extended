@@ -80,8 +80,8 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    * @param server           the Velocity proxy instance
    */
   public VelocityServerConnection(final VelocityRegisteredServer registeredServer,
-      @Nullable final VelocityRegisteredServer previousServer,
-      final ConnectedPlayer proxyPlayer, final VelocityServer server) {
+                                  @Nullable final VelocityRegisteredServer previousServer,
+                                  final ConnectedPlayer proxyPlayer, final VelocityServer server) {
     this.registeredServer = registeredServer;
     this.previousServer = previousServer;
     this.proxyPlayer = proxyPlayer;

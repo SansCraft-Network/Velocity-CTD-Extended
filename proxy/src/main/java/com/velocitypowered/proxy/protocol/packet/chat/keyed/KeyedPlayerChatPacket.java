@@ -128,7 +128,7 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
 
   @Override
   public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, message);
 
     buf.writeLong(unsigned ? Instant.now().toEpochMilli() : Objects.requireNonNull(expiry).toEpochMilli());
@@ -141,14 +141,14 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       ProtocolUtils.writeVarInt(buf, previousMessages.length);
       for (SignaturePair previousMessage : previousMessages) {
-        ProtocolUtils.writeUuid(buf, previousMessage.signer());
-        ProtocolUtils.writeByteArray(buf, previousMessage.signature());
+        ProtocolUtils.writeUuid(buf, previousMessage.getSigner());
+        ProtocolUtils.writeByteArray(buf, previousMessage.getSignature());
       }
 
       if (lastMessage != null) {
         buf.writeBoolean(true);
-        ProtocolUtils.writeUuid(buf, lastMessage.signer());
-        ProtocolUtils.writeByteArray(buf, lastMessage.signature());
+        ProtocolUtils.writeUuid(buf, lastMessage.getSigner());
+        ProtocolUtils.writeByteArray(buf, lastMessage.getSignature());
       } else {
         buf.writeBoolean(false);
       }

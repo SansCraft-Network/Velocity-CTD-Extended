@@ -251,18 +251,18 @@ public abstract class QueueManager {
         }
 
         if (queue.isOnline()) {
-          final int maxPlayers = this.server.getConfiguration().getPlayerCaps().get(queue.getServerName());
           long playerCount;
           if (this.server.getMultiProxyHandler().isRedisEnabled()) {
             playerCount = this.server.getMultiProxyHandler().getAllPlayers().stream().filter(info -> info.getServerName() != null
                 && info.getServerName().equalsIgnoreCase(queue.getServerName())).count();
           } else {
             playerCount = this.server.getAllPlayers().stream().filter(p -> p.getCurrentServer()
-                .map((serverConnection) -> serverConnection.getServerInfo().getName().equalsIgnoreCase(queue.getServerName()))
+                .map(conn -> conn.getServerInfo().getName().equalsIgnoreCase(queue.getServerName()))
                 .orElse(false))
                 .count();
           }
-          queue.setFull(playerCount >= maxPlayers);
+          long maxPlayers = this.server.getConfiguration().getPlayerCaps().getOrDefault(queue.getServerName(), -1);
+          queue.setFull(maxPlayers > 0 && playerCount >= maxPlayers);
         }
       });
     }

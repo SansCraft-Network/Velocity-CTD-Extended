@@ -441,8 +441,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     Preconditions.checkNotNull(message, "message");
     Preconditions.checkNotNull(type, "type");
 
-    Component translated = translateMessage(message)
-        .replaceText(TextReplacementConfig.builder().match("''").replacement("'").build());
+    Component translated = translateMessage(message).replaceText(TextReplacementConfig.builder().match("''").replacement("'").build());
 
     connection.write(getChatBuilderFactory().builder()
         .component(translated).forIdentity(identity)
@@ -621,7 +620,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   private ConnectionRequestBuilder createConnectionRequest(final RegisteredServer server,
-      @Nullable final VelocityServerConnection previousConnection) {
+                                                           @Nullable final VelocityServerConnection previousConnection) {
     return new ConnectionRequestBuilderImpl(server, previousConnection);
   }
 
@@ -944,7 +943,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       serversToTry = new ArrayList<>();
     }
     String virtualHostStr = getVirtualHost().map(InetSocketAddress::getHostString)
-        .orElse("");
+        .orElse("")
+        .toLowerCase(Locale.ROOT);
     List<String> connOrder = new ArrayList<>(server.getConfiguration().getForcedHosts().getOrDefault(virtualHostStr,
         new ArrayList<>()));
     connOrder.addAll(server.getConfiguration().getAttemptConnectionOrder());
@@ -1355,7 +1355,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
   @Override
   public void removeResourcePacks(@NotNull final ResourcePackInfoLike request,
-      @NotNull final ResourcePackInfoLike @NotNull ... others) {
+                                  @NotNull final ResourcePackInfoLike @NotNull ... others) {
     removeResourcePacks(request.asResourcePackInfo().id());
     for (final ResourcePackInfoLike other : others) {
       removeResourcePacks(other.asResourcePackInfo().id());

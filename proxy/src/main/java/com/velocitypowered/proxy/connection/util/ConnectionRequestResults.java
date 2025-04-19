@@ -45,9 +45,8 @@ public final class ConnectionRequestResults {
    * @param server the server to use
    * @return the result
    */
-  public static Impl plainResult(
-      final ConnectionRequestBuilder.Status status,
-      final RegisteredServer server) {
+  public static Impl plainResult(final ConnectionRequestBuilder.Status status,
+                                 final RegisteredServer server) {
     return new Impl(status, null, server, true);
   }
 
@@ -82,7 +81,7 @@ public final class ConnectionRequestResults {
     private final boolean safe;
 
     Impl(final Status status, @Nullable final Component component,
-        final RegisteredServer attemptedConnection, final boolean safe) {
+         final RegisteredServer attemptedConnection, final boolean safe) {
       this.status = status;
       this.component = component;
       this.attemptedConnection = attemptedConnection;

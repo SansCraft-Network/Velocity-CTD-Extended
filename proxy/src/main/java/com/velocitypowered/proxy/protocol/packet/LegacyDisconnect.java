@@ -45,7 +45,7 @@ public record LegacyDisconnect(String reason) {
    * @return the disconnect packet
    */
   public static LegacyDisconnect fromServerPing(final ServerPing response,
-      final LegacyMinecraftPingVersion version) {
+                                                final LegacyMinecraftPingVersion version) {
     final Players players = response.getPlayers().orElse(FAKE_PLAYERS);
 
     return switch (version) {

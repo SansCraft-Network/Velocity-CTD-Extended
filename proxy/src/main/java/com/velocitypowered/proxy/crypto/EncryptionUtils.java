@@ -96,7 +96,7 @@ public enum EncryptionUtils {
    * @return validity of the signature
    */
   public static boolean verifySignature(final String algorithm, final PublicKey base, final byte[] signature,
-      final byte[]... toVerify) {
+                                        final byte[]... toVerify) {
     Preconditions.checkArgument(toVerify.length > 0);
     try {
       Signature construct = Signature.getInstance(algorithm);

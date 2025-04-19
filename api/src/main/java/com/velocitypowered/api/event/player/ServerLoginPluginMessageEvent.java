@@ -43,9 +43,8 @@ public class ServerLoginPluginMessageEvent implements ResultedEvent<ResponseResu
    * @param contents the contents of the message
    * @param sequenceId the ID of the message
    */
-  public ServerLoginPluginMessageEvent(
-      final ServerConnection connection, final ChannelIdentifier identifier,
-      final byte[] contents, final int sequenceId) {
+  public ServerLoginPluginMessageEvent(final ServerConnection connection, final ChannelIdentifier identifier,
+                                       final byte[] contents, final int sequenceId) {
     this.connection = checkNotNull(connection, "connection");
     this.identifier = checkNotNull(identifier, "identifier");
     this.contents = checkNotNull(contents, "contents");

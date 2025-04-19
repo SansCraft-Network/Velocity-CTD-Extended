@@ -220,9 +220,12 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
     return result;
   }
 
-  private record ResponseWriter(ByteBuf buf, boolean isBasic) {
+  private static class ResponseWriter {
 
-    private ResponseWriter(final ByteBuf buf, final boolean isBasic) {
+    private final ByteBuf buf;
+    private final boolean isBasic;
+
+    ResponseWriter(final ByteBuf buf, final boolean isBasic) {
       this.buf = buf;
       this.isBasic = isBasic;
 

@@ -17,7 +17,12 @@
 
 package com.velocitypowered.proxy.protocol.packet.brigadier;
 
-import static com.velocitypowered.api.network.ProtocolVersion.*;
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_19;
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_19_3;
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_19_4;
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_3;
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_20_5;
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_21_5;
 import static com.velocitypowered.proxy.protocol.packet.brigadier.ArgumentIdentifier.id;
 import static com.velocitypowered.proxy.protocol.packet.brigadier.ArgumentIdentifier.mapSet;
 import static com.velocitypowered.proxy.protocol.packet.brigadier.DoubleArgumentPropertySerializer.DOUBLE;
@@ -64,7 +69,7 @@ public final class ArgumentPropertyRegistry {
       new HashMap<>();
 
   private static <T extends ArgumentType<?>> void register(final ArgumentIdentifier identifier,
-      final Class<T> klazz, final ArgumentPropertySerializer<T> serializer) {
+                                                           final Class<T> klazz, final ArgumentPropertySerializer<T> serializer) {
     byIdentifier.put(identifier, serializer);
     byClass.put(klazz, serializer);
     classToId.put(klazz, identifier);
@@ -108,16 +113,16 @@ public final class ArgumentPropertyRegistry {
    * @param type the type to serialize
    */
   public static void serialize(final ByteBuf buf, final ArgumentType<?> type,
-      final ProtocolVersion protocolVersion) {
+                               final ProtocolVersion protocolVersion) {
     if (type instanceof PassthroughProperty) {
       final PassthroughProperty property = (PassthroughProperty) type;
-      writeIdentifier(buf, property.identifier(), protocolVersion);
-      if (property.result() != null) {
-        property.serializer().serialize(property.result(), buf, protocolVersion);
+      writeIdentifier(buf, property.getIdentifier(), protocolVersion);
+      if (property.getResult() != null) {
+        property.getSerializer().serialize(property.getResult(), buf, protocolVersion);
       }
     } else if (type instanceof ModArgumentProperty property) {
-      writeIdentifier(buf, property.identifier(), protocolVersion);
-      buf.writeBytes(property.data());
+      writeIdentifier(buf, property.getIdentifier(), protocolVersion);
+      buf.writeBytes(property.getData());
     } else {
       ArgumentPropertySerializer serializer = byClass.get(type.getClass());
       ArgumentIdentifier id = classToId.get(type.getClass());
@@ -138,7 +143,7 @@ public final class ArgumentPropertyRegistry {
    * @param protocolVersion the protocol version to use
    */
   public static void writeIdentifier(final ByteBuf buf, final ArgumentIdentifier identifier,
-      final ProtocolVersion protocolVersion) {
+                                     final ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(MINECRAFT_1_19)) {
       Integer id = identifier.getIdByProtocolVersion(protocolVersion);
       Preconditions.checkNotNull(id, "Don't know how to serialize type " + identifier);
@@ -188,7 +193,7 @@ public final class ArgumentPropertyRegistry {
 
           @Override
           public void serialize(final BoolArgumentType object, final ByteBuf buf,
-              final ProtocolVersion protocolVersion) {
+                                final ProtocolVersion protocolVersion) {
 
           }
         });

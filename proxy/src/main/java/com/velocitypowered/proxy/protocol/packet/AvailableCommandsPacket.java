@@ -237,7 +237,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     private boolean validated;
 
     private WireNode(final int idx, final byte flags, final int[] children, final int redirectTo,
-        @Nullable final ArgumentBuilder<CommandSource, ?> args) {
+                     @Nullable final ArgumentBuilder<CommandSource, ?> args) {
       this.idx = idx;
       this.flags = flags;
       this.children = children;
@@ -354,7 +354,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(final CommandContext<CommandSource> context,
-        final SuggestionsBuilder builder) {
+                                                         final SuggestionsBuilder builder) {
       return builder.buildFuture();
     }
   }

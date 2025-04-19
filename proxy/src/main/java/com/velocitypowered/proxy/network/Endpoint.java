@@ -24,10 +24,21 @@ import io.netty.channel.Channel;
 /**
  * Represents a listener endpoint.
  */
-public record Endpoint(Channel channel, ListenerType type) {
+public final class Endpoint {
+
+  private final Channel channel;
+  private final ListenerType type;
 
   public Endpoint(final Channel channel, final ListenerType type) {
     this.channel = Preconditions.checkNotNull(channel, "channel");
     this.type = Preconditions.checkNotNull(type, "type");
+  }
+
+  public Channel getChannel() {
+    return channel;
+  }
+
+  public ListenerType getType() {
+    return type;
   }
 }

@@ -269,8 +269,8 @@ max-packets-per-second = 4096
 
 # Defines the total size in bytes of packet data a client can send the proxy per second.
 # Useful for preventing large or excessive packet streams that may degrade performance.
-# Default is 33554432 bytes (32 MB or 1 << 25).
-max-packet-data-per-second = 33554432
+# Default is 134217728 bytes (128 MB or 1 << 27).
+max-packet-data-per-second = 134217728
 
 # How many channels a player can (un)register.
 channel-register-limit = 1024

@@ -89,7 +89,7 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
 
   @Override
   public void sendLoginPluginMessage(final ChannelIdentifier identifier, final byte[] contents,
-      final MessageConsumer consumer) {
+                                     final MessageConsumer consumer) {
     if (identifier == null) {
       throw new NullPointerException("identifier");
     }

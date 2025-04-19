@@ -35,7 +35,7 @@ public final class ServerPing {
   private final @Nullable ModInfo modinfo;
 
   public ServerPing(final Version version, @Nullable final Players players,
-      final net.kyori.adventure.text.Component description, @Nullable final Favicon favicon) {
+                    final net.kyori.adventure.text.Component description, @Nullable final Favicon favicon) {
     this(version, players, description, favicon, ModInfo.DEFAULT);
   }
 
@@ -49,8 +49,8 @@ public final class ServerPing {
    * @param modinfo the mods this server runs
    */
   public ServerPing(final Version version, @Nullable final Players players,
-      final net.kyori.adventure.text.Component description, @Nullable final Favicon favicon,
-      @Nullable final ModInfo modinfo) {
+                    final net.kyori.adventure.text.Component description, @Nullable final Favicon favicon,
+                    @Nullable final ModInfo modinfo) {
     this.version = Preconditions.checkNotNull(version, "version");
     this.players = players;
     this.description = Preconditions.checkNotNull(description, "description");

@@ -55,8 +55,7 @@ public class PlayerResourcePackStatusEvent {
   /**
    * Instantiates this event.
    */
-  public PlayerResourcePackStatusEvent(
-          final Player player, final UUID packId, final Status status, final ResourcePackInfo packInfo) {
+  public PlayerResourcePackStatusEvent(final Player player, final UUID packId, final Status status, final ResourcePackInfo packInfo) {
     this.player = Preconditions.checkNotNull(player, "player");
     this.packId = packId == null ? packInfo == null ? null : packInfo.getId() : packId;
     this.status = Preconditions.checkNotNull(status, "status");

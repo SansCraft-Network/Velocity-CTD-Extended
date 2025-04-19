@@ -75,7 +75,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
 
   @Override
   public void sendMessage(@NonNull final Identity identity, @NonNull final Component message,
-      @NonNull final MessageType messageType) {
+                          @NonNull final MessageType messageType) {
     componentLogger.info(message);
   }
 

@@ -80,10 +80,8 @@ import io.netty.util.ReferenceCountUtil;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -105,7 +103,6 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
   private final ConnectedPlayer player;
   private boolean spawned = false;
   private final List<UUID> serverBossBars = new ArrayList<>();
-  private final Set<String> serverObjectives = new HashSet<>();
   private final Queue<PluginMessagePacket> loginPluginMessages = new ConcurrentLinkedQueue<>();
   private final VelocityServer server;
   private @Nullable TabCompleteRequestPacket outstandingTabComplete;

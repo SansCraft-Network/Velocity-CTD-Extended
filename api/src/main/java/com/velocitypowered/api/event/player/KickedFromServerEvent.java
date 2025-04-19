@@ -44,8 +44,8 @@ public final class KickedFromServerEvent implements
    * @param result the initial result
    */
   public KickedFromServerEvent(final Player player, final RegisteredServer server,
-      @Nullable final Component originalReason,
-      final boolean duringServerConnect, final ServerKickResult result) {
+                               @Nullable final Component originalReason,
+                               final boolean duringServerConnect, final ServerKickResult result) {
     this.player = Preconditions.checkNotNull(player, "player");
     this.server = Preconditions.checkNotNull(server, "server");
     this.originalReason = originalReason;

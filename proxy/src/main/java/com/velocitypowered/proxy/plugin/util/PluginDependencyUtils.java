@@ -90,8 +90,8 @@ public final class PluginDependencyUtils {
   }
 
   private static void visitNode(final Graph<PluginDescription> dependencyGraph, final PluginDescription current,
-      final Map<PluginDescription, Mark> visited, final List<PluginDescription> sorted,
-      final Deque<PluginDescription> currentDependencyScanStack) {
+                                final Map<PluginDescription, Mark> visited, final List<PluginDescription> sorted,
+                                final Deque<PluginDescription> currentDependencyScanStack) {
     Mark mark = visited.getOrDefault(current, Mark.NOT_VISITED);
     if (mark == Mark.VISITED) {
       // Visited this node already, nothing to do.

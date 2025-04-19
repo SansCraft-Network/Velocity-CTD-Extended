@@ -40,8 +40,8 @@ public final class QueryResponse {
 
   @VisibleForTesting
   QueryResponse(final String hostname, final String gameVersion, final String map, final int currentPlayers,
-      final int maxPlayers, final String proxyHost, final int proxyPort, final ImmutableCollection<String> players,
-      final String proxyVersion, final ImmutableCollection<PluginInformation> plugins) {
+                final int maxPlayers, final String proxyHost, final int proxyPort, final ImmutableCollection<String> players,
+                final String proxyVersion, final ImmutableCollection<PluginInformation> plugins) {
     this.hostname = hostname;
     this.gameVersion = gameVersion;
     this.map = map;

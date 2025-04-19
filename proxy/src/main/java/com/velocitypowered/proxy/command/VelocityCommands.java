@@ -433,9 +433,8 @@ public final class VelocityCommands {
    * @param builder the builder passed to the {@code builder} callback
    * @return a future that resolves to the suggestions
    */
-  public static CompletableFuture<Suggestions> suggestProxy(
-      final VelocityServer server, final CommandContext<CommandSource> context, final SuggestionsBuilder builder
-  ) {
+  public static CompletableFuture<Suggestions> suggestProxy(final VelocityServer server, final CommandContext<CommandSource> context,
+                                                            final SuggestionsBuilder builder) {
     final String argument = context.getArguments().containsKey("proxy")
         ? context.getArgument("proxy", String.class)
         : "";
@@ -455,9 +454,8 @@ public final class VelocityCommands {
    * @param builder the builder passed to the {@code builder} callback
    * @return a future that resolves to the suggestions
    */
-  public static CompletableFuture<Suggestions> suggestPlayer(
-      final VelocityServer server, final CommandContext<CommandSource> ctx, final SuggestionsBuilder builder,
-      final boolean includeRemote) {
+  public static CompletableFuture<Suggestions> suggestPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx,
+                                                             final SuggestionsBuilder builder, final boolean includeRemote) {
     final String argument = ctx.getArguments().containsKey("player")
         ? ctx.getArgument("player", String.class)
         : "";

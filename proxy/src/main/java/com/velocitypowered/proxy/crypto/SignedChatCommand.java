@@ -47,9 +47,9 @@ public class SignedChatCommand implements KeySigned {
    * Create a signed command from data.
    */
   public SignedChatCommand(final String command, final PublicKey signer, final UUID sender,
-      final Instant expiry, final Map<String, byte[]> signature, final byte[] salt,
-      final boolean isPreviewSigned, final SignaturePair[] previousSignatures,
-      @Nullable final SignaturePair lastSignature) {
+                           final Instant expiry, final Map<String, byte[]> signature, final byte[] salt,
+                           final boolean isPreviewSigned, final SignaturePair[] previousSignatures,
+                           @Nullable final SignaturePair lastSignature) {
     this.command = Preconditions.checkNotNull(command);
     this.signer = Preconditions.checkNotNull(signer);
     this.sender = Preconditions.checkNotNull(sender);

@@ -22,7 +22,7 @@ public class ServerPostConnectEvent {
   private final RegisteredServer previousServer;
 
   public ServerPostConnectEvent(final Player player,
-      @Nullable final RegisteredServer previousServer) {
+                                @Nullable final RegisteredServer previousServer) {
     this.player = Preconditions.checkNotNull(player, "player");
     this.previousServer = previousServer;
   }

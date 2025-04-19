@@ -32,10 +32,7 @@ public class ServerResourcePackSendEvent implements ResultedEvent<ResultedEvent.
    * @param receivedResourcePack The resource pack the server sent.
    * @param serverConnection The connection this occurred on.
    */
-  public ServerResourcePackSendEvent(
-      final ResourcePackInfo receivedResourcePack,
-      final ServerConnection serverConnection
-  ) {
+  public ServerResourcePackSendEvent(final ResourcePackInfo receivedResourcePack, final ServerConnection serverConnection) {
     this.result = ResultedEvent.GenericResult.allowed();
     this.receivedResourcePack = receivedResourcePack;
     this.serverConnection = serverConnection;

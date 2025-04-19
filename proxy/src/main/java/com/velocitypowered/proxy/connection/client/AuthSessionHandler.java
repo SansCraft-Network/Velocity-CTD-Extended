@@ -97,17 +97,17 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     // Make sure the player is on the minimum version set in configuration or higher
     if (!versionCheck(mcConnection)) {
       if (server.getConfiguration().isLogOfflineConnections()
-                  || (!server.getConfiguration().isLogMinimumVersion())) {
+              || (!server.getConfiguration().isLogMinimumVersion())) {
         return;
       }
 
       final String discMessage = String.format("[initial connection] %s (%s) has disconnected: ",
-              finalProfile.getName(),
-              mcConnection.getRemoteAddress().toString());
+          finalProfile.getName(),
+          mcConnection.getRemoteAddress().toString());
 
       componentLogger.info(Component.text(discMessage).append(
-              Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
-                      .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion()))));
+          Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
+              .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion()))));
       return;
     }
 
@@ -164,9 +164,9 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     // Compare the client's protocol version with the minimum required version
     if (ProtocolVersion.getVersionByName(clientProtocolVersion).lessThan(minimumProtocolVersion)
             || (ProtocolVersion.getVersionByName(clientProtocolVersion).greaterThan(maximumProtocolVersion))) {
-      // Disconnect the player with an error message if client version is too low
+      // Disconnect the player with an error message if their client version is too low
       this.inbound.disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
-              .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+          .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
       return false;
     }
 
@@ -227,9 +227,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           connectedPlayer.setServerLinks(this.server.getConfiguration().getServerLinks());
         }
       }
-      server.getEventManager()
-          .fire(new PostLoginEvent(connectedPlayer))
-          .thenCompose(ignored -> connectToInitialServer(connectedPlayer))
+      server.getEventManager().fire(new PostLoginEvent(connectedPlayer)).thenCompose(ignored -> connectToInitialServer(connectedPlayer))
           .exceptionally((ex) -> {
             logger.error("Exception while connecting {} to initial server", connectedPlayer, ex);
             return null;
@@ -293,8 +291,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
         if (inbound.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
           loginState = State.ACKNOWLEDGED;
           mcConnection.setActiveSessionHandler(StateRegistry.PLAY, new InitialConnectSessionHandler(player, server));
-          server.getEventManager().fire(new PostLoginEvent(player)).thenCompose((ignored)
-              -> connectToInitialServer(player)).exceptionally((ex) -> {
+          server.getEventManager().fire(new PostLoginEvent(player)).thenCompose((ignored) ->
+              connectToInitialServer(player)).exceptionally((ex) -> {
                 logger.error("Exception while connecting {} to initial server", player, ex);
                 return null;
               });

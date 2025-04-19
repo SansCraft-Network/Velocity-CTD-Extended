@@ -1295,7 +1295,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private int maxPacketsPerSecond = 1 << 12;
     @Expose
-    private int maxPacketDataPerSecond = 1 << 25;
+    private int maxPacketDataPerSecond = 1 << 27;
     @Expose
     private int channelRegisterLimit = 1024;
     @Expose
@@ -1343,7 +1343,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10);
         this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 0);
         this.maxPacketsPerSecond = config.getIntOrElse("max-packets-per-second", 1 << 12);
-        this.maxPacketDataPerSecond = config.getIntOrElse("max-packet-data-per-second", 1 << 25);
+        this.maxPacketDataPerSecond = config.getIntOrElse("max-packet-data-per-second", 1 << 27);
         this.channelRegisterLimit = config.getIntOrElse("channel-register-limit", 1024);
         this.allowIllegalCharactersInChat = config.getOrElse("allow-illegal-characters-in-chat", false);
         this.serverBrand = config.getOrElse("server-brand", "{backend-brand} ({proxy-brand})");

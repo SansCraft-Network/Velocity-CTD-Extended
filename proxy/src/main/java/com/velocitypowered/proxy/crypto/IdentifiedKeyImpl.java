@@ -42,7 +42,7 @@ public class IdentifiedKeyImpl implements IdentifiedKey {
   private @MonotonicNonNull UUID holder;
 
   public IdentifiedKeyImpl(final Revision revision, final byte[] keyBits, final long expiry,
-      final byte[] signature) {
+                           final byte[] signature) {
     this(revision, EncryptionUtils.parseRsaPublicKey(keyBits),
         Instant.ofEpochMilli(expiry), signature);
   }
@@ -50,8 +50,8 @@ public class IdentifiedKeyImpl implements IdentifiedKey {
   /**
    * Creates an Identified key from data.
    */
-  public IdentifiedKeyImpl(
-      final Revision revision, final PublicKey publicKey, final Instant expiryTemporal, final byte[] signature) {
+  public IdentifiedKeyImpl(final Revision revision, final PublicKey publicKey,
+                           final Instant expiryTemporal, final byte[] signature) {
     this.revision = revision;
     this.publicKey = publicKey;
     this.expiryTemporal = expiryTemporal;

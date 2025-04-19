@@ -42,7 +42,7 @@ public class KnownPacksPacket implements MinecraftPacket {
 
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     final int packCount = ProtocolUtils.readVarInt(buf);
     if (packCount > MAX_LENGTH_PACKS) {
       throw TOO_MANY_PACKS;
@@ -59,7 +59,7 @@ public class KnownPacksPacket implements MinecraftPacket {
 
   @Override
   public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, packs.length);
 
     for (KnownPack pack : packs) {

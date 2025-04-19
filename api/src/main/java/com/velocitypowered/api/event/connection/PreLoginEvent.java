@@ -118,7 +118,7 @@ public final class PreLoginEvent implements ResultedEvent<PreLoginEvent.PreLogin
     private final net.kyori.adventure.text.Component reason;
 
     private PreLoginComponentResult(final Result result,
-        final net.kyori.adventure.text.@Nullable Component reason) {
+                                    final net.kyori.adventure.text.@Nullable Component reason) {
       this.result = result;
       this.reason = reason;
     }

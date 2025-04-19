@@ -211,14 +211,14 @@ public final class ConnectionManager {
     Collection<Endpoint> endpoints = this.endpoints.removeAll(oldBind);
     Preconditions.checkState(!endpoints.isEmpty(), "Endpoint was not registered");
 
-    ListenerType type = endpoints.iterator().next().type();
+    ListenerType type = endpoints.iterator().next().getType();
 
     // Fire proxy close event to notify plugins of socket close. We block since plugins
     // should have a chance to be notified before the server stops accepting connections.
     server.getEventManager().fire(new ListenerCloseEvent(oldBind, type)).join();
 
     for (Endpoint endpoint : endpoints) {
-      Channel serverChannel = endpoint.channel();
+      Channel serverChannel = endpoint.getChannel();
       LOGGER.info("Closing endpoint {}", serverChannel.localAddress());
       serverChannel.close().syncUninterruptibly();
     }
@@ -234,7 +234,7 @@ public final class ConnectionManager {
         .entrySet()) {
       final InetSocketAddress address = entry.getKey();
       final Collection<Endpoint> endpoints = entry.getValue();
-      ListenerType type = endpoints.iterator().next().type();
+      ListenerType type = endpoints.iterator().next().getType();
 
       // Fire proxy close event to notify plugins of socket close. We block since plugins
       // should have a chance to be notified before the server stops accepting connections.
@@ -244,13 +244,13 @@ public final class ConnectionManager {
       for (Endpoint endpoint : endpoints) {
         if (interrupt) {
           try {
-            endpoint.channel().close().sync();
+            endpoint.getChannel().close().sync();
           } catch (final InterruptedException e) {
             LOGGER.info("Interrupted whilst closing endpoint", e);
             Thread.currentThread().interrupt();
           }
         } else {
-          endpoint.channel().close().syncUninterruptibly();
+          endpoint.getChannel().close().syncUninterruptibly();
         }
       }
     }

@@ -39,7 +39,7 @@ public final class GameProfileRequestEvent {
    * @param onlineMode whether the user connected in online or offline mode
    */
   public GameProfileRequestEvent(final InboundConnection connection, final GameProfile originalProfile,
-      final boolean onlineMode) {
+                                 final boolean onlineMode) {
     this.connection = Preconditions.checkNotNull(connection, "connection");
     this.originalProfile = Preconditions.checkNotNull(originalProfile, "originalProfile");
     this.username = originalProfile.getName();

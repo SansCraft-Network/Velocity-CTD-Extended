@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.nbt.BinaryTag;
@@ -732,7 +731,7 @@ public enum ProtocolUtils {
   public static void writePlayerKey(final ByteBuf buf, final IdentifiedKey playerKey) {
     buf.writeLong(playerKey.getExpiryTemporal().toEpochMilli());
     ProtocolUtils.writeByteArray(buf, playerKey.getSignedPublicKey().getEncoded());
-    ProtocolUtils.writeByteArray(buf, Objects.requireNonNull(playerKey.getSignature()));
+    ProtocolUtils.writeByteArray(buf, playerKey.getSignature());
   }
 
   /**

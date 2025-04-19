@@ -41,7 +41,7 @@ public final class MinecraftVarintLengthEncoder extends MessageToMessageEncoder<
 
   @Override
   protected void encode(final ChannelHandlerContext ctx, final ByteBuf buf,
-      final List<Object> list) throws Exception {
+                        final List<Object> list) throws Exception {
     final int length = buf.readableBytes();
     final int varintLength = ProtocolUtils.varIntBytes(length);
 

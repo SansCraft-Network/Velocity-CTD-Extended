@@ -122,8 +122,8 @@ public enum LegacyForgeHandshakeBackendPhase implements BackendConnectionPhase {
 
   @Override
   public final boolean handle(final VelocityServerConnection serverConnection,
-      final ConnectedPlayer player,
-      final PluginMessagePacket message) {
+                              final ConnectedPlayer player,
+                              final PluginMessagePacket message) {
     if (message.getChannel().equals(LegacyForgeConstants.FORGE_LEGACY_HANDSHAKE_CHANNEL)) {
       // Get the phase and check if we need to start the next phase.
       LegacyForgeHandshakeBackendPhase newPhase = getNewPhase(serverConnection, message);
@@ -147,7 +147,7 @@ public enum LegacyForgeHandshakeBackendPhase implements BackendConnectionPhase {
 
   @Override
   public void onDepartForNewServer(final VelocityServerConnection serverConnection,
-      final ConnectedPlayer player) {
+                                   final ConnectedPlayer player) {
     // If the server we are departing is modded, we must always reset the client's handshake.
     player.getPhase().resetConnectionPhase(player);
   }
@@ -177,7 +177,7 @@ public enum LegacyForgeHandshakeBackendPhase implements BackendConnectionPhase {
    * @return The phase to transition to, which may be the same as before.
    */
   private LegacyForgeHandshakeBackendPhase getNewPhase(final VelocityServerConnection serverConnection,
-      final PluginMessagePacket packet) {
+                                                       final PluginMessagePacket packet) {
     if (packetToAdvanceOn != null
         && LegacyForgeUtil.getHandshakePacketDiscriminator(packet) == packetToAdvanceOn) {
       LegacyForgeHandshakeBackendPhase phaseToTransitionTo = nextPhase();

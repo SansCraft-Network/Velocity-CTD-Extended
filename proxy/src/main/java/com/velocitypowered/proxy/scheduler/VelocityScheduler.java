@@ -223,7 +223,7 @@ public class VelocityScheduler implements Scheduler {
     private volatile @Nullable Thread currentTaskThread;
 
     private VelocityTask(final PluginContainer container, final Runnable runnable,
-        final Consumer<ScheduledTask> consumer, final long delay, final long repeat) {
+                         final Consumer<ScheduledTask> consumer, final long delay, final long repeat) {
       this.container = container;
       this.runnable = runnable;
       this.consumer = consumer;

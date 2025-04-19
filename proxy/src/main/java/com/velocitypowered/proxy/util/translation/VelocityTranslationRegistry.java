@@ -121,10 +121,9 @@ public final class VelocityTranslationRegistry implements TranslationRegistry {
     }
 
     @Override
-    public Tag resolve(
-            final @NotNull String name,
-            final @NotNull ArgumentQueue arguments,
-            final @NotNull Context ctx
+    public Tag resolve(final @NotNull String name,
+                       final @NotNull ArgumentQueue arguments,
+                       final @NotNull Context ctx
     ) throws ParsingException {
       final int index = arguments.popOr("No argument number provided")
               .asInt().orElseThrow(() -> ctx.newException("Invalid argument number", arguments));

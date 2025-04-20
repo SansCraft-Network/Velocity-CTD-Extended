@@ -45,6 +45,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -1104,10 +1105,10 @@ public final class VelocityConfiguration implements ProxyConfig {
         Map<String, List<String>> forcedHosts = new HashMap<>();
         for (UnmodifiableConfig.Entry entry : config.entrySet()) {
           if (entry.getValue() instanceof String) {
-            forcedHosts.put(entry.getKey(),
+            forcedHosts.put(entry.getKey().toLowerCase(Locale.ROOT),
                 ImmutableList.of(entry.getValue()));
           } else if (entry.getValue() instanceof List) {
-            forcedHosts.put(entry.getKey(),
+            forcedHosts.put(entry.getKey().toLowerCase(Locale.ROOT),
                 ImmutableList.copyOf((List<String>) entry.getValue()));
           } else {
             throw new IllegalStateException(

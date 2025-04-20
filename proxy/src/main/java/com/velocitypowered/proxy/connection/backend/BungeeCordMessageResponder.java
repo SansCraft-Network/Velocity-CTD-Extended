@@ -373,7 +373,7 @@ public class BungeeCordMessageResponder {
   }
 
   private void processMessage0(final ByteBufDataInput in,
-      final ComponentSerializer<Component, ?, String> serializer) {
+                               final ComponentSerializer<Component, ?, String> serializer) {
     String target = in.readUTF();
     String message = in.readUTF();
 

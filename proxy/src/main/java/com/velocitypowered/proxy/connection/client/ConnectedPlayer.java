@@ -974,6 +974,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         continue;
       }
 
+      attemptedServers.add(serverName);
       if (selectedServer.isEmpty()) {
         if (server.getConfiguration().getDynamicFallbackFilter().equalsIgnoreCase("FIRST_AVAILABLE")) {
           return Optional.of(registeredServer);
@@ -990,7 +991,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       }
     }
 
-    selectedServer.ifPresent(registeredServer -> attemptedServers.add(registeredServer.getServerInfo().getName()));
     return selectedServer;
   }
 

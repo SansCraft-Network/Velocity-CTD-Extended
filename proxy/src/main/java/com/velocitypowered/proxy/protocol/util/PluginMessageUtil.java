@@ -204,7 +204,7 @@ public final class PluginMessageUtil {
         .replaceAll("\\{proxy-version}", version.getVersion())
         .replaceAll("\\{proxy-vendor}", version.getVendor())
         .replaceAll("\\{server-connected}", connectedServer)
-        + "§r";
+        + "§r"; // Ensures brand coloration remains within bounds
 
     ByteBuf rewrittenBuf = Unpooled.buffer();
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {

@@ -203,7 +203,8 @@ public final class PluginMessageUtil {
         .replaceAll("\\{proxy-brand-custom}", proxyBrandCustom)
         .replaceAll("\\{proxy-version}", version.getVersion())
         .replaceAll("\\{proxy-vendor}", version.getVendor())
-        .replaceAll("\\{server-connected}", connectedServer);
+        .replaceAll("\\{server-connected}", connectedServer)
+        + "§r";
 
     ByteBuf rewrittenBuf = Unpooled.buffer();
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {

@@ -976,6 +976,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
       if (selectedServer.isEmpty()) {
         if (server.getConfiguration().getDynamicFallbackFilter().equalsIgnoreCase("FIRST_AVAILABLE")) {
+          attemptedServers.add(registeredServer.getServerInfo().getName());
           return Optional.of(registeredServer);
         }
         selectedServer = Optional.of(registeredServer);

@@ -20,32 +20,25 @@ package com.velocitypowered.proxy.network;
 import com.velocitypowered.proxy.util.concurrent.VelocityNettyThreadFactory;
 import io.netty.channel.ChannelFactory;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.IoHandlerFactory;
-import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollDatagramChannel;
-import io.netty.channel.epoll.EpollIoHandler;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.kqueue.KQueue;
 import io.netty.channel.kqueue.KQueueDatagramChannel;
-import io.netty.channel.kqueue.KQueueIoHandler;
+import io.netty.channel.kqueue.KQueueEventLoopGroup;
 import io.netty.channel.kqueue.KQueueServerSocketChannel;
 import io.netty.channel.kqueue.KQueueSocketChannel;
-import io.netty.channel.nio.NioIoHandler;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.channel.uring.IoUring;
-import io.netty.channel.uring.IoUringDatagramChannel;
-import io.netty.channel.uring.IoUringIoHandler;
-import io.netty.channel.uring.IoUringServerSocketChannel;
-import io.netty.channel.uring.IoUringSocketChannel;
 import java.util.concurrent.ThreadFactory;
-import java.util.function.Supplier;
+import java.util.function.BiFunction;
 
 /**
  * Lists the supported transports for Velocity.
@@ -54,36 +47,32 @@ public enum TransportType {
   NIO("NIO", NioServerSocketChannel::new,
       NioSocketChannel::new,
       NioDatagramChannel::new,
-      NioIoHandler::newFactory),
+      (name, type) -> new NioEventLoopGroup(0, createThreadFactory(name, type))),
   EPOLL("epoll", EpollServerSocketChannel::new,
       EpollSocketChannel::new,
       EpollDatagramChannel::new,
-      EpollIoHandler::newFactory),
+      (name, type) -> new EpollEventLoopGroup(0, createThreadFactory(name, type))),
   KQUEUE("kqueue", KQueueServerSocketChannel::new,
       KQueueSocketChannel::new,
       KQueueDatagramChannel::new,
-      KQueueIoHandler::newFactory),
-  IO_URING("io_uring", IoUringServerSocketChannel::new,
-      IoUringSocketChannel::new,
-      IoUringDatagramChannel::new,
-      IoUringIoHandler::newFactory);
+      (name, type) -> new KQueueEventLoopGroup(0, createThreadFactory(name, type)));
 
   final String name;
   final ChannelFactory<? extends ServerSocketChannel> serverSocketChannelFactory;
   final ChannelFactory<? extends SocketChannel> socketChannelFactory;
   final ChannelFactory<? extends DatagramChannel> datagramChannelFactory;
-  final Supplier<IoHandlerFactory> ioHandlerFactorySupplier;
+  final BiFunction<String, Type, EventLoopGroup> eventLoopGroupFactory;
 
   TransportType(final String name,
       final ChannelFactory<? extends ServerSocketChannel> serverSocketChannelFactory,
       final ChannelFactory<? extends SocketChannel> socketChannelFactory,
       final ChannelFactory<? extends DatagramChannel> datagramChannelFactory,
-      final Supplier<IoHandlerFactory> ioHandlerFactorySupplier) {
+      final BiFunction<String, Type, EventLoopGroup> eventLoopGroupFactory) {
     this.name = name;
     this.serverSocketChannelFactory = serverSocketChannelFactory;
     this.socketChannelFactory = socketChannelFactory;
     this.datagramChannelFactory = datagramChannelFactory;
-    this.ioHandlerFactorySupplier = ioHandlerFactorySupplier;
+    this.eventLoopGroupFactory = eventLoopGroupFactory;
   }
 
   @Override
@@ -98,8 +87,7 @@ public enum TransportType {
    * @return the event loop group
    */
   public EventLoopGroup createEventLoopGroup(final Type type) {
-    return new MultiThreadIoEventLoopGroup(
-        0, createThreadFactory(this.name, type), this.ioHandlerFactorySupplier.get());
+    return this.eventLoopGroupFactory.apply(this.name, type);
   }
 
   private static ThreadFactory createThreadFactory(final String name, final Type type) {
@@ -114,10 +102,6 @@ public enum TransportType {
   public static TransportType bestType() {
     if (Boolean.getBoolean("velocity.disable-native-transport")) {
       return NIO;
-    }
-
-    if (IoUring.isAvailable() && Boolean.getBoolean("velocity.enable-iouring-transport")) {
-      return IO_URING;
     }
 
     if (Epoll.isAvailable()) {

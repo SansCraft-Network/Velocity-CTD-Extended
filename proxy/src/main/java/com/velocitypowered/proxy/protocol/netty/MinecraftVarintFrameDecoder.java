@@ -57,7 +57,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
    *
    * @param handshakeState Whether this decoder is being used in the handshake state
    */
-  public MinecraftVarintFrameDecoder(boolean handshakeState) {
+  public MinecraftVarintFrameDecoder(final boolean handshakeState) {
     this.handshakeState = handshakeState;
     if (handshakeState) {
       this.registry = StateRegistry.HANDSHAKE.getProtocolRegistry(ProtocolUtils.Direction.SERVERBOUND, ProtocolVersion.MINIMUM_VERSION);

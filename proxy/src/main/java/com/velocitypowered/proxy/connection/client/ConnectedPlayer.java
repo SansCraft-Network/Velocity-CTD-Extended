@@ -93,7 +93,6 @@ import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
-import com.velocitypowered.proxy.queue.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.tablist.InternalTabList;
 import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
@@ -961,11 +960,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       if (registeredServer == null) {
         logger.error(Component.text("Unable to read your velocity.toml fallback servers. Users are unable to connect."));
         return Optional.empty();
-      }
-
-      ServerQueueStatus queue = server.getQueueManager().getQueue(serverName);
-      if (queue.getStatus() == ServerStatus.OFFLINE) {
-        continue;
       }
 
       if ((connectedServer != null && hasSameName(connectedServer.getServer(), serverName))

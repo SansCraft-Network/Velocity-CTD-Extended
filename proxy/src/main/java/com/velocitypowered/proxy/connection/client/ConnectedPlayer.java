@@ -964,7 +964,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       }
 
       ServerQueueStatus queue = server.getQueueManager().getQueue(serverName);
-      if (queue.getStatus() != ServerStatus.ONLINE) {
+      if (queue.getStatus() == ServerStatus.OFFLINE) {
         continue;
       }
 

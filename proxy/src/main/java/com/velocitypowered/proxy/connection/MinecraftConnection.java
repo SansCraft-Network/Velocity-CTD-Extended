@@ -390,7 +390,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
       minecraftDecoder.setState(state);
     }
     final MinecraftVarintFrameDecoder varintDecoder = this.channel.pipeline()
-            .get(MinecraftVarintFrameDecoder.class);
+        .get(MinecraftVarintFrameDecoder.class);
     if (varintDecoder != null) {
       varintDecoder.setState(state);
     }

@@ -234,7 +234,6 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
 
     smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.PLAY);
     smc.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
-    smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.PLAY);
     //noinspection DataFlowIssue
     configHandler.handleBackendFinishUpdate(serverConn).thenRunAsync(() -> {
       smc.write(FinishedUpdatePacket.INSTANCE);

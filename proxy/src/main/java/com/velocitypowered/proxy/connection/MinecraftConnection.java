@@ -394,11 +394,6 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     if (minecraftDecoder != null) {
       minecraftDecoder.setState(state);
     }
-    final MinecraftVarintFrameDecoder varintDecoder = this.channel.pipeline()
-        .get(MinecraftVarintFrameDecoder.class);
-    if (varintDecoder != null) {
-      varintDecoder.setState(state);
-    }
 
     if (state == StateRegistry.CONFIG) {
       // Activate the play packet queue

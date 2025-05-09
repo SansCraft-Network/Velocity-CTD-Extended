@@ -232,6 +232,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     final ConnectedPlayer player = serverConn.getPlayer();
     final ClientConfigSessionHandler configHandler = (ClientConfigSessionHandler) player.getConnection().getActiveSessionHandler();
 
+    smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.PLAY);
     smc.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
     smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.PLAY);
     //noinspection DataFlowIssue

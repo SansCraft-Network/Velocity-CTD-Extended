@@ -150,6 +150,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     MinecraftConnection smc = serverConn.ensureConnected();
     smc.setAutoReading(false);
     // Even when not auto reading messages are still decoded. Decode them with the correct state
+    smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.CONFIG);
     smc.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.CONFIG);
     smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.CONFIG);
     serverConn.getPlayer().switchToConfigState();

@@ -378,6 +378,11 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     ensureInEventLoop();
 
     this.state = state;
+    final MinecraftVarintFrameDecoder frameDecoder = this.channel.pipeline()
+        .get(MinecraftVarintFrameDecoder.class);
+    if (frameDecoder != null) {
+      frameDecoder.setState(state);
+    }
     // If the connection is LEGACY (<1.6), the decoder and encoder are not set.
     final MinecraftEncoder minecraftEncoder = this.channel.pipeline()
         .get(MinecraftEncoder.class);

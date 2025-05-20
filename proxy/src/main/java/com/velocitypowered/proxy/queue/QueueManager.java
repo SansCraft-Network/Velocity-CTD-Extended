@@ -102,7 +102,7 @@ public abstract class QueueManager {
   public abstract boolean isMasterProxy();
 
   /**
-   * Handles starting the task that manages sending the actionbar
+   * Handles starting the task that manages "sending" the actionbar
    * messages to the players in the queues.
    */
   public void scheduleTickMessage() {

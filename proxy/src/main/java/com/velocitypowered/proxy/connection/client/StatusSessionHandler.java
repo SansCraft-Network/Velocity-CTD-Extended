@@ -123,7 +123,15 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
   }
 
   private enum State {
+
+    /**
+     * Indicates that the server is waiting for a status request or legacy ping from the client.
+     */
     AWAITING_REQUEST,
+
+    /**
+     * Indicates that a status or legacy ping request has been received from the client.
+     */
     RECEIVED_REQUEST
   }
 }

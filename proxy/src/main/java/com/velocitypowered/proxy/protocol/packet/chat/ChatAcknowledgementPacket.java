@@ -40,7 +40,7 @@ public class ChatAcknowledgementPacket implements MinecraftPacket {
 
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     offset = ProtocolUtils.readVarInt(buf);
   }
 

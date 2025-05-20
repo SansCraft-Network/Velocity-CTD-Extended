@@ -45,7 +45,7 @@ public class EventTest {
   private final VelocityEventManager eventManager = new VelocityEventManager(pluginManager);
 
   @AfterAll
-  void shutdown() throws Exception {
+  void shutdown() {
     pluginManager.shutdown();
   }
 

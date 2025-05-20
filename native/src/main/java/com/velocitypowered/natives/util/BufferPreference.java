@@ -21,18 +21,22 @@ package com.velocitypowered.natives.util;
  * Enumerates Netty buffer preferences and requirements for use with Netty.
  */
 public enum BufferPreference {
+
   /**
    * A heap buffer is required.
    */
   HEAP_REQUIRED,
+
   /**
    * A heap buffer is preferred (but not required).
    */
   HEAP_PREFERRED,
+
   /**
    * A direct buffer is preferred (but not required).
    */
   DIRECT_PREFERRED,
+
   /**
    * A direct buffer is required.
    */

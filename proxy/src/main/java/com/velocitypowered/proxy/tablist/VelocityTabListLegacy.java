@@ -35,7 +35,7 @@ import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
- * Exposes the legacy 1.7 tab list to plugins.
+ * Exposes the legacy 1.7 tab list to "plugins".
  */
 public class VelocityTabListLegacy extends KeyedVelocityTabList {
 
@@ -88,7 +88,7 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
     Item item = packet.getItems().get(0); // Only one item per packet in 1.7
 
     switch (packet.getAction()) {
-      case LegacyPlayerListItemPacket.ADD_PLAYER:
+      case LegacyPlayerListItemPacket.ADD_PLAYER -> {
         if (nameMapping.containsKey(item.getName())) { // ADD_PLAYER also used for updating ping
           KeyedVelocityTabListEntry entry = entries.get(nameMapping.get(item.getName()));
           if (entry != null) {
@@ -103,16 +103,16 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
               .latency(item.getLatency())
               .build());
         }
-        break;
-      case LegacyPlayerListItemPacket.REMOVE_PLAYER:
+      }
+      case LegacyPlayerListItemPacket.REMOVE_PLAYER -> {
         UUID removedUuid = nameMapping.remove(item.getName());
         if (removedUuid != null) {
           entries.remove(removedUuid);
         }
-        break;
-      default:
-        // For 1.7 there is only add and remove
-        break;
+      }
+      default -> {
+      }
+      // For 1.7 there is only add and remove
     }
   }
 
@@ -120,17 +120,14 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
   void updateEntry(final int action, final TabListEntry entry) {
     if (entries.containsKey(entry.getProfile().getId())) {
       switch (action) {
-        case LegacyPlayerListItemPacket.UPDATE_LATENCY:
         // Add here because we removed beforehand
-        case LegacyPlayerListItemPacket.UPDATE_DISPLAY_NAME:
-          connection
+        case LegacyPlayerListItemPacket.UPDATE_LATENCY, LegacyPlayerListItemPacket.UPDATE_DISPLAY_NAME -> connection
               .write(new LegacyPlayerListItemPacket(LegacyPlayerListItemPacket.ADD_PLAYER,
                   // ADD_PLAYER also updates ping
-                  Collections.singletonList(LegacyPlayerListItemPacket.Item.from(entry))));
-          break;
-        default:
-          // Can't do anything else
-          break;
+                  Collections.singletonList(Item.from(entry))));
+        default -> {
+        }
+        // Can't do anything else
       }
     }
   }

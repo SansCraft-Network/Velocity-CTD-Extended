@@ -266,6 +266,4 @@ public enum InformationUtils {
   private static final Gson GSON_WITHOUT_EXCLUDES = new GsonBuilder()
       .setPrettyPrinting()
       .create();
-
-
 }

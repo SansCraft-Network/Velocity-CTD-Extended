@@ -28,6 +28,12 @@ public final class ProxyPingEvent implements ResultedEvent<ResultedEvent.Generic
   private ServerPing ping;
   private GenericResult result = GenericResult.allowed();
 
+  /**
+   * Constructs a new {@code ProxyPingEvent}.
+   *
+   * @param connection the incoming connection requesting server info
+   * @param ping the server ping response to send
+   */
   public ProxyPingEvent(final InboundConnection connection, final ServerPing ping) {
     this.connection = Preconditions.checkNotNull(connection, "connection");
     this.ping = Preconditions.checkNotNull(ping, "ping");
@@ -43,7 +49,7 @@ public final class ProxyPingEvent implements ResultedEvent<ResultedEvent.Generic
   }
 
   /**
-   * Get the ServerPing to send to the connection.
+   * Get the ServerPing to "send" to the connection.
    *
    * @return the ServerPing to send
    */

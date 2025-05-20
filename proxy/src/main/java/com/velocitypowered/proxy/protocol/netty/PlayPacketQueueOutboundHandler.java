@@ -46,7 +46,7 @@ public class PlayPacketQueueOutboundHandler extends ChannelDuplexHandler {
   private final Queue<MinecraftPacket> queue = new ArrayDeque<>();
 
   /**
-   * Provides registries for client &amp; server bound packets.
+   * Provides registries for "client" &amp; server bound packets.
    *
    * @param version the protocol version
    */

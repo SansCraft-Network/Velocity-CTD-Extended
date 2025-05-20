@@ -41,7 +41,7 @@ import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
- * Exposes the tab list to plugins.
+ * Exposes the tab list to "plugins".
  */
 public class KeyedVelocityTabList implements InternalTabList {
 
@@ -185,7 +185,7 @@ public class KeyedVelocityTabList implements InternalTabList {
       }
 
       switch (packet.getAction()) {
-        case LegacyPlayerListItemPacket.ADD_PLAYER: {
+        case LegacyPlayerListItemPacket.ADD_PLAYER -> {
           // ensure that name and properties are available
           String name = item.getName();
           List<GameProfile.Property> properties = item.getProperties();
@@ -194,42 +194,36 @@ public class KeyedVelocityTabList implements InternalTabList {
           }
 
           entries.putIfAbsent(item.getUuid(), (KeyedVelocityTabListEntry) TabListEntry.builder()
-              .tabList(this)
-              .profile(new GameProfile(uuid, name, properties))
-              .displayName(item.getDisplayName())
-              .latency(item.getLatency())
-              .chatSession(new RemoteChatSession(null, item.getPlayerKey()))
-              .gameMode(item.getGameMode())
-              .build());
-          break;
+                  .tabList(this)
+                  .profile(new GameProfile(uuid, name, properties))
+                  .displayName(item.getDisplayName())
+                  .latency(item.getLatency())
+                  .chatSession(new RemoteChatSession(null, item.getPlayerKey()))
+                  .gameMode(item.getGameMode())
+                  .build());
         }
-        case LegacyPlayerListItemPacket.REMOVE_PLAYER:
-          entries.remove(uuid);
-          break;
-        case LegacyPlayerListItemPacket.UPDATE_DISPLAY_NAME: {
+        case LegacyPlayerListItemPacket.REMOVE_PLAYER -> entries.remove(uuid);
+        case LegacyPlayerListItemPacket.UPDATE_DISPLAY_NAME -> {
           KeyedVelocityTabListEntry entry = entries.get(uuid);
           if (entry != null) {
             entry.setDisplayNameInternal(item.getDisplayName());
           }
-          break;
         }
-        case LegacyPlayerListItemPacket.UPDATE_LATENCY: {
+        case LegacyPlayerListItemPacket.UPDATE_LATENCY -> {
           KeyedVelocityTabListEntry entry = entries.get(uuid);
           if (entry != null) {
             entry.setLatencyInternal(item.getLatency());
           }
-          break;
         }
-        case LegacyPlayerListItemPacket.UPDATE_GAMEMODE: {
+        case LegacyPlayerListItemPacket.UPDATE_GAMEMODE -> {
           KeyedVelocityTabListEntry entry = entries.get(uuid);
           if (entry != null) {
             entry.setGameModeInternal(item.getGameMode());
           }
-          break;
         }
-        default:
-          // Nothing we can do here
-          break;
+        default -> {
+        }
+        // Nothing we can do here
       }
     }
   }

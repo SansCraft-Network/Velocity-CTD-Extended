@@ -392,8 +392,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       this.cm.queryBind(configuration.getBind().getHostString(), configuration.getQueryPort());
     }
 
-    final String defaultPackage = new String(
-        new byte[] { 'o', 'r', 'g', '.', 'b', 's', 't', 'a', 't', 's' });
+    final String defaultPackage = new String(new byte[] {'o', 'r', 'g', '.', 'b', 's', 't', 'a', 't', 's' });
     if (!MetricsBase.class.getPackage().getName().startsWith(defaultPackage)) {
       Metrics.VelocityMetrics.startMetrics(this, configuration.getMetrics());
     } else {
@@ -409,6 +408,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
   }
 
+  @SuppressWarnings("deprecation")
   private void registerTranslations(final boolean log) {
     final String defaultFile = "messages.properties";
     final TranslationRegistry translationRegistry = new VelocityTranslationRegistry(TranslationRegistry.create(this.translationRegistryKey));
@@ -424,7 +424,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         try (Stream<Path> files = Files.walk(path)) {
           if (!Files.exists(langPath)) {
             Files.createDirectory(langPath);
-
             files.filter(Files::isRegularFile).forEach(file -> {
               try {
                 final Path langFile = langPath.resolve(file.getFileName().toString());

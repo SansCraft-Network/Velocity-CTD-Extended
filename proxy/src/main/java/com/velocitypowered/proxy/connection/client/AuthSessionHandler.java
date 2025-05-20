@@ -96,8 +96,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
     // Make sure the player is on the minimum version set in configuration or higher
     if (!versionCheck(mcConnection)) {
-      if (server.getConfiguration().isLogOfflineConnections()
-              || (!server.getConfiguration().isLogMinimumVersion())) {
+      if (server.getConfiguration().isLogOfflineConnections() || (!server.getConfiguration().isLogMinimumVersion())) {
         return;
       }
 
@@ -337,6 +336,20 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   }
 
   enum State {
-    START, SUCCESS_SENT, ACKNOWLEDGED
+
+    /**
+     * The initial state before a successful login has been sent.
+     */
+    START,
+
+    /**
+     * The server has sent the {@link ServerLoginSuccessPacket}, but the client has not acknowledged it yet.
+     */
+    SUCCESS_SENT,
+
+    /**
+     * The client has acknowledged the login, and the session is transitioning to the play or config state.
+     */
+    ACKNOWLEDGED
   }
 }

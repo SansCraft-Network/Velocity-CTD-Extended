@@ -39,11 +39,35 @@ public abstract class GenericTitlePacket implements MinecraftPacket {
    * updating timing information, or resetting and hiding titles.
    */
   public enum ActionType {
+
+    /**
+     * Sends a main title message to the player.
+     */
     SET_TITLE(0),
+
+    /**
+     * Sends a subtitle message displayed below the main title.
+     */
     SET_SUBTITLE(1),
+
+    /**
+     * Sends a message to the action bar (above the hotbar).
+     */
     SET_ACTION_BAR(2),
+
+    /**
+     * Updates the fade-in, stay, and fade-out timing for titles and subtitles.
+     */
     SET_TIMES(3),
+
+    /**
+     * Hides the currently displayed title and subtitle without resetting internal timings.
+     */
     HIDE(4),
+
+    /**
+     * Resets all title-related state, including currently displayed messages and configured timings.
+     */
     RESET(5);
 
     private final int action;
@@ -57,7 +81,6 @@ public abstract class GenericTitlePacket implements MinecraftPacket {
           ? action > 2 ? action - 1 : action : action;
     }
   }
-
 
   private ActionType action;
 

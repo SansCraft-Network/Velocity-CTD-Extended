@@ -122,12 +122,10 @@ public class VelocityEventManager implements EventManager {
    * Registers a new continuation adapter function.
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public <F> void registerHandlerAdapter(
-      final String name,
-      final Predicate<Method> filter,
-      final BiConsumer<Method, List<String>> validator,
-      final TypeToken<F> invokeFunctionType,
-      final Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder) {
+  public <F> void registerHandlerAdapter(final String name, final Predicate<Method> filter,
+                                         final BiConsumer<Method, List<String>> validator,
+                                         final TypeToken<F> invokeFunctionType,
+                                         final Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder) {
     handlerAdapters.add(new CustomHandlerAdapter(name, filter, validator,
         invokeFunctionType, handlerBuilder, methodHandlesLookup));
   }
@@ -161,6 +159,7 @@ public class VelocityEventManager implements EventManager {
   }
 
   enum AsyncType {
+
     /**
      * The event will never run async, everything is handled on the netty thread.
      */
@@ -256,8 +255,8 @@ public class VelocityEventManager implements EventManager {
     final @Nullable Class<?> continuationType;
 
     private MethodHandlerInfo(final Method method, final AsyncType asyncType,
-        final @Nullable Class<?> eventType, final short order, final @Nullable String errors,
-        final @Nullable Class<?> continuationType) {
+                              final @Nullable Class<?> eventType, final short order,
+                              final @Nullable String errors, final @Nullable Class<?> continuationType) {
       this.method = method;
       this.asyncType = asyncType;
       this.eventType = eventType;
@@ -268,7 +267,7 @@ public class VelocityEventManager implements EventManager {
   }
 
   private void collectMethods(final Class<?> targetClass,
-      final Map<String, MethodHandlerInfo> collected) {
+                              final Map<String, MethodHandlerInfo> collected) {
     for (final Method method : targetClass.getDeclaredMethods()) {
       final Subscribe subscribe = method.getAnnotation(Subscribe.class);
       if (subscribe == null) {
@@ -535,7 +534,7 @@ public class VelocityEventManager implements EventManager {
   }
 
   private <E> void fire(final @Nullable CompletableFuture<E> future,
-      final E event, final HandlersCache handlersCache) {
+                        final E event, final HandlersCache handlersCache) {
     final HandlerRegistration registration = handlersCache.handlers[0];
     if (registration.asyncType == AsyncType.ALWAYS) {
       registration.plugin.getExecutorService().execute(
@@ -610,13 +609,10 @@ public class VelocityEventManager implements EventManager {
     @SuppressWarnings({"FieldMayBeFinal"})
     private volatile boolean resumed = false;
 
-    private ContinuationTask(
-        final EventTask task,
-        final HandlerRegistration[] registrations,
-        final @Nullable CompletableFuture<E> future,
-        final E event,
-        final int index,
-        final boolean currentlyAsync) {
+    private ContinuationTask(final EventTask task,
+                             final HandlerRegistration[] registrations,
+                             final @Nullable CompletableFuture<E> future,
+                             final E event, final int index, final boolean currentlyAsync) {
       this.task = task;
       this.registrations = registrations;
       this.future = future;
@@ -698,8 +694,7 @@ public class VelocityEventManager implements EventManager {
     }
   }
 
-  private static void logHandlerException(
-      final HandlerRegistration registration, final Throwable t) {
+  private static void logHandlerException(final HandlerRegistration registration, final Throwable t) {
     final PluginDescription pluginDescription = registration.plugin.getDescription();
     logger.error("Couldn't pass {} to {} {}", registration.eventType.getSimpleName(),
         pluginDescription.getId(), pluginDescription.getVersion().orElse(""), t);

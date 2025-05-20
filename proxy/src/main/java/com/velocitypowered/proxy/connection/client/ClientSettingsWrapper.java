@@ -46,6 +46,7 @@ public class ClientSettingsWrapper implements PlayerSettings {
     if (locale == null) {
       locale = Locale.forLanguageTag(settings.getLocale().replaceAll("_", "-"));
     }
+
     return locale;
   }
 
@@ -102,9 +103,11 @@ public class ClientSettingsWrapper implements PlayerSettings {
     if (this == o) {
       return true;
     }
+
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     ClientSettingsWrapper that = (ClientSettingsWrapper) o;
     return Objects.equals(settings, that.settings) && Objects.equals(parts, that.parts)
         && Objects.equals(locale, that.locale);

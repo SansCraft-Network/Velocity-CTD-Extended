@@ -27,11 +27,9 @@ import io.netty.buffer.ByteBuf;
  */
 final class StringArgumentPropertySerializer implements ArgumentPropertySerializer<StringArgumentType> {
 
-  public static final ArgumentPropertySerializer<StringArgumentType> STRING =
-      new StringArgumentPropertySerializer();
+  public static final ArgumentPropertySerializer<StringArgumentType> STRING = new StringArgumentPropertySerializer();
 
   private StringArgumentPropertySerializer() {
-
   }
 
   @Override
@@ -48,17 +46,10 @@ final class StringArgumentPropertySerializer implements ArgumentPropertySerializ
   @Override
   public void serialize(final StringArgumentType object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
     switch (object.getType()) {
-      case SINGLE_WORD:
-        ProtocolUtils.writeVarInt(buf, 0);
-        break;
-      case QUOTABLE_PHRASE:
-        ProtocolUtils.writeVarInt(buf, 1);
-        break;
-      case GREEDY_PHRASE:
-        ProtocolUtils.writeVarInt(buf, 2);
-        break;
-      default:
-        throw new IllegalArgumentException("Invalid string argument type " + object.getType());
+      case SINGLE_WORD -> ProtocolUtils.writeVarInt(buf, 0);
+      case QUOTABLE_PHRASE -> ProtocolUtils.writeVarInt(buf, 1);
+      case GREEDY_PHRASE -> ProtocolUtils.writeVarInt(buf, 2);
+      default -> throw new IllegalArgumentException("Invalid string argument type " + object.getType());
     }
   }
 }

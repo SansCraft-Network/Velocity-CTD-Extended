@@ -83,6 +83,7 @@ public class VelocityCommandManager implements CommandManager {
    * Constructs a command manager.
    *
    * @param eventManager the event manager
+   * @param pluginManager the plugin manager
    */
   public VelocityCommandManager(final VelocityEventManager eventManager, final PluginManager pluginManager) {
     this.pluginManager = pluginManager;

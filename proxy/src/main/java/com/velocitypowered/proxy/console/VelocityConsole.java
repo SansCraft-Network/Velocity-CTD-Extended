@@ -52,6 +52,7 @@ import org.jline.reader.LineReaderBuilder;
  * Implements the Velocity console, including sending commands and being the recipient
  * of messages from plugins.
  */
+@SuppressWarnings("UnstableApiUsage")
 public final class VelocityConsole extends SimpleTerminalConsole implements ConsoleCommandSource {
 
   private static final Logger logger = LogManager.getLogger(VelocityConsole.class, new ParameterizedMessageFactory());
@@ -61,7 +62,6 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   private final VelocityServer server;
   private PermissionFunction permissionFunction = ALWAYS_TRUE;
 
-  @SuppressWarnings("UnstableApiUsage")
   private final @NotNull Pointers pointers = ConsoleCommandSource.super.pointers().toBuilder()
       .withDynamic(PermissionChecker.POINTER, this::getPermissionChecker)
       .withDynamic(Identity.LOCALE, () -> ClosestLocaleMatcher.INSTANCE

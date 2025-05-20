@@ -57,8 +57,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
    */
   public MinecraftVarintFrameDecoder(final ProtocolUtils.Direction direction) {
     this.direction = direction;
-    this.registry = StateRegistry.HANDSHAKE.getProtocolRegistry(
-        direction, ProtocolVersion.MINIMUM_VERSION);
+    this.registry = StateRegistry.HANDSHAKE.getProtocolRegistry(direction, ProtocolVersion.MINIMUM_VERSION);
     this.state = StateRegistry.HANDSHAKE;
   }
 

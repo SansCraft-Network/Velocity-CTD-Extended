@@ -75,10 +75,10 @@ public enum TransportType {
   final Supplier<IoHandlerFactory> ioHandlerFactorySupplier;
 
   TransportType(final String name,
-      final ChannelFactory<? extends ServerSocketChannel> serverSocketChannelFactory,
-      final ChannelFactory<? extends SocketChannel> socketChannelFactory,
-      final ChannelFactory<? extends DatagramChannel> datagramChannelFactory,
-      final Supplier<IoHandlerFactory> ioHandlerFactorySupplier) {
+                final ChannelFactory<? extends ServerSocketChannel> serverSocketChannelFactory,
+                final ChannelFactory<? extends SocketChannel> socketChannelFactory,
+                final ChannelFactory<? extends DatagramChannel> datagramChannelFactory,
+                final Supplier<IoHandlerFactory> ioHandlerFactorySupplier) {
     this.name = name;
     this.serverSocketChannelFactory = serverSocketChannelFactory;
     this.socketChannelFactory = socketChannelFactory;

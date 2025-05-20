@@ -191,10 +191,22 @@ public final class CommandExecuteEvent implements ResultedEvent<CommandResult> {
       this.command = command;
     }
 
+    /**
+     * Returns the command to be executed, if it was overridden.
+     *
+     * @return an {@link Optional} containing the new command string (without leading slash),
+     *         or empty if no override is present
+     */
     public Optional<String> getCommand() {
       return Optional.ofNullable(command);
     }
 
+    /**
+     * Indicates whether this command should be forwarded directly to the backend server
+     * instead of being processed by the proxy.
+     *
+     * @return {@code true} if the command should be forwarded to the server, {@code false} otherwise
+     */
     public boolean isForwardToServer() {
       return forward;
     }

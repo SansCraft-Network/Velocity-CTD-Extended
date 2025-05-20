@@ -90,39 +90,30 @@ public interface MinecraftSessionHandler {
   }
 
   default void handleGeneric(MinecraftPacket packet) {
-
   }
 
   default void handleUnknown(ByteBuf buf) {
-
   }
 
   default void connected() {
-
   }
 
   default void disconnected() {
-
   }
 
   default void activated() {
-
   }
 
   default void deactivated() {
-
   }
 
   default void exception(Throwable throwable) {
-
   }
 
   default void writabilityChanged() {
-
   }
 
   default void readCompleted() {
-
   }
 
   default boolean handle(AvailableCommandsPacket commands) {

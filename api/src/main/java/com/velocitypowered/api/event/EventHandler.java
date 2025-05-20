@@ -17,8 +17,22 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @FunctionalInterface
 public interface EventHandler<E> {
 
+  /**
+   * Executes this handler synchronously with the given event.
+   *
+   * @param event the event to handle
+   */
   void execute(E event);
 
+  /**
+   * Executes this handler asynchronously with the given event.
+   *
+   * <p>If asynchronous handling is not implemented, the event is executed synchronously
+   * and this method returns {@code null}.</p>
+   *
+   * @param event the event to handle
+   * @return an {@link EventTask} representing the async task, or {@code null} if not async
+   */
   default @Nullable EventTask executeAsync(E event) {
     execute(event);
     return null;

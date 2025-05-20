@@ -149,6 +149,8 @@ public interface Player extends
 
   /**
    * Returns the player's game profile.
+   *
+   * @return the player's profile
    */
   GameProfile getGameProfile();
 

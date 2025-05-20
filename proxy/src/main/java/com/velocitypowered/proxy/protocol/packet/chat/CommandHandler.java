@@ -64,8 +64,8 @@ public interface CommandHandler<T extends MinecraftPacket> {
   }
 
   default CompletableFuture<MinecraftPacket> runCommand(VelocityServer server,
-      ConnectedPlayer player, String command,
-      Function<Boolean, MinecraftPacket> hasRunPacketFunction) {
+                                                        ConnectedPlayer player, String command,
+                                                        Function<Boolean, MinecraftPacket> hasRunPacketFunction) {
     return server.getCommandManager().executeImmediatelyAsync(player, command)
         .thenApply(hasRunPacketFunction);
   }

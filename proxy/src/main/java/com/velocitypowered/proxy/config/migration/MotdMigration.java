@@ -39,8 +39,7 @@ public final class MotdMigration implements ConfigurationMigration {
     // JSON Format Migration
     if (oldMotd.strip().startsWith("{")) {
       migratedMotd = MiniMessage.miniMessage().serialize(
-                      GsonComponentSerializer.gson().deserialize(oldMotd))
-              .replace("\\", "");
+              GsonComponentSerializer.gson().deserialize(oldMotd)).replace("\\", "");
     } else {
       // Legacy '&' Format Migration
       migratedMotd = MiniMessage.miniMessage().serialize(

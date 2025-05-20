@@ -39,6 +39,12 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
   private final ConnectedPlayer player;
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@link SessionCommandHandler} for the specified player and server.
+   *
+   * @param player the connected player associated with this handler
+   * @param server the Velocity server instance
+   */
   public SessionCommandHandler(final ConnectedPlayer player, final VelocityServer server) {
     super(player, server);
     this.player = player;

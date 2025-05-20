@@ -29,7 +29,6 @@ final class IntegerArgumentPropertySerializer implements ArgumentPropertySeriali
   static final byte HAS_MAXIMUM = 0x02;
 
   private IntegerArgumentPropertySerializer() {
-
   }
 
   @Override

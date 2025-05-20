@@ -114,10 +114,9 @@ public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandl
   }
 
   /**
-   * Processes a client response to a sent resource-pack.
+   * Processes a client response to a "sent" resource-pack.
    *
    * <p>Cases in which no action will be taken:
-   * <ul>
    *
    * <li><b>DOWNLOADED</b>
    * In this case, the resource pack is downloaded and will be applied to the client;
@@ -136,12 +135,10 @@ public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandl
    * Only in modern versions, as the resource pack has already been rejected,
    * there is nothing to do, if the resource pack is required,
    * the client will be kicked out of the server.</p>
-   * </ul>
    *
    * @param bundle the resource pack response bundle
    */
-  public abstract boolean onResourcePackResponse(
-          @NotNull ResourcePackResponseBundle bundle);
+  public abstract boolean onResourcePackResponse(@NotNull ResourcePackResponseBundle bundle);
 
   protected boolean handleResponseResult(final @Nullable ResourcePackInfo queued,
                                          final @NotNull ResourcePackResponseBundle bundle) {

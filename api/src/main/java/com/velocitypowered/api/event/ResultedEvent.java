@@ -70,10 +70,20 @@ public interface ResultedEvent<R extends ResultedEvent.Result> {
       return status ? "allowed" : "denied";
     }
 
+    /**
+     * Returns a result indicating the event is allowed to proceed.
+     *
+     * @return an allowed {@link GenericResult}
+     */
     public static GenericResult allowed() {
       return ALLOWED;
     }
 
+    /**
+     * Returns a result indicating the event is denied.
+     *
+     * @return a denied {@link GenericResult}
+     */
     public static GenericResult denied() {
       return DENIED;
     }
@@ -99,6 +109,11 @@ public interface ResultedEvent<R extends ResultedEvent.Result> {
       return status;
     }
 
+    /**
+     * Returns the denial reason component, if present.
+     *
+     * @return an {@link Optional} containing the reason component if the result is denied
+     */
     public Optional<Component> getReasonComponent() {
       return Optional.ofNullable(reason);
     }
@@ -114,10 +129,22 @@ public interface ResultedEvent<R extends ResultedEvent.Result> {
       return "denied";
     }
 
+    /**
+     * Returns a result indicating the event is allowed to proceed.
+     *
+     * @return an allowed {@link ComponentResult}
+     */
     public static ComponentResult allowed() {
       return ALLOWED;
     }
 
+    /**
+     * Returns a result indicating the event is denied, with the given reason component.
+     *
+     * @param reason the denial reason to show
+     * @return a denied {@link ComponentResult}
+     * @throws NullPointerException if the reason is null
+     */
     public static ComponentResult denied(final Component reason) {
       Preconditions.checkNotNull(reason, "reason");
       return new ComponentResult(false, reason);

@@ -139,7 +139,6 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
     if (salt == 0L && previousMessages.length == 0) {
       unsigned = true;
     }
-
   }
 
   @Override
@@ -178,7 +177,6 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
         buf.writeBoolean(false);
       }
     }
-
   }
 
   @Override

@@ -69,7 +69,7 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
   private boolean informationForwarded;
 
   LoginSessionHandler(final VelocityServer server, final VelocityServerConnection serverConn,
-      final CompletableFuture<Impl> resultFuture) {
+                      final CompletableFuture<Impl> resultFuture) {
     this.server = server;
     this.serverConn = serverConn;
     this.resultFuture = resultFuture;

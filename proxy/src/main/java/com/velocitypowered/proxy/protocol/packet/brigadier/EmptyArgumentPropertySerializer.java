@@ -26,8 +26,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 final class EmptyArgumentPropertySerializer implements ArgumentPropertySerializer<Void> {
 
-  static final ArgumentPropertySerializer<Void> EMPTY =
-      new EmptyArgumentPropertySerializer();
+  static final ArgumentPropertySerializer<Void> EMPTY = new EmptyArgumentPropertySerializer();
 
   private EmptyArgumentPropertySerializer() {
   }
@@ -39,6 +38,5 @@ final class EmptyArgumentPropertySerializer implements ArgumentPropertySerialize
 
   @Override
   public void serialize(final Void object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
-
   }
 }

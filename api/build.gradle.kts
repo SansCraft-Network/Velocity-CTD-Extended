@@ -23,7 +23,8 @@ dependencies {
     api(libs.gson)
     api(libs.guava)
 
-    // DEPRECATED: Will be removed in Velocity Polymer
+    // DEPRECATED: Will be removed in Velocity Polymer,
+    // assuming Velocity Polymer EVER releases!
     api("io.hotmoka:toml4j:0.7.3")
 
     api(platform(libs.adventure.bom))
@@ -55,8 +56,6 @@ tasks {
         }
     }
     withType<Javadoc> {
-        exclude("com/velocitypowered/api/plugin/ap/**")
-
         val o = options as StandardJavadocDocletOptions
         o.encoding = "UTF-8"
         o.source = "17"
@@ -70,7 +69,6 @@ tasks {
             "https://jd.advntr.dev/api/${libs.adventure.bom.get().version}/",
             "https://jd.advntr.dev/text-minimessage/${libs.adventure.bom.get().version}/",
             "https://jd.advntr.dev/key/${libs.adventure.bom.get().version}/",
-            "https://javadoc.io/doc/com.github.ben-manes.caffeine/caffeine/${libs.caffeine.get().version}/",
         )
 
         o.tags(
@@ -79,8 +77,5 @@ tasks {
             "implNote:a:Implementation Note:",
             "sinceMinecraft:a:Since Minecraft:"
         )
-
-        // Disable the crazy super-strict doclint tool in Java 8
-        o.addStringOption("Xdoclint:none", "-quiet")
     }
 }

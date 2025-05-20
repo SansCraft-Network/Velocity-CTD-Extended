@@ -25,7 +25,6 @@ final class ByteArgumentPropertySerializer implements ArgumentPropertySerializer
   static final ByteArgumentPropertySerializer BYTE = new ByteArgumentPropertySerializer();
 
   private ByteArgumentPropertySerializer() {
-
   }
 
   @Override

@@ -52,7 +52,7 @@ public class SystemChatPacket implements MinecraftPacket {
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     component = ComponentHolder.read(buf, version);
-    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)){
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       type = buf.readBoolean() ? ChatType.GAME_INFO : ChatType.SYSTEM;
     } else {
       type = ChatType.values()[ProtocolUtils.readVarInt(buf)];
@@ -64,14 +64,9 @@ public class SystemChatPacket implements MinecraftPacket {
     component.write(buf);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       switch (type) {
-        case SYSTEM:
-          buf.writeBoolean(false);
-          break;
-        case GAME_INFO:
-          buf.writeBoolean(true);
-          break;
-        default:
-          throw new IllegalArgumentException("Invalid chat type");
+        case SYSTEM -> buf.writeBoolean(false);
+        case GAME_INFO -> buf.writeBoolean(true);
+        default -> throw new IllegalArgumentException("Invalid chat type");
       }
     } else {
       ProtocolUtils.writeVarInt(buf, type.getId());

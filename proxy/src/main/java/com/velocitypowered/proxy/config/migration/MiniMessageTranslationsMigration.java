@@ -43,8 +43,8 @@ public final class MiniMessageTranslationsMigration implements ConfigurationMigr
     if (Files.notExists(langFolder)) {
       return;
     }
-    try (final DirectoryStream<Path> stream
-                 = Files.newDirectoryStream(langFolder, Files::isRegularFile)) {
+
+    try (DirectoryStream<Path> stream = Files.newDirectoryStream(langFolder, Files::isRegularFile)) {
       for (final Path path : stream) {
         String content = Files.readString(path, StandardCharsets.UTF_8);
         // Migrate old arguments

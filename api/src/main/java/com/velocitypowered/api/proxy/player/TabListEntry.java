@@ -331,6 +331,7 @@ public interface TabListEntry extends KeyIdentifiable {
      *
      * @return the constructed {@link TabListEntry}
      */
+    @SuppressWarnings("deprecation")
     public TabListEntry build() {
       if (tabList == null) {
         throw new IllegalStateException("The Tablist must be set when building a TabListEntry");

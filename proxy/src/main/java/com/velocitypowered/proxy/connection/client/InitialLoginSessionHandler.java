@@ -318,9 +318,25 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   }
 
   private enum LoginState {
+
+    /**
+     * Indicates that the server is expecting the initial {@link ServerLoginPacket} from the client.
+     */
     LOGIN_PACKET_EXPECTED,
+
+    /**
+     * The server has received the {@link ServerLoginPacket} from the client.
+     */
     LOGIN_PACKET_RECEIVED,
+
+    /**
+     * The server has sent an {@link EncryptionRequestPacket} to the client and is now waiting for a response.
+     */
     ENCRYPTION_REQUEST_SENT,
+
+    /**
+     * The server has received the {@link EncryptionResponsePacket} from the client and is processing it.
+     */
     ENCRYPTION_RESPONSE_RECEIVED
   }
 }

@@ -116,15 +116,13 @@ public final class ModernResourcePackHandler extends ResourcePackHandler {
   }
 
   @Override
-  public boolean onResourcePackResponse(
-          final @NotNull ResourcePackResponseBundle bundle
-  ) {
+  public boolean onResourcePackResponse(final @NotNull ResourcePackResponseBundle bundle) {
     final UUID uuid = bundle.uuid();
     final List<ResourcePackInfo> outstandingResourcePacks =
         this.outstandingResourcePacks.get(uuid);
     final boolean peek = bundle.status().isIntermediate();
-    final ResourcePackInfo queued = outstandingResourcePacks.isEmpty() ? null :
-        peek ? outstandingResourcePacks.get(0) : outstandingResourcePacks.remove(0);
+    final ResourcePackInfo queued = outstandingResourcePacks.isEmpty() ? null
+        : peek ? outstandingResourcePacks.get(0) : outstandingResourcePacks.remove(0);
 
     server.getEventManager()
             .fire(new PlayerResourcePackStatusEvent(this.player, uuid, bundle.status(), queued))

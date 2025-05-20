@@ -46,6 +46,7 @@ public final class DimensionInfo {
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
       Preconditions.checkArgument(!registryIdentifier.isEmpty(), "registryIdentifier cannot be empty");
     }
+
     this.levelName = levelName;
     this.isFlat = isFlat;
     this.isDebugType = isDebugType;

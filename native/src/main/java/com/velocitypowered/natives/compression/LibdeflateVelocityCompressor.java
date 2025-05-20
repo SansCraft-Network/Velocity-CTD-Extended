@@ -65,7 +65,7 @@ public final class LibdeflateVelocityCompressor implements VelocityCompressor {
   public void deflate(final ByteBuf source, final ByteBuf destination) throws DataFormatException {
     ensureNotDisposed();
 
-    while (true) {
+    do {
       long sourceAddress = source.memoryAddress() + source.readerIndex();
       long destinationAddress = destination.memoryAddress() + destination.writerIndex();
 
@@ -80,7 +80,7 @@ public final class LibdeflateVelocityCompressor implements VelocityCompressor {
       } else {
         throw new DataFormatException("libdeflate returned unknown code " + produced);
       }
-    }
+    } while (true);
   }
 
   private void ensureNotDisposed() {

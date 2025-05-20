@@ -78,14 +78,22 @@ public class PlayerChatCompletionPacket implements MinecraftPacket {
 
   /**
    * Represents the different actions that can be taken with chat completions.
-   * The possible actions are:
-   * - ADD: Add new completions to the existing ones.
-   * - REMOVE: Remove specified completions.
-   * - SET: Replace the current completions with the specified ones.
    */
   public enum Action {
+
+    /**
+     * Add the specified completions to the client's current suggestion list.
+     */
     ADD,
+
+    /**
+     * Remove the specified completions from the client's current suggestion list.
+     */
     REMOVE,
+
+    /**
+     * Replace the client's entire suggestion list with the specified completions.
+     */
     SET
   }
 }

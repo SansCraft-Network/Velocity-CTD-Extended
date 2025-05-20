@@ -348,7 +348,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
               // The client is trying to send messages too early. This is primarily caused by mods,
               // but further aggravated by Velocity. To work around these issues, we will queue any
               // non-FML handshake messages to be sent once the FML handshake has completed or the
-              // JoinGame packet has been received by the proxy, whichever comes first.
+              // JoinGame packet has been received by "the" proxy, whichever comes first.
               //
               // We also need to make sure to retain these packets, so they can be flushed
               // appropriately.

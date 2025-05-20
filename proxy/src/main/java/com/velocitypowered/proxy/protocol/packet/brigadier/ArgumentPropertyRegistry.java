@@ -55,6 +55,7 @@ import java.util.Map;
  * and later retrieved or used when processing commands within the system. The properties
  * might be tied to argument types, validation rules, or transformations.</p>
  */
+@SuppressWarnings("unchecked")
 public final class ArgumentPropertyRegistry {
 
   private ArgumentPropertyRegistry() {
@@ -152,7 +153,6 @@ public final class ArgumentPropertyRegistry {
     } else {
       ProtocolUtils.writeString(buf, identifier.getIdentifier());
     }
-
   }
 
   /**
@@ -266,18 +266,19 @@ public final class ArgumentPropertyRegistry {
         RegistryKeyArgumentList.ResourceSelector.class,
         RegistryKeyArgumentList.ResourceSelector.Serializer.REGISTRY);
 
-    empty(id("minecraft:template_mirror", mapSet(MINECRAFT_1_21_5, 48), mapSet(MINECRAFT_1_20_5, 47), mapSet(MINECRAFT_1_20_3, 46), mapSet(MINECRAFT_1_19, 45))); // 1.19
-    empty(id("minecraft:template_rotation", mapSet(MINECRAFT_1_21_5, 49), mapSet(MINECRAFT_1_20_5, 48), mapSet(MINECRAFT_1_20_3, 47), mapSet(MINECRAFT_1_19, 46))); // 1.19
+    empty(id("minecraft:template_mirror", mapSet(MINECRAFT_1_21_5, 48), mapSet(MINECRAFT_1_20_5, 47), mapSet(MINECRAFT_1_20_3, 46),
+            mapSet(MINECRAFT_1_19, 45))); // 1.19
+    empty(id("minecraft:template_rotation", mapSet(MINECRAFT_1_21_5, 49), mapSet(MINECRAFT_1_20_5, 48), mapSet(MINECRAFT_1_20_3, 47),
+            mapSet(MINECRAFT_1_19, 46))); // 1.19
     empty(id("minecraft:heightmap", mapSet(MINECRAFT_1_21_5, 50), mapSet(MINECRAFT_1_20_3, 49), mapSet(MINECRAFT_1_19_4, 47))); // 1.19.4
-
-    empty(id("minecraft:uuid", mapSet(MINECRAFT_1_21_5, 54),mapSet(MINECRAFT_1_20_5, 53), mapSet(MINECRAFT_1_20_3, 48), mapSet(MINECRAFT_1_19_4, 48),
-        mapSet(MINECRAFT_1_19, 47))); // added in 1.16
+    empty(id("minecraft:uuid", mapSet(MINECRAFT_1_21_5, 54), mapSet(MINECRAFT_1_20_5, 53), mapSet(MINECRAFT_1_20_3, 48), mapSet(MINECRAFT_1_19_4, 48),
+            mapSet(MINECRAFT_1_19, 47))); // added in 1.16
 
     empty(id("minecraft:loot_table", mapSet(MINECRAFT_1_21_5, 51), mapSet(MINECRAFT_1_20_5, 50)));
     empty(id("minecraft:loot_predicate", mapSet(MINECRAFT_1_21_5, 52), mapSet(MINECRAFT_1_20_5, 51)));
     empty(id("minecraft:loot_modifier", mapSet(MINECRAFT_1_21_5, 53), mapSet(MINECRAFT_1_20_5, 52)));
 
-    // Crossstitch support
+    // Cross-stitch support
     register(id("crossstitch:mod_argument", mapSet(MINECRAFT_1_19, -256)), ModArgumentProperty.class, MOD);
 
     empty(id("minecraft:nbt")); // No longer in 1.19+

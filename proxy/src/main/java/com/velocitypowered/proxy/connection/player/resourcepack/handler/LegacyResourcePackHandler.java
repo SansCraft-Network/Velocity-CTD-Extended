@@ -103,7 +103,7 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler
       if (previousResourceResponse != null && !previousResourceResponse) {
         // If that happened we can flush the queue right away.
         // Unless it is 1.17+ and forced, it will come back denied anyway
-        while (!outstandingResourcePacks.isEmpty()) {
+        do {
           queued = outstandingResourcePacks.peek();
           if (queued.getShouldForce() && player.getProtocolVersion()
                   .noLessThan(ProtocolVersion.MINECRAFT_1_17)) {
@@ -113,7 +113,7 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler
                   queued.getHash() == null ? "" : new String(queued.getHash()),
                   PlayerResourcePackStatusEvent.Status.DECLINED));
           queued = null;
-        }
+        } while (!outstandingResourcePacks.isEmpty());
         if (queued == null) {
           // Exit as the queue was cleared
           return;
@@ -125,9 +125,7 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler
   }
 
   @Override
-  public boolean onResourcePackResponse(
-          final @NotNull ResourcePackResponseBundle bundle
-  ) {
+  public boolean onResourcePackResponse(final @NotNull ResourcePackResponseBundle bundle) {
     final boolean peek = bundle.status().isIntermediate();
     final ResourcePackInfo queued = peek
             ? outstandingResourcePacks.peek() : outstandingResourcePacks.poll();

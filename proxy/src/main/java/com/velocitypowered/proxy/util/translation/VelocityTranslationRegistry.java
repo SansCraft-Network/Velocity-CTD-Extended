@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Velocity Contributors
+ * Copyright (C) 2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,8 +120,7 @@ public final class VelocityTranslationRegistry implements TranslationRegistry {
     @Override
     public Tag resolve(final @NotNull String name,
                        final @NotNull ArgumentQueue arguments,
-                       final @NotNull Context ctx
-    ) throws ParsingException {
+                       final @NotNull Context ctx) throws ParsingException {
       final int index = arguments.popOr("No argument number provided")
               .asInt().orElseThrow(() -> ctx.newException("Invalid argument number", arguments));
 

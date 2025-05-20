@@ -535,90 +535,38 @@ public class BungeeCordMessageResponder {
     ByteBufDataInput in = new ByteBufDataInput(message.content());
     String subChannel = in.readUTF();
     switch (subChannel) {
-      case "GetPlayerServer":
-        this.processGetPlayerServer(in);
-        break;
-      case "ForwardToPlayer":
-        this.processForwardToPlayer(in);
-        break;
-      case "Forward":
-        this.processForwardToServer(in);
-        break;
-      case "ConnectDirect":
-        this.processConnect(in, false);
-        break;
-      case "ConnectQueue":
-        this.processConnect(in, true);
-        break;
-      case "Connect":
+      case "GetPlayerServer" -> this.processGetPlayerServer(in);
+      case "ForwardToPlayer" -> this.processForwardToPlayer(in);
+      case "Forward" -> this.processForwardToServer(in);
+      case "ConnectDirect" -> this.processConnect(in, false);
+      case "ConnectQueue" -> this.processConnect(in, true);
+      case "Connect" ->
         this.processConnect(in, proxy.getConfiguration().getQueue().shouldOverrideBungeeMessaging());
-        break;
-      case "ConnectOtherDirect":
-        this.processConnectOther(in, false);
-        break;
-      case "ConnectOtherQueue":
-        this.processConnectOther(in, true);
-        break;
-      case "ConnectOther":
+      case "ConnectOtherDirect" -> this.processConnectOther(in, false);
+      case "ConnectOtherQueue" -> this.processConnectOther(in, true);
+      case "ConnectOther" ->
         this.processConnectOther(in, proxy.getConfiguration().getQueue().shouldOverrideBungeeMessaging());
-        break;
-      case "IP":
-        this.processIp(in);
-        break;
-      case "PlayerCount":
-        this.processPlayerCount(in);
-        break;
-      case "PlayerList":
-        this.processPlayerList(in);
-        break;
-      case "GetServers":
-        this.processGetServers();
-        break;
-      case "Message":
-        this.processMessage(in);
-        break;
-      case "MessageRaw":
-        this.processMessageRaw(in);
-        break;
-      case "GetServer":
-        this.processGetServer();
-        break;
-      case "UUID":
-        this.processUuid();
-        break;
-      case "UUIDOther":
-        this.processUuidOther(in);
-        break;
-      case "IPOther":
-        this.processIpOther(in);
-        break;
-      case "ServerIP":
-        this.processServerIp(in);
-        break;
-      case "KickPlayer":
-        this.processKick(in);
-        break;
-      case "KickPlayerRaw":
-        this.processKickRaw(in);
-        break;
-      case "Ping":
-        this.processPing(in);
-        break;
-      case "QueuedServer":
-        this.queuedServer(in);
-        break;
-      case "QueuedPosition":
-        this.queuedPosition(in);
-        break;
-      case "MaxQueuedPosition":
-        this.queuedMaxPosition(in);
-        break;
-      case "QueuedPausedChannel":
-        this.queuedPaused(in);
-        break;
-      default:
-        // Do nothing, unknown command
-        break;
+      case "IP" -> this.processIp(in);
+      case "PlayerCount" -> this.processPlayerCount(in);
+      case "PlayerList" -> this.processPlayerList(in);
+      case "GetServers" -> this.processGetServers();
+      case "Message" -> this.processMessage(in);
+      case "MessageRaw" -> this.processMessageRaw(in);
+      case "GetServer" -> this.processGetServer();
+      case "UUID" -> this.processUuid();
+      case "UUIDOther" -> this.processUuidOther(in);
+      case "IPOther" -> this.processIpOther(in);
+      case "ServerIP" -> this.processServerIp(in);
+      case "KickPlayer" -> this.processKick(in);
+      case "KickPlayerRaw" -> this.processKickRaw(in);
+      case "Ping" -> this.processPing(in);
+      case "QueuedServer" -> this.queuedServer(in);
+      case "QueuedPosition" -> this.queuedPosition(in);
+      case "MaxQueuedPosition" -> this.queuedMaxPosition(in);
+      case "QueuedPausedChannel" -> this.queuedPaused(in);
+      default -> {
+      }
+      // Do nothing, unknown command
     }
 
     return true;

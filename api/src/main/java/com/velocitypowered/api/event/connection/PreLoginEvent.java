@@ -61,10 +61,20 @@ public final class PreLoginEvent implements ResultedEvent<PreLoginEvent.PreLogin
     this.result = PreLoginComponentResult.allowed();
   }
 
+  /**
+   * Gets the inbound connection associated with this login attempt.
+   *
+   * @return the inbound connection
+   */
   public InboundConnection getConnection() {
     return connection;
   }
 
+  /**
+   * Gets the username of the player attempting to connect.
+   *
+   * @return the player's username
+   */
   public String getUsername() {
     return username;
   }
@@ -128,14 +138,29 @@ public final class PreLoginEvent implements ResultedEvent<PreLoginEvent.PreLogin
       return result != Result.DISALLOWED;
     }
 
+    /**
+     * Gets the reason component shown to the player if the connection is denied.
+     *
+     * @return the reason as a {@link net.kyori.adventure.text.Component}, or empty if not denied
+     */
     public Optional<net.kyori.adventure.text.Component> getReasonComponent() {
       return Optional.ofNullable(reason);
     }
 
+    /**
+     * Checks if this result explicitly forces online mode for the connection.
+     *
+     * @return true if online mode is forced
+     */
     public boolean isOnlineModeAllowed() {
       return result == Result.FORCE_ONLINE;
     }
 
+    /**
+     * Checks if this result explicitly forces offline mode for the connection.
+     *
+     * @return true if offline mode is forced
+     */
     public boolean isForceOfflineMode() {
       return result == Result.FORCE_OFFLINE;
     }

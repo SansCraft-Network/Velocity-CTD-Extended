@@ -109,5 +109,4 @@ public final class RemotePlayerInfo implements Serializable {
   public void setBeingTransferred(final boolean beingTransferred) {
     this.beingTransferred = beingTransferred;
   }
-
 }

@@ -45,7 +45,7 @@ public class PlayPacketQueueInboundHandler extends ChannelDuplexHandler {
   private final Queue<Object> queue = new ArrayDeque<>();
 
   /**
-   * Provides registries for client &amp; server bound packets.
+   * Provides registries for "client" &amp; server bound packets.
    *
    * @param version the protocol version
    */

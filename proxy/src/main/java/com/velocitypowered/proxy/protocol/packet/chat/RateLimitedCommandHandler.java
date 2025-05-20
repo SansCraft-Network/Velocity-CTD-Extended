@@ -22,6 +22,14 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.kyori.adventure.text.Component;
 
+/**
+ * Abstract base class for handling rate-limited player command packets.
+ *
+ * <p>Subclasses should implement {@link #handlePlayerCommandInternal(MinecraftPacket)} to define
+ * how individual command packets are processed. Rate limiting is enforced to prevent abuse.</p>
+ *
+ * @param <T> the type of {@link MinecraftPacket} this handler processes
+ */
 public abstract class RateLimitedCommandHandler<T extends MinecraftPacket> implements CommandHandler<T> {
 
   private final Player player;
@@ -34,11 +42,12 @@ public abstract class RateLimitedCommandHandler<T extends MinecraftPacket> imple
     this.velocityServer = velocityServer;
   }
 
-    @Override
-    public boolean handlePlayerCommand(final MinecraftPacket packet) {
+  @Override
+  public boolean handlePlayerCommand(final MinecraftPacket packet) {
     if (packetClass().isInstance(packet)) {
       if (!velocityServer.getCommandRateLimiter().attempt(player.getUniqueId())) {
-        if (velocityServer.getConfiguration().isKickOnCommandRateLimit() && failedAttempts++ >= velocityServer.getConfiguration().getKickAfterRateLimitedCommands()) {
+        if (velocityServer.getConfiguration().isKickOnCommandRateLimit() && failedAttempts++
+                >= velocityServer.getConfiguration().getKickAfterRateLimitedCommands()) {
           player.disconnect(Component.translatable("velocity.kick.command-rate-limit"));
         }
 

@@ -385,6 +385,33 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
    * Represents the state of the configuration stage.
    */
   public enum State {
-    START, NEGOTIATING, PLUGIN_MESSAGE_INTERRUPT, RESOURCE_PACK_INTERRUPT, COMPLETE
+
+    /**
+     * The initial state before any configuration-related packets have been handled.
+     */
+    START,
+
+    /**
+     * The state while the configuration process is actively negotiating capabilities
+     * between the client and the backend server.
+     */
+    NEGOTIATING,
+
+    /**
+     * A plugin message (e.g., branding, mod channels) has interrupted the configuration flow,
+     * pausing or deferring progress.
+     */
+    PLUGIN_MESSAGE_INTERRUPT,
+
+    /**
+     * A resource pack-related exchange (prompt, response, or removal) has interrupted
+     * the normal configuration process.
+     */
+    RESOURCE_PACK_INTERRUPT,
+
+    /**
+     * The configuration stage has completed successfully, and the session is now ready for play.
+     */
+    COMPLETE
   }
 }

@@ -23,6 +23,13 @@ import org.jetbrains.annotations.NotNull;
  * A {@link Ratelimiter} that does no rate-limiting.
  */
 enum NoopCacheRatelimiter implements Ratelimiter<Object> {
+
+  /**
+   * Singleton instance of the {@link NoopCacheRatelimiter}, which performs no rate limiting.
+   *
+   * <p>This instance always allows all operations unconditionally by returning {@code true}
+   * for every {@link #attempt(Object)} call, effectively disabling rate limiting logic.</p>
+   */
   INSTANCE;
 
   @Override

@@ -55,8 +55,7 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
   private volatile boolean loginEventFired;
   private @MonotonicNonNull IdentifiedKey playerKey;
 
-  LoginInboundConnection(
-      final InitialInboundConnection delegate) {
+  LoginInboundConnection(final InitialInboundConnection delegate) {
     this.delegate = delegate;
     this.outstandingResponses = Int2ObjectSyncMap.hashmap();
     this.loginMessagesToSend = new ConcurrentLinkedQueue<>();

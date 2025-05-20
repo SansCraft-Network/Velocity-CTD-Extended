@@ -44,8 +44,7 @@ public class FakePluginManager implements PluginManager {
       VelocityVirtualPlugin.INSTANCE);
 
   private final ExecutorService service = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setNameFormat("Test Async Thread").setDaemon(true).build()
-  );
+      new ThreadFactoryBuilder().setNameFormat("Test Async Thread").setDaemon(true).build());
 
   @Override
   public @NonNull Optional<PluginContainer> fromInstance(@NonNull final Object instance) {

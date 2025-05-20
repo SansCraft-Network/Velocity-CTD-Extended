@@ -55,12 +55,13 @@ public class RedisRetriever implements QueueCacheRetriever {
     if (server == null) {
       return null;
     }
-    SerializableQueue ser = this.redisManager.getQueue(serverName);
 
+    SerializableQueue ser = this.redisManager.getQueue(serverName);
     ServerQueueStatus status = null;
     if (ser != null) {
       status = ser.convert(this.proxy, server);
     }
+
     if (status == null) {
       status = new ServerQueueStatus(server, proxy);
 

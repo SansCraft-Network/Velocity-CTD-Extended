@@ -53,6 +53,7 @@ import net.kyori.option.OptionSchema;
 /**
  * Utilities for writing and reading data in the Minecraft protocol.
  */
+@SuppressWarnings("unchecked")
 public enum ProtocolUtils {
   ;
 
@@ -476,6 +477,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to write to
    * @param tag the BinaryTag to write
    */
+  @SuppressWarnings("unchecked")
   public static <T extends BinaryTag> void writeBinaryTag(final ByteBuf buf, final ProtocolVersion version,
                                                           final T tag) {
     BinaryTagType<T> type = (BinaryTagType<T>) tag.type();
@@ -779,7 +781,15 @@ public enum ProtocolUtils {
    * Represents the direction in which a packet flows.
    */
   public enum Direction {
+
+    /**
+     * Indicates that the packet is sent from the client to the server.
+     */
     SERVERBOUND,
+
+    /**
+     * Indicates that the packet is sent from the server to the client.
+     */
     CLIENTBOUND
   }
 }

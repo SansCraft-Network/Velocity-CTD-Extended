@@ -40,7 +40,6 @@ public final class GameProfileSerializer implements JsonSerializer<GameProfile>,
   }.getType();
 
   private GameProfileSerializer() {
-
   }
 
   @Override

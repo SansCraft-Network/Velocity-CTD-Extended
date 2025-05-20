@@ -1037,5 +1037,4 @@ public enum StateRegistry {
                                    final ProtocolVersion lastValidProtocolVersion, final boolean encodeOnly) {
     return new PacketMapping(id, version, lastValidProtocolVersion, encodeOnly);
   }
-
 }

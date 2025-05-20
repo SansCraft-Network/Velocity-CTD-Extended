@@ -32,7 +32,6 @@ public final class StatusRequestPacket implements MinecraftPacket {
   public static final StatusRequestPacket INSTANCE = new StatusRequestPacket();
 
   private StatusRequestPacket() {
-
   }
 
   @Override

@@ -146,6 +146,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a player connected to the proxy.
  */
+@SuppressWarnings("UnstableApiUsage")
 public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, KeyIdentifiable,
     VelocityInboundConnection {
 
@@ -186,7 +187,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private boolean connectionInProgress;
   private boolean dontRemoveFromRedis;
 
-  @SuppressWarnings("UnstableApiUsage")
   private final @NotNull Pointers pointers =
       Player.super.pointers().toBuilder()
           .withDynamic(Identity.UUID, this::getUniqueId)
@@ -225,6 +225,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     } else {
       this.tabList = new VelocityTabListLegacy(this, server);
     }
+
     this.playerKey = playerKey;
     this.chatQueue = new ChatQueue(this);
     this.chatBuilderFactory = new ChatBuilderFactory(this.getProtocolVersion());
@@ -428,6 +429,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void sendMessage(@NonNull final Identity identity, @NonNull final Component message) {
     final Component translated = translateMessage(message);
 
@@ -436,6 +438,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void sendMessage(@NonNull final Identity identity, @NonNull final Component message,
                           @NonNull final MessageType type) {
     Preconditions.checkNotNull(message, "message");
@@ -848,27 +851,25 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
               switch (status.getStatus()) {
                 // Impossible/nonsensical cases
-                case ALREADY_CONNECTED:
-                  logger.error("{}: already connected to {}", this,
+                case ALREADY_CONNECTED -> logger.error("{}: already connected to {}", this,
                       status.getAttemptedConnection().getServerInfo().getName());
-                  break;
-                case CONNECTION_IN_PROGRESS:
-                  // Fatal case
-                case CONNECTION_CANCELLED:
+
+                // Fatal case
+                case CONNECTION_IN_PROGRESS, CONNECTION_CANCELLED -> {
                   Component fallbackMsg = res.getMessageComponent();
                   if (fallbackMsg == null) {
                     fallbackMsg = friendlyReason;
                   }
                   disconnect(status.getReasonComponent().orElse(fallbackMsg));
-                  break;
-                case SERVER_DISCONNECTED:
+                }
+                case SERVER_DISCONNECTED -> {
                   Component reason = status.getReasonComponent()
                       .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
                   handleConnectionException(res.getServer(),
                       DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()),
                       ((Impl) status).isSafe());
-                  break;
-                case SUCCESS:
+                }
+                case SUCCESS -> {
                   Component requestedMessage = res.getMessageComponent();
                   if (requestedMessage == null) {
                     requestedMessage = friendlyReason;
@@ -899,10 +900,10 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                       }
                     }
                   }
-                  break;
-                default:
-                  // The only remaining value is successful (no need to do anything!)
-                  break;
+                }
+                default -> {
+                }
+                // The only remaining value is successful (no need to do anything!)
               }
             }, connection.eventLoop());
       } else if (event.getResult() instanceof final Notify res) {

@@ -76,7 +76,8 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
   }
 
   public CommandExecuteEvent.SignedState getEventSignedState() {
-    return !this.argumentSignatures.isEmpty() ? CommandExecuteEvent.SignedState.SIGNED_WITH_ARGS : CommandExecuteEvent.SignedState.SIGNED_WITHOUT_ARGS;
+    return !this.argumentSignatures.isEmpty() ? CommandExecuteEvent.SignedState.SIGNED_WITH_ARGS
+            : CommandExecuteEvent.SignedState.SIGNED_WITHOUT_ARGS;
   }
 
   @Override
@@ -112,6 +113,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
       packet.command = command;
       return packet;
     }
+
     SessionPlayerCommandPacket packet = new SessionPlayerCommandPacket();
     packet.command = command;
     packet.timeStamp = timeStamp;

@@ -28,10 +28,20 @@ public class PlayerInfo {
     this.uuid = uuid;
   }
 
+  /**
+   * Gets the username of the player.
+   *
+   * @return the player's username
+   */
   public String getUsername() {
     return username;
   }
 
+  /**
+   * Gets the UUID of the player.
+   *
+   * @return the player's UUID
+   */
   public UUID getUuid() {
     return uuid;
   }

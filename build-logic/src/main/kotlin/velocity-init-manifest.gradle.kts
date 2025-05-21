@@ -1,30 +1,28 @@
 import java.io.ByteArrayOutputStream
 
-abstract class VelocityInitManifestGradle @Inject constructor(
-    private val execOps: ExecOperations, project: Project) {
-    init {
-        val currentShortRevision = ByteArrayOutputStream().use { output ->
-            execOps.exec {
-                commandLine("git", "rev-parse", "HEAD")
-                standardOutput = output
-            }
-            output.toString().trim().take(8)
-        }
+val currentShortRevision = ByteArrayOutputStream().use {
+    @Suppress("DEPRECATION")
+    exec {
+        executable = "git"
+        args = listOf("rev-parse", "HEAD")
+        standardOutput = it
+    }
+    it.toString().trim().substring(0, 8)
+}
 
-        project.tasks.withType<Jar>().configureEach {
-            manifest {
-                val buildNumber = System.getenv("BUILD_NUMBER")
-                val velocityHumanVersion = if (project.version.toString().endsWith("-SNAPSHOT")) {
-                    if (buildNumber == null) {
-                        "${project.version} (git-$currentShortRevision)"
-                    } else {
-                        "${project.version} (git-$currentShortRevision-b$buildNumber)"
-                    }
+tasks.withType<Jar> {
+    manifest {
+        val buildNumber = System.getenv("BUILD_NUMBER")
+        val velocityHumanVersion: String =
+            if (project.version.toString().endsWith("-SNAPSHOT")) {
+                if (buildNumber == null) {
+                    "${project.version} (git-$currentShortRevision)"
                 } else {
-                    archiveVersion.get()
+                    "${project.version} (git-$currentShortRevision-b$buildNumber)"
                 }
-                attributes["Implementation-Version"] = velocityHumanVersion
+            } else {
+                archiveVersion.get()
             }
-        }
+        attributes["Implementation-Version"] = velocityHumanVersion
     }
 }

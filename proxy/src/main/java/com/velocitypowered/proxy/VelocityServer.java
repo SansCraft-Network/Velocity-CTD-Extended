@@ -129,7 +129,7 @@ import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationRegistry;
+import net.kyori.adventure.translation.TranslationStore;
 import net.kyori.adventure.translation.Translator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -408,10 +408,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
   }
 
-  @SuppressWarnings("deprecation")
   private void registerTranslations(final boolean log) {
     final String defaultFile = "messages.properties";
-    final TranslationRegistry translationRegistry = new VelocityTranslationRegistry(TranslationRegistry.create(this.translationRegistryKey));
+    final VelocityTranslationRegistry translationRegistry =
+            new VelocityTranslationRegistry(TranslationStore.messageFormat(this.translationRegistryKey));
     translationRegistry.defaultLocale(Locale.US);
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
@@ -466,7 +466,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
                 try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                   final ResourceBundle bundle = new PropertyResourceBundle(reader);
 
-                  translationRegistry.registerAll(locale, defaultKeys, (key) -> {
+                  translationRegistry.registerAll(locale, defaultKeys, key -> {
                     final String format = bundle.containsKey(key) ? bundle.getString(key) : defaultBundle.getString(key);
                     final String escapedFormat = format.replace("'", "''");
 

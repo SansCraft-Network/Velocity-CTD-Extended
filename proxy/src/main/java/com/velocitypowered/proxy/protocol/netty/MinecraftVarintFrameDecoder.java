@@ -98,7 +98,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
 
         final int index = in.readerIndex();
         final int packetId = readRawVarInt21(in);
-        // Index hasn't changed, we've read nothing
+        // The index hasn't changed, we've read nothing
         if (index == in.readerIndex()) {
           in.resetReaderIndex();
           return;
@@ -138,7 +138,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
   }
 
   @Override
-  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+  public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
     if (MinecraftDecoder.DEBUG) {
       LOGGER.atWarn()
           .withThrowable(cause)

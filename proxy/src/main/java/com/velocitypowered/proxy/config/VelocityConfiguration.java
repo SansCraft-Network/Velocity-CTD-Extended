@@ -235,8 +235,8 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     switch (playerInfoForwardingMode) {
       case NONE ->
-        logger.warn("Player info forwarding is disabled by default! All players will appear to be connecting "
-            + "from the proxy and will have offline-mode UUIDs.");
+          logger.warn("Player info forwarding is disabled by default! All players will appear to be connecting "
+              + "from the proxy and will have offline-mode UUIDs.");
       case MODERN, BUNGEEGUARD -> requireForwardingSecret = true;
       default -> {
       }

@@ -68,8 +68,8 @@ public class DisconnectPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "Disconnect{"
-      + "reason='" + reason + '\''
-      + '}';
+        + "reason='" + reason + '\''
+        + '}';
   }
 
   @Override

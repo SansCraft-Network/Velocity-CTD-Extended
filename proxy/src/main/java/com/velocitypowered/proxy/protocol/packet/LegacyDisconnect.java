@@ -50,17 +50,17 @@ public record LegacyDisconnect(String reason) {
 
     return switch (version) {
       case MINECRAFT_1_3 ->
-        // Minecraft 1.3 and below use the section symbol as a delimiter. Accordingly, we must
-        // remove all section symbols, along with fetching just the first line of an (unformatted)
-        // MOTD.
-        new LegacyDisconnect(String.join(LEGACY_COLOR_CODE,
+          // Minecraft 1.3 and below use the section symbol as a delimiter. Accordingly, we must
+          // remove all section symbols, along with fetching just the first line of an (unformatted)
+          // MOTD.
+          new LegacyDisconnect(String.join(LEGACY_COLOR_CODE,
             cleanSectionSymbol(getFirstLine(PlainTextComponentSerializer.plainText().serialize(
                 response.getDescriptionComponent()))),
             Integer.toString(players.getOnline()),
             Integer.toString(players.getMax())));
       case MINECRAFT_1_4, MINECRAFT_1_6 ->
-        // Minecraft 1.4-1.6 provide support for more fields, and additionally support color codes.
-        new LegacyDisconnect(String.join("\0",
+          // Minecraft 1.4-1.6 provide support for more fields, and additionally support color codes.
+          new LegacyDisconnect(String.join("\0",
             LEGACY_COLOR_CODE + "1",
             Integer.toString(response.getVersion().getProtocol()),
             response.getVersion().getName(),

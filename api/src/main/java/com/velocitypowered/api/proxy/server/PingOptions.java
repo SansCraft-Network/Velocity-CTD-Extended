@@ -85,7 +85,7 @@ public final class PingOptions {
       return false;
     }
     return Objects.equals(this.protocolVersion, other.protocolVersion)
-      && Objects.equals(this.timeout, other.timeout);
+        && Objects.equals(this.timeout, other.timeout);
   }
 
   @Override
@@ -96,9 +96,9 @@ public final class PingOptions {
   @Override
   public String toString() {
     return "PingOptions{"
-            + "protocolVersion=" + protocolVersion
-            + ", timeout=" + timeout
-            + '}';
+        + "protocolVersion=" + protocolVersion
+        + ", timeout=" + timeout
+        + '}';
   }
 
   /**

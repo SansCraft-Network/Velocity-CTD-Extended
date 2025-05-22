@@ -88,12 +88,12 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "SessionPlayerCommand{"
-      + "command='" + command + '\''
-      + ", timeStamp=" + timeStamp
-      + ", salt=" + salt
-      + ", argumentSignatures=" + argumentSignatures
-      + ", lastSeenMessages=" + lastSeenMessages
-      + '}';
+        + "command='" + command + '\''
+        + ", timeStamp=" + timeStamp
+        + ", salt=" + salt
+        + ", argumentSignatures=" + argumentSignatures
+        + ", lastSeenMessages=" + lastSeenMessages
+        + '}';
   }
 
   /**
@@ -182,8 +182,8 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
     @Override
     public String toString() {
       return "ArgumentSignatures{"
-        + "entries=" + entries
-        + '}';
+          + "entries=" + entries
+          + '}';
     }
   }
 
@@ -212,8 +212,8 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
     @Override
     public String toString() {
       return "ArgumentSignature{"
-        + "name='" + name + '\''
-        + '}';
+          + "name='" + name + '\''
+          + '}';
     }
   }
 }

@@ -541,11 +541,11 @@ public class BungeeCordMessageResponder {
       case "ConnectDirect" -> this.processConnect(in, false);
       case "ConnectQueue" -> this.processConnect(in, true);
       case "Connect" ->
-        this.processConnect(in, proxy.getConfiguration().getQueue().shouldOverrideBungeeMessaging());
+          this.processConnect(in, proxy.getConfiguration().getQueue().shouldOverrideBungeeMessaging());
       case "ConnectOtherDirect" -> this.processConnectOther(in, false);
       case "ConnectOtherQueue" -> this.processConnectOther(in, true);
       case "ConnectOther" ->
-        this.processConnectOther(in, proxy.getConfiguration().getQueue().shouldOverrideBungeeMessaging());
+          this.processConnectOther(in, proxy.getConfiguration().getQueue().shouldOverrideBungeeMessaging());
       case "IP" -> this.processIp(in);
       case "PlayerCount" -> this.processPlayerCount(in);
       case "PlayerList" -> this.processPlayerList(in);

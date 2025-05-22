@@ -255,9 +255,9 @@ public final class PluginMessageUtil {
       case UNREGISTER_CHANNEL_LEGACY -> UNREGISTER_CHANNEL;
       case BRAND_CHANNEL_LEGACY -> BRAND_CHANNEL;
       case "BungeeCord" ->
-        // This is a special historical case we are compelled to support for the benefit of
-        // BungeeQuack.
-        "bungeecord:main";
+          // This is a special historical case we are compelled to support for the benefit of
+          // BungeeQuack.
+          "bungeecord:main";
       default -> {
         // This is very likely a legacy name, so transform it. Velocity uses the same scheme as
         // BungeeCord does to transform channels, but removes clearly invalid characters as

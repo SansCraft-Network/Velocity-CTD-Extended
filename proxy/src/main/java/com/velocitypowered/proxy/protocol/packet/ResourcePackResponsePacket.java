@@ -104,9 +104,9 @@ public class ResourcePackResponsePacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "ResourcePackResponsePacket{"
-      + "id=" + id
-      + ", hash='" + hash + '\''
-      + ", status=" + status
-      + '}';
+        + "id=" + id
+        + ", hash='" + hash + '\''
+        + ", status=" + status
+        + '}';
   }
 }

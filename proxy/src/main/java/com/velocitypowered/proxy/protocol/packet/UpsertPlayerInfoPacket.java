@@ -326,15 +326,15 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
     @Override
     public String toString() {
       return "Entry{"
-        + "profileId=" + profileId
-        + ", profile=" + profile
-        + ", listed=" + listed
-        + ", latency=" + latency
-        + ", gameMode=" + gameMode
-        + ", displayName=" + displayName
-        + ", listOrder=" + listOrder
-        + ", chatSession=" + chatSession
-        + '}';
+          + "profileId=" + profileId
+          + ", profile=" + profile
+          + ", listed=" + listed
+          + ", latency=" + latency
+          + ", gameMode=" + gameMode
+          + ", displayName=" + displayName
+          + ", listOrder=" + listOrder
+          + ", chatSession=" + chatSession
+          + '}';
     }
   }
 }

@@ -104,9 +104,9 @@ public class LastSeenMessages {
   @Override
   public String toString() {
     return "LastSeenMessages{"
-      + "offset=" + offset
-      + ", acknowledged=" + acknowledged
-      + ", checksum=" + checksum
-      + '}';
+        + "offset=" + offset
+        + ", acknowledged=" + acknowledged
+        + ", checksum=" + checksum
+        + '}';
   }
 }

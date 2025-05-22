@@ -58,8 +58,8 @@ public class ChatAcknowledgementPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "ChatAcknowledgement{"
-      + "offset=" + offset
-      + '}';
+        + "offset=" + offset
+        + '}';
   }
 
   public int offset() {

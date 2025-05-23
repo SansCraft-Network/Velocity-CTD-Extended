@@ -945,14 +945,15 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private ProxyAddress getProxyAddressToUse() {
     final String filter = getConfiguration().getDynamicProxyFilter();
     List<ProxyAddress> addresses = new ArrayList<>(getConfiguration().getProxyAddresses().stream().toList());
-    if (addresses.isEmpty()) {
-      return null;
-    }
 
     if (getMultiProxyHandler().getOwnProxyId() != null) {
       addresses.removeIf(address -> getMultiProxyHandler().getOwnProxyId().equalsIgnoreCase(address.proxyId()));
     }
 
+    if (addresses.isEmpty()) {
+      return null;
+    }
+    
     switch (filter) {
       case "MOST_EMPTY" -> addresses.sort((o1, o2) -> {
         int connectedSize1 = getMultiProxyHandler().getAllPlayers().stream().filter(i ->

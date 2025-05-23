@@ -48,12 +48,15 @@ public class JavaVelocityCipher implements VelocityCipher {
 
   private JavaVelocityCipher(boolean encrypt, SecretKey key) throws GeneralSecurityException {
     this.cipher = Cipher.getInstance("AES/CFB8/NoPadding");
-    // But, you're saying, *why* are we using the key as the IV? After all, reusing the key as
+    // But you're saying, *why* are we using the key as the IV?
+    // After all, reusing the key as
     // the IV defeats the entire point - we might as well just initialize it to all zeroes.
     //
-    // You can blame Mojang. For the record, we also don't consider the Minecraft protocol
+    // You can blame Mojang.
+    // For the record, we also don't consider the Minecraft protocol
     // encryption scheme to be secure, and it has reached the point where any serious cryptographic
-    // protocol needs a refresh. There are multiple obvious weaknesses, and this is far from the
+    // protocol needs a refresh.
+    // There are multiple obvious weaknesses, and this is far from the
     // most serious.
     //
     // If you are using Minecraft in a security-sensitive application, *I don't know what to say.*
@@ -73,7 +76,7 @@ public class JavaVelocityCipher implements VelocityCipher {
       cipher.update(source.array(), baseOffset, inBytes, source.array(), baseOffset);
     } catch (ShortBufferException ex) {
       /* This _really_ shouldn't happen - AES CFB8 will work in place.
-         If you run into this, that means that for whatever reason the Java Runtime has determined
+         If you run into this, that means that for whatever reason, the Java Runtime has determined
          that the output buffer needs more bytes than the input buffer. When we are working with
          AES-CFB8, the output size is equal to the input size. See the problem? */
       throw new AssertionError("Cipher update did not operate in place and requested a larger "

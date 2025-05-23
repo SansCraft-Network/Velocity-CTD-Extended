@@ -12,7 +12,7 @@ package com.velocitypowered.api.command;
  */
 public enum CommandResult {
   /**
-   * The command was successfully executed by the proxy.
+   * The proxy successfully executed the command.
    */
   EXECUTED,
   /**

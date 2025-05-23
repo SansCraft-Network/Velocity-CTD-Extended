@@ -48,11 +48,12 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.json.JSONOptions;
 import net.kyori.adventure.text.serializer.json.legacyimpl.NBTLegacyHoverEventSerializer;
-import net.kyori.option.OptionState;
+import net.kyori.option.OptionSchema;
 
 /**
  * Utilities for writing and reading data in the Minecraft protocol.
  */
+@SuppressWarnings("unchecked")
 public enum ProtocolUtils {
   ;
 
@@ -61,10 +62,11 @@ public enum ProtocolUtils {
           .downsampleColors()
           .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
           .options(
-              OptionState.optionState()
+              OptionSchema.globalSchema().stateBuilder()
               // before 1.16
               .value(JSONOptions.EMIT_RGB, Boolean.FALSE)
-              .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.LEGACY_ONLY)
+              .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.VALUE_FIELD)
+              .value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.CAMEL_CASE)
               // before 1.20.3
               .value(JSONOptions.EMIT_COMPACT_TEXT_COMPONENT, Boolean.FALSE)
               .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, Boolean.FALSE)
@@ -76,10 +78,11 @@ public enum ProtocolUtils {
           GsonComponentSerializer.builder()
           .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
           .options(
-              OptionState.optionState()
+              OptionSchema.globalSchema().stateBuilder()
               // after 1.16
               .value(JSONOptions.EMIT_RGB, Boolean.TRUE)
-              .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.MODERN_ONLY)
+              .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.CAMEL_CASE)
+              .value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.CAMEL_CASE)
               // before 1.20.3
               .value(JSONOptions.EMIT_COMPACT_TEXT_COMPONENT, Boolean.FALSE)
               .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, Boolean.FALSE)
@@ -87,17 +90,36 @@ public enum ProtocolUtils {
               .build()
           )
           .build();
+  private static final GsonComponentSerializer PRE_1_21_5_SERIALIZER =
+      GsonComponentSerializer.builder()
+          .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
+          .options(
+              OptionSchema.globalSchema().stateBuilder()
+              // after 1.16
+              .value(JSONOptions.EMIT_RGB, Boolean.TRUE)
+              .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.CAMEL_CASE)
+              .value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.CAMEL_CASE)
+              // after 1.20.3
+              .value(JSONOptions.EMIT_COMPACT_TEXT_COMPONENT, Boolean.TRUE)
+              .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, Boolean.TRUE)
+              .value(JSONOptions.VALIDATE_STRICT_EVENTS, Boolean.TRUE)
+              .build()
+          )
+          .build();
   private static final GsonComponentSerializer MODERN_SERIALIZER =
       GsonComponentSerializer.builder()
           .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
           .options(
-              OptionState.optionState()
+              OptionSchema.globalSchema().stateBuilder()
               // after 1.16
               .value(JSONOptions.EMIT_RGB, Boolean.TRUE)
-              .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.MODERN_ONLY)
+              .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.SNAKE_CASE)
+              .value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.SNAKE_CASE)
               // after 1.20.3
               .value(JSONOptions.EMIT_COMPACT_TEXT_COMPONENT, Boolean.TRUE)
               .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, Boolean.TRUE)
+              // after 1.21.5
+              .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_KEY_AS_TYPE_AND_UUID_AS_ID, Boolean.FALSE)
               .value(JSONOptions.VALIDATE_STRICT_EVENTS, Boolean.TRUE)
               .build()
           )
@@ -455,6 +477,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to write to
    * @param tag the BinaryTag to write
    */
+  @SuppressWarnings("unchecked")
   public static <T extends BinaryTag> void writeBinaryTag(final ByteBuf buf, final ProtocolVersion version,
                                                           final T tag) {
     BinaryTagType<T> type = (BinaryTagType<T>) tag.type();
@@ -584,7 +607,7 @@ public enum ProtocolUtils {
   public static byte[] readByteArray17(final ByteBuf buf) {
     // Read in a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet
+    // No vanilla packet should give a 3-byte packet
     int len = readExtendedForgeShort(buf);
 
     checkArgument(len <= FORGE_MAX_ARRAY_LENGTH,
@@ -596,7 +619,7 @@ public enum ProtocolUtils {
   }
 
   /**
-   * Reads a retained {@link ByteBuf} slice of the specified {@code buf} with the 1.7 style length.
+   * Reads a retained {@link ByteBuf} slice of the specified {@code buf} with the 1.7-style length.
    *
    * @param buf the buffer to read from
    * @return the retained slice
@@ -604,7 +627,7 @@ public enum ProtocolUtils {
   public static ByteBuf readRetainedByteBufSlice17(final ByteBuf buf) {
     // Read in a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet
+    // No vanilla packet should give a 3-byte packet
     int len = readExtendedForgeShort(buf);
 
     checkFrame(len <= FORGE_MAX_ARRAY_LENGTH,
@@ -631,8 +654,8 @@ public enum ProtocolUtils {
     }
     // Write a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet, this method will still retain vanilla
-    // behaviour.
+    // No vanilla packet should give a 3-byte packet, this method will still retain vanilla
+    // behavior.
     writeExtendedForgeShort(buf, b.length);
     buf.writeBytes(b);
   }
@@ -655,8 +678,8 @@ public enum ProtocolUtils {
     }
     // Write a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
-    // No vanilla packet should give a 3 byte packet, this method will still retain vanilla
-    // behaviour.
+    // No vanilla packet should give a 3-byte packet, this method will still retain vanilla
+    // behavior.
     writeExtendedForgeShort(buf, b.readableBytes());
     buf.writeBytes(b);
   }
@@ -696,8 +719,9 @@ public enum ProtocolUtils {
   }
 
   /**
-   * Reads a non length-prefixed string from the {@code buf}. We need this for the legacy 1.7
-   * version, being inconsistent when sending the brand.
+   * Reads a non-length-prefixed string from the {@code buf}.
+   * We need this for the legacy 1.7 version, being
+   * inconsistent when sending the brand.
    *
    * @param buf the buffer to read from
    * @return the decoded string
@@ -714,8 +738,11 @@ public enum ProtocolUtils {
    * @return the appropriate {@link GsonComponentSerializer}
    */
   public static GsonComponentSerializer getJsonChatSerializer(final ProtocolVersion version) {
-    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
       return MODERN_SERIALIZER;
+    }
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
+      return PRE_1_21_5_SERIALIZER;
     }
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
       return PRE_1_20_3_SERIALIZER;
@@ -754,7 +781,15 @@ public enum ProtocolUtils {
    * Represents the direction in which a packet flows.
    */
   public enum Direction {
+
+    /**
+     * Indicates that the packet is sent from the client to the server.
+     */
     SERVERBOUND,
+
+    /**
+     * Indicates that the packet is sent from the server to the client.
+     */
     CLIENTBOUND
   }
 }

@@ -144,8 +144,25 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   }
 
   private static void serializeNode(final CommandNode<CommandSource> node, final ByteBuf buf,
-      final Object2IntMap<CommandNode<CommandSource>> idMappings, final ProtocolVersion protocolVersion) {
-    byte flags = getFlags(node);
+                                    final Object2IntMap<CommandNode<CommandSource>> idMappings, final ProtocolVersion protocolVersion) {
+    byte flags = 0;
+    if (node.getRedirect() != null) {
+      flags |= FLAG_IS_REDIRECT;
+    }
+    if (node.getCommand() != null) {
+      flags |= FLAG_EXECUTABLE;
+    }
+
+    if (node instanceof LiteralCommandNode<?>) {
+      flags |= NODE_TYPE_LITERAL;
+    } else if (node instanceof ArgumentCommandNode<?, ?>) {
+      flags |= NODE_TYPE_ARGUMENT;
+      if (((ArgumentCommandNode<CommandSource, ?>) node).getCustomSuggestions() != null) {
+        flags |= FLAG_HAS_SUGGESTIONS;
+      }
+    } else if (!(node instanceof RootCommandNode<?>)) {
+      throw new IllegalArgumentException("Unknown node type " + node.getClass().getName());
+    }
 
     buf.writeByte(flags);
     ProtocolUtils.writeVarInt(buf, node.getChildren().size());
@@ -173,28 +190,6 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     } else if (node instanceof LiteralCommandNode<?>) {
       ProtocolUtils.writeString(buf, node.getName());
     }
-  }
-
-  private static byte getFlags(CommandNode<CommandSource> node) {
-    byte flags = 0;
-    if (node.getRedirect() != null) {
-      flags |= FLAG_IS_REDIRECT;
-    }
-    if (node.getCommand() != null) {
-      flags |= FLAG_EXECUTABLE;
-    }
-
-    if (node instanceof LiteralCommandNode<?>) {
-      flags |= NODE_TYPE_LITERAL;
-    } else if (node instanceof ArgumentCommandNode<?, ?>) {
-      flags |= NODE_TYPE_ARGUMENT;
-      if (((ArgumentCommandNode<CommandSource, ?>) node).getCustomSuggestions() != null) {
-        flags |= FLAG_HAS_SUGGESTIONS;
-      }
-    } else if (!(node instanceof RootCommandNode<?>)) {
-      throw new IllegalArgumentException("Unknown node type " + node.getClass().getName());
-    }
-    return flags;
   }
 
   @Override
@@ -242,7 +237,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     private boolean validated;
 
     private WireNode(final int idx, final byte flags, final int[] children, final int redirectTo,
-        @Nullable final ArgumentBuilder<CommandSource, ?> args) {
+                     @Nullable final ArgumentBuilder<CommandSource, ?> args) {
       this.idx = idx;
       this.flags = flags;
       this.children = children;
@@ -252,7 +247,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     }
 
     void validate(final WireNode[] wireNodes) {
-      // Ensure all children exist. Note that we delay checking if the node has been built yet;
+      // Ensure all children exist. Note that we delay checking if the node has already been built;
       // that needs to come after this node is built.
       for (int child : children) {
         if (child < 0 || child >= wireNodes.length) {
@@ -359,7 +354,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
 
     @Override
     public CompletableFuture<Suggestions> getSuggestions(final CommandContext<CommandSource> context,
-        final SuggestionsBuilder builder) {
+                                                         final SuggestionsBuilder builder) {
       return builder.buildFuture();
     }
   }

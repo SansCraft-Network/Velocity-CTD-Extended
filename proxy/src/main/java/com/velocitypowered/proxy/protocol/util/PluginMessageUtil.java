@@ -110,7 +110,8 @@ public final class PluginMessageUtil {
         message.getChannel());
     if (!message.content().isReadable()) {
       // If we try to split this, we will get a one-element array with the empty string, which
-      // has caused issues with 1.13+ compatibility. Just return an empty list.
+      // has caused issues with 1.13+ compatibility.
+      // Return an empty list.
       return ImmutableList.of();
     }
     String payload = message.content().toString(StandardCharsets.UTF_8);
@@ -202,7 +203,8 @@ public final class PluginMessageUtil {
         .replaceAll("\\{proxy-brand-custom}", proxyBrandCustom)
         .replaceAll("\\{proxy-version}", version.getVersion())
         .replaceAll("\\{proxy-vendor}", version.getVendor())
-        .replaceAll("\\{server-connected}", connectedServer);
+        .replaceAll("\\{server-connected}", connectedServer)
+        + "§r"; // Ensures brand coloration remains within bounds
 
     ByteBuf rewrittenBuf = Unpooled.buffer();
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -253,12 +255,12 @@ public final class PluginMessageUtil {
       case UNREGISTER_CHANNEL_LEGACY -> UNREGISTER_CHANNEL;
       case BRAND_CHANNEL_LEGACY -> BRAND_CHANNEL;
       case "BungeeCord" ->
-        // This is a special historical case we are compelled to support for the benefit of
-        // BungeeQuack.
-        "bungeecord:main";
+          // This is a special historical case we are compelled to support for the benefit of
+          // BungeeQuack.
+          "bungeecord:main";
       default -> {
         // This is very likely a legacy name, so transform it. Velocity uses the same scheme as
-        // BungeeCord does to transform channels, but also removes clearly invalid characters as
+        // BungeeCord does to transform channels, but removes clearly invalid characters as
         // well.
         String lower = name.toLowerCase(Locale.ROOT);
         yield "legacy:" + INVALID_IDENTIFIER_REGEX.matcher(lower).replaceAll("");

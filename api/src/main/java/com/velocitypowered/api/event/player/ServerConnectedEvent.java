@@ -37,20 +37,35 @@ public final class ServerConnectedEvent {
    * @param previousServer the server the player was previously connected to, null if none
    */
   public ServerConnectedEvent(final Player player, final RegisteredServer server,
-      @Nullable final RegisteredServer previousServer) {
+                              @Nullable final RegisteredServer previousServer) {
     this.player = Preconditions.checkNotNull(player, "player");
     this.server = Preconditions.checkNotNull(server, "server");
     this.previousServer = previousServer;
   }
 
+  /**
+   * Returns the player involved in this event.
+   *
+   * @return the {@link Player} who connected
+   */
   public Player getPlayer() {
     return player;
   }
 
+  /**
+   * Returns the server the player successfully connected to.
+   *
+   * @return the {@link RegisteredServer} the player connected to
+   */
   public RegisteredServer getServer() {
     return server;
   }
 
+  /**
+   * Returns the server the player was previously connected to, if any.
+   *
+   * @return an {@link Optional} of the previous {@link RegisteredServer}, or empty if none
+   */
   public Optional<RegisteredServer> getPreviousServer() {
     return Optional.ofNullable(previousServer);
   }

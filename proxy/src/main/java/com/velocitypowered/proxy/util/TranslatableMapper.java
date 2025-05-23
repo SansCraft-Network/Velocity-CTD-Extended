@@ -24,44 +24,33 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.flattener.ComponentFlattener;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationRegistry;
-import net.kyori.adventure.translation.Translator;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Velocity Translation Mapper.
  */
 public enum TranslatableMapper implements BiConsumer<TranslatableComponent, Consumer<Component>> {
+
+  /**
+   * Singleton instance of the {@link TranslatableMapper} used to resolve and render
+   * {@link TranslatableComponent} objects to localized {@link Component} instances
+   * using the {@link GlobalTranslator}.
+   *
+   * <p>This instance is registered in the {@link #FLATTENER} for use during
+   * text flattening, enabling proper localization of translatable messages based on
+   * the user's locale or a best-match fallback.</p>
+   */
   INSTANCE;
 
   public static final ComponentFlattener FLATTENER = ComponentFlattener.basic().toBuilder()
-          .complexMapper(TranslatableComponent.class, TranslatableMapper.INSTANCE)
-          .build();
+      .complexMapper(TranslatableComponent.class, TranslatableMapper.INSTANCE)
+      .build();
 
   @Override
-  public void accept(
-          final TranslatableComponent translatableComponent,
-          final Consumer<Component> componentConsumer
-  ) {
-    for (final Translator source : GlobalTranslator.translator().sources()) {
-      if (source instanceof TranslationRegistry registry
-              && registry.contains(translatableComponent.key())) {
-        componentConsumer.accept(GlobalTranslator.render(translatableComponent,
-                ClosestLocaleMatcher.INSTANCE.lookupClosest(Locale.getDefault())));
-        return;
-      }
-    }
-    final @Nullable String fallback = translatableComponent.fallback();
-    if (fallback == null) {
-      return;
-    }
-    for (final Translator source : GlobalTranslator.translator().sources()) {
-      if (source instanceof TranslationRegistry registry && registry.contains(fallback)) {
-        componentConsumer.accept(
-                GlobalTranslator.render(Component.translatable(fallback),
-                        ClosestLocaleMatcher.INSTANCE.lookupClosest(Locale.getDefault())));
-        return;
-      }
+  public void accept(final TranslatableComponent translatableComponent,
+                     final Consumer<Component> componentConsumer) {
+    final Locale locale = ClosestLocaleMatcher.INSTANCE.lookupClosest(Locale.getDefault());
+    if (GlobalTranslator.translator().canTranslate(translatableComponent.key(), locale)) {
+      componentConsumer.accept(GlobalTranslator.render(translatableComponent, locale));
     }
   }
 }

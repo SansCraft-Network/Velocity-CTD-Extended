@@ -51,7 +51,7 @@ public final class PingOptions {
   /**
    * The maximum period of time to wait for a response from the remote server.
    *
-   * @return the server ping timeout in milliseconds
+   * @return the server ping's timeout in milliseconds
    */
   public long getTimeout() {
     return this.timeout;
@@ -85,7 +85,7 @@ public final class PingOptions {
       return false;
     }
     return Objects.equals(this.protocolVersion, other.protocolVersion)
-      && Objects.equals(this.timeout, other.timeout);
+        && Objects.equals(this.timeout, other.timeout);
   }
 
   @Override
@@ -96,9 +96,9 @@ public final class PingOptions {
   @Override
   public String toString() {
     return "PingOptions{"
-            + "protocolVersion=" + protocolVersion
-            + ", timeout=" + timeout
-            + '}';
+        + "protocolVersion=" + protocolVersion
+        + ", timeout=" + timeout
+        + '}';
   }
 
   /**

@@ -28,7 +28,6 @@ final class ModArgumentPropertySerializer implements ArgumentPropertySerializer<
   static final ModArgumentPropertySerializer MOD = new ModArgumentPropertySerializer();
 
   private ModArgumentPropertySerializer() {
-
   }
 
   @Override

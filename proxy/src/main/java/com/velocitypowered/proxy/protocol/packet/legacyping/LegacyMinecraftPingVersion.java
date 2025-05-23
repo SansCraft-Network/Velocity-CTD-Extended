@@ -28,7 +28,19 @@ package com.velocitypowered.proxy.protocol.packet.legacyping;
  * requires a legacy server ping format.</p>
  */
 public enum LegacyMinecraftPingVersion {
+
+  /**
+   * Minecraft 1.3.
+   */
   MINECRAFT_1_3,
+
+  /**
+   * Minecraft 1.4.
+   */
   MINECRAFT_1_4,
+
+  /**
+   * Minecraft 1.6.
+   */
   MINECRAFT_1_6
 }

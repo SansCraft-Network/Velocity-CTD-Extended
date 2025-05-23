@@ -35,7 +35,15 @@ public record RedisGenericReplyRequest(Type type, String targetProxy, EncodedCom
   }
 
   enum Type {
+
+    /**
+     * Requests the target proxy to reload its configuration or perform a reload-related action.
+     */
     RELOAD,
+
+    /**
+     * Requests the target proxy to respond with its current uptime.
+     */
     UPTIME
   }
 }

@@ -33,20 +33,18 @@ import java.util.List;
 /**
  * Serializes {@link GameProfile} instances into JSON.
  */
-public final class GameProfileSerializer implements JsonSerializer<GameProfile>,
-    JsonDeserializer<GameProfile> {
+public final class GameProfileSerializer implements JsonSerializer<GameProfile>, JsonDeserializer<GameProfile> {
 
   public static final GameProfileSerializer INSTANCE = new GameProfileSerializer();
   private static final Type propertyList = new TypeToken<List<Property>>() {
   }.getType();
 
   private GameProfileSerializer() {
-
   }
 
   @Override
   public GameProfile deserialize(final JsonElement json, final Type typeOfT,
-      final JsonDeserializationContext context) {
+                                 final JsonDeserializationContext context) {
     JsonObject obj = json.getAsJsonObject();
     return new GameProfile(obj.get("id").getAsString(), obj.get("name").getAsString(),
         context.deserialize(obj.get("properties"), propertyList));

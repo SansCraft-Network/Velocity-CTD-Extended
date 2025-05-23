@@ -28,7 +28,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class VelocityTabListEntryLegacy extends KeyedVelocityTabListEntry {
 
   VelocityTabListEntryLegacy(final VelocityTabListLegacy tabList, final GameProfile profile,
-      @Nullable final Component displayName, final int latency, final int gameMode) {
+                             @Nullable final Component displayName, final int latency, final int gameMode) {
     super(tabList, profile, displayName, latency, gameMode, null);
   }
 

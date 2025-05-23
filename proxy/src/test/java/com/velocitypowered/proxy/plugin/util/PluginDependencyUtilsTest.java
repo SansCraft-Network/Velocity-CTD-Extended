@@ -96,7 +96,7 @@ class PluginDependencyUtilsTest {
     assertThrows(IllegalStateException.class, () -> PluginDependencyUtils.sortCandidates(descs));
   }
 
-  private static PluginDescription testDescription(String id, PluginDependency... dependencies) {
+  private static PluginDescription testDescription(final String id, final PluginDependency... dependencies) {
     return new VelocityPluginDescription(
         id, "tuxed", "0.1", null, null, ImmutableList.of(),
         ImmutableList.copyOf(dependencies), null

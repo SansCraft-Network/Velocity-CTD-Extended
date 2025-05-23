@@ -39,8 +39,6 @@ import com.velocitypowered.proxy.protocol.packet.JoinGamePacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -70,8 +68,7 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
     this.server = server;
     this.serverConn = serverConn;
     this.resultFuture = resultFuture;
-    this.bungeecordMessageResponder = new BungeeCordMessageResponder(server,
-        serverConn.getPlayer());
+    this.bungeecordMessageResponder = new BungeeCordMessageResponder(server, serverConn.getPlayer());
   }
 
   @Override
@@ -108,9 +105,6 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
 
     // Reset Tablist header and footer to prevent desync
     player.clearPlayerListHeaderAndFooter();
-
-    // When the list is cycled, clear it to prevent infinite looping.
-    player.getAttemptedServers().clear();
 
     // The goods are in hand! We got JoinGame. Let's transition completely to the new state.
     smc.setAutoReading(false);
@@ -224,10 +218,7 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
       return true;
     }
 
-    byte[] bytes = new byte[packet.content().readableBytes()];
-    packet.content().getBytes(packet.content().readerIndex(), bytes);
-    ByteBuf safeBuf = Unpooled.copiedBuffer(bytes);
-    serverConn.getPlayer().getConnection().write(new PluginMessagePacket(packet.getChannel(), safeBuf));
+    serverConn.getPlayer().getConnection().write(packet.retain());
     return true;
   }
 

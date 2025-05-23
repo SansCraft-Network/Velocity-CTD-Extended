@@ -83,9 +83,9 @@ public class VelocityCommandManager implements CommandManager {
    * Constructs a command manager.
    *
    * @param eventManager the event manager
+   * @param pluginManager the plugin manager
    */
-  public VelocityCommandManager(final VelocityEventManager eventManager,
-      final PluginManager pluginManager) {
+  public VelocityCommandManager(final VelocityEventManager eventManager, final PluginManager pluginManager) {
     this.pluginManager = pluginManager;
     this.lock = new ReentrantReadWriteLock();
     this.dispatcher = new CommandDispatcher<>();
@@ -256,7 +256,7 @@ public class VelocityCommandManager implements CommandManager {
       }
     } catch (final Throwable e) {
       // Ugly, ugly swallowing of everything Throwable, because plugins are naughty.
-      // "Ugly indeed, but with proper spacing... umm.. uhh... yeah still ugly..." - Hadimhz
+      // "Ugly indeed, but with proper spacing... umm... uhh... yeah still ugly..."
       throw new RuntimeException("Unable to invoke command " + parsed.getReader().getString() + " for " + source, e);
     } finally {
       eventManager.fireAndForget(new PostCommandInvocationEvent(source, parsed.getReader().getString(), result));

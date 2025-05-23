@@ -20,7 +20,7 @@ import com.velocitypowered.api.proxy.Player;
  * <li>{@link BrigadierCommand}, which supports parameterized arguments and
  * specialized execution, tab complete suggestions and permission-checking logic.
  *
- * <li>{@link SimpleCommand}, modelled after the convention popularized by
+ * <li>{@link SimpleCommand}, modeled after the convention popularized by
  * Bukkit and BungeeCord. Older classes directly implementing {@link Command}
  * are suggested to migrate to this interface.
  *

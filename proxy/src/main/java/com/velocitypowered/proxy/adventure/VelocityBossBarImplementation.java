@@ -88,16 +88,21 @@ public final class VelocityBossBarImplementation implements BossBar.Listener,
     return false;
   }
 
+  /**
+   * Removes a disconnected player from the list of viewers.
+   *
+   * <p>This is a passive removal and does not send any packet to the player, assuming
+   * the player is already disconnected.</p>
+   *
+   * @param viewer the {@link ConnectedPlayer} who has disconnected
+   */
   public void viewerDisconnected(final ConnectedPlayer viewer) {
     this.viewers.remove(viewer);
   }
 
   @Override
-  public void bossBarNameChanged(
-      final @NotNull BossBar bar,
-      final @NotNull Component oldName,
-      final @NotNull Component newName
-  ) {
+  public void bossBarNameChanged(final @NotNull BossBar bar, final @NotNull Component oldName,
+                                 final @NotNull Component newName) {
     for (final ConnectedPlayer viewer : this.viewers) {
       final Component translated = viewer.translateMessage(newName);
       final BossBarPacket packet = BossBarPacket.createUpdateNamePacket(
@@ -110,11 +115,8 @@ public final class VelocityBossBarImplementation implements BossBar.Listener,
   }
 
   @Override
-  public void bossBarProgressChanged(
-      final @NotNull BossBar bar,
-      final float oldProgress,
-      final float newProgress
-  ) {
+  public void bossBarProgressChanged(final @NotNull BossBar bar, final float oldProgress,
+                                     final float newProgress) {
     final BossBarPacket packet = BossBarPacket.createUpdateProgressPacket(this.id, this.bar);
     for (final ConnectedPlayer viewer : this.viewers) {
       viewer.getConnection().write(packet);
@@ -122,11 +124,8 @@ public final class VelocityBossBarImplementation implements BossBar.Listener,
   }
 
   @Override
-  public void bossBarColorChanged(
-      final @NotNull BossBar bar,
-      final BossBar.@NotNull Color oldColor,
-      final BossBar.@NotNull Color newColor
-  ) {
+  public void bossBarColorChanged(final @NotNull BossBar bar, final BossBar.@NotNull Color oldColor,
+                                  final BossBar.@NotNull Color newColor) {
     final BossBarPacket packet = BossBarPacket.createUpdateStylePacket(this.id, this.bar);
     for (final ConnectedPlayer viewer : this.viewers) {
       viewer.getConnection().write(packet);
@@ -134,11 +133,8 @@ public final class VelocityBossBarImplementation implements BossBar.Listener,
   }
 
   @Override
-  public void bossBarOverlayChanged(
-      final @NotNull BossBar bar,
-      final BossBar.@NotNull Overlay oldOverlay,
-      final BossBar.@NotNull Overlay newOverlay
-  ) {
+  public void bossBarOverlayChanged(final @NotNull BossBar bar, final BossBar.@NotNull Overlay oldOverlay,
+                                    final BossBar.@NotNull Overlay newOverlay) {
     final BossBarPacket packet = BossBarPacket.createUpdateStylePacket(this.id, this.bar);
     for (final ConnectedPlayer viewer : this.viewers) {
       viewer.getConnection().write(packet);
@@ -146,11 +142,8 @@ public final class VelocityBossBarImplementation implements BossBar.Listener,
   }
 
   @Override
-  public void bossBarFlagsChanged(
-      final @NotNull BossBar bar,
-      final @NotNull Set<BossBar.Flag> flagsAdded,
-      final @NotNull Set<BossBar.Flag> flagsRemoved
-  ) {
+  public void bossBarFlagsChanged(final @NotNull BossBar bar, final @NotNull Set<BossBar.Flag> flagsAdded,
+                                  final @NotNull Set<BossBar.Flag> flagsRemoved) {
     final BossBarPacket packet = BossBarPacket.createUpdatePropertiesPacket(this.id, this.bar);
     for (final ConnectedPlayer viewer : this.viewers) {
       viewer.getConnection().write(packet);

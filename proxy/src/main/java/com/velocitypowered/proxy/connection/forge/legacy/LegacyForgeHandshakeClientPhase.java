@@ -47,7 +47,7 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
     public void onFirstJoin(final ConnectedPlayer player) {
       // We have something special to do for legacy Forge servers - during first connection the FML
       // handshake will getNewPhase to complete regardless. Thus, we need to ensure that a reset
-      // packet is ALWAYS sent on first switch.
+      // packet is ALWAYS sent on the first switch.
       //
       // As we know that calling this branch only happens on first join, we set that if we are a
       // Forge client that we must reset on the next switch.
@@ -56,8 +56,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
 
     @Override
     boolean onHandle(final ConnectedPlayer player,
-        final PluginMessagePacket message,
-        final MinecraftConnection backendConn) {
+                     final PluginMessagePacket message,
+                     final MinecraftConnection backendConn) {
       // If we stay in this phase, we do nothing because it means the packet wasn't handled.
       // Returning false indicates this
       return false;
@@ -88,8 +88,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
 
     @Override
     boolean onHandle(final ConnectedPlayer player,
-        final PluginMessagePacket message,
-        final MinecraftConnection backendConn) {
+                     final PluginMessagePacket message,
+                     final MinecraftConnection backendConn) {
       // Read the mod list if we haven't already.
       if (player.getModInfo().isEmpty()) {
         List<ModInfo.Mod> mods = LegacyForgeUtil.readModList(message);
@@ -114,7 +114,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
   },
 
   /**
-   * Waiting on the server to send another ACK. Transition to {@link #PENDING_COMPLETE} when client
+   * Waiting on the server to send another ACK.
+   * Transition to {@link #PENDING_COMPLETE} when the client
    * sends another ACK
    */
   WAITING_SERVER_COMPLETE(LegacyForgeConstants.ACK_DISCRIMINATOR) {
@@ -125,7 +126,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
   },
 
   /**
-   * Waiting on the server to send yet another ACK. Transition to {@link #COMPLETE} when client
+   * Waiting on the server to send another ACK.
+   * Transition to {@link #COMPLETE} when the client
    * sends another ACK
    */
   PENDING_COMPLETE(LegacyForgeConstants.ACK_DISCRIMINATOR) {
@@ -157,8 +159,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
 
     @Override
     boolean onHandle(final ConnectedPlayer player,
-        final PluginMessagePacket message,
-        final MinecraftConnection backendConn) {
+                     final PluginMessagePacket message,
+                     final MinecraftConnection backendConn) {
       super.onHandle(player, message, backendConn);
 
       // just in case the timing is awful
@@ -190,8 +192,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
 
   @Override
   public final boolean handle(final ConnectedPlayer player,
-      final PluginMessagePacket message,
-      final VelocityServerConnection server) {
+                              final PluginMessagePacket message,
+                              final VelocityServerConnection server) {
     if (server != null) {
       MinecraftConnection backendConn = server.getConnection();
       if (backendConn != null
@@ -220,8 +222,8 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
    * @return true if handled, false otherwise.
    */
   boolean onHandle(final ConnectedPlayer player,
-      final PluginMessagePacket message,
-      final MinecraftConnection backendConn) {
+                   final PluginMessagePacket message,
+                   final MinecraftConnection backendConn) {
     // Send the packet on to the server.
     backendConn.write(message.retain());
 
@@ -235,7 +237,7 @@ public enum LegacyForgeHandshakeClientPhase implements ClientConnectionPhase {
   }
 
   /**
-   * Gets the next phase, if any (will return self if we are at the end of the handshake).
+   * Gets the next phase if any (returns self if we are at the end of the handshake).
    *
    * @return The next phase
    */

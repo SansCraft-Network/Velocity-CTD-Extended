@@ -24,7 +24,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
 
 /**
- * Represents a packet that is sent to acknowledge the receipt of a chat message.
+ * Represents a packet sent to acknowledge the receipt of a chat message.
  * This packet is used to confirm that a player or client has received and processed
  * a chat message from the server.
  */
@@ -40,7 +40,7 @@ public class ChatAcknowledgementPacket implements MinecraftPacket {
 
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     offset = ProtocolUtils.readVarInt(buf);
   }
 
@@ -58,8 +58,8 @@ public class ChatAcknowledgementPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "ChatAcknowledgement{"
-      + "offset=" + offset
-      + '}';
+        + "offset=" + offset
+        + '}';
   }
 
   public int offset() {

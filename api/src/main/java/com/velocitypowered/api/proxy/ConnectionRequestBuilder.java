@@ -101,7 +101,7 @@ public interface ConnectionRequestBuilder {
      */
     CONNECTION_IN_PROGRESS,
     /**
-     * A plugin has cancelled this connection.
+     * A plugin has canceled this connection.
      */
     CONNECTION_CANCELLED,
     /**

@@ -164,9 +164,7 @@ public class JavaPluginLoader implements PluginLoader {
     }
   }
 
-  private VelocityPluginDescription createCandidateDescription(
-      final SerializedPluginDescription description,
-      final Path source) {
+  private VelocityPluginDescription createCandidateDescription(final SerializedPluginDescription description, final Path source) {
     Set<PluginDependency> dependencies = new HashSet<>();
 
     for (SerializedPluginDescription.Dependency dependency : description.getDependencies()) {
@@ -186,9 +184,7 @@ public class JavaPluginLoader implements PluginLoader {
     );
   }
 
-  private VelocityPluginDescription createDescription(
-      final JavaVelocityPluginDescriptionCandidate description,
-      final Class<?> mainClass) {
+  private VelocityPluginDescription createDescription(final JavaVelocityPluginDescriptionCandidate description, final Class<?> mainClass) {
     return new JavaVelocityPluginDescription(
         description.getId(),
         description.getName().orElse(null),
@@ -202,8 +198,7 @@ public class JavaPluginLoader implements PluginLoader {
     );
   }
 
-  private static PluginDependency toDependencyMeta(
-      final SerializedPluginDescription.Dependency dependency) {
+  private static PluginDependency toDependencyMeta(final SerializedPluginDescription.Dependency dependency) {
     return new PluginDependency(
         dependency.getId(),
         null, // TODO Implement version matching in dependency annotation

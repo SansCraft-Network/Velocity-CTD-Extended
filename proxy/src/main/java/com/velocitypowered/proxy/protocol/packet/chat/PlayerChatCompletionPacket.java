@@ -59,14 +59,14 @@ public class PlayerChatCompletionPacket implements MinecraftPacket {
 
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     action = Action.values()[ProtocolUtils.readVarInt(buf)];
     completions = ProtocolUtils.readStringArray(buf);
   }
 
   @Override
   public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, action.ordinal());
     ProtocolUtils.writeStringArray(buf, completions);
   }
@@ -78,14 +78,22 @@ public class PlayerChatCompletionPacket implements MinecraftPacket {
 
   /**
    * Represents the different actions that can be taken with chat completions.
-   * The possible actions are:
-   * - ADD: Add new completions to the existing ones.
-   * - REMOVE: Remove specified completions.
-   * - SET: Replace the current completions with the specified ones.
    */
   public enum Action {
+
+    /**
+     * Add the specified completions to the client's current suggestion list.
+     */
     ADD,
+
+    /**
+     * Remove the specified completions from the client's current suggestion list.
+     */
     REMOVE,
+
+    /**
+     * Replace the client's entire suggestion list with the specified completions.
+     */
     SET
   }
 }

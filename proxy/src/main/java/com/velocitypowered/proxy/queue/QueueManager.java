@@ -102,7 +102,7 @@ public abstract class QueueManager {
   public abstract boolean isMasterProxy();
 
   /**
-   * Handles starting the task that manages sending the actionbar
+   * Handles starting the task that manages "sending" the actionbar
    * messages to the players in the queues.
    */
   public void scheduleTickMessage() {
@@ -251,15 +251,10 @@ public abstract class QueueManager {
         }
 
         if (queue.isOnline()) {
-          final int maxPlayers = this.server.getConfiguration().getPlayerCaps().get(queue.getServerName());
-          long playerCount;
-          if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-            playerCount = this.server.getMultiProxyHandler().getAllPlayers().stream().filter(info -> info.getServerName() != null
-                && info.getServerName().equalsIgnoreCase(queue.getServerName())).count();
-          } else {
-            playerCount = server.getPlayerCount();
-          }
-          queue.setFull(playerCount >= maxPlayers);
+          result.getPlayers().ifPresent(ping -> {
+            int max = server.getConfiguration().getPlayerCaps().getOrDefault(queue.getServerName(), ping.getMax());
+            queue.setFull(ping.getOnline() >= max);
+          });
         }
       });
     }

@@ -39,7 +39,7 @@ final class LegacyForgeUtil {
   /**
    * Gets the discriminator from the FML|HS packet (the first byte in the data).
    *
-   * @param message The message to analyse
+   * @param message The message to analyze
    * @return The discriminator
    */
   static byte getHandshakePacketDiscriminator(final PluginMessagePacket message) {
@@ -52,7 +52,7 @@ final class LegacyForgeUtil {
    * Gets the mod list from the mod list packet and parses it.
    *
    * @param message The message
-   * @return The list of mods. May be empty.
+   * @return The list of mods. Maybe empty.
    */
   static List<ModInfo.Mod> readModList(final PluginMessagePacket message) {
     Preconditions.checkNotNull(message, "message");

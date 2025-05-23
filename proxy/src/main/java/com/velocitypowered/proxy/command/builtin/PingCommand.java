@@ -97,8 +97,8 @@ public class PingCommand {
 
       if (ping == -1L) {
         context.getSource().sendMessage(
-                Component.translatable("velocity.command.ping.unknown", NamedTextColor.RED)
-                        .arguments(Component.text(player.getUsername()))
+            Component.translatable("velocity.command.ping.unknown", NamedTextColor.RED)
+                .arguments(Component.text(player.getUsername()))
         );
         return 0;
       }

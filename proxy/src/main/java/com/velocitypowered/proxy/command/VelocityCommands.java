@@ -240,7 +240,7 @@ public final class VelocityCommands {
     // Brigadier resolves the redirect of a node if further input can be parsed.
     // Let <bar> be a literal node having a redirect to a <foo> literal. Then,
     // the context returned by CommandDispatcher#parseNodes when given the input
-    // string "<bar> " does not contain a child context with <foo> as its root node.
+    // string "<bar>" does not contain a child context with <foo> as its root node.
     // Thus, the vanilla client asks the children of <bar> for suggestions, instead
     // of those of <foo> (https://github.com/Mojang/brigadier/issues/46).
     // Perform a shallow copy of the literal instead.
@@ -263,12 +263,12 @@ public final class VelocityCommands {
   // Arguments node
 
   /**
-   * Returns the arguments node for the command represented by the given alias node, if present;
+   * Returns the argument's node for the command represented by the given alias node, if present;
    * otherwise returns {@code null}.
    *
    * @param alias the alias node
    * @param <S>   the type of the command source
-   * @return the arguments node, or null if not present
+   * @return the argument's node, or null if not present
    */
   static <S> @Nullable VelocityArgumentCommandNode<S, ?> getArgumentsNode(
       final LiteralCommandNode<S> alias) {
@@ -283,7 +283,7 @@ public final class VelocityCommands {
    * Returns whether the given node is an argument's node.
    *
    * @param node the node to check
-   * @return true if the node is an arguments node; false otherwise
+   * @return true if the node is an argument's node; false otherwise
    */
   public static boolean isArgumentsNode(final CommandNode<?> node) {
     return node instanceof VelocityArgumentCommandNode && node.getName().equals(ARGS_NODE_NAME);
@@ -433,9 +433,8 @@ public final class VelocityCommands {
    * @param builder the builder passed to the {@code builder} callback
    * @return a future that resolves to the suggestions
    */
-  public static CompletableFuture<Suggestions> suggestProxy(
-      final VelocityServer server, final CommandContext<CommandSource> context, final SuggestionsBuilder builder
-  ) {
+  public static CompletableFuture<Suggestions> suggestProxy(final VelocityServer server, final CommandContext<CommandSource> context,
+                                                            final SuggestionsBuilder builder) {
     final String argument = context.getArguments().containsKey("proxy")
         ? context.getArgument("proxy", String.class)
         : "";
@@ -455,9 +454,8 @@ public final class VelocityCommands {
    * @param builder the builder passed to the {@code builder} callback
    * @return a future that resolves to the suggestions
    */
-  public static CompletableFuture<Suggestions> suggestPlayer(
-      final VelocityServer server, final CommandContext<CommandSource> ctx, final SuggestionsBuilder builder,
-      final boolean includeRemote) {
+  public static CompletableFuture<Suggestions> suggestPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx,
+                                                             final SuggestionsBuilder builder, final boolean includeRemote) {
     final String argument = ctx.getArguments().containsKey("player")
         ? ctx.getArgument("player", String.class)
         : "";

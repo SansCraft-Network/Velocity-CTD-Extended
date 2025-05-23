@@ -130,10 +130,8 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
    * @param pack the {@link net.kyori.adventure.resource.ResourcePackInfo} instance to convert from
    * @return a new {@link ResourcePackInfo} representing the converted Adventure resource pack request
    */
-  public static ResourcePackInfo fromAdventureRequest(
-          final ResourcePackRequest request,
-          final net.kyori.adventure.resource.ResourcePackInfo pack
-  ) {
+  public static ResourcePackInfo fromAdventureRequest(final ResourcePackRequest request,
+                                                      final net.kyori.adventure.resource.ResourcePackInfo pack) {
     return new BuilderImpl(pack.uri().toString())
             .setHash(pack.hash().isEmpty() ? null : ByteBufUtil.decodeHexDump(pack.hash()))
             .setId(pack.id())
@@ -198,5 +196,4 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
       return this;
     }
   }
-
 }

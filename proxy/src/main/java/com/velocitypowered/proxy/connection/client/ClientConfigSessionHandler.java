@@ -44,6 +44,7 @@ import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.KnownPacksPacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -129,8 +130,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
     } else if (BungeeCordMessageResponder.isBungeeCordMessage(packet)) {
       return true;
     } else if (serverConn != null) {
-      byte[] bytes = new byte[packet.content().readableBytes()];
-      packet.content().getBytes(packet.content().readerIndex(), bytes);
+      byte[] bytes = ByteBufUtil.getBytes(packet.content());
       ChannelIdentifier id = this.server.getChannelRegistrar().getFromId(packet.getChannel());
 
       if (id == null) {
@@ -145,19 +145,17 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
           .fire(new PluginMessageEvent(serverConn.getPlayer(), serverConn, id, bytes))
           .thenAcceptAsync(pme -> {
             if (pme.getResult().isAllowed() && serverConn.getConnection() != null) {
-              ByteBuf safeCopy = Unpooled.copiedBuffer(bytes);
               serverConn.ensureConnected().write(new PluginMessagePacket(
-                  pme.getIdentifier().getId(), safeCopy));
+                  pme.getIdentifier().getId(), Unpooled.wrappedBuffer(bytes)));
             }
             serverConn.getPlayer().getConnection().setAutoReading(true);
-          }, player.getConnection().eventLoop()).exceptionally(ex -> {
+          }, player.getConnection().eventLoop()).exceptionally((ex) -> {
             logger.error("Exception while handling plugin message packet for {}", player, ex);
             return null;
           });
-      return true;
     }
 
-    return false;
+    return true;
   }
 
   @Override
@@ -172,16 +170,13 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public boolean handle(final KnownPacksPacket packet) {
-    if (player.getConnectionInFlightOrConnectedServer() != null) {
-      callConfigurationEvent().thenRunAsync(() ->
-          player.getConnectionInFlightOrConnectedServer().ensureConnected().write(packet)).exceptionally(ex -> {
-            logger.error("Error forwarding known packs response to backend:", ex);
-            return null;
-          });
-      return true;
-    }
+    callConfigurationEvent().thenRun(() ->
+        player.getConnectionInFlightOrConnectedServer().ensureConnected().write(packet)).exceptionally(ex -> {
+          logger.error("Error forwarding known packs response to backend:", ex);
+          return null;
+        });
 
-    return false;
+    return true;
   }
 
   @Override
@@ -249,10 +244,10 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   /**
    * Calls the {@link PlayerConfigurationEvent}.
-   * For 1.20.5+ backends this is done when the client responds to
+   * For 1.20.5+ backends, this is done when the client responds to
    * the known packs request. The response is delayed until the event
    * has been called.
-   * For 1.20.2-1.20.4 servers this is done when the client acknowledges
+   * For 1.20.2-1.20.4 servers, this is done when the client acknowledges
    * the end of the configuration.
    * This is handled differently because for 1.20.5+ servers can't keep
    * their connection alive between states and older servers don't have

@@ -23,7 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.function.BooleanSupplier;
 
 /**
- * Statically-computed constraints for native code.
+ * Statically computed constraints for native code.
  */
 public class NativeConstraints {
   private static final boolean NATIVES_ENABLED = !Boolean.getBoolean("velocity.natives-disabled");

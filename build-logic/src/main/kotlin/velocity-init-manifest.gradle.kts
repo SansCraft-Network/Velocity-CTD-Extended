@@ -1,5 +1,3 @@
-import org.gradle.jvm.tasks.Jar
-import org.gradle.kotlin.dsl.withType
 import java.io.ByteArrayOutputStream
 
 val currentShortRevision = ByteArrayOutputStream().use {

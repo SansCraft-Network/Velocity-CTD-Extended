@@ -17,9 +17,10 @@
 
 package com.velocitypowered.proxy.protocol.netty;
 
+import static io.netty.channel.ChannelHandler.Sharable;
+
 import com.velocitypowered.proxy.protocol.packet.LegacyDisconnect;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import java.nio.charset.StandardCharsets;
@@ -27,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * Encodes {@code LegacyDisconnect} for Minecraft 1.3-1.6.4.
  */
-@ChannelHandler.Sharable
+@Sharable
 public final class LegacyPingEncoder extends MessageToByteEncoder<LegacyDisconnect> {
 
   public static final LegacyPingEncoder INSTANCE = new LegacyPingEncoder();
@@ -36,8 +37,7 @@ public final class LegacyPingEncoder extends MessageToByteEncoder<LegacyDisconne
   }
 
   @Override
-  protected void encode(final ChannelHandlerContext ctx, final LegacyDisconnect msg, final ByteBuf out)
-      throws Exception {
+  protected void encode(final ChannelHandlerContext ctx, final LegacyDisconnect msg, final ByteBuf out) throws Exception {
     out.writeByte(0xff);
     writeLegacyString(out, msg.reason());
   }

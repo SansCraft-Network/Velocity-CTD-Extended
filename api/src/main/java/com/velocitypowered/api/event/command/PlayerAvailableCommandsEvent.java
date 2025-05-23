@@ -28,19 +28,29 @@ public class PlayerAvailableCommandsEvent {
   /**
    * Constructs an available commands event.
    *
-   * @param player the targeted player
+   * @param player   the targeted player
    * @param rootNode the Brigadier root node
    */
   public PlayerAvailableCommandsEvent(final Player player,
-      final RootCommandNode<?> rootNode) {
+                                      final RootCommandNode<?> rootNode) {
     this.player = checkNotNull(player, "player");
     this.rootNode = checkNotNull(rootNode, "rootNode");
   }
 
+  /**
+   * Gets the player that the available commands are being sent to.
+   *
+   * @return the targeted player
+   */
   public Player getPlayer() {
     return player;
   }
 
+  /**
+   * Gets the root command node that represents the available commands.
+   *
+   * @return the Brigadier root command node
+   */
   public RootCommandNode<?> getRootNode() {
     return rootNode;
   }

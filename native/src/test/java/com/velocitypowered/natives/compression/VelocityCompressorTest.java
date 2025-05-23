@@ -76,7 +76,7 @@ class VelocityCompressorTest {
     check(compressor, () -> Unpooled.buffer(TEST_DATA.length + 32));
   }
 
-  private void check(VelocityCompressor compressor, Supplier<ByteBuf> bufSupplier)
+  private void check(final VelocityCompressor compressor, final Supplier<ByteBuf> bufSupplier)
       throws DataFormatException {
     ByteBuf source = bufSupplier.get();
     ByteBuf dest = bufSupplier.get();

@@ -72,18 +72,18 @@ public class ServerListPingHandler {
       List<ServerPing.SamplePlayer> unshuffledPlayers;
       if (server.getMultiProxyHandler().isRedisEnabled()) {
         unshuffledPlayers = server.getMultiProxyHandler().getAllPlayers().stream()
-                .map(player -> new ServerPing.SamplePlayer(player.getUsername(), player.getUuid()))
-                .collect(Collectors.toList());
+            .map(player -> new ServerPing.SamplePlayer(player.getUsername(), player.getUuid()))
+            .collect(Collectors.toList());
       } else {
         unshuffledPlayers = server.getAllPlayers().stream()
-                .map(player -> {
-                  if (player.getPlayerSettings().isClientListingAllowed()) {
-                    return new ServerPing.SamplePlayer(player.getUsername(), player.getUniqueId());
-                  } else {
-                    return ServerPing.SamplePlayer.ANONYMOUS;
-                  }
-                })
-                .collect(Collectors.toList());
+            .map(player -> {
+              if (player.getPlayerSettings().isClientListingAllowed()) {
+                return new ServerPing.SamplePlayer(player.getUsername(), player.getUniqueId());
+              } else {
+                return ServerPing.SamplePlayer.ANONYMOUS;
+              }
+            })
+            .collect(Collectors.toList());
       }
 
       Collections.shuffle(unshuffledPlayers);

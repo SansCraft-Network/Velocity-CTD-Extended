@@ -36,7 +36,7 @@ class VelocityPluginModule implements Module {
   private final Path basePluginPath;
 
   VelocityPluginModule(final JavaVelocityPluginDescription description, final PluginContainer pluginContainer,
-      final Path basePluginPath) {
+                       final Path basePluginPath) {
     this.description = description;
     this.pluginContainer = pluginContainer;
     this.basePluginPath = basePluginPath;

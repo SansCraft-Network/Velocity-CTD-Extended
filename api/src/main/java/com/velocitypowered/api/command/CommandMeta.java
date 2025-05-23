@@ -60,7 +60,7 @@ public interface CommandMeta {
      *
      * @param node the command node
      * @return this builder, for chaining
-     * @throws IllegalArgumentException if the node is executable, i.e. has a non-null
+     * @throws IllegalArgumentException if the node is executable, i.e., has a non-null
      *         {@link com.mojang.brigadier.Command}, or has a redirect.
      */
     Builder hint(CommandNode<CommandSource> node);

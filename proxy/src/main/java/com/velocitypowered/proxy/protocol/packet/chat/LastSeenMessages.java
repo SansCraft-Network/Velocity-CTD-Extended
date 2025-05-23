@@ -39,6 +39,13 @@ public class LastSeenMessages {
     this(0, new BitSet(), (byte) 0);
   }
 
+  /**
+   * Creates a new {@link LastSeenMessages} instance with the specified offset, acknowledged messages, and checksum.
+   *
+   * @param offset the starting index of the message window
+   * @param acknowledged a BitSet representing which messages have been acknowledged
+   * @param checksum the checksum for the message window data
+   */
   public LastSeenMessages(final int offset, final BitSet acknowledged, final byte checksum) {
     this.offset = offset;
     this.acknowledged = acknowledged;
@@ -63,6 +70,12 @@ public class LastSeenMessages {
     }
   }
 
+  /**
+   * Encodes this {@link LastSeenMessages} instance into the provided {@link ByteBuf}.
+   *
+   * @param buf the buffer to write the data to
+   * @param protocolVersion the protocol version used for encoding
+   */
   public void encode(final ByteBuf buf, final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, offset);
     buf.writeBytes(Arrays.copyOf(acknowledged.toByteArray(), DIV_FLOOR));
@@ -71,6 +84,11 @@ public class LastSeenMessages {
     }
   }
 
+  /**
+   * Gets the current offset of the message tracking window.
+   *
+   * @return the offset value
+   */
   public int getOffset() {
     return this.offset;
   }
@@ -86,9 +104,9 @@ public class LastSeenMessages {
   @Override
   public String toString() {
     return "LastSeenMessages{"
-      + "offset=" + offset
-      + ", acknowledged=" + acknowledged
-      + ", checksum=" + checksum
-      + '}';
+        + "offset=" + offset
+        + ", acknowledged=" + acknowledged
+        + ", checksum=" + checksum
+        + '}';
   }
 }

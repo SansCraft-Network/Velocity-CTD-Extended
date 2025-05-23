@@ -45,6 +45,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -59,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Velocity's configuration.
  */
+@SuppressWarnings("unchecked")
 public final class VelocityConfiguration implements ProxyConfig {
 
   private static final Logger logger = LogManager.getLogger(VelocityConfiguration.class);
@@ -223,30 +225,21 @@ public final class VelocityConfiguration implements ProxyConfig {
     boolean requireForwardingSecret = false;
     for (Map.Entry<String, PlayerInfoForwarding> entry : servers.getServerForwardingModes().entrySet()) {
       switch (entry.getValue()) {
-        case NONE:
-          logger.warn("Player info forwarding is disabled for {}!"
+        case NONE -> logger.warn("Player info forwarding is disabled for {}!"
                   + " All players will appear to be connecting from the proxy and will have offline-mode UUIDs.", entry.getKey());
-          break;
-        case MODERN:
-        case BUNGEEGUARD:
-          requireForwardingSecret = true;
-          break;
-        default:
-          break;
+        case MODERN, BUNGEEGUARD -> requireForwardingSecret = true;
+        default -> {
+        }
       }
     }
 
     switch (playerInfoForwardingMode) {
-      case NONE:
-        logger.warn("Player info forwarding is disabled by default! All players will appear to be connecting "
-            + "from the proxy and will have offline-mode UUIDs.");
-        break;
-      case MODERN:
-      case BUNGEEGUARD:
-        requireForwardingSecret = true;
-        break;
-      default:
-        break;
+      case NONE ->
+          logger.warn("Player info forwarding is disabled by default! All players will appear to be connecting "
+              + "from the proxy and will have offline-mode UUIDs.");
+      case MODERN, BUNGEEGUARD -> requireForwardingSecret = true;
+      default -> {
+      }
     }
 
     if (requireForwardingSecret && (forwardingSecret == null || forwardingSecret.length == 0)) {
@@ -551,16 +544,6 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
-  public int getMaxPacketsPerSecond() {
-    return advanced.getMaxPacketsPerSecond();
-  }
-
-  @Override
-  public int getMaxPacketDataPerSecond() {
-    return advanced.getMaxPacketDataPerSecond();
-  }
-
-  @Override
   public int getChannelRegisterLimit() {
     return advanced.getChannelRegisterLimit();
   }
@@ -824,9 +807,7 @@ public final class VelocityConfiguration implements ProxyConfig {
               "log-minimum-version", false);
       final String minimumVersion = config.getOrElse("minimum-version", "1.7.2");
       final CommentedConfig slashServersConfig = config.getOrElse("slash-servers", (CommentedConfig) null);
-
       final Map<String, List<String>> slashServers = new HashMap<>();
-
       if (slashServersConfig != null) {
         for (UnmodifiableConfig.Entry entry : slashServersConfig.entrySet()) {
           if (entry.getValue() instanceof String) {
@@ -843,7 +824,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       }
 
       final List<ServerLink> links = new ArrayList<>();
-
       if (serverLinksConfig != null) {
         for (CommentedConfig.Entry entry : serverLinksConfig.entrySet()) {
           CommentedConfig link = entry.getValue();
@@ -854,7 +834,6 @@ public final class VelocityConfiguration implements ProxyConfig {
 
       final List<ProxyAddress> addresses = new ArrayList<>();
       String filter = "MOST_EMPTY";
-
       if (proxyAddressesConfig != null) {
         filter = proxyAddressesConfig.getOrElse("dynamic-proxy-filter", "MOST_EMPTY");
         for (CommentedConfig.Entry entry : proxyAddressesConfig.entrySet()) {
@@ -870,7 +849,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       }
 
       final Map<String, Integer> playerCaps = new HashMap<>();
-
       if (playerCapsConfig != null) {
         for (CommentedConfig.Entry entry : playerCapsConfig.entrySet()) {
           playerCaps.put(entry.getKey(), entry.getValue());
@@ -990,7 +968,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     );
     private List<String> attemptConnectionOrder = ImmutableList.of("lobby");
     private Map<String, PlayerInfoForwarding> serverForwardingModes = ImmutableMap.of();
-
     private String dynamicFallbackFilter;
     @Expose
     private List<String> serverAliases;
@@ -1033,9 +1010,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
         this.servers = ImmutableMap.copyOf(servers);
         this.serverForwardingModes = ImmutableMap.copyOf(serverForwardingModes);
-        this.attemptConnectionOrder = config.getOrElse("try", attemptConnectionOrder)
-            .stream()
-            .toList();
+        this.attemptConnectionOrder = config.getOrElse("try", attemptConnectionOrder).stream().toList();
         this.dynamicFallbackFilter = config.getOrElse("dynamic-fallbacks-filter", "FIRST_AVAILABLE");
         this.serverAliases = config.getOrElse("server-aliases", List.of("joinqueue", "queue", "server"));
       }
@@ -1114,10 +1089,10 @@ public final class VelocityConfiguration implements ProxyConfig {
         Map<String, List<String>> forcedHosts = new HashMap<>();
         for (UnmodifiableConfig.Entry entry : config.entrySet()) {
           if (entry.getValue() instanceof String) {
-            forcedHosts.put(entry.getKey(),
+            forcedHosts.put(entry.getKey().toLowerCase(Locale.ROOT),
                 ImmutableList.of(entry.getValue()));
           } else if (entry.getValue() instanceof List) {
-            forcedHosts.put(entry.getKey(),
+            forcedHosts.put(entry.getKey().toLowerCase(Locale.ROOT),
                 ImmutableList.copyOf((List<String>) entry.getValue()));
           } else {
             throw new IllegalStateException(
@@ -1253,7 +1228,6 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   private static final class Advanced {
-
     @Expose
     private int compressionThreshold = 256;
     @Expose
@@ -1293,18 +1267,16 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private int kickAfterRateLimitedTabCompletes = 0;
     @Expose
-    private int maxPacketsPerSecond = 1 << 12;
-    @Expose
-    private int maxPacketDataPerSecond = 1 << 25;
-    @Expose
     private int channelRegisterLimit = 1024;
     @Expose
     private boolean allowIllegalCharactersInChat = false;
     @Expose
     private String serverBrand = "{backend-brand} ({proxy-brand})";
+    @Expose
     private String serverBrandAsString;
     @Expose
     private String fallbackVersionPing = "{proxy-brand} {protocol-min}-{protocol-max}";
+    @Expose
     private String fallbackVersionPingAsString;
     @Expose
     private boolean alwaysFallBackPing = true;
@@ -1342,8 +1314,6 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 0);
         this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10);
         this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 0);
-        this.maxPacketsPerSecond = config.getIntOrElse("max-packets-per-second", 1 << 12);
-        this.maxPacketDataPerSecond = config.getIntOrElse("max-packet-data-per-second", 1 << 25);
         this.channelRegisterLimit = config.getIntOrElse("channel-register-limit", 1024);
         this.allowIllegalCharactersInChat = config.getOrElse("allow-illegal-characters-in-chat", false);
         this.serverBrand = config.getOrElse("server-brand", "{backend-brand} ({proxy-brand})");
@@ -1440,14 +1410,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       return kickAfterRateLimitedTabCompletes;
     }
 
-    public int getMaxPacketsPerSecond() {
-      return maxPacketsPerSecond;
-    }
-
-    public int getMaxPacketDataPerSecond() {
-      return maxPacketDataPerSecond;
-    }
-
     public int getChannelRegisterLimit() {
       return channelRegisterLimit;
     }
@@ -1498,8 +1460,6 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", kickAfterRateLimitedCommands=" + kickAfterRateLimitedCommands
           + ", tabCompleteRateLimit=" + tabCompleteRateLimit
           + ", kickAfterRateLimitedTabCompletes=" + kickAfterRateLimitedTabCompletes
-          + ", maxPacketsPerSecond=" + maxPacketsPerSecond
-          + ", maxPacketDataPerSecond=" + maxPacketDataPerSecond
           + ", channelRegisterLimit=" + channelRegisterLimit
           + ", allowIllegalCharactersInChat=" + allowIllegalCharactersInChat
           + '}';

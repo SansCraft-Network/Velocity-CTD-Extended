@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 
+@SuppressWarnings("unchecked")
 class CaffeineCacheRatelimiterTest {
 
   @Test
@@ -46,5 +47,4 @@ class CaffeineCacheRatelimiterTest {
     extra.addAndGet(TimeUnit.SECONDS.toNanos(2));
     assertTrue(ratelimiter.attempt(InetAddress.getLoopbackAddress()));
   }
-
 }

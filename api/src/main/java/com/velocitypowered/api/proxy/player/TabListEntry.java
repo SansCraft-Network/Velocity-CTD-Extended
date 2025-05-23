@@ -72,15 +72,15 @@ public interface TabListEntry extends KeyIdentifiable {
   /**
    * Returns the latency for {@code this} entry.
    *
-   * <p>The icon shown in the tab list is calculated by the latency as follows:</p>
+   * <p>The latency calculates the icon shown in the tab list as follows:</p>
    *
    * <ul>
-   *  <li>A negative latency will display the no connection icon</li>
+   *  <li>Negative latency will display the no connection icon</li>
    *  <li>0-150 will display 5 bars</li>
    *  <li>150-300 will display 4 bars</li>
    *  <li>300-600 will display 3 bars</li>
    *  <li>600-1000 will display 2 bars</li>
-   *  <li>A latency greater than 1 second will display 1 bar</li>
+   *  <li>Latency greater than 1 second will display 1 bar</li>
    * </ul>
    *
    * @return latency set for {@code this} entry
@@ -240,9 +240,9 @@ public interface TabListEntry extends KeyIdentifiable {
      *
      * <p>This only works for players currently <b>not</b> connected to this proxy.</p>
      *
-     * <p>For any player currently connected to this proxy this will be filled automatically.</p>
+     * <p>For any player currently connected to this proxy, this will be filled automatically.</p>
      *
-     * <p>Will ignore mismatching key revisions data.</p>
+     * <p>Will ignore mismatching key revision's data.</p>
      *
      * @param chatSession session to set
      * @return {@code this}, for chaining
@@ -331,6 +331,7 @@ public interface TabListEntry extends KeyIdentifiable {
      *
      * @return the constructed {@link TabListEntry}
      */
+    @SuppressWarnings("deprecation")
     public TabListEntry build() {
       if (tabList == null) {
         throw new IllegalStateException("The Tablist must be set when building a TabListEntry");

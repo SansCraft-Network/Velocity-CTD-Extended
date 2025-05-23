@@ -35,6 +35,7 @@ import org.jspecify.annotations.NullMarked;
 @NullMarked
 @SuppressWarnings("ComparableType") // allows us to be more flexible
 public interface Ordered<T> extends Comparable<T> {
+
   /**
    * Checks if {@code this} is greater than {@code that}.
    *

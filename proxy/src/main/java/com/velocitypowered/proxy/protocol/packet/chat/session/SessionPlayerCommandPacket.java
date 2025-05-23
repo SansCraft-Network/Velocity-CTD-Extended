@@ -76,7 +76,8 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
   }
 
   public CommandExecuteEvent.SignedState getEventSignedState() {
-    return !this.argumentSignatures.isEmpty() ? CommandExecuteEvent.SignedState.SIGNED_WITH_ARGS : CommandExecuteEvent.SignedState.SIGNED_WITHOUT_ARGS;
+    return !this.argumentSignatures.isEmpty() ? CommandExecuteEvent.SignedState.SIGNED_WITH_ARGS
+            : CommandExecuteEvent.SignedState.SIGNED_WITHOUT_ARGS;
   }
 
   @Override
@@ -87,12 +88,12 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "SessionPlayerCommand{"
-      + "command='" + command + '\''
-      + ", timeStamp=" + timeStamp
-      + ", salt=" + salt
-      + ", argumentSignatures=" + argumentSignatures
-      + ", lastSeenMessages=" + lastSeenMessages
-      + '}';
+        + "command='" + command + '\''
+        + ", timeStamp=" + timeStamp
+        + ", salt=" + salt
+        + ", argumentSignatures=" + argumentSignatures
+        + ", lastSeenMessages=" + lastSeenMessages
+        + '}';
   }
 
   /**
@@ -112,6 +113,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
       packet.command = command;
       return packet;
     }
+
     SessionPlayerCommandPacket packet = new SessionPlayerCommandPacket();
     packet.command = command;
     packet.timeStamp = timeStamp;
@@ -180,8 +182,8 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
     @Override
     public String toString() {
       return "ArgumentSignatures{"
-        + "entries=" + entries
-        + '}';
+          + "entries=" + entries
+          + '}';
     }
   }
 
@@ -210,8 +212,8 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
     @Override
     public String toString() {
       return "ArgumentSignature{"
-        + "name='" + name + '\''
-        + '}';
+          + "name='" + name + '\''
+          + '}';
     }
   }
 }

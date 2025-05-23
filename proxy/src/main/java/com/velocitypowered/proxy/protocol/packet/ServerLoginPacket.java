@@ -92,10 +92,10 @@ public class ServerLoginPacket implements MinecraftPacket {
   @Override
   public String toString() {
     return "ServerLogin{"
-            + "username='" + username + '\''
-            + "playerKey='" + playerKey + '\''
-            + "holderUUID='" + holderUuid + '\''
-            + '}';
+        + "username='" + username + '\''
+        + "playerKey='" + playerKey + '\''
+        + "holderUUID='" + holderUuid + '\''
+        + '}';
   }
 
   @Override
@@ -172,7 +172,7 @@ public class ServerLoginPacket implements MinecraftPacket {
     // Accommodate the rare (but likely malicious) use of UTF-8 usernames, since it is technically
     // legal on the protocol level.
     int base = 1 + (16 * 3);
-    // Adjustments for Key-authentication
+    // Adjustments for Key authentication
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19)) {
       if (version.lessThan(ProtocolVersion.MINECRAFT_1_19_3)) {
         // + 1 for the boolean present/ not present

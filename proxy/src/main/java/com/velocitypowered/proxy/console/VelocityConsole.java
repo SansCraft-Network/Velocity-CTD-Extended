@@ -52,6 +52,7 @@ import org.jline.reader.LineReaderBuilder;
  * Implements the Velocity console, including sending commands and being the recipient
  * of messages from plugins.
  */
+@SuppressWarnings("UnstableApiUsage")
 public final class VelocityConsole extends SimpleTerminalConsole implements ConsoleCommandSource {
 
   private static final Logger logger = LogManager.getLogger(VelocityConsole.class, new ParameterizedMessageFactory());
@@ -61,7 +62,6 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   private final VelocityServer server;
   private PermissionFunction permissionFunction = ALWAYS_TRUE;
 
-  @SuppressWarnings("UnstableApiUsage")
   private final @NotNull Pointers pointers = ConsoleCommandSource.super.pointers().toBuilder()
       .withDynamic(PermissionChecker.POINTER, this::getPermissionChecker)
       .withDynamic(Identity.LOCALE, () -> ClosestLocaleMatcher.INSTANCE
@@ -75,7 +75,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
 
   @Override
   public void sendMessage(@NonNull final Identity identity, @NonNull final Component message,
-      @NonNull final MessageType messageType) {
+                          @NonNull final MessageType messageType) {
     componentLogger.info(message);
   }
 
@@ -117,7 +117,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
           try {
             List<String> offers = this.server.getCommandManager()
                 .offerSuggestions(this, parsedLine.line())
-                .join(); // Console doesn't get harmed much by this...
+                .join(); // The console doesn't get harmed much by this...
             for (String offer : offers) {
               list.add(new Candidate(offer));
             }

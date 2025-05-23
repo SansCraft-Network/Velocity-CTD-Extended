@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * Handles sorting plugin dependencies into an order that satisfies all dependencies.
  */
+@SuppressWarnings("UnstableApiUsage")
 public final class PluginDependencyUtils {
 
   private PluginDependencyUtils() {
@@ -54,7 +55,7 @@ public final class PluginDependencyUtils {
     sortedCandidates.sort(Comparator.comparing(PluginDescription::getId));
 
     // Create a graph and populate it with plugin dependencies. Specifically, each graph has plugin
-    // nodes, and edges that represent the dependencies that plugin relies on. Non-existent plugins
+    // nodes and edges that represent the dependencies that plugin relies on. Non-existent plugins
     // are ignored.
     MutableGraph<PluginDescription> graph = GraphBuilder.directed()
         .allowsSelfLoops(false)
@@ -77,7 +78,7 @@ public final class PluginDependencyUtils {
 
     // Now we do the depth-first search. The most accessible description of the algorithm is on
     // Wikipedia: https://en.wikipedia.org/w/index.php?title=Topological_sorting&oldid=1036420482,
-    // section "Depth-first search." Apparently this algorithm originates from "Introduction to
+    // section "Depth-first search." Apparently, this algorithm originates from "Introduction to
     // Algorithms" (2nd ed.)
     List<PluginDescription> sorted = new ArrayList<>();
     Map<PluginDescription, Mark> marks = new HashMap<>();
@@ -90,8 +91,8 @@ public final class PluginDependencyUtils {
   }
 
   private static void visitNode(final Graph<PluginDescription> dependencyGraph, final PluginDescription current,
-      final Map<PluginDescription, Mark> visited, final List<PluginDescription> sorted,
-      final Deque<PluginDescription> currentDependencyScanStack) {
+                                final Map<PluginDescription, Mark> visited, final List<PluginDescription> sorted,
+                                final Deque<PluginDescription> currentDependencyScanStack) {
     Mark mark = visited.getOrDefault(current, Mark.NOT_VISITED);
     if (mark == Mark.VISITED) {
       // Visited this node already, nothing to do.
@@ -122,8 +123,21 @@ public final class PluginDependencyUtils {
   }
 
   private enum Mark {
+
+    /**
+     * The plugin has not been visited yet during the traversal.
+     */
     NOT_VISITED,
+
+    /**
+     * The plugin is currently being visited (part of the current recursion stack).
+     * This helps detect circular dependencies.
+     */
     VISITING,
+
+    /**
+     * The plugin and all its dependencies have been fully visited and sorted.
+     */
     VISITED
   }
 }

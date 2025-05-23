@@ -18,10 +18,24 @@
 package com.velocitypowered.proxy.queue;
 
 /**
- * server status.
+ * Enumerates the status the backend server may be in for queuing.
  */
 public enum ServerStatus {
+
+  /**
+   * Indicates the backend server is currently unreachable or has failed to respond.
+   * Players will not be connected or queued to this server.
+   */
   OFFLINE,
+
+  /**
+   * Indicates the backend server is not yet ready to accept players but is expected to be online soon.
+   * Players may remain queued until the server becomes available.
+   */
   WAITING,
+
+  /**
+   * Indicates the backend server is online and able to accept player connections.
+   */
   ONLINE
 }

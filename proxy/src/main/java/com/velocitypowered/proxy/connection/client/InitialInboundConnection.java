@@ -35,7 +35,7 @@ import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
 import net.kyori.adventure.translation.GlobalTranslator;
 
 /**
- * Implements {@link InboundConnection} for a newly-established connection.
+ * Implements {@link InboundConnection} for a newly established connection.
  */
 public final class InitialInboundConnection implements VelocityInboundConnection,
     MinecraftConnectionAssociation {
@@ -117,7 +117,6 @@ public final class InitialInboundConnection implements VelocityInboundConnection
 
       if (connection.server.getConfiguration().isLogPlayerDisconnections()) {
         logger.info(Component.text(this + " has disconnected: ").append(translated));
-
       }
     }
     connection.closeWith(DisconnectPacket.create(translated, getProtocolVersion(), connection.getState()));

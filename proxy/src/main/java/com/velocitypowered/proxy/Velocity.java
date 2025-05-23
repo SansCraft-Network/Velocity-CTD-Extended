@@ -47,6 +47,11 @@ public class Velocity {
       System.setProperty("io.netty.native.workdir", System.getProperty("velocity.natives-tmpdir"));
     }
 
+    // Restore allocator used before Netty 4.2 due to oom issues with the adaptive allocator
+    if (System.getProperty("io.netty.allocator.type") == null) {
+      System.setProperty("io.netty.allocator.type", "pooled");
+    }
+
     // Disable the resource leak detector by default as it reduces performance. Allow the user to
     // override this if desired.
     if (!VelocityProperties.hasProperty("io.netty.leakDetection.level")) {
@@ -77,7 +82,7 @@ public class Velocity {
     server.getConsoleCommandSource().start();
 
     // If we don't have a console available (because SimpleTerminalConsole returned), then we still
-    // need to wait, otherwise the JVM will reap us as no non-daemon threads will be active once the
+    // need to wait; otherwise the JVM will reap us as no non-daemon threads will be active once the
     // main thread exits.
     server.awaitProxyShutdown();
   }

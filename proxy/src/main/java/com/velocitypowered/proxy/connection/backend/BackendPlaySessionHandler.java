@@ -47,6 +47,7 @@ import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftVarintFrameDecoder;
 import com.velocitypowered.proxy.protocol.packet.AvailableCommandsPacket;
 import com.velocitypowered.proxy.protocol.packet.BossBarPacket;
 import com.velocitypowered.proxy.protocol.packet.BundleDelimiterPacket;
@@ -90,7 +91,6 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
       Boolean.getBoolean("velocity.log-server-backpressure");
   private static final int MAXIMUM_PACKETS_TO_FLUSH =
       Integer.getInteger("velocity.max-packets-per-flush", 8192);
-  private static final int MAX_PLUGIN_MESSAGE_SIZE = 512 * 1024; // 512 KB - any packet over this size is likely an exploit or a poorly coded plugin
 
   private final VelocityServer server;
   private final VelocityServerConnection serverConn;
@@ -150,6 +150,7 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     MinecraftConnection smc = serverConn.ensureConnected();
     smc.setAutoReading(false);
     // Even when not auto reading messages are still decoded. Decode them with the correct state
+    smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.CONFIG);
     smc.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.CONFIG);
     serverConn.getPlayer().switchToConfigState();
     return true;
@@ -317,13 +318,13 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
       return false;
     }
 
-    byte[] contentBytes = new byte[packet.content().readableBytes()];
-    packet.content().getBytes(packet.content().readerIndex(), contentBytes);
-    PluginMessageEvent event = new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, contentBytes);
+    byte[] copy = ByteBufUtil.getBytes(packet.content());
+    PluginMessageEvent event = new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, copy);
     server.getEventManager().fire(event).thenAcceptAsync(pme -> {
       if (pme.getResult().isAllowed() && !playerConnection.isClosed()) {
-        ByteBuf unpooled = Unpooled.copiedBuffer(contentBytes);
-        playerConnection.write(new PluginMessagePacket(packet.getChannel(), unpooled));
+        PluginMessagePacket copied = new PluginMessagePacket(
+            packet.getChannel(), Unpooled.wrappedBuffer(copy));
+        playerConnection.write(copied);
       }
     }, playerConnection.eventLoop()).exceptionally((ex) -> {
       logger.error("Exception while handling plugin message {}", packet, ex);
@@ -461,12 +462,6 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void handleUnknown(final ByteBuf buf) {
-    int size = buf.readableBytes();
-
-    if (size >= MAX_PLUGIN_MESSAGE_SIZE) {
-      System.out.println("PACKET WITH SIZE OVER 8KB DISCARDED");
-      return;
-    }
     playerConnection.delayedWrite(buf.retain());
     if (++packetsFlushed >= MAXIMUM_PACKETS_TO_FLUSH) {
       playerConnection.flush();

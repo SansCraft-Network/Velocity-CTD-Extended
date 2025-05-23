@@ -29,7 +29,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * Represents a signed chat command.
  */
 public class SignedChatCommand implements KeySigned {
-
   private final String command;
   private final PublicKey signer;
   private final Instant expiry;
@@ -42,14 +41,13 @@ public class SignedChatCommand implements KeySigned {
   private final SignaturePair[] previousSignatures;
   private final @Nullable SignaturePair lastSignature;
 
-
   /**
    * Create a signed command from data.
    */
   public SignedChatCommand(final String command, final PublicKey signer, final UUID sender,
-      final Instant expiry, final Map<String, byte[]> signature, final byte[] salt,
-      final boolean isPreviewSigned, final SignaturePair[] previousSignatures,
-      @Nullable final SignaturePair lastSignature) {
+                           final Instant expiry, final Map<String, byte[]> signature, final byte[] salt,
+                           final boolean isPreviewSigned, final SignaturePair[] previousSignatures,
+                           @Nullable final SignaturePair lastSignature) {
     this.command = Preconditions.checkNotNull(command);
     this.signer = Preconditions.checkNotNull(signer);
     this.sender = Preconditions.checkNotNull(sender);
@@ -59,7 +57,6 @@ public class SignedChatCommand implements KeySigned {
     this.isPreviewSigned = isPreviewSigned;
     this.previousSignatures = previousSignatures;
     this.lastSignature = lastSignature;
-
   }
 
   @Override
@@ -85,7 +82,6 @@ public class SignedChatCommand implements KeySigned {
   public String getBaseCommand() {
     return command;
   }
-
 
   public Map<String, byte[]> getSignatures() {
     return signatures;

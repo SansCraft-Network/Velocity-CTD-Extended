@@ -36,7 +36,7 @@ public interface EventTask {
   boolean requiresAsync();
 
   /**
-   * Runs this event task with the given {@link Continuation}. The continuation must be notified
+   * Runs this event task with given {@link Continuation}. The continuation must be notified
    * when the task is completed, either with {@link Continuation#resume()} if the task was
    * successful or {@link Continuation#resumeWithException(Throwable)} if an exception occurred.
    *

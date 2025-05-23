@@ -96,7 +96,7 @@ public class EventTaskTest {
    * An extremely simplified implementation of {@link Continuation} for verifying the completion of
    * an operation.
    */
-  private static class WitnessContinuation implements Continuation {
+  private static final class WitnessContinuation implements Continuation {
 
     private static final AtomicIntegerFieldUpdater<WitnessContinuation> STATUS_UPDATER =
         AtomicIntegerFieldUpdater.newUpdater(WitnessContinuation.class, "status");
@@ -118,7 +118,7 @@ public class EventTaskTest {
     }
 
     @Override
-    public void resumeWithException(Throwable exception) {
+    public void resumeWithException(final Throwable exception) {
       if (!STATUS_UPDATER.compareAndSet(this, UNCOMPLETED, COMPLETED_WITH_EXCEPTION)) {
         throw new IllegalStateException("Continuation is already completed");
       }
@@ -134,5 +134,4 @@ public class EventTaskTest {
       return STATUS_UPDATER.get(this) == COMPLETED_WITH_EXCEPTION;
     }
   }
-
 }

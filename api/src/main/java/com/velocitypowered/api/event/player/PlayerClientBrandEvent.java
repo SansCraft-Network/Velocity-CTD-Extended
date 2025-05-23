@@ -21,18 +21,28 @@ public final class PlayerClientBrandEvent {
   /**
    * Creates a new instance.
    *
-   * @param player the {@link Player} of the sent client brand
-   * @param brand the sent client brand
+   * @param player the {@link Player} of the "sent" client brand
+   * @param brand the "sent" client brand
    */
   public PlayerClientBrandEvent(final Player player, final String brand) {
     this.player = Preconditions.checkNotNull(player);
     this.brand = Preconditions.checkNotNull(brand);
   }
 
+  /**
+   * Gets the player who sent the client brand.
+   *
+   * @return the player
+   */
   public Player getPlayer() {
     return player;
   }
 
+  /**
+   * Gets the brand string sent by the client.
+   *
+   * @return the client brand
+   */
   public String getBrand() {
     return brand;
   }
@@ -40,9 +50,8 @@ public final class PlayerClientBrandEvent {
   @Override
   public String toString() {
     return "PlayerClientBrandEvent{"
-      + "player=" + player
-      + ", brand='" + brand + '\''
-      + '}';
+        + "player=" + player
+        + ", brand='" + brand + '\''
+        + '}';
   }
 }
-

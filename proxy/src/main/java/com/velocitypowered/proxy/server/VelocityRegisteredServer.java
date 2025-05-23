@@ -159,7 +159,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    *
    * @param loop    the event loop to use
    * @param pingOptions the options to apply to this ping
-   * @return the server list ping response
+   * @return the server list's ping response
    */
   public CompletableFuture<ServerPing> ping(@Nullable final EventLoop loop, final PingOptions pingOptions) {
     if (server == null) {
@@ -169,13 +169,13 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     server.createBootstrap(loop).handler(new ChannelInitializer<>() {
       @Override
       protected void initChannel(@NotNull final Channel ch) {
-        ch.pipeline().addLast(FRAME_DECODER, new MinecraftVarintFrameDecoder())
+        ch.pipeline().addLast(FRAME_DECODER, new MinecraftVarintFrameDecoder(ProtocolUtils.Direction.CLIENTBOUND))
             .addLast(READ_TIMEOUT, new ReadTimeoutHandler(
                 pingOptions.getTimeout() == 0
                     ? server.getConfiguration().getReadTimeout()
                     : pingOptions.getTimeout(), TimeUnit.MILLISECONDS))
             .addLast(FRAME_ENCODER, MinecraftVarintLengthEncoder.INSTANCE)
-            .addLast(MINECRAFT_DECODER, new MinecraftDecoder(ProtocolUtils.Direction.CLIENTBOUND, null))
+            .addLast(MINECRAFT_DECODER, new MinecraftDecoder(ProtocolUtils.Direction.CLIENTBOUND))
             .addLast(MINECRAFT_ENCODER, new MinecraftEncoder(ProtocolUtils.Direction.SERVERBOUND));
 
         ch.pipeline().addLast(HANDLER, new MinecraftConnection(ch, server));
@@ -209,10 +209,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
   }
 
   @Override
-  public boolean sendPluginMessage(
-          final @NotNull ChannelIdentifier identifier,
-          final @NotNull PluginMessageEncoder dataEncoder
-  ) {
+  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
     requireNonNull(identifier);
     requireNonNull(dataEncoder);
     final ByteBuf buf = Unpooled.buffer();

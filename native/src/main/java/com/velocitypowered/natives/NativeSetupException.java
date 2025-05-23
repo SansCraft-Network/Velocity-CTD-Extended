@@ -25,20 +25,20 @@ public class NativeSetupException extends RuntimeException {
   public NativeSetupException() {
   }
 
-  public NativeSetupException(String message) {
+  public NativeSetupException(final String message) {
     super(message);
   }
 
-  public NativeSetupException(String message, Throwable cause) {
+  public NativeSetupException(final String message, final Throwable cause) {
     super(message, cause);
   }
 
-  public NativeSetupException(Throwable cause) {
+  public NativeSetupException(final Throwable cause) {
     super(cause);
   }
 
-  public NativeSetupException(String message, Throwable cause, boolean enableSuppression,
-      boolean writableStackTrace) {
+  public NativeSetupException(final String message, final Throwable cause, final boolean enableSuppression,
+                              final boolean writableStackTrace) {
     super(message, cause, enableSuppression, writableStackTrace);
   }
 }

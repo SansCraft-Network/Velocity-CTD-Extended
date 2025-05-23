@@ -21,8 +21,30 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-record PassthroughProperty<T>(ArgumentIdentifier identifier, ArgumentPropertySerializer<T> serializer,
-    @Nullable T result) implements ArgumentType<T> {
+class PassthroughProperty<T> implements ArgumentType<T> {
+
+  private final ArgumentIdentifier identifier;
+  private final ArgumentPropertySerializer<T> serializer;
+  private final @Nullable T result;
+
+  PassthroughProperty(final ArgumentIdentifier identifier, final ArgumentPropertySerializer<T> serializer,
+                      @Nullable final T result) {
+    this.identifier = identifier;
+    this.serializer = serializer;
+    this.result = result;
+  }
+
+  public ArgumentIdentifier getIdentifier() {
+    return identifier;
+  }
+
+  public ArgumentPropertySerializer<T> getSerializer() {
+    return serializer;
+  }
+
+  public @Nullable T getResult() {
+    return result;
+  }
 
   @Override
   public T parse(final StringReader reader) {

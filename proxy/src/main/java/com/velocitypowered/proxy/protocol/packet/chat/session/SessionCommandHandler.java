@@ -39,6 +39,12 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
   private final ConnectedPlayer player;
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@link SessionCommandHandler} for the specified player and server.
+   *
+   * @param player the connected player associated with this handler
+   * @param server the Velocity server instance
+   */
   public SessionCommandHandler(final ConnectedPlayer player, final VelocityServer server) {
     super(player, server);
     this.player = player;
@@ -56,7 +62,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
       return null;
     }
     if (server.getConfiguration().enforceChatSigning() && packet.isSigned()) {
-      // Any signed message produced by the client *must* be passed through to the server in order to maintain a
+      // Any signed message produced by the client *must* be passed through to the server to maintain a
       // consistent state for future messages.
       logger.fatal("A plugin tried to deny a command with signable component(s). This is not supported. "
           + "Disconnecting player {}. Command packet: {}",

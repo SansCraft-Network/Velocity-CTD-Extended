@@ -112,4 +112,16 @@ public class HandshakePacket implements MinecraftPacket {
   public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
+
+  @Override
+  public int expectedMinLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                               final ProtocolVersion version) {
+    return 7;
+  }
+
+  @Override
+  public int expectedMaxLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                               final ProtocolVersion version) {
+    return 9 + (MAXIMUM_HOSTNAME_LENGTH * 3);
+  }
 }

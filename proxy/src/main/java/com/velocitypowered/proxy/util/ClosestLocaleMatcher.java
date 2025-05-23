@@ -35,11 +35,10 @@ public final class ClosestLocaleMatcher {
 
   private ClosestLocaleMatcher() {
     this.byLanguage = new ConcurrentHashMap<>();
-    this.closest = Caffeine.newBuilder()
-        .build(sublocale -> {
-          final String tag = sublocale.getLanguage();
-          return byLanguage.getOrDefault(tag, sublocale);
-        });
+    this.closest = Caffeine.newBuilder().build(sublocale -> {
+      final String tag = sublocale.getLanguage();
+      return byLanguage.getOrDefault(tag, sublocale);
+    });
   }
 
   /**

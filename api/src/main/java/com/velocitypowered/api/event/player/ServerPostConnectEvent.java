@@ -21,8 +21,15 @@ public class ServerPostConnectEvent {
   private final Player player;
   private final RegisteredServer previousServer;
 
+  /**
+   * Constructs a new {@link ServerPostConnectEvent}.
+   *
+   * @param player the player that connected to the server
+   * @param previousServer the server the player was previously connected to, or {@code null}
+   *                       if the player had not been connected to a server before
+   */
   public ServerPostConnectEvent(final Player player,
-      @Nullable final RegisteredServer previousServer) {
+                                @Nullable final RegisteredServer previousServer) {
     this.player = Preconditions.checkNotNull(player, "player");
     this.previousServer = previousServer;
   }

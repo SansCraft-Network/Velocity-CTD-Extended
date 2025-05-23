@@ -52,32 +52,32 @@ public class RegistrationTest {
     eventManager = createEventManager(new FakePluginManager());
   }
 
-  protected EventManager createEventManager(PluginManager pluginManager) {
+  protected EventManager createEventManager(final PluginManager pluginManager) {
     return new VelocityEventManager(pluginManager);
   }
 
-  // Must be public in order to generate a method calling it
+  // Must be public to generate a method calling it
   private static class SimpleEvent {
 
     int value;
   }
 
-  private static class SimpleSubclassedEvent extends SimpleEvent {
+  private static final class SimpleSubclassedEvent extends SimpleEvent {
 
   }
 
-  private static class HandlerListener implements EventHandler<SimpleEvent> {
+  private static final class HandlerListener implements EventHandler<SimpleEvent> {
 
     @Override
-    public void execute(SimpleEvent event) {
+    public void execute(final SimpleEvent event) {
       event.value++;
     }
   }
 
-  private static class AnnotatedListener {
+  private static final class AnnotatedListener {
 
     @Subscribe
-    public void increment(SimpleEvent event) {
+    public void increment(final SimpleEvent event) {
       event.value++;
     }
   }
@@ -92,7 +92,7 @@ public class RegistrationTest {
     void runTest(boolean annotated, EventGenerator generator);
   }
 
-  private Stream<DynamicNode> composeTests(String name, TestFunction testFunction) {
+  private Stream<DynamicNode> composeTests(final String name, final TestFunction testFunction) {
     Set<DynamicNode> tests = new HashSet<>();
     boolean[] trueAndFalse = new boolean[]{true, false};
     for (boolean annotated : trueAndFalse) {
@@ -202,5 +202,4 @@ public class RegistrationTest {
       generator.assertFiredEventValue(0);
     });
   }
-
 }

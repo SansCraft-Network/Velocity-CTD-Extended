@@ -780,7 +780,7 @@ public enum StateRegistry {
   protected final PacketRegistry serverbound = new PacketRegistry(SERVERBOUND, this);
 
   public StateRegistry.PacketRegistry.ProtocolRegistry getProtocolRegistry(final Direction direction,
-      final ProtocolVersion version) {
+                                                                           final ProtocolVersion version) {
     return (direction == SERVERBOUND ? serverbound : clientbound).getProtocolRegistry(version);
   }
 
@@ -1037,5 +1037,4 @@ public enum StateRegistry {
                                    final ProtocolVersion lastValidProtocolVersion, final boolean encodeOnly) {
     return new PacketMapping(id, version, lastValidProtocolVersion, encodeOnly);
   }
-
 }

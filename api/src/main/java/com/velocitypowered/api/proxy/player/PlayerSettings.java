@@ -86,8 +86,20 @@ public interface PlayerSettings {
    * The client's current chat display mode.
    */
   enum ChatMode {
+
+    /**
+     * Chat is fully visible.
+     */
     SHOWN,
+
+    /**
+     * Only command messages are shown.
+     */
     COMMANDS_ONLY,
+
+    /**
+     * Chat is completely hidden.
+     */
     HIDDEN
   }
 
@@ -95,7 +107,15 @@ public interface PlayerSettings {
    * The player's selected dominant hand.
    */
   enum MainHand {
+
+    /**
+     * This scope defines the left hand.
+     */
     LEFT,
+
+    /**
+     * This scope defines the right hand.
+     */
     RIGHT
   }
 
@@ -103,8 +123,20 @@ public interface PlayerSettings {
    * The client's current "Particles" option state.
    */
   enum ParticleStatus {
+
+    /**
+     * All particles are shown.
+     */
     ALL,
+
+    /**
+     * A reduced number of particles are shown.
+     */
     DECREASED,
+
+    /**
+     * Minimal particle effects are shown.
+     */
     MINIMAL
   }
 }

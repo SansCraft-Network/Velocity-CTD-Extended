@@ -70,8 +70,9 @@ public interface CommandInvocationFactory<I extends CommandInvocation<?>> {
    * @return the built invocation context
    */
   // This provides an abstraction over methods common to CommandContext and CommandContextBuilder.
-  // Annoyingly, they mostly have the same getters but one is (correctly) not a subclass of
-  // the other. Subclasses may override the methods above to obtain class-specific data.
-  I create(final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
-      final Map<String, ? extends ParsedArgument<?, ?>> arguments);
+  // Annoyingly, they mostly have the same getters, but one is (correctly) not a subclass of
+  // the other.
+  // Subclasses may override the methods above to collect class-specific data.
+  I create(CommandSource source, List<? extends ParsedCommandNode<?>> nodes,
+           Map<String, ? extends ParsedArgument<?, ?>> arguments);
 }

@@ -87,10 +87,9 @@ public interface ResourcePackInfo extends ResourcePackRequestLike {
 
   /**
    * Returns a copy of this {@link ResourcePackInfo} instance as a builder, using the new URL.
-   * <p/>
    * It is <b>not</b> guaranteed that
    * {@code resourcePackInfo.asBuilder(resourcePackInfo.getUrl()).build().equals(resourcePackInfo)}
-   * is true, because the {@link ResourcePackInfo#getOrigin()} and
+   * Is true, because the {@link ResourcePackInfo#getOrigin()} and
    * {@link ResourcePackInfo#getOriginalOrigin()} fields are transient.
    *
    * @param newUrl The new URL to use in the updated builder.
@@ -107,7 +106,8 @@ public interface ResourcePackInfo extends ResourcePackRequestLike {
     /**
      * Sets the id of the resource pack.
      *
-     * @param id the id the resource-pack
+     * @param id the id of the resource-pack
+     * @return this builder instance
      */
     Builder setId(UUID id);
 
@@ -122,24 +122,26 @@ public interface ResourcePackInfo extends ResourcePackRequestLike {
      *    previously declined or disabled resource packs
      *  - The player will be disconnected from the network if they close/skip the prompt.
      * If the client is on a version older than 1.17:
-     *  - If the player accepts the resource pack or has previously accepted a resource-pack
+     *  - If the player accepts the resource pack or has previously accepted a resource-pack,
      *    then nothing else will happen.
      *  - If the player declines the resource pack or has previously declined a resource-pack
      *    the player will be disconnected from the network
      *
      * @param shouldForce whether to force the client to accept the resource pack
+     * @return this builder instance
      */
     Builder setShouldForce(boolean shouldForce);
 
     /**
      * Sets the SHA-1 hash of the provided resource pack.
      * Note: It is recommended to always set this hash.
-     * If this hash is not set/ not present then the client will always download
+     * If this hash is not set/ not present, then the client will always download
      * the resource pack even if it may still be cached. By having this hash present,
      * the client will check first whether a resource pack by this hash is cached
      * before downloading.
      *
      * @param hash the SHA-1 hash of the resource-pack
+     * @return this builder instance
      */
     Builder setHash(byte @Nullable [] hash);
 
@@ -148,6 +150,7 @@ public interface ResourcePackInfo extends ResourcePackRequestLike {
      * This will only display if the client version is 1.17 or newer.
      *
      * @param prompt the component to display
+     * @return this builder instance
      */
     Builder setPrompt(@Nullable Component prompt);
 

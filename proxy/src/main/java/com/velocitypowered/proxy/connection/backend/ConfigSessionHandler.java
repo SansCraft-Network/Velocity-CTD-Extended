@@ -40,6 +40,7 @@ import com.velocitypowered.proxy.connection.util.ConnectionRequestResults.Impl;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
+import com.velocitypowered.proxy.protocol.netty.MinecraftVarintFrameDecoder;
 import com.velocitypowered.proxy.protocol.packet.ClientboundCookieRequestPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientboundStoreCookiePacket;
 import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
@@ -56,7 +57,7 @@ import com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket;
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.TagsUpdatePacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
-import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
 import java.util.concurrent.CompletableFuture;
@@ -231,6 +232,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     final ConnectedPlayer player = serverConn.getPlayer();
     final ClientConfigSessionHandler configHandler = (ClientConfigSessionHandler) player.getConnection().getActiveSessionHandler();
 
+    smc.getChannel().pipeline().get(MinecraftVarintFrameDecoder.class).setState(StateRegistry.PLAY);
     smc.getChannel().pipeline().get(MinecraftDecoder.class).setState(StateRegistry.PLAY);
     //noinspection DataFlowIssue
     configHandler.handleBackendFinishUpdate(serverConn).thenRunAsync(() -> {
@@ -270,8 +272,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
               serverConn.getServer().getServerInfo().getName(),
               ProtocolVersion.getVersionByName(server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn()));
     } else {
-      byte[] bytes = new byte[packet.content().readableBytes()];
-      packet.content().getBytes(packet.content().readerIndex(), bytes);
+      byte[] bytes = ByteBufUtil.getBytes(packet.content());
       ChannelIdentifier id = this.server.getChannelRegistrar().getFromId(packet.getChannel());
 
       if (id == null) {
@@ -286,9 +287,8 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
           .fire(new PluginMessageEvent(serverConn, serverConn.getPlayer(), id, bytes))
           .thenAcceptAsync(pme -> {
             if (pme.getResult().isAllowed() && !serverConn.getPlayer().getConnection().isClosed()) {
-              ByteBuf sendBuf = Unpooled.copiedBuffer(bytes);
-              serverConn.getPlayer().getConnection().write(
-                  new PluginMessagePacket(pme.getIdentifier().getId(), sendBuf));
+              serverConn.getPlayer().getConnection().write(new PluginMessagePacket(
+                  pme.getIdentifier().getId(), Unpooled.wrappedBuffer(bytes)));
             }
             this.serverConn.getConnection().setAutoReading(true);
           }, serverConn.ensureConnected().eventLoop()).exceptionally((ex) -> {
@@ -385,6 +385,33 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
    * Represents the state of the configuration stage.
    */
   public enum State {
-    START, NEGOTIATING, PLUGIN_MESSAGE_INTERRUPT, RESOURCE_PACK_INTERRUPT, COMPLETE
+
+    /**
+     * The initial state before any configuration-related packets have been handled.
+     */
+    START,
+
+    /**
+     * The state while the configuration process is actively negotiating capabilities
+     * between the client and the backend server.
+     */
+    NEGOTIATING,
+
+    /**
+     * A plugin message (e.g., branding, mod channels) has interrupted the configuration flow,
+     * pausing or deferring progress.
+     */
+    PLUGIN_MESSAGE_INTERRUPT,
+
+    /**
+     * A resource pack-related exchange (prompt, response, or removal) has interrupted
+     * the normal configuration process.
+     */
+    RESOURCE_PACK_INTERRUPT,
+
+    /**
+     * The configuration stage has completed successfully, and the session is now ready for play.
+     */
+    COMPLETE
   }
 }

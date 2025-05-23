@@ -30,7 +30,6 @@ final class FloatArgumentPropertySerializer implements ArgumentPropertySerialize
   static final FloatArgumentPropertySerializer FLOAT = new FloatArgumentPropertySerializer();
 
   private FloatArgumentPropertySerializer() {
-
   }
 
   @Override

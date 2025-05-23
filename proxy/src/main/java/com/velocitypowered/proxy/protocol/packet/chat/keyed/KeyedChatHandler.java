@@ -34,7 +34,7 @@ import org.apache.logging.log4j.Logger;
  * A handler for processing chat components based on specific keys.
  *
  * <p>The {@code KeyedChatHandler} class is responsible for managing chat interactions or
- * messages that are identified by keys. It implements the required interface or class
+ * messages that keys identify. It implements the required interface or class
  * to handle key-based chat processing.</p>
  */
 public class KeyedChatHandler implements
@@ -145,7 +145,7 @@ public class KeyedChatHandler implements
         } else {
           logger.warn("A plugin changed a signed chat message. The server may not accept it.");
           return player.getChatBuilderFactory().builder()
-              .message(chatResult.getMessage().get() /* always present at this point */)
+              .message(chatResult.getMessage().get()) // Always present at this point
               .setTimestamp(packet.getExpiry())
               .toServer();
         }

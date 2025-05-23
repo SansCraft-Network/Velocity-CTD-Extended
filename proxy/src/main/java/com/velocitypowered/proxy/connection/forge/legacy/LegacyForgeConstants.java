@@ -66,10 +66,9 @@ public final class LegacyForgeConstants {
   /**
    * The payload for the reset packet.
    */
-  static final byte[] FORGE_LEGACY_HANDSHAKE_RESET_DATA = new byte[]{RESET_DATA_DISCRIMINATOR, 0};
+  static final byte[] FORGE_LEGACY_HANDSHAKE_RESET_DATA = new byte[] {RESET_DATA_DISCRIMINATOR, 0};
 
   private LegacyForgeConstants() {
     throw new AssertionError();
   }
-
 }

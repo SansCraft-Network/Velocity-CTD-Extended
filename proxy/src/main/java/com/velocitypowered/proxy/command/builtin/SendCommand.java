@@ -524,6 +524,5 @@ public class SendCommand {
     public boolean hasMultipleMatches() {
       return multipleMatches;
     }
-
   }
 }

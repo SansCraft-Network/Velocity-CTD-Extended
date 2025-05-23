@@ -101,10 +101,10 @@ public final class ProxyOptions {
     return this.servers;
   }
 
-  private static class ServerInfoConverter implements ValueConverter<ServerInfo> {
+  private static final class ServerInfoConverter implements ValueConverter<ServerInfo> {
 
     @Override
-    public ServerInfo convert(String s) {
+    public ServerInfo convert(final String s) {
       String[] split = s.split(":", 2);
       if (split.length < 2) {
         throw new ValueConversionException("Invalid server format. Use <name>:<address>");

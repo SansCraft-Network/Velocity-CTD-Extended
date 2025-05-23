@@ -224,7 +224,7 @@ final class SuggestionsProvider<S> {
       return Suggestions.empty();
     }
 
-    // Ask the command for suggestions via the arguments node
+    // Ask the command for suggestions via the argument's node
     reader.setCursor(start);
     final CompletableFuture<Suggestions> cmdSuggestions =
         this.getArgumentsNodeSuggestions(argsNode, reader, context);
@@ -246,7 +246,7 @@ final class SuggestionsProvider<S> {
    *
    * <p>The reader and context are not mutated by this method.
    *
-   * @param node    the arguments node of the command
+   * @param node    the argument's node of the command
    * @param reader  the input reader
    * @param context the context, containing an alias node and {@code node}
    * @return a future that completes with the suggestions
@@ -306,7 +306,8 @@ final class SuggestionsProvider<S> {
       final CommandContextBuilder<S> contextSoFar) {
     // This is a stripped-down version of CommandDispatcher#parseNodes that doesn't
     // check the requirements are satisfied and ignores redirects, neither of which
-    // are used by hint nodes. Parsing errors are ignored.
+    // is used by hint nodes.
+    // Parsing errors are ignored.
     List<ParseResults<S>> potentials = null;
     for (final CommandNode<S> child : node.getRelevantNodes(originalReader)) {
       if (VelocityCommands.isArgumentsNode(child)) {
@@ -350,7 +351,7 @@ final class SuggestionsProvider<S> {
   }
 
   /**
-   * Returns a future that is completed with the result of merging the {@link Suggestions} the given
+   * Returns a future completed with the result of merging the {@link Suggestions} the given
    * futures complete with. The results of the futures that complete exceptionally are ignored.
    *
    * @param fullInput the command input

@@ -26,7 +26,7 @@ import java.nio.file.Path;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Migrate old forwarding secret settings to modern version using an external file.
+ * Migrate old forwarding secret settings to the modern version using an external file.
  */
 public final class ForwardingMigration implements ConfigurationMigration {
   @Override

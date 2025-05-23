@@ -25,7 +25,7 @@ import java.util.zip.DataFormatException;
 /**
  * Implements deflate compression using the {@code libdeflate} native C library.
  */
-public class LibdeflateVelocityCompressor implements VelocityCompressor {
+public final class LibdeflateVelocityCompressor implements VelocityCompressor {
 
   public static final VelocityCompressorFactory FACTORY = LibdeflateVelocityCompressor::new;
 
@@ -48,7 +48,7 @@ public class LibdeflateVelocityCompressor implements VelocityCompressor {
       throws DataFormatException {
     ensureNotDisposed();
 
-    // libdeflate recommends we work with a known uncompressed size - so we work strictly within
+    // Libdeflate recommends we work with a known uncompressed size - so we work strictly within
     // those parameters. If the uncompressed size doesn't match the compressed size, then we will
     // throw an exception from native code.
     destination.ensureWritable(uncompressedSize);
@@ -65,8 +65,7 @@ public class LibdeflateVelocityCompressor implements VelocityCompressor {
   public void deflate(final ByteBuf source, final ByteBuf destination) throws DataFormatException {
     ensureNotDisposed();
 
-    int originalWriterIndex = destination.writerIndex();
-    while (true) {
+    do {
       long sourceAddress = source.memoryAddress() + source.readerIndex();
       long destinationAddress = destination.memoryAddress() + destination.writerIndex();
 
@@ -77,18 +76,11 @@ public class LibdeflateVelocityCompressor implements VelocityCompressor {
         break;
       } else if (produced == 0) {
         // Insufficient room - enlarge the buffer.
-        try {
-          destination.capacity(destination.capacity() * 2);
-        } catch (Throwable t) {
-          // Rollback writer index to prevent buffer corruption.
-          destination.writerIndex(originalWriterIndex);
-          throw t;
-        }
+        destination.capacity(destination.capacity() * 2);
       } else {
-        destination.writerIndex(originalWriterIndex);
         throw new DataFormatException("libdeflate returned unknown code " + produced);
       }
-    }
+    } while (true);
   }
 
   private void ensureNotDisposed() {

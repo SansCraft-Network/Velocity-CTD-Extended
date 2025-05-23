@@ -69,7 +69,7 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
   private boolean informationForwarded;
 
   LoginSessionHandler(final VelocityServer server, final VelocityServerConnection serverConn,
-      final CompletableFuture<Impl> resultFuture) {
+                      final CompletableFuture<Impl> resultFuture) {
     this.server = server;
     this.serverConn = serverConn;
     this.resultFuture = resultFuture;
@@ -88,7 +88,7 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
         && packet.getChannel().equals(PlayerDataForwarding.CHANNEL)) {
 
       int requestedForwardingVersion = PlayerDataForwarding.MODERN_DEFAULT;
-      // Check version
+      // Check the forwarding version
       if (packet.content().readableBytes() == 1) {
         requestedForwardingVersion = packet.content().readByte();
       }

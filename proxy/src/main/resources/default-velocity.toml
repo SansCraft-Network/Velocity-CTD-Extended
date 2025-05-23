@@ -262,16 +262,6 @@ tab-complete-rate-limit = 10
 # Setting this to 0 or lower will disable this feature.
 kick-after-rate-limited-tab-completes = 0
 
-# Defines the maximum number of packets a client can send to the proxy per second.
-# Helps limit packet flooding by abusive or misbehaving users.
-# Default is 4096 (1 << 12).
-max-packets-per-second = 4096
-
-# Defines the total size in bytes of packet data a client can send the proxy per second.
-# Useful for preventing large or excessive packet streams that may degrade performance.
-# Default is 33554432 bytes (32 MB or 1 << 25).
-max-packet-data-per-second = 33554432
-
 # How many channels a player can (un)register.
 channel-register-limit = 1024
 

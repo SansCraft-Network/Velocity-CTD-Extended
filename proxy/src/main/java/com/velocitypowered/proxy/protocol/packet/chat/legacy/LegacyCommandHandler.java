@@ -36,6 +36,12 @@ public class LegacyCommandHandler extends RateLimitedCommandHandler<LegacyChatPa
   private final ConnectedPlayer player;
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@code LegacyCommandHandler} for handling legacy command packets.
+   *
+   * @param player the connected player issuing the command
+   * @param server the Velocity server instance
+   */
   public LegacyCommandHandler(final ConnectedPlayer player, final VelocityServer server) {
     super(player, server);
     this.player = player;
@@ -70,6 +76,7 @@ public class LegacyCommandHandler extends RateLimitedCommandHandler<LegacyChatPa
         }
         return null;
       });
-    }, command, Instant.now(), null, new CommandExecuteEvent.InvocationInfo(CommandExecuteEvent.SignedState.UNSUPPORTED, CommandExecuteEvent.Source.PLAYER));
+    }, command, Instant.now(), null,
+            new CommandExecuteEvent.InvocationInfo(CommandExecuteEvent.SignedState.UNSUPPORTED, CommandExecuteEvent.Source.PLAYER));
   }
 }

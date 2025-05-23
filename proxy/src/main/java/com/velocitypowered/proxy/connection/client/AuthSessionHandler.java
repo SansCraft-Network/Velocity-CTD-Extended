@@ -76,7 +76,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   private final String minimumVersion;
 
   AuthSessionHandler(final VelocityServer server, final LoginInboundConnection inbound,
-      final GameProfile profile, final boolean onlineMode) {
+                     final GameProfile profile, final boolean onlineMode) {
     this.server = Preconditions.checkNotNull(server, "server");
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
     this.profile = Preconditions.checkNotNull(profile, "profile");
@@ -96,18 +96,17 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
     // Make sure the player is on the minimum version set in configuration or higher
     if (!versionCheck(mcConnection)) {
-      if (server.getConfiguration().isLogOfflineConnections()
-                  || (!server.getConfiguration().isLogMinimumVersion())) {
+      if (server.getConfiguration().isLogOfflineConnections() || (!server.getConfiguration().isLogMinimumVersion())) {
         return;
       }
 
       final String discMessage = String.format("[initial connection] %s (%s) has disconnected: ",
-              finalProfile.getName(),
-              mcConnection.getRemoteAddress().toString());
+          finalProfile.getName(),
+          mcConnection.getRemoteAddress().toString());
 
       componentLogger.info(Component.text(discMessage).append(
-              Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
-                      .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion()))));
+          Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
+              .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion()))));
       return;
     }
 
@@ -137,7 +136,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           .fire(new PermissionsSetupEvent(player, ConnectedPlayer.DEFAULT_PERMISSIONS))
           .thenAcceptAsync(event -> {
             if (!mcConnection.isClosed()) {
-              // wait for permissions to load, then set the players permission function
+              // wait for permissions to load, then set the player permission function
               final PermissionFunction function = event.createFunction(player);
               if (function == null) {
                 logger.error("A plugin permission provider {} provided an invalid permission "
@@ -164,9 +163,9 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     // Compare the client's protocol version with the minimum required version
     if (ProtocolVersion.getVersionByName(clientProtocolVersion).lessThan(minimumProtocolVersion)
             || (ProtocolVersion.getVersionByName(clientProtocolVersion).greaterThan(maximumProtocolVersion))) {
-      // Disconnect the player with an error message if client version is too low
+      // Disconnect the player with an error message if their client version is too low
       this.inbound.disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
-              .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+          .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
       return false;
     }
 
@@ -227,9 +226,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           connectedPlayer.setServerLinks(this.server.getConfiguration().getServerLinks());
         }
       }
-      server.getEventManager()
-          .fire(new PostLoginEvent(connectedPlayer))
-          .thenCompose(ignored -> connectToInitialServer(connectedPlayer))
+      server.getEventManager().fire(new PostLoginEvent(connectedPlayer)).thenCompose(ignored -> connectToInitialServer(connectedPlayer))
           .exceptionally((ex) -> {
             logger.error("Exception while connecting {} to initial server", connectedPlayer, ex);
             return null;
@@ -246,7 +243,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           if (event.getResult().isAllowed()) {
             // The received cookie must have been requested by a proxy plugin in login phase,
             // because if a backend server requests a cookie in login phase, the client is already
-            // in config phase. Therefore, the only way, we receive a CookieResponsePacket from a
+            // in config phase.
+            // Therefore, the only way we receive a CookieResponsePacket from a
             // client in login phase is when a proxy plugin requested a cookie in login phase.
             throw new IllegalStateException(
                 "A cookie was requested by a proxy plugin in login phase but the response wasn't handled");
@@ -293,8 +291,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
         if (inbound.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
           loginState = State.ACKNOWLEDGED;
           mcConnection.setActiveSessionHandler(StateRegistry.PLAY, new InitialConnectSessionHandler(player, server));
-          server.getEventManager().fire(new PostLoginEvent(player)).thenCompose((ignored)
-              -> connectToInitialServer(player)).exceptionally((ex) -> {
+          server.getEventManager().fire(new PostLoginEvent(player)).thenCompose((ignored) ->
+              connectToInitialServer(player)).exceptionally((ex) -> {
                 logger.error("Exception while connecting {} to initial server", player, ex);
                 return null;
               });
@@ -338,6 +336,20 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   }
 
   enum State {
-    START, SUCCESS_SENT, ACKNOWLEDGED
+
+    /**
+     * The initial state before a successful login has been sent.
+     */
+    START,
+
+    /**
+     * The server has sent the {@link ServerLoginSuccessPacket}, but the client has not acknowledged it yet.
+     */
+    SUCCESS_SENT,
+
+    /**
+     * The client has acknowledged the login, and the session is transitioning to the play or config state.
+     */
+    ACKNOWLEDGED
   }
 }

@@ -17,11 +17,12 @@
 
 package com.velocitypowered.proxy.protocol.netty;
 
+import static io.netty.channel.ChannelHandler.Sharable;
+
 import com.velocitypowered.natives.encryption.JavaVelocityCipher;
 import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageEncoder;
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.List;
 /**
  * Handler for appending a length for Minecraft packets.
  */
-@ChannelHandler.Sharable
+@Sharable
 public final class MinecraftVarintLengthEncoder extends MessageToMessageEncoder<ByteBuf> {
 
   public static final MinecraftVarintLengthEncoder INSTANCE = new MinecraftVarintLengthEncoder();
@@ -41,7 +42,7 @@ public final class MinecraftVarintLengthEncoder extends MessageToMessageEncoder<
 
   @Override
   protected void encode(final ChannelHandlerContext ctx, final ByteBuf buf,
-      final List<Object> list) throws Exception {
+                        final List<Object> list) throws Exception {
     final int length = buf.readableBytes();
     final int varintLength = ProtocolUtils.varIntBytes(length);
 

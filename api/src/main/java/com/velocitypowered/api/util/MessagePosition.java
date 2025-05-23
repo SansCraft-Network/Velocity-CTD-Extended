@@ -12,8 +12,8 @@ package com.velocitypowered.api.util;
  */
 public enum MessagePosition {
   /**
-   * The chat message will appear in the client's HUD. These messages can be filtered out by the
-   * client.
+   * The chat message will appear in the client's HUD.
+   * The client can filter out these messages.
    */
   CHAT,
   /**
@@ -21,8 +21,8 @@ public enum MessagePosition {
    */
   SYSTEM,
   /**
-   * The chat message will appear above the player's main HUD. This text format doesn't support many
-   * component features, such as hover events.
+   * The chat message will appear above the player's main HUD.
+   * This text format supports few component features, such as hover events.
    */
   ACTION_BAR
 }

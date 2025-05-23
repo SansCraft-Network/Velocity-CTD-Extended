@@ -12,22 +12,38 @@ import com.velocitypowered.api.network.ListenerType;
 import java.net.InetSocketAddress;
 
 /**
- * This event is fired by the proxy after a listener starts accepting connections.
+ * The proxy fires this event after a listener starts accepting connections.
  */
 public final class ListenerBoundEvent {
 
   private final InetSocketAddress address;
   private final ListenerType listenerType;
 
+  /**
+   * Constructs a new {@link ListenerBoundEvent}.
+   *
+   * @param address the socket address the listener is bound to
+   * @param listenerType the type of listener that was bound
+   */
   public ListenerBoundEvent(final InetSocketAddress address, final ListenerType listenerType) {
     this.address = Preconditions.checkNotNull(address, "address");
     this.listenerType = Preconditions.checkNotNull(listenerType, "listenerType");
   }
 
+  /**
+   * Returns the socket address the listener is bound to.
+   *
+   * @return the bound socket address
+   */
   public InetSocketAddress getAddress() {
     return address;
   }
 
+  /**
+   * Returns the type of listener that was bound.
+   *
+   * @return the listener type
+   */
   public ListenerType getListenerType() {
     return listenerType;
   }

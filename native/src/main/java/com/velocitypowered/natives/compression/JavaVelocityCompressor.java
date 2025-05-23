@@ -31,7 +31,7 @@ import java.util.zip.Inflater;
 /**
  * Implements deflate compression by wrapping {@link Deflater} and {@link Inflater}.
  */
-public class JavaVelocityCompressor implements VelocityCompressor {
+public final class JavaVelocityCompressor implements VelocityCompressor {
 
   public static final VelocityCompressorFactory FACTORY = JavaVelocityCompressor::new;
 
@@ -39,13 +39,13 @@ public class JavaVelocityCompressor implements VelocityCompressor {
   private final Inflater inflater;
   private boolean disposed = false;
 
-  private JavaVelocityCompressor(int level) {
+  private JavaVelocityCompressor(final int level) {
     this.deflater = new Deflater(level);
     this.inflater = new Inflater();
   }
 
   @Override
-  public void inflate(ByteBuf source, ByteBuf destination, int uncompressedSize)
+  public void inflate(final ByteBuf source, final ByteBuf destination, final int uncompressedSize)
       throws DataFormatException {
     ensureNotDisposed();
 
@@ -80,7 +80,7 @@ public class JavaVelocityCompressor implements VelocityCompressor {
   }
 
   @Override
-  public void deflate(ByteBuf source, ByteBuf destination) {
+  public void deflate(final ByteBuf source, final ByteBuf destination) {
     ensureNotDisposed();
 
     // We (probably) can't nicely deal with >=1 buffer nicely, so let's scream loudly.

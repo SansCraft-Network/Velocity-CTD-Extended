@@ -24,7 +24,7 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Migrates MOTD builtin configuration from legacy or json format to MiniMessage.
+ * Migrates MOTD builtin configuration from legacy or JSON format to MiniMessage.
  */
 public final class MotdMigration implements ConfigurationMigration {
   @Override
@@ -39,8 +39,7 @@ public final class MotdMigration implements ConfigurationMigration {
     // JSON Format Migration
     if (oldMotd.strip().startsWith("{")) {
       migratedMotd = MiniMessage.miniMessage().serialize(
-                      GsonComponentSerializer.gson().deserialize(oldMotd))
-              .replace("\\", "");
+              GsonComponentSerializer.gson().deserialize(oldMotd)).replace("\\", "");
     } else {
       // Legacy '&' Format Migration
       migratedMotd = MiniMessage.miniMessage().serialize(

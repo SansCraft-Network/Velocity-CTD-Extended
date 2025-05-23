@@ -182,15 +182,17 @@ public class ServerQueueStatus {
       boolean inserted = false;
       int position = 0;
 
-      while (iterator.hasNext()) {
-        ServerQueueEntry currentEntry = iterator.next();
+      if (iterator.hasNext()) {
+        do {
+          ServerQueueEntry currentEntry = iterator.next();
 
-        if (currentEntry.getPriority() < priority) {
-          insertAtPosition(entry, position);
-          inserted = true;
-          break;
-        }
-        position++;
+          if (currentEntry.getPriority() < priority) {
+            insertAtPosition(entry, position);
+            inserted = true;
+            break;
+          }
+          position++;
+        } while (iterator.hasNext());
       }
 
       if (!inserted) {

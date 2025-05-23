@@ -19,11 +19,11 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * called for the {@link com.velocitypowered.api.proxy.ConsoleCommandSource} and any
  * {@link com.velocitypowered.api.proxy.Player}s who join the proxy.
  *
- * <p>This event is only called once per subject, on initialisation.</p>
+ * <p>This event is only called once per subject, on initialization.</p>
  *
  * <p>Velocity will wait for this event to finish firing before proceeding further with server
- * startup (for the console command source) and logins (for players) but it is strongly
- * recommended to minimize the amount of work that must be done in this event.</p>
+ * startup (for the console command source) and logins (for players).
+ * However, it is strongly recommended to minimize the amount of work that must be done in this event.</p>
  */
 @AwaitingEvent
 public final class PermissionsSetupEvent {
@@ -32,11 +32,22 @@ public final class PermissionsSetupEvent {
   private final PermissionProvider defaultProvider;
   private PermissionProvider provider;
 
+  /**
+   * Constructs a new {@link PermissionsSetupEvent}.
+   *
+   * @param subject the subject (e.g., player or console) whose permissions are being initialized
+   * @param provider the default permission provider used for the subject
+   */
   public PermissionsSetupEvent(final PermissionSubject subject, final PermissionProvider provider) {
     this.subject = Preconditions.checkNotNull(subject, "subject");
     this.provider = this.defaultProvider = Preconditions.checkNotNull(provider, "provider");
   }
 
+  /**
+   * Gets the subject whose permissions are being initialized.
+   *
+   * @return the permission subject
+   */
   public PermissionSubject getSubject() {
     return this.subject;
   }
@@ -51,6 +62,11 @@ public final class PermissionsSetupEvent {
     return this.provider.createFunction(subject);
   }
 
+  /**
+   * Gets the current {@link PermissionProvider} in use for this subject.
+   *
+   * @return the permission provider
+   */
   public PermissionProvider getProvider() {
     return this.provider;
   }

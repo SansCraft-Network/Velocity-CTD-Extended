@@ -44,8 +44,8 @@ public class ServerDataPacket implements MinecraftPacket {
   /**
    * Constructs a new {@code ServerDataPacket} with the given server description, favicon, and secure chat enforcement status.
    *
-   * @param description the server description (may be null)
-   * @param favicon the server favicon (may be null)
+   * @param description the server description (maybe null)
+   * @param favicon the server favicon (maybe null)
    * @param secureChatEnforced whether secure chat is enforced (for versions 1.19.1 to 1.20.5)
    */
   public ServerDataPacket(@Nullable final ComponentHolder description, @Nullable final Favicon favicon,
@@ -57,7 +57,7 @@ public class ServerDataPacket implements MinecraftPacket {
 
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_4) || buf.readBoolean()) {
       this.description = ComponentHolder.read(buf, protocolVersion);
     }
@@ -82,7 +82,7 @@ public class ServerDataPacket implements MinecraftPacket {
 
   @Override
   public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     boolean hasDescription = this.description != null;
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_19_4)) {
       buf.writeBoolean(hasDescription);

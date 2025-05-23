@@ -34,7 +34,6 @@ public final class FaviconSerializer implements JsonSerializer<Favicon>, JsonDes
   public static final FaviconSerializer INSTANCE = new FaviconSerializer();
 
   private FaviconSerializer() {
-
   }
 
   @Override

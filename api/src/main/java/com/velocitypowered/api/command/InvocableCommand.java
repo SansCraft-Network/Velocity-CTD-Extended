@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * A command that can be executed with arbitrary arguments.
  *
- * <p>Modifying the command tree (e.g. registering a command via
+ * <p>Modifying the command tree (e.g., registering a command via
  * {@link CommandManager#register(CommandMeta, Command)}) during
  * permission checking and suggestions provision results in
  * undefined behavior, which may include deadlocks.
@@ -56,7 +56,7 @@ public sealed interface InvocableCommand<I extends CommandInvocation<?>> extends
    * Tests to check if the source has permission to perform the specified invocation.
    *
    * <p>If the method returns {@code false}, the handling is forwarded onto
-   * the players current server.
+   * the player's current server.
    *
    * @param invocation the invocation context
    * @return {@code true} if the source has permission

@@ -23,15 +23,25 @@ public class PlayerInfo {
    * @param username The username of the player.
    * @param uuid The UUID of the player.
    */
-  public PlayerInfo(String username, UUID uuid) {
+  public PlayerInfo(final String username, final UUID uuid) {
     this.username = username;
     this.uuid = uuid;
   }
 
+  /**
+   * Gets the username of the player.
+   *
+   * @return the player's username
+   */
   public String getUsername() {
     return username;
   }
 
+  /**
+   * Gets the UUID of the player.
+   *
+   * @return the player's UUID
+   */
   public UUID getUuid() {
     return uuid;
   }

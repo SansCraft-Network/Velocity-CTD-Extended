@@ -87,7 +87,7 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
 
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     Action[] actions = Action.class.getEnumConstants();
     byte[] bytes = new byte[-Math.floorDiv(-actions.length, 8)];
     buf.readBytes(bytes);
@@ -111,7 +111,7 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
 
   @Override
   public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-      final ProtocolVersion protocolVersion) {
+                     final ProtocolVersion protocolVersion) {
     Action[] actions = Action.class.getEnumConstants();
     BitSet set = new BitSet(actions.length);
     for (int idx = 0; idx < actions.length; idx++) {
@@ -326,15 +326,15 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
     @Override
     public String toString() {
       return "Entry{"
-        + "profileId=" + profileId
-        + ", profile=" + profile
-        + ", listed=" + listed
-        + ", latency=" + latency
-        + ", gameMode=" + gameMode
-        + ", displayName=" + displayName
-        + ", listOrder=" + listOrder
-        + ", chatSession=" + chatSession
-        + '}';
+          + "profileId=" + profileId
+          + ", profile=" + profile
+          + ", listed=" + listed
+          + ", latency=" + latency
+          + ", gameMode=" + gameMode
+          + ", displayName=" + displayName
+          + ", listOrder=" + listOrder
+          + ", chatSession=" + chatSession
+          + '}';
     }
   }
 }

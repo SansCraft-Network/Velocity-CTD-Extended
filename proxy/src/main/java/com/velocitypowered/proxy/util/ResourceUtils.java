@@ -46,10 +46,8 @@ public class ResourceUtils {
    * @param remainingPathComponents Remaining path components
    */
   public static boolean visitResources(final Class<?> target, final Consumer<Path> consumer,
-                                       final String firstPathComponent, final String... remainingPathComponents)
-      throws IOException {
-    final URL knownResource = ResourceUtils.class.getClassLoader()
-        .getResource("default-velocity.toml");
+                                       final String firstPathComponent, final String... remainingPathComponents) throws IOException {
+    final URL knownResource = ResourceUtils.class.getClassLoader().getResource("default-velocity.toml");
     if (knownResource == null) {
       throw new IllegalStateException(
           "default-velocity.toml does not exist, don't know where we are");

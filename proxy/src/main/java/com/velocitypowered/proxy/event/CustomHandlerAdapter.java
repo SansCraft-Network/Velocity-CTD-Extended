@@ -42,13 +42,11 @@ final class CustomHandlerAdapter<F> {
   private final MethodHandles.Lookup methodHandlesLookup;
 
   @SuppressWarnings("unchecked")
-  CustomHandlerAdapter(
-      final String name,
-      final Predicate<Method> filter,
-      final BiConsumer<Method, List<String>> validator,
-      final TypeToken<F> invokeFunctionType,
-      final Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder,
-      final MethodHandles.Lookup methodHandlesLookup) {
+  CustomHandlerAdapter(final String name, final Predicate<Method> filter,
+                       final BiConsumer<Method, List<String>> validator,
+                       final TypeToken<F> invokeFunctionType,
+                       final Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder,
+                       final MethodHandles.Lookup methodHandlesLookup) {
     this.name = name;
     this.filter = filter;
     this.validator = validator;
@@ -57,8 +55,7 @@ final class CustomHandlerAdapter<F> {
     this.methodHandlesLookup = methodHandlesLookup;
   }
 
-  UntargetedEventHandler buildUntargetedHandler(final Method method)
-      throws IllegalAccessException {
+  UntargetedEventHandler buildUntargetedHandler(final Method method) throws IllegalAccessException {
     final MethodHandle methodHandle = methodHandlesLookup.unreflect(method);
     final MethodHandles.Lookup defineLookup = MethodHandles.privateLookupIn(
         method.getDeclaringClass(), methodHandlesLookup);

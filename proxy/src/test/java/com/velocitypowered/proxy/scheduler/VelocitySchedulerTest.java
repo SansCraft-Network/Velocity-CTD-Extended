@@ -130,7 +130,5 @@ class VelocitySchedulerTest {
     latch.await();
 
     assertEquals(consumerTask.get(), initialTask.get());
-
   }
-
 }

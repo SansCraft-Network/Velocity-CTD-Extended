@@ -82,7 +82,6 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
     } else {
       this.replace(ProtocolUtils.readRetainedByteBufSlice17(buf));
     }
-
   }
 
   @Override
@@ -106,7 +105,6 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
     } else {
       ProtocolUtils.writeByteBuf17(content(), buf, true); // True for Forge support
     }
-
   }
 
   @Override

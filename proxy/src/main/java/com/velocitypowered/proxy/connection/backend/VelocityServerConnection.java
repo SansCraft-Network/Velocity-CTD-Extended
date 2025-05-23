@@ -80,8 +80,8 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    * @param server           the Velocity proxy instance
    */
   public VelocityServerConnection(final VelocityRegisteredServer registeredServer,
-      @Nullable final VelocityRegisteredServer previousServer,
-      final ConnectedPlayer proxyPlayer, final VelocityServer server) {
+                                  @Nullable final VelocityRegisteredServer previousServer,
+                                  final ConnectedPlayer proxyPlayer, final VelocityServer server) {
     this.registeredServer = registeredServer;
     this.previousServer = previousServer;
     this.proxyPlayer = proxyPlayer;
@@ -257,18 +257,12 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
   }
 
   @Override
-  public boolean sendPluginMessage(
-          final @NotNull ChannelIdentifier identifier,
-          final byte @NotNull [] data
-  ) {
+  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final byte @NotNull [] data) {
     return sendPluginMessage(identifier, Unpooled.wrappedBuffer(data));
   }
 
   @Override
-  public boolean sendPluginMessage(
-          final @NotNull ChannelIdentifier identifier,
-          final @NotNull PluginMessageEncoder dataEncoder
-  ) {
+  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
     requireNonNull(identifier);
     requireNonNull(dataEncoder);
     final ByteBuf buf = Unpooled.buffer();
@@ -337,7 +331,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
 
   /**
    * Gets the current "phase" of the connection, mostly used for tracking modded negotiation for
-   * legacy forge servers and provides methods for performing phase specific actions.
+   * legacy forge servers and provides methods for performing phase-specific actions.
    *
    * @return The {@link BackendConnectionPhase}
    */

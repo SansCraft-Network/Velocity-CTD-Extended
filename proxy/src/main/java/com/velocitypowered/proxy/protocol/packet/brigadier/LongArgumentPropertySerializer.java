@@ -30,7 +30,6 @@ final class LongArgumentPropertySerializer implements ArgumentPropertySerializer
   static final LongArgumentPropertySerializer LONG = new LongArgumentPropertySerializer();
 
   private LongArgumentPropertySerializer() {
-
   }
 
   @Override

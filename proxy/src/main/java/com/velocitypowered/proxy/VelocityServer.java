@@ -129,7 +129,7 @@ import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationRegistry;
+import net.kyori.adventure.translation.TranslationStore;
 import net.kyori.adventure.translation.Translator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -143,6 +143,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Implementation of {@link ProxyServer}.
  */
+@SuppressWarnings({"unchecked"})
 public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   public static final String VELOCITY_URL = "https://github.com/GemstoneGG/Velocity-CTD";
@@ -391,8 +392,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       this.cm.queryBind(configuration.getBind().getHostString(), configuration.getQueryPort());
     }
 
-    final String defaultPackage = new String(
-        new byte[] { 'o', 'r', 'g', '.', 'b', 's', 't', 'a', 't', 's' });
+    final String defaultPackage = new String(new byte[] {'o', 'r', 'g', '.', 'b', 's', 't', 'a', 't', 's' });
     if (!MetricsBase.class.getPackage().getName().startsWith(defaultPackage)) {
       Metrics.VelocityMetrics.startMetrics(this, configuration.getMetrics());
     } else {
@@ -410,7 +410,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   private void registerTranslations(final boolean log) {
     final String defaultFile = "messages.properties";
-    final TranslationRegistry translationRegistry = new VelocityTranslationRegistry(TranslationRegistry.create(this.translationRegistryKey));
+    final VelocityTranslationRegistry translationRegistry =
+            new VelocityTranslationRegistry(TranslationStore.messageFormat(this.translationRegistryKey));
     translationRegistry.defaultLocale(Locale.US);
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
@@ -423,7 +424,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         try (Stream<Path> files = Files.walk(path)) {
           if (!Files.exists(langPath)) {
             Files.createDirectory(langPath);
-
             files.filter(Files::isRegularFile).forEach(file -> {
               try {
                 final Path langFile = langPath.resolve(file.getFileName().toString());
@@ -466,7 +466,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
                 try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                   final ResourceBundle bundle = new PropertyResourceBundle(reader);
 
-                  translationRegistry.registerAll(locale, defaultKeys, (key) -> {
+                  translationRegistry.registerAll(locale, defaultKeys, key -> {
                     final String format = bundle.containsKey(key) ? bundle.getString(key) : defaultBundle.getString(key);
                     final String escapedFormat = format.replace("'", "''");
 

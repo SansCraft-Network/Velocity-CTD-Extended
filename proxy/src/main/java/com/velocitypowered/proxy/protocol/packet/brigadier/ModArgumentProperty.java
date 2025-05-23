@@ -30,19 +30,22 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a mod-specific argument property.
- *
- * @param identifier the identifier for this argument
- * @param data the serialized data for this argument
  */
-public record ModArgumentProperty(ArgumentIdentifier identifier, ByteBuf data) implements ArgumentType<ByteBuf> {
+public class ModArgumentProperty implements ArgumentType<ByteBuf> {
+
+  private final ArgumentIdentifier identifier;
+  private final ByteBuf data;
 
   public ModArgumentProperty(final ArgumentIdentifier identifier, final ByteBuf data) {
     this.identifier = identifier;
     this.data = Unpooled.unreleasableBuffer(data.asReadOnly());
   }
 
-  @Override
-  public ByteBuf data() {
+  public ArgumentIdentifier getIdentifier() {
+    return identifier;
+  }
+
+  public ByteBuf getData() {
     return data.slice();
   }
 
@@ -53,7 +56,7 @@ public record ModArgumentProperty(ArgumentIdentifier identifier, ByteBuf data) i
 
   @Override
   public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
-      final SuggestionsBuilder builder) {
+                                                            final SuggestionsBuilder builder) {
     throw new UnsupportedOperationException();
   }
 

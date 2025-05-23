@@ -44,11 +44,10 @@ public class FakePluginManager implements PluginManager {
       VelocityVirtualPlugin.INSTANCE);
 
   private final ExecutorService service = Executors.newCachedThreadPool(
-      new ThreadFactoryBuilder().setNameFormat("Test Async Thread").setDaemon(true).build()
-  );
+      new ThreadFactoryBuilder().setNameFormat("Test Async Thread").setDaemon(true).build());
 
   @Override
-  public @NonNull Optional<PluginContainer> fromInstance(@NonNull Object instance) {
+  public @NonNull Optional<PluginContainer> fromInstance(@NonNull final Object instance) {
     if (instance == PLUGIN_A) {
       return Optional.of(containerA);
     } else if (instance == PLUGIN_B) {
@@ -61,7 +60,7 @@ public class FakePluginManager implements PluginManager {
   }
 
   @Override
-  public @NonNull Optional<PluginContainer> getPlugin(@NonNull String id) {
+  public @NonNull Optional<PluginContainer> getPlugin(@NonNull final String id) {
     return switch (id) {
       case "a" -> Optional.of(containerA);
       case "b" -> Optional.of(containerB);
@@ -76,12 +75,12 @@ public class FakePluginManager implements PluginManager {
   }
 
   @Override
-  public boolean isLoaded(@NonNull String id) {
+  public boolean isLoaded(@NonNull final String id) {
     return id.equals("a") || id.equals("b");
   }
 
   @Override
-  public void addToClasspath(@NonNull Object plugin, @NonNull Path path) {
+  public void addToClasspath(@NonNull final Object plugin, @NonNull final Path path) {
     throw new UnsupportedOperationException();
   }
 
@@ -94,7 +93,7 @@ public class FakePluginManager implements PluginManager {
     private final String id;
     private final Object instance;
 
-    private FakePluginContainer(String id, Object instance) {
+    private FakePluginContainer(final String id, final Object instance) {
       this.id = id;
       this.instance = instance;
     }

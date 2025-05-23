@@ -22,6 +22,7 @@ import com.google.common.collect.ForwardingSet;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * An unsynchronized collection that puts an upper bound on the size of the collection.
@@ -31,7 +32,7 @@ public final class CappedSet<T> extends ForwardingSet<T> {
   private final Set<T> delegate;
   private final int upperSize;
 
-  private CappedSet(Set<T> delegate, int upperSize) {
+  private CappedSet(final Set<T> delegate, final int upperSize) {
     this.delegate = delegate;
     this.upperSize = upperSize;
   }
@@ -43,17 +44,17 @@ public final class CappedSet<T> extends ForwardingSet<T> {
    * @param <T>     the type of elements in the collection
    * @return the new collection
    */
-  public static <T> Set<T> create(int maxSize) {
+  public static <T> Set<T> create(final int maxSize) {
     return new CappedSet<>(new HashSet<>(), maxSize);
   }
 
   @Override
-  protected Set<T> delegate() {
+  protected @NotNull Set<T> delegate() {
     return delegate;
   }
 
   @Override
-  public boolean add(T element) {
+  public boolean add(final T element) {
     if (this.delegate.size() >= upperSize) {
       Preconditions.checkState(this.delegate.contains(element),
           "collection is too large (%s >= %s)",
@@ -64,7 +65,7 @@ public final class CappedSet<T> extends ForwardingSet<T> {
   }
 
   @Override
-  public boolean addAll(Collection<? extends T> collection) {
+  public boolean addAll(final @NotNull Collection<? extends T> collection) {
     return this.standardAddAll(collection);
   }
 }

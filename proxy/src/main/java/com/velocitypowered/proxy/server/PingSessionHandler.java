@@ -46,7 +46,7 @@ public class PingSessionHandler implements MinecraftSessionHandler {
   private final String virtualHostString;
 
   PingSessionHandler(final CompletableFuture<ServerPing> result, final RegisteredServer server,
-      final MinecraftConnection connection, final ProtocolVersion version, String virtualHostString) {
+                     final MinecraftConnection connection, final ProtocolVersion version, String virtualHostString) {
     this.result = result;
     this.server = server;
     this.connection = connection;

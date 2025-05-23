@@ -111,8 +111,7 @@ public class VelocityTabList implements InternalTabList {
                 entry.getDisplayNameComponent().orElse(null))) {
           actions.add(UpsertPlayerInfoPacket.Action.UPDATE_DISPLAY_NAME);
           playerInfoEntry.setDisplayName(entry.getDisplayNameComponent().isEmpty()
-                  ? null : new ComponentHolder(player.getProtocolVersion(),
-                      entry.getDisplayNameComponent().get())
+              ? null : new ComponentHolder(player.getProtocolVersion(), entry.getDisplayNameComponent().get())
           );
         }
         if (!Objects.equals(previousEntry.getLatency(), entry.getLatency())) {

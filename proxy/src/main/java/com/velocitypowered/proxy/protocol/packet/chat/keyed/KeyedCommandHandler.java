@@ -38,6 +38,12 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
   private final ConnectedPlayer player;
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@code KeyedCommandHandler}.
+   *
+   * @param player the player sending the command
+   * @param server the proxy server instance
+   */
   public KeyedCommandHandler(final ConnectedPlayer player, final VelocityServer server) {
     super(player, server);
     this.player = player;
@@ -122,6 +128,7 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
         }
         return null;
       });
-    }, packet.getCommand(), packet.getTimestamp(), null, new CommandExecuteEvent.InvocationInfo(CommandExecuteEvent.SignedState.UNSUPPORTED, CommandExecuteEvent.Source.PLAYER));
+    }, packet.getCommand(), packet.getTimestamp(), null, new CommandExecuteEvent.InvocationInfo(
+            CommandExecuteEvent.SignedState.UNSUPPORTED, CommandExecuteEvent.Source.PLAYER));
   }
 }

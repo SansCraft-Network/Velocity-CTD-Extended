@@ -37,9 +37,8 @@ public interface BackendConnectionPhase {
    * @param message The message to handle
    * @return true if handled, false otherwise.
    */
-  default boolean handle(VelocityServerConnection server,
-      ConnectedPlayer player,
-      PluginMessagePacket message) {
+  default boolean handle(VelocityServerConnection server, ConnectedPlayer player,
+                         PluginMessagePacket message) {
     return false;
   }
 

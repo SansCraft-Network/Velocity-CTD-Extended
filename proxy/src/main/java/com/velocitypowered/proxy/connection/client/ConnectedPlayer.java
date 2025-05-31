@@ -201,7 +201,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private @Nullable ClientSettingsPacket clientSettingsPacket;
   private volatile ChatQueue chatQueue;
   private final ChatBuilderFactory chatBuilderFactory;
-  private final List<String> attemptedServers;
 
   ConnectedPlayer(final VelocityServer server, final GameProfile profile, final MinecraftConnection connection,
                   @Nullable final InetSocketAddress virtualHost, @Nullable final String rawVirtualHost, final boolean onlineMode,
@@ -216,7 +215,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     this.connectionPhase = connection.getType().getInitialClientPhase();
     this.onlineMode = onlineMode;
     this.clientsideChannels = CappedSet.create(server.getConfiguration().getChannelRegisterLimit());
-    this.attemptedServers = new ArrayList<>();
 
     if (connection.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_19_3)) {
       this.tabList = new VelocityTabList(this);
@@ -247,10 +245,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     if (this.server.getQueueManager().isQueueEnabled()) {
       this.server.getQueueManager().onPlayerLeave(this);
     }
-  }
-
-  public List<String> getAttemptedServers() {
-    return attemptedServers;
   }
 
   public ChatBuilderFactory getChatBuilderFactory() {
@@ -958,7 +952,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     List<String> connOrder = new ArrayList<>(server.getConfiguration().getForcedHosts().getOrDefault(virtualHostStr,
         new ArrayList<>()));
     connOrder.addAll(server.getConfiguration().getAttemptConnectionOrder());
-    connOrder.removeAll(attemptedServers);
 
     if (connOrder.isEmpty()) {
       return Optional.empty();
@@ -980,7 +973,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
       if (selectedServer.isEmpty()) {
         if (server.getConfiguration().getDynamicFallbackFilter().equalsIgnoreCase("FIRST_AVAILABLE")) {
-          attemptedServers.add(registeredServer.getServerInfo().getName());
           return Optional.of(registeredServer);
         }
         selectedServer = Optional.of(registeredServer);
@@ -995,7 +987,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       }
     }
 
-    selectedServer.ifPresent(registeredServer -> attemptedServers.add(registeredServer.getServerInfo().getName()));
     return selectedServer;
   }
 
@@ -1010,7 +1001,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   public void setConnectedServer(@Nullable final VelocityServerConnection serverConnection) {
     this.connectedServer = serverConnection;
-    this.getAttemptedServers().clear();
 
     if (serverConnection == connectionInFlight) {
       connectionInFlight = null;

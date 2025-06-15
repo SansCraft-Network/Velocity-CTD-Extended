@@ -105,8 +105,8 @@ import com.velocitypowered.proxy.util.collect.CappedSet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -176,6 +176,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private final HandshakeIntent handshakeIntent;
   private GameProfile profile;
   private PermissionFunction permissionFunction;
+  private int tryIndex = 0;
   private long ping = -1;
   private final boolean onlineMode;
   private @Nullable VelocityServerConnection connectedServer;
@@ -944,45 +945,56 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   private Optional<RegisteredServer> getNextServerToTry(@Nullable final RegisteredServer current) {
     if (serversToTry == null) {
-      serversToTry = new ArrayList<>();
-    }
-    String virtualHostStr = getVirtualHost().map(InetSocketAddress::getHostString)
-        .orElse("")
-        .toLowerCase(Locale.ROOT);
-    List<String> connOrder = new ArrayList<>(server.getConfiguration().getForcedHosts().getOrDefault(virtualHostStr,
-        new ArrayList<>()));
-    connOrder.addAll(server.getConfiguration().getAttemptConnectionOrder());
-
-    if (connOrder.isEmpty()) {
-      return Optional.empty();
+      String virtualHostStr = getVirtualHost().map(InetSocketAddress::getHostString)
+          .orElse("")
+          .toLowerCase(Locale.ROOT);
+      serversToTry = server.getConfiguration().getForcedHosts().getOrDefault(virtualHostStr,
+          Collections.emptyList());
     }
 
-    Optional<RegisteredServer> selectedServer = Optional.empty();
-    for (String serverName : connOrder) {
-      RegisteredServer registeredServer = server.getServer(serverName).orElse(null);
-      if (registeredServer == null) {
-        logger.error(Component.text("Unable to read your velocity.toml fallback servers. Users are unable to connect."));
+    if (serversToTry.isEmpty()) {
+      List<String> connOrder = server.getConfiguration().getAttemptConnectionOrder();
+      if (connOrder.isEmpty()) {
         return Optional.empty();
+      } else {
+        serversToTry = connOrder;
       }
+    }
 
-      if ((connectedServer != null && hasSameName(connectedServer.getServer(), serverName))
-          || (connectionInFlight != null && hasSameName(connectionInFlight.getServer(), serverName))
-          || (current != null && hasSameName(current, serverName))) {
+    String strategy = server.getConfiguration().getDynamicFallbackFilter().toUpperCase(Locale.ROOT);
+    Optional<RegisteredServer> selectedServer = Optional.empty();
+
+    for (int i = tryIndex; i < serversToTry.size(); i++) {
+      String toTryName = serversToTry.get(i);
+      if ((connectedServer != null && hasSameName(connectedServer.getServer(), toTryName))
+          || (connectionInFlight != null && hasSameName(connectionInFlight.getServer(), toTryName))
+          || (current != null && hasSameName(current, toTryName))) {
         continue;
       }
 
+      Optional<RegisteredServer> potentialServer = server.getServer(toTryName);
+      if (potentialServer.isEmpty()) {
+        continue;
+      }
+
+      RegisteredServer registeredServer = potentialServer.get();
+
       if (selectedServer.isEmpty()) {
-        if (server.getConfiguration().getDynamicFallbackFilter().equalsIgnoreCase("FIRST_AVAILABLE")) {
+        if (strategy.equalsIgnoreCase("FIRST_AVAILABLE")) {
+          tryIndex = i + 1;
           return Optional.of(registeredServer);
         }
         selectedServer = Optional.of(registeredServer);
-      } else if (server.getConfiguration().getDynamicFallbackFilter().equalsIgnoreCase("MOST_POPULATED")) {
+        tryIndex = i + 1;
+      } else if (strategy.equalsIgnoreCase("MOST_POPULATED")) {
         if (registeredServer.getTotalPlayerCount() > selectedServer.get().getTotalPlayerCount()) {
           selectedServer = Optional.of(registeredServer);
+          tryIndex = i + 1;
         }
-      } else if (server.getConfiguration().getDynamicFallbackFilter().equalsIgnoreCase("LEAST_POPULATED")) {
+      } else if (strategy.equalsIgnoreCase("LEAST_POPULATED")) {
         if (registeredServer.getTotalPlayerCount() < selectedServer.get().getTotalPlayerCount()) {
           selectedServer = Optional.of(registeredServer);
+          tryIndex = i + 1;
         }
       }
     }
@@ -1001,6 +1013,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   public void setConnectedServer(@Nullable final VelocityServerConnection serverConnection) {
     this.connectedServer = serverConnection;
+    this.tryIndex = 0;
 
     if (serverConnection == connectionInFlight) {
       connectionInFlight = null;

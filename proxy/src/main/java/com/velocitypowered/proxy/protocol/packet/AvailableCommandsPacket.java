@@ -49,6 +49,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -62,6 +63,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class AvailableCommandsPacket implements MinecraftPacket {
 
   private static final Command<CommandSource> PLACEHOLDER_COMMAND = source -> 0;
+  private static final Predicate<CommandSource> PLACEHOLDER_REQUIREMENT = source -> true;
 
   private static final byte NODE_TYPE_ROOT = 0x00;
   private static final byte NODE_TYPE_LITERAL = 0x01;
@@ -71,6 +73,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   private static final byte FLAG_EXECUTABLE = 0x04;
   private static final byte FLAG_IS_REDIRECT = 0x08;
   private static final byte FLAG_HAS_SUGGESTIONS = 0x10;
+  private static final byte FLAG_IS_RESTRICTED = 0x20;
 
   private @MonotonicNonNull RootCommandNode<CommandSource> rootNode;
 
@@ -151,6 +154,9 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     }
     if (node.getCommand() != null) {
       flags |= FLAG_EXECUTABLE;
+    }
+    if (node.getRequirement() == PLACEHOLDER_REQUIREMENT) {
+      flags |= FLAG_IS_RESTRICTED;
     }
 
     if (node instanceof LiteralCommandNode<?>) {
@@ -293,6 +299,11 @@ public class AvailableCommandsPacket implements MinecraftPacket {
           // If executable, add an empty command
           if ((flags & FLAG_EXECUTABLE) != 0) {
             args.executes(PLACEHOLDER_COMMAND);
+          }
+
+          // If restricted, add empty requirement
+          if ((flags & FLAG_IS_RESTRICTED) != 0) {
+            args.requires(PLACEHOLDER_REQUIREMENT);
           }
 
           this.built = args.build();

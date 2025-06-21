@@ -543,11 +543,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     return advanced.getKickAfterRateLimitedCommands();
   }
 
-  @Override
-  public int getChannelRegisterLimit() {
-    return advanced.getChannelRegisterLimit();
-  }
-
   public boolean isProxyProtocol() {
     return advanced.isProxyProtocol();
   }
@@ -1267,8 +1262,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private int kickAfterRateLimitedTabCompletes = 0;
     @Expose
-    private int channelRegisterLimit = 1024;
-    @Expose
     private boolean allowIllegalCharactersInChat = false;
     @Expose
     private String serverBrand = "{backend-brand} ({proxy-brand})";
@@ -1314,7 +1307,6 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.kickAfterRateLimitedCommands = config.getIntOrElse("kick-after-rate-limited-commands", 0);
         this.tabCompleteRateLimit = config.getIntOrElse("tab-complete-rate-limit", 10);
         this.kickAfterRateLimitedTabCompletes = config.getIntOrElse("kick-after-rate-limited-tab-completes", 0);
-        this.channelRegisterLimit = config.getIntOrElse("channel-register-limit", 1024);
         this.allowIllegalCharactersInChat = config.getOrElse("allow-illegal-characters-in-chat", false);
         this.serverBrand = config.getOrElse("server-brand", "{backend-brand} ({proxy-brand})");
         this.fallbackVersionPing = config.getOrElse("fallback-version-ping", "{proxy-brand} {protocol-min}-{protocol-max}");
@@ -1410,10 +1402,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       return kickAfterRateLimitedTabCompletes;
     }
 
-    public int getChannelRegisterLimit() {
-      return channelRegisterLimit;
-    }
-
     public boolean isAllowIllegalCharactersInChat() {
       return allowIllegalCharactersInChat;
     }
@@ -1460,7 +1448,6 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", kickAfterRateLimitedCommands=" + kickAfterRateLimitedCommands
           + ", tabCompleteRateLimit=" + tabCompleteRateLimit
           + ", kickAfterRateLimitedTabCompletes=" + kickAfterRateLimitedTabCompletes
-          + ", channelRegisterLimit=" + channelRegisterLimit
           + ", allowIllegalCharactersInChat=" + allowIllegalCharactersInChat
           + '}';
     }

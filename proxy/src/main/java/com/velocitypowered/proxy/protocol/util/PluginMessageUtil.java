@@ -27,6 +27,7 @@ import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.util.ProxyVersion;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.netty.MinecraftDecoder;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
@@ -117,8 +118,8 @@ public final class PluginMessageUtil {
     String payload = message.content().toString(StandardCharsets.UTF_8);
     checkArgument(payload.length() <= Short.MAX_VALUE, "payload too long: %s", payload.length());
     String[] channels = payload.split("\0");
-    checkArgument(existingChannels + channels.length <= server.getConfiguration().getChannelRegisterLimit(),
-        "too many channels: %s + %s > %s", existingChannels, channels.length, server.getConfiguration().getChannelRegisterLimit());
+    checkArgument(existingChannels + channels.length <= ConnectedPlayer.MAX_CLIENTSIDE_PLUGIN_CHANNELS,
+        "too many channels: %s + %s > %s", existingChannels, channels.length, ConnectedPlayer.MAX_CLIENTSIDE_PLUGIN_CHANNELS);
     ImmutableList.Builder<ChannelIdentifier> channelIdentifiers = ImmutableList.builderWithExpectedSize(channels.length);
     try {
       for (String channel : channels) {

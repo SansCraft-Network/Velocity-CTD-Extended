@@ -281,7 +281,12 @@ public enum ProtocolVersion implements Ordered<ProtocolVersion> {
   /**
    * Minecraft 1.21.6.
    */
-  MINECRAFT_1_21_6(771, "1.21.6");
+  MINECRAFT_1_21_6(771, "1.21.6"),
+
+  /**
+   * Minecraft 1.21.7.
+   */
+  MINECRAFT_1_21_7(772, "1.21.7");
 
   private static final int SNAPSHOT_BIT = 30;
 

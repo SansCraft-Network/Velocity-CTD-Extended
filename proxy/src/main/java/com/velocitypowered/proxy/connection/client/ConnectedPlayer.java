@@ -66,7 +66,6 @@ import com.velocitypowered.proxy.connection.player.bundle.BundleDelimiterHandler
 import com.velocitypowered.proxy.connection.player.resourcepack.VelocityResourcePackInfo;
 import com.velocitypowered.proxy.connection.player.resourcepack.handler.ResourcePackHandler;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
-import com.velocitypowered.proxy.connection.util.ConnectionRequestResults;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults.Impl;
 import com.velocitypowered.proxy.connection.util.VelocityInboundConnection;
 import com.velocitypowered.proxy.protocol.StateRegistry;
@@ -106,10 +105,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -195,7 +194,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private @MonotonicNonNull List<String> serversToTry = null;
   private final ResourcePackHandler resourcePackHandler;
   private final BundleDelimiterHandler bundleHandler = new BundleDelimiterHandler(this);
-  private boolean connectionInProgress;
   private boolean dontRemoveFromRedis;
   private @Nullable String clientBrand;
   private @Nullable Locale effectiveLocale;
@@ -750,8 +748,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       friendlyError = Component.translatable("velocity.error.connected-server-error",
           Component.text(server.getServerInfo().getName()));
     } else {
-      logger.error("{}: unable to connect to server {}", this, server.getServerInfo().getName(),
-          wrapped);
+      if (Boolean.getBoolean("velocity.suppress-connection-timeout-logs")) {
+        logger.error("{}: unable to connect to server {}", this, server.getServerInfo().getName());
+      } else {
+        logger.error("{}: unable to connect to server {}", this, server.getServerInfo().getName(),
+            wrapped);
+      }
       friendlyError = Component.translatable("velocity.error.connecting-server-error",
           Component.text(server.getServerInfo().getName()));
     }
@@ -945,20 +947,24 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    * @return the next server to try
    */
   private Optional<RegisteredServer> getNextServerToTry(@Nullable final RegisteredServer current) {
-    if (serversToTry == null) {
+    if (serversToTry == null || serversToTry.isEmpty()) {
       String virtualHostStr = getVirtualHost().map(InetSocketAddress::getHostString)
           .orElse("")
           .toLowerCase(Locale.ROOT);
-      serversToTry = server.getConfiguration().getForcedHosts().getOrDefault(virtualHostStr,
-          Collections.emptyList());
-    }
 
-    if (serversToTry.isEmpty()) {
-      List<String> connOrder = server.getConfiguration().getAttemptConnectionOrder();
-      if (connOrder.isEmpty()) {
-        return Optional.empty();
-      } else {
-        serversToTry = connOrder;
+      serversToTry = server.getConfiguration().getForcedHosts().get(virtualHostStr);
+      if (serversToTry == null || serversToTry.isEmpty()) {
+        for (Map.Entry<String, List<String>> entry : server.getConfiguration().getForcedHosts().entrySet()) {
+          String pattern = entry.getKey().toLowerCase(Locale.ROOT);
+          if (pattern.startsWith("*.") && virtualHostStr.endsWith(pattern.substring(1))) {
+            serversToTry = entry.getValue();
+            break;
+          }
+        }
+      }
+
+      if (serversToTry == null || serversToTry.isEmpty()) {
+        serversToTry = server.getConfiguration().getAttemptConnectionOrder();
       }
     }
 
@@ -982,20 +988,20 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
       if (selectedServer.isEmpty()) {
         if (strategy.equalsIgnoreCase("FIRST_AVAILABLE")) {
-          tryIndex = i + 1;
+          tryIndex = i;
           return Optional.of(registeredServer);
         }
         selectedServer = Optional.of(registeredServer);
-        tryIndex = i + 1;
+        tryIndex = i;
       } else if (strategy.equalsIgnoreCase("MOST_POPULATED")) {
         if (registeredServer.getTotalPlayerCount() > selectedServer.get().getTotalPlayerCount()) {
           selectedServer = Optional.of(registeredServer);
-          tryIndex = i + 1;
+          tryIndex = i;
         }
       } else if (strategy.equalsIgnoreCase("LEAST_POPULATED")) {
         if (registeredServer.getTotalPlayerCount() < selectedServer.get().getTotalPlayerCount()) {
           selectedServer = Optional.of(registeredServer);
-          tryIndex = i + 1;
+          tryIndex = i;
         }
       }
     }
@@ -1576,11 +1582,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
     @Override
     public CompletableFuture<Result> connect() {
-      if (connectionInProgress) {
-        return completedFuture(ConnectionRequestResults.plainResult(Status.CONNECTION_CANCELLED, toConnect));
-      }
-
-      connectionInProgress = true;
       return this.internalConnect().whenCompleteAsync((status, throwable) -> {
         if (status != null && !status.isSuccessful()) {
           if (!status.isSafe()) {
@@ -1603,22 +1604,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             }
           }
         }
-
-        connectionInProgress = false;
-      }, connection.eventLoop())
-          .exceptionally((ex) -> {
-            connectionInProgress = false;
-            return null;
-          }).thenApply(x -> x);
+      }, connection.eventLoop()).thenApply(x -> x);
     }
 
     @Override
     public CompletableFuture<Boolean> connectWithIndication() {
-      if (connectionInProgress) {
-        return completedFuture(false);
-      }
-
-      connectionInProgress = true;
       return internalConnect().whenCompleteAsync((status, throwable) -> {
         if (throwable != null) {
           // TODO: The exception handling from this is not very good. Find a better way.
@@ -1649,19 +1639,13 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             }
           }
           default -> {
-            // The only remaining value is successful (no need to do anything!)
+            // In this case, the default handler removes the user on server switch.
             if (server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
               server.getQueueManager().removeFromAll(get());
             }
           }
         }
-
-        connectionInProgress = false;
-      }, connection.eventLoop())
-          .exceptionally((ex) -> {
-            connectionInProgress = false;
-            return null;
-          }).thenApply(Result::isSuccessful);
+      }, connection.eventLoop()).thenApply(Result::isSuccessful);
     }
 
     @Override

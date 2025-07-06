@@ -697,8 +697,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     if (server.getConfiguration().isLogPlayerDisconnections()) {
       logger.info(Component.text(this + " has disconnected: ").append(translated));
     }
-    connection.closeWith(DisconnectPacket.create(translated,
-            this.getProtocolVersion(), connection.getState()));
+    connection.closeWith(DisconnectPacket.create(translated, this.getProtocolVersion(), connection.getState()));
   }
 
   public @Nullable VelocityServerConnection getConnectedServer() {
@@ -952,18 +951,20 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           .orElse("")
           .toLowerCase(Locale.ROOT);
 
-      serversToTry = server.getConfiguration().getForcedHosts().get(virtualHostStr);
-      if (serversToTry == null || serversToTry.isEmpty()) {
+      List<String> forcedHosts = server.getConfiguration().getForcedHosts().get(virtualHostStr);
+      if (forcedHosts == null || forcedHosts.isEmpty()) {
         for (Map.Entry<String, List<String>> entry : server.getConfiguration().getForcedHosts().entrySet()) {
           String pattern = entry.getKey().toLowerCase(Locale.ROOT);
           if (pattern.startsWith("*.") && virtualHostStr.endsWith(pattern.substring(1))) {
-            serversToTry = entry.getValue();
+            forcedHosts = entry.getValue();
             break;
           }
         }
       }
 
-      if (serversToTry == null || serversToTry.isEmpty()) {
+      if (forcedHosts != null && !forcedHosts.isEmpty()) {
+        serversToTry = forcedHosts;
+      } else {
         serversToTry = server.getConfiguration().getAttemptConnectionOrder();
       }
     }

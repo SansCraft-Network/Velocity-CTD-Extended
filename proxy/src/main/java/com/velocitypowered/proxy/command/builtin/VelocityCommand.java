@@ -511,8 +511,7 @@ public final class VelocityCommand {
               .append(Component.text()
                   .content("discord.gg/beer")
                   .color(NamedTextColor.RED)
-                  .clickEvent(
-                      ClickEvent.openUrl("https://discord.gg/beer"))
+                  .clickEvent(ClickEvent.openUrl(VelocityServer.VELOCITY_URL))
                   .build())
                   .append(Component.text(" - "))
                   .append(Component.text()

@@ -66,8 +66,7 @@ public final class ConnectionRequestResults {
   }
 
   public static Impl forUnsafeDisconnect(final DisconnectPacket disconnect, final RegisteredServer server) {
-    return new Impl(Status.SERVER_DISCONNECTED, disconnect.getReason().getComponent(), server,
-        false);
+    return new Impl(Status.SERVER_DISCONNECTED, disconnect.getReason().getComponent(), server, false);
   }
 
   /**

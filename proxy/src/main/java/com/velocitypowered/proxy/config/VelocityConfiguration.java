@@ -844,13 +844,13 @@ public final class VelocityConfiguration implements ProxyConfig {
           CommentedConfig link = entry.getValue();
           String label = link.get("label");
           String url = link.get("link");
-          Object rawServer = link.get("server");
-          if (!(rawServer instanceof List<?> rawList)) {
+          Object serverName = link.get("server");
+          if (!(serverName instanceof List<?> serverList)) {
             logger.warn("Invalid 'server' value for server-link '{}'. Expected a list of servers like [\"factions\", \"minigames\"]", entry.getKey());
             continue;
           }
 
-          List<String> scopes = rawList.stream()
+          List<String> scopes = serverList.stream()
               .filter(Objects::nonNull)
               .map(Object::toString)
               .map(String::trim)

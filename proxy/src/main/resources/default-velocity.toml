@@ -469,14 +469,22 @@ minigames = 300
 # This allows you to implement server links into the escape menu that
 # ensures users on versions 1.21 and above can easily find relevant
 # information about your Velocity network.
+#
+# Available options:
+# - "all":              Returns the server link to all
+#                       the servers on the proxy.
+# - "{server_name}":    Returns the server link to a specific server on the proxy and
+#                       is not a placeholder. Enter a valid server in the scope.
 
 [server-links.GitHub]
 link = "https://github.com/GemstoneGG/Velocity-CTD"
 label = "<#ff3a4c>GitHub"
+server = ["all"]
 
 [server-links.Discord]
 link = "https://discord.gg/beer"
 label = "<#09add3>Discord"
+server = ["factions", "minigames"]
 
 [proxy-addresses]
 # Proxy addresses are specified to ensure that the player

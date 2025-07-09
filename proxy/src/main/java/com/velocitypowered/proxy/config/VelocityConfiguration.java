@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -127,7 +128,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   @Expose
   private Map<String, List<String>> slashServers = new HashMap<>();
   @Expose
-  private List<ServerLink> serverLinks = new ArrayList<>();
+  private Map<String, List<ServerLink>> serverLinks = new HashMap<>();
   @Expose
   private List<ProxyAddress> proxyAddresses = new ArrayList<>();
   @Expose
@@ -158,8 +159,8 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 final boolean logPlayerDisconnections, final boolean logOfflineConnections, final boolean disableForge,
                                 final boolean enforceChatSigning, final boolean translateHeaderFooter, final boolean logMinimumVersion,
                                 final String minimumVersion, final Redis redis, final Queue queue, final Map<String, List<String>> slashServers,
-                                final List<ServerLink> serverLinks, final List<ProxyAddress> proxyAddresses, final String dynamicProxyFilter,
-                                final Map<String, Integer> playerCaps) {
+                                final Map<String, List<ServerLink>> serverLinks, final List<ProxyAddress> proxyAddresses,
+                                final String dynamicProxyFilter, final Map<String, Integer> playerCaps) {
     this.bind = bind;
     this.motd = motd;
     this.motdHover = motdHover;
@@ -643,7 +644,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     return slashServers;
   }
 
-  public List<ServerLink> getServerLinks() {
+  public Map<String, List<ServerLink>> getServerLinks() {
     return serverLinks;
   }
 
@@ -657,6 +658,25 @@ public final class VelocityConfiguration implements ProxyConfig {
 
   public Map<String, Integer> getPlayerCaps() {
     return this.playerCaps;
+  }
+
+  /**
+   * Gets all server links scoped to the provided server name, including global ones.
+   *
+   * @param serverName the backend server name (e.g., "lobby")
+   * @return a list of {@link ServerLink} visible to players on that server
+   */
+  public List<ServerLink> getServerLinksFor(final String serverName) {
+    List<ServerLink> result = new ArrayList<>();
+
+    for (Map.Entry<String, List<ServerLink>> entry : this.serverLinks.entrySet()) {
+      String scope = entry.getKey();
+      if ("all".equalsIgnoreCase(scope) || serverName.equalsIgnoreCase(scope)) {
+        result.addAll(entry.getValue());
+      }
+    }
+
+    return result;
   }
 
   @Override
@@ -818,12 +838,30 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
       }
 
-      final List<ServerLink> links = new ArrayList<>();
+      final Map<String, List<ServerLink>> links = new HashMap<>();
       if (serverLinksConfig != null) {
         for (CommentedConfig.Entry entry : serverLinksConfig.entrySet()) {
           CommentedConfig link = entry.getValue();
-          links.add(ServerLink.serverLink(MiniMessage.miniMessage().deserialize(link.get("label")),
-              link.get("link")));
+          String label = link.get("label");
+          String url = link.get("link");
+          Object rawServer = link.get("server");
+          if (!(rawServer instanceof List<?> rawList)) {
+            logger.warn("Invalid 'server' value for server-link '{}'. Expected a list of servers like [\"factions\", \"minigames\"]", entry.getKey());
+            continue;
+          }
+
+          List<String> scopes = rawList.stream()
+              .filter(Objects::nonNull)
+              .map(Object::toString)
+              .map(String::trim)
+              .toList();
+
+          if (label != null && url != null) {
+            for (String scope : scopes) {
+              links.computeIfAbsent(scope, s -> new ArrayList<>())
+                  .add(ServerLink.serverLink(MiniMessage.miniMessage().deserialize(label), url));
+            }
+          }
         }
       }
 

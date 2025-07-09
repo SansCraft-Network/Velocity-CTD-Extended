@@ -32,6 +32,7 @@ import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.GameProfile;
+import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
@@ -46,6 +47,7 @@ import com.velocitypowered.proxy.protocol.packet.ServerboundCookieResponsePacket
 import com.velocitypowered.proxy.protocol.packet.SetCompressionPacket;
 import com.velocitypowered.proxy.redis.multiproxy.RedisPlayerSetTransferringRequest;
 import io.netty.buffer.ByteBuf;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -223,7 +225,9 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
       if (!this.server.getConfiguration().getServerLinks().isEmpty()) {
         if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
-          connectedPlayer.setServerLinks(this.server.getConfiguration().getServerLinks());
+          String serverName = connectedPlayer.getNextServerToTry().map(s -> s.getServerInfo().getName()).orElse("");
+          List<ServerLink> scopedLinks = server.getConfiguration().getServerLinksFor(serverName);
+          connectedPlayer.setServerLinks(scopedLinks);
         }
       }
       server.getEventManager().fire(new PostLoginEvent(connectedPlayer)).thenCompose(ignored -> connectToInitialServer(connectedPlayer))

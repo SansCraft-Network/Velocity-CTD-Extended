@@ -39,6 +39,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ProxyVersion;
+import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
 import com.velocitypowered.proxy.command.builtin.AlertCommand;
 import com.velocitypowered.proxy.command.builtin.AlertRawCommand;
@@ -672,7 +673,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
           try {
             if (player.getProtocolState() == ProtocolState.CONFIGURATION || player.getProtocolState() == ProtocolState.PLAY) {
-              player.setServerLinks(getConfiguration().getServerLinks());
+              String serverName = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse("");
+              List<ServerLink> scopedLinks = getConfiguration().getServerLinksFor(serverName);
+              player.setServerLinks(scopedLinks);
             }
           } catch (IllegalStateException ignored) {
             // Ignore illegal state to ensure each viable reload is successful.

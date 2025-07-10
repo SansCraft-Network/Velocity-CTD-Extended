@@ -234,11 +234,10 @@ public class ServerQueueStatus {
                   .arguments(Component.text(getServerName()),
                       Component.text(this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
         } else {
-          this.velocityServer.getPlayer(player).ifPresent(p -> {
-            p.sendMessage(Component.translatable("velocity.queue.error.max-send-retries-reached")
-                .arguments(Component.text(getServerName()),
-                    Component.text(this.velocityServer.getConfiguration().getQueue().getMaxSendRetries())));
-          });
+          this.velocityServer.getPlayer(player).ifPresent(p
+                  -> p.sendMessage(Component.translatable("velocity.queue.error.max-send-retries-reached")
+              .arguments(Component.text(getServerName()),
+                  Component.text(this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
         }
       }
     }).delay(1, TimeUnit.SECONDS).schedule();

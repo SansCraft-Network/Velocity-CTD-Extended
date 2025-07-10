@@ -187,6 +187,14 @@ server-aliases = [
     "minigames"
 ]
 
+[command-aliases]
+# What commands should have aliases for simpler execution that
+# do not already have a more advanced function or implementation.
+hub = [
+    "lobby",
+    "return"
+]
+
 [advanced]
 # How large a Minecraft packet has to be before we compress it. Setting this to zero will
 # compress all packets, and setting it to -1 will disable compression entirely.
@@ -479,12 +487,17 @@ minigames = 300
 [server-links.GitHub]
 link = "https://github.com/GemstoneGG/Velocity-CTD"
 label = "<#ff3a4c>GitHub"
-server = ["all"]
+server = [
+    "all"
+]
 
 [server-links.Discord]
 link = "https://discord.gg/beer"
 label = "<#09add3>Discord"
-server = ["factions", "minigames"]
+server = [
+    "factions",
+    "minigames"
+]
 
 [proxy-addresses]
 # Proxy addresses are specified to ensure that the player

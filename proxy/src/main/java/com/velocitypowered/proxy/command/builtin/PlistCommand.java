@@ -53,11 +53,14 @@ public class PlistCommand {
   }
 
   /**
-   * Registers this command.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isPlistEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isPlistEnabled) {
+  public BrigadierCommand register(final boolean isPlistEnabled) {
     if (!isPlistEnabled || !server.getMultiProxyHandler().isRedisEnabled()) {
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
@@ -91,14 +94,15 @@ public class PlistCommand {
         )
         .build();
     rootNode.then(serverNode);
-    server.getCommandManager().register(new BrigadierCommand(rootNode));
+    return new BrigadierCommand(rootNode);
   }
 
   private int totalCount(final CommandContext<CommandSource> context) {
     final CommandSource source = context.getSource();
     sendTotalProxyCount(source, this.server.getMultiProxyHandler().getOwnProxyId(), this.server.getPlayerCount());
     source.sendMessage(
-        Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW));
+        Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW)
+            .arguments(Component.text(VelocityCommands.readAlias(context.getNodes()))));
     return Command.SINGLE_SUCCESS;
   }
 

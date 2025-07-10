@@ -26,7 +26,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.util.ComponentUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -43,11 +42,14 @@ public class AlertCommand {
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isAlertEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isAlertEnabled) {
+  public BrigadierCommand register(final boolean isAlertEnabled) {
     if (!isAlertEnabled) {
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
@@ -58,13 +60,7 @@ public class AlertCommand {
         .then(BrigadierCommand
             .requiredArgumentBuilder("message", StringArgumentType.greedyString())
             .executes(this::alert));
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(rootNode);
   }
 
   private int alert(final CommandContext<CommandSource> context) {

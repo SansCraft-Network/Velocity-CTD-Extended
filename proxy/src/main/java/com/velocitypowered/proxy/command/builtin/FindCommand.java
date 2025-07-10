@@ -30,7 +30,6 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -48,11 +47,14 @@ public class FindCommand {
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isFindEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isFindEnabled) {
+  public BrigadierCommand register(final boolean isFindEnabled) {
     if (!isFindEnabled) {
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
@@ -65,13 +67,7 @@ public class FindCommand {
         .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
         .executes(this::find);
     rootNode.then(playerNode);
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(rootNode);
   }
 
   private int find(final CommandContext<CommandSource> context) {

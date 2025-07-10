@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.logging.log4j.LogManager;
@@ -70,10 +71,10 @@ public final class VelocityConfiguration implements ProxyConfig {
   private String bind = "0.0.0.0:25565";
   @Expose
   private String motd = "<aqua>A Velocity Server";
-  private net.kyori.adventure.text.@MonotonicNonNull Component motdAsComponent;
+  private @MonotonicNonNull Component motdAsComponent;
   @Expose
   private List<String> motdHover = List.of("");
-  private List<net.kyori.adventure.text.@MonotonicNonNull Component> motdHoverComponents;
+  private List<@MonotonicNonNull Component> motdHoverComponents;
   @Expose
   private int showMaxPlayers = 500;
   @Expose
@@ -95,6 +96,8 @@ public final class VelocityConfiguration implements ProxyConfig {
   private final ForcedHosts forcedHosts;
   @Expose
   private final Commands commands;
+  @Expose
+  private final Map<String, List<String>> commandAliases;
   @Expose
   private final Advanced advanced;
   @Expose
@@ -136,10 +139,12 @@ public final class VelocityConfiguration implements ProxyConfig {
   @Expose
   private Map<String, Integer> playerCaps;
 
-  private VelocityConfiguration(final Servers servers, final ForcedHosts forcedHosts, final Commands commands,
-                                final Advanced advanced, final Query query, final Metrics metrics, final Redis redis, final Queue queue) {
+  private VelocityConfiguration(final Servers servers, final ForcedHosts forcedHosts, final Map<String, List<String>> commandAliases,
+                                final Commands commands, final Advanced advanced, final Query query, final Metrics metrics, final Redis redis,
+                                final Queue queue) {
     this.servers = servers;
     this.forcedHosts = forcedHosts;
+    this.commandAliases = commandAliases;
     this.commands = commands;
     this.advanced = advanced;
     this.query = query;
@@ -153,12 +158,16 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 final boolean preventClientProxyConnections, final boolean announceForge,
                                 final PlayerInfoForwarding playerInfoForwardingMode, final byte[] forwardingSecret,
                                 final boolean onlineModeKickExistingPlayers, final PingPassthroughMode pingPassthrough,
-                                final boolean samplePlayersInPing, final boolean enablePlayerAddressLogging, final Servers servers,
-                                final ForcedHosts forcedHosts, final Commands commands, final Advanced advanced, final Query query,
-                                final Metrics metrics, final boolean forceKeyAuthentication, final boolean logPlayerConnections,
-                                final boolean logPlayerDisconnections, final boolean logOfflineConnections, final boolean disableForge,
-                                final boolean enforceChatSigning, final boolean translateHeaderFooter, final boolean logMinimumVersion,
-                                final String minimumVersion, final Redis redis, final Queue queue, final Map<String, List<String>> slashServers,
+                                final boolean samplePlayersInPing, final boolean enablePlayerAddressLogging,
+                                final Servers servers, final ForcedHosts forcedHosts,
+                                final Map<String, List<String>> commandAliases,
+                                final Commands commands, final Advanced advanced, final Query query,
+                                final Metrics metrics, final boolean forceKeyAuthentication,
+                                final boolean logPlayerConnections, final boolean logPlayerDisconnections,
+                                final boolean logOfflineConnections, final boolean disableForge,
+                                final boolean enforceChatSigning, final boolean translateHeaderFooter,
+                                final boolean logMinimumVersion, final String minimumVersion,
+                                final Redis redis, final Queue queue, final Map<String, List<String>> slashServers,
                                 final Map<String, List<ServerLink>> serverLinks, final List<ProxyAddress> proxyAddresses,
                                 final String dynamicProxyFilter, final Map<String, Integer> playerCaps) {
     this.bind = bind;
@@ -176,6 +185,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     this.enablePlayerAddressLogging = enablePlayerAddressLogging;
     this.servers = servers;
     this.forcedHosts = forcedHosts;
+    this.commandAliases = commandAliases;
     this.commands = commands;
     this.advanced = advanced;
     this.query = query;
@@ -381,7 +391,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
-  public net.kyori.adventure.text.Component getMotd() {
+  public Component getMotd() {
     if (motdAsComponent == null) {
       motdAsComponent = MiniMessage.miniMessage().deserialize(motd);
     }
@@ -389,7 +399,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
-  public List<net.kyori.adventure.text.Component> getMotdHover() {
+  public List<Component> getMotdHover() {
     if (motdHoverComponents == null) {
       motdHoverComponents = motdHover.stream()
           .map(MiniMessage.miniMessage()::deserialize)
@@ -433,6 +443,10 @@ public final class VelocityConfiguration implements ProxyConfig {
   @Override
   public List<String> getAttemptConnectionOrder() {
     return servers.getAttemptConnectionOrder();
+  }
+
+  public Map<String, List<String>> getCommandAliases() {
+    return commandAliases;
   }
 
   @Override
@@ -783,6 +797,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       // Read the rest of the config
       final CommentedConfig serversConfig = config.get("servers");
       final CommentedConfig forcedHostsConfig = config.get("forced-hosts");
+      final CommentedConfig commandAliasesConfig = config.get("command-aliases");
       final CommentedConfig commandsConfig = config.get("commands");
       final CommentedConfig advancedConfig = config.get("advanced");
       final CommentedConfig queryConfig = config.get("query");
@@ -838,6 +853,20 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
       }
 
+      final Map<String, List<String>> commandAliases = new HashMap<>();
+      if (commandAliasesConfig != null) {
+        for (UnmodifiableConfig.Entry entry : commandAliasesConfig.entrySet()) {
+          if (entry.getValue() instanceof List<?> list) {
+            List<String> aliases = list.stream().map(Object::toString).toList();
+            commandAliases.put(entry.getKey(), aliases);
+          } else if (entry.getValue() instanceof String str) {
+            commandAliases.put(entry.getKey(), List.of(str));
+          } else {
+            logger.warn("Invalid value in [command-aliases] for '{}': {}", entry.getKey(), entry.getValue());
+          }
+        }
+      }
+
       final Map<String, List<ServerLink>> links = new HashMap<>();
       if (serverLinksConfig != null) {
         for (CommentedConfig.Entry entry : serverLinksConfig.entrySet()) {
@@ -846,7 +875,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           String url = link.get("link");
           Object serverName = link.get("server");
           if (!(serverName instanceof List<?> serverList)) {
-            logger.warn("Invalid 'server' value for server-link '{}'. Expected a list of servers like [\"factions\", \"minigames\"]", entry.getKey());
+            logger.warn("Invalid 'server' value for server-link '{}'. Expected a list of servers like \"factions\" or \"minigames\"", entry.getKey());
             continue;
           }
 
@@ -912,6 +941,7 @@ public final class VelocityConfiguration implements ProxyConfig {
               enablePlayerAddressLogging,
               new Servers(serversConfig),
               new ForcedHosts(forcedHostsConfig),
+              commandAliases,
               new Commands(commandsConfig),
               new Advanced(advancedConfig),
               new Query(queryConfig),

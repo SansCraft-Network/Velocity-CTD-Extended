@@ -61,17 +61,18 @@ public class TransferCommand {
   }
 
   /**
-   * Registers the command.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isTransferEnabled Whether to enable it or not.
+   * @param isTransferEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isTransferEnabled) {
+  public BrigadierCommand register(final boolean isTransferEnabled) {
     if (!isTransferEnabled) {
-      return;
+      return null;
     }
 
     if (!this.server.getConfiguration().isAcceptTransfers()) {
-      return;
+      return null;
     }
 
     final LiteralCommandNode<CommandSource> transfer = BrigadierCommand.literalArgumentBuilder("transfer")
@@ -136,13 +137,7 @@ public class TransferCommand {
         .executes(this::transfer)))
         .build();
 
-    final BrigadierCommand command = new BrigadierCommand(transfer);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(transfer);
   }
 
   private int transfer(final CommandContext<CommandSource> context) {

@@ -30,6 +30,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.multiproxy.RedisSwitchServerRequest;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
@@ -38,7 +39,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
  * Implements the Velocity default {@code /send} command.
@@ -53,23 +53,26 @@ public class SendCommand {
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isSendEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isSendEnabled) {
+  public BrigadierCommand register(final boolean isSendEnabled) {
     if (!isSendEnabled) {
-      return;
+      return null;
     }
 
     if (server.getMultiProxyHandler().isRedisEnabled()) {
       registerMultiProxy(true);
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
             .literalArgumentBuilder("send")
             .requires(source ->
                     source.getPermissionValue("velocity.command.send") == Tristate.TRUE)
-            .executes(this::usage);
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "send"));
     final RequiredArgumentBuilder<CommandSource, String> playerNode = BrigadierCommand
             .requiredArgumentBuilder(PLAYER_ARG, StringArgumentType.word())
             .suggests((context, builder) -> {
@@ -102,7 +105,7 @@ public class SendCommand {
 
               return builder.buildFuture();
             })
-            .executes(this::usage);
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "send"));
     final ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
             .requiredArgumentBuilder(SERVER_ARG, StringArgumentType.word())
             .suggests((context, builder) -> {
@@ -121,13 +124,7 @@ public class SendCommand {
             .build();
     playerNode.then(serverNode);
     rootNode.then(playerNode.build());
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(rootNode);
   }
 
   /**
@@ -144,7 +141,7 @@ public class SendCommand {
         .literalArgumentBuilder("send")
         .requires(source ->
             source.getPermissionValue("velocity.command.send") == Tristate.TRUE)
-        .executes(this::usage);
+        .executes(ctx -> VelocityCommands.emitUsage(ctx, "send"));
     final RequiredArgumentBuilder<CommandSource, String> playerNode = BrigadierCommand
         .requiredArgumentBuilder(PLAYER_ARG, StringArgumentType.word())
         .suggests((context, builder) -> {
@@ -177,7 +174,7 @@ public class SendCommand {
 
           return builder.buildFuture();
         })
-        .executes(this::usage);
+        .executes(ctx -> VelocityCommands.emitUsage(ctx, "send"));
     final ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
         .requiredArgumentBuilder(SERVER_ARG, StringArgumentType.word())
         .suggests((context, builder) -> {
@@ -203,13 +200,6 @@ public class SendCommand {
             .build(),
         command
     );
-  }
-
-  private int usage(final CommandContext<CommandSource> context) {
-    context.getSource().sendMessage(
-        Component.translatable("velocity.command.send-usage", NamedTextColor.YELLOW)
-    );
-    return Command.SINGLE_SUCCESS;
   }
 
   private int send(final CommandContext<CommandSource> context) {

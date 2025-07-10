@@ -32,7 +32,6 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.multiproxy.MultiProxyHandler;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import java.util.ArrayList;
@@ -57,11 +56,14 @@ public class GlistCommand {
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isGlistEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isGlistEnabled) {
+  public BrigadierCommand register(final boolean isGlistEnabled) {
     if (!isGlistEnabled) {
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
@@ -89,20 +91,15 @@ public class GlistCommand {
         .executes(this::serverCount)
         .build();
     rootNode.then(serverNode);
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(rootNode);
   }
 
   private int totalCount(final CommandContext<CommandSource> context) {
     final CommandSource source = context.getSource();
     sendTotalProxyCount(source);
     source.sendMessage(
-        Component.translatable("velocity.command.glist-view-all", NamedTextColor.YELLOW));
+        Component.translatable("velocity.command.glist-view-all", NamedTextColor.YELLOW)
+            .arguments(Component.text(VelocityCommands.readAlias(context.getNodes()))));
     return 1;
   }
 

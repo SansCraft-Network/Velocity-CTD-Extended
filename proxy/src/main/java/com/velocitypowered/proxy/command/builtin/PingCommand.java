@@ -27,7 +27,6 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.multiproxy.EncodedCommandSource;
 import com.velocitypowered.proxy.redis.multiproxy.RedisGetPlayerPingRequest;
 import net.kyori.adventure.text.Component;
@@ -45,11 +44,14 @@ public class PingCommand {
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isPingEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isPingEnabled) {
+  public BrigadierCommand register(final boolean isPingEnabled) {
     if (!isPingEnabled) {
-      return;
+      return null;
     }
 
     LiteralArgumentBuilder<CommandSource> node = BrigadierCommand.literalArgumentBuilder("ping")
@@ -71,14 +73,7 @@ public class PingCommand {
             return 0;
           }
         });
-
-    final BrigadierCommand command = new BrigadierCommand(node);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(node);
   }
 
   private int getPing(final CommandContext<CommandSource> context, final String username) {

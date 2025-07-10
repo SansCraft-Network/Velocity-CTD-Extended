@@ -164,7 +164,8 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
         && handshake.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_13)) {
       // Bump connection into the correct protocol state so that we can send the disconnect packet.
       connection.setState(StateRegistry.LOGIN);
-      ic.disconnectQuietly(Component.translatable("velocity.error.modern-forwarding-needs-new-client"));
+      ic.disconnectQuietly(Component.translatable("velocity.error.modern-forwarding-needs-new-client")
+          .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
       return;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -108,6 +108,20 @@ public interface ProxyConfig {
    * @return mapped list of server names
    */
   Map<String, List<String>> getForcedHosts();
+
+  /**
+   * Whether the proxy should cache Mojang profile results to reduce login API pressure.
+   *
+   * @return true if profile result caching is enabled
+   */
+  boolean isCachePlayerProfileResultEnabled();
+
+  /**
+   * How long (in minutes) to cache Mojang profile results.
+   *
+   * @return the profile cache expiration time in minutes
+   */
+  int getProfileCacheExpiryMinutes();
 
   /**
    * Get the minimum compression threshold for packets.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
+import net.kyori.adventure.text.Component;
 
 /**
  * Provides an interface to a Minecraft server proxy.
@@ -34,7 +35,7 @@ public interface ProxyServer extends Audience {
    *
    * @param reason message to kick online players with
    */
-  void shutdown(net.kyori.adventure.text.Component reason);
+  void shutdown(Component reason);
 
   /**
    * Shuts down the proxy, kicking players with the default reason.

@@ -213,8 +213,8 @@ public class VelocityEventManager implements EventManager {
     final Object instance;
 
     HandlerRegistration(final PluginContainer plugin, final short order,
-                               final Class<?> eventType, final Object instance, final EventHandler<Object> handler,
-                               final AsyncType asyncType) {
+                        final Class<?> eventType, final Object instance, final EventHandler<Object> handler,
+                        final AsyncType asyncType) {
       this.plugin = plugin;
       this.order = order;
       this.eventType = eventType;

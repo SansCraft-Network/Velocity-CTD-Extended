@@ -18,8 +18,10 @@
 package com.velocitypowered.proxy.command.builtin;
 
 import com.google.common.base.Suppliers;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -42,12 +44,16 @@ import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.redis.multiproxy.RedisSudo;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.util.InformationUtils;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -509,6 +515,21 @@ public final class VelocityCommand {
     private static final TextColor VELOCITY_COLOR = TextColor.color(0xff3a4c);
 
     /**
+     * Version distance constant indicating the current version is up to date with GitHub.
+     */
+    private static final int DISTANCE_LATEST = 0;
+
+    /**
+     * Version distance constant indicating an error occurred during GitHub comparison.
+     */
+    private static final int DISTANCE_ERROR = -1;
+
+    /**
+     * Version distance constant indicating the specified commit hash was not found.
+     */
+    private static final int DISTANCE_UNKNOWN = -2;
+
+    /**
      * Memoized supplier that builds the {@code /velocity info} output component.
      */
     private final Supplier<Component> infoSupplier;
@@ -552,8 +573,50 @@ public final class VelocityCommand {
           infoBuilder.appendNewline().append(embellishment);
         }
 
+        infoBuilder.appendNewline();
+        if (version.getVersion().equalsIgnoreCase("<unknown>") || version.getVersion().contains("SNAPSHOT")) {
+          infoBuilder.append(Component.text("You are running a development build of Velocity.", NamedTextColor.RED));
+        } else {
+          int dist = fetchDistanceFromGitHub("GemstoneGG/Velocity-CTD", "libdeflate", version.getVersion().split("-")[1]);
+          switch (dist) {
+            case DISTANCE_ERROR -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-error", NamedTextColor.RED));
+            case DISTANCE_UNKNOWN -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-unknown", NamedTextColor.RED));
+            case DISTANCE_LATEST -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-latest", NamedTextColor.GREEN));
+            default -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-behind", NamedTextColor.YELLOW,
+                Component.text(dist)));
+          }
+        }
+
         return infoBuilder.build();
       });
+    }
+
+    private static int fetchDistanceFromGitHub(final String repo, final String branch, final String hash) {
+      try {
+        final HttpURLConnection connection = (HttpURLConnection) URI.create("https://api.github.com/repos/%s/compare/%s...%s".formatted(repo, branch, hash)).toURL().openConnection();
+        connection.connect();
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+          return DISTANCE_UNKNOWN; // Unidentifiable commit
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+          final JsonObject obj = new Gson().fromJson(reader, JsonObject.class);
+          final String status = obj.get("status").getAsString();
+          return switch (status) {
+            case "identical" -> DISTANCE_LATEST;
+            case "behind" -> obj.get("behind_by").getAsInt();
+            default -> DISTANCE_ERROR;
+          };
+        } catch (final JsonSyntaxException | NumberFormatException e) {
+          return DISTANCE_ERROR;
+        }
+      } catch (final IOException e) {
+        return DISTANCE_ERROR;
+      }
     }
 
     @Override

@@ -67,6 +67,11 @@ public final class ProxyOptions {
    */
   private final List<ServerInfo> servers;
 
+  /**
+   * List of additional plugin jars specified via {@code --add-plugin} or {@code --add-extra-plugin-jar}.
+   */
+  private final List<String> additionalPlugins;
+
   ProxyOptions(final String[] args) {
     final OptionParser parser = new OptionParser();
 
@@ -87,6 +92,10 @@ public final class ProxyOptions {
     final OptionSpec<Void> ignoreConfigServers = parser.accepts("ignore-config-servers",
             "Skip registering servers from the config file. "
                     + "Useful in dynamic setups or with the --add-server flag.");
+    final OptionSpec<String> additionalPlugins = parser.acceptsAll(Arrays.asList("add-plugin", "add-extra-plugin-jar"),
+            "Specify paths to extra plugin jars to be loaded in addition to those in the plugins folder. "
+                    + "This argument can be specified multiple times, once for each extra plugin jar path."
+            ).withRequiredArg().ofType(String.class);
     final OptionSet set = parser.parse(args);
 
     this.help = set.has(help);
@@ -94,6 +103,7 @@ public final class ProxyOptions {
     this.haproxy = haproxy.value(set);
     this.servers = servers.values(set);
     this.ignoreConfigServers = set.has(ignoreConfigServers);
+    this.additionalPlugins = additionalPlugins.values(set);
 
     if (this.help) {
       try {
@@ -142,6 +152,15 @@ public final class ProxyOptions {
    */
   public List<ServerInfo> getServers() {
     return this.servers;
+  }
+
+  /**
+   * Returns the list of additional plugin jars specified via {@code --add-plugin}.
+   *
+   * @return the list of extra plugin jar paths
+   */
+  public List<String> getAdditionalPlugins() {
+    return this.additionalPlugins;
   }
 
   private static final class ServerInfoConverter implements ValueConverter<ServerInfo> {

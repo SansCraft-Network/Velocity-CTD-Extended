@@ -33,6 +33,7 @@ import com.velocitypowered.natives.encryption.VelocityCipher;
 import com.velocitypowered.natives.encryption.VelocityCipherFactory;
 import com.velocitypowered.natives.util.Natives;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler;
 import com.velocitypowered.proxy.connection.client.HandshakeSessionHandler;
 import com.velocitypowered.proxy.connection.client.InitialInboundConnection;
 import com.velocitypowered.proxy.connection.client.InitialLoginSessionHandler;
@@ -73,6 +74,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import net.kyori.adventure.text.Component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -88,6 +90,14 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * The logger instance used to report events and exceptions on this connection.
    */
   private static final Logger logger = LogManager.getLogger(MinecraftConnection.class);
+
+  /**
+   * The maximum size in bytes for an incoming packet from the client before disconnection.
+   *
+   * <p>This value is configurable via the {@code velocity.max-client-packet-size} system property.</p>
+   * Defaults to {@code 2097152} (2 MiB).
+   */
+  public static final int MAX_CLIENT_PACKET_SIZE = Integer.getInteger("velocity.max-client-packet-size", 2097152);
 
   /**
    * The underlying Netty channel backing this Minecraft connection.
@@ -213,6 +223,14 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
         this.remoteAddress = new InetSocketAddress(proxyMessage.sourceAddress(),
             proxyMessage.sourcePort());
       } else if (msg instanceof ByteBuf buf) {
+        if (activeSessionHandler instanceof ClientPlaySessionHandler) {
+          if (MAX_CLIENT_PACKET_SIZE > 0 && buf.readableBytes() > MAX_CLIENT_PACKET_SIZE) {
+            logger.error("{}: received oversized packet ({} bytes > {} byte limit)", association, buf.readableBytes(), MAX_CLIENT_PACKET_SIZE);
+            closeWith(Component.translatable("velocity.kick.oversized-packet"));
+            return;
+          }
+        }
+
         activeSessionHandler.handleUnknown(buf);
       }
     } finally {

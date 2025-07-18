@@ -52,7 +52,9 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftVarintFrameDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.netty.PlayPacketQueueInboundHandler;
 import com.velocitypowered.proxy.protocol.netty.PlayPacketQueueOutboundHandler;
+import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
 import com.velocitypowered.proxy.protocol.packet.SetCompressionPacket;
+import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
 import com.velocitypowered.proxy.util.except.QuietDecoderException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -69,12 +71,14 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.translation.GlobalTranslator;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -226,7 +230,9 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
         if (activeSessionHandler instanceof ClientPlaySessionHandler) {
           if (MAX_CLIENT_PACKET_SIZE > 0 && buf.readableBytes() > MAX_CLIENT_PACKET_SIZE) {
             logger.error("{}: received oversized packet ({} bytes > {} byte limit)", association, buf.readableBytes(), MAX_CLIENT_PACKET_SIZE);
-            closeWith(Component.translatable("velocity.kick.oversized-packet"));
+            Component translated = GlobalTranslator.render(Component.translatable("velocity.kick.oversized-packet"),
+                ClosestLocaleMatcher.INSTANCE.lookupClosest(Locale.getDefault()));
+            closeWith(DisconnectPacket.create(translated, getProtocolVersion(), getState()));
             return;
           }
         }

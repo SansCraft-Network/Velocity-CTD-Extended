@@ -577,7 +577,7 @@ public final class VelocityCommand {
         if (version.getVersion().equalsIgnoreCase("<unknown>") || version.getVersion().contains("SNAPSHOT")) {
           infoBuilder.append(Component.text("You are running a development build of Velocity.", NamedTextColor.RED));
         } else {
-          int dist = fetchDistanceFromGitHub("GemstoneGG/Velocity-CTD", "libdeflate", version.getVersion().split("-")[1]);
+          int dist = fetchDistanceFromGitHub(version.getVersion().split("-")[1]);
           switch (dist) {
             case DISTANCE_ERROR -> infoBuilder.append(Component.translatable(
                 "velocity.command.version-error", NamedTextColor.RED));
@@ -595,9 +595,9 @@ public final class VelocityCommand {
       });
     }
 
-    private static int fetchDistanceFromGitHub(final String repo, final String branch, final String hash) {
+    private static int fetchDistanceFromGitHub(final String hash) {
       try {
-        final HttpURLConnection connection = (HttpURLConnection) URI.create("https://api.github.com/repos/%s/compare/%s...%s".formatted(repo, branch, hash)).toURL().openConnection();
+        final HttpURLConnection connection = (HttpURLConnection) URI.create("https://api.github.com/repos/GemstoneGG/Velocity-CTD/compare/libdeflate..." + hash).toURL().openConnection();
         connection.connect();
         if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
           return DISTANCE_UNKNOWN; // Unidentifiable commit

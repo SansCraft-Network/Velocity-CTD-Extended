@@ -393,6 +393,7 @@ public class RedisManagerImpl {
     if (entry == null) {
       return;
     }
+
     entry.update(serverQueueEntry.getConnectionAttempts(), serverQueueEntry.isWaitingForConnection(),
         serverQueueEntry.getPriority(),
         serverQueueEntry.isFullBypass(),

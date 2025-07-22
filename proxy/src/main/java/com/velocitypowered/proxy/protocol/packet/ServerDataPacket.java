@@ -71,8 +71,19 @@ public class ServerDataPacket implements MinecraftPacket {
     this.secureChatEnforced = secureChatEnforced;
   }
 
+  /**
+   * Decodes this server data packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the server description, favicon, and optionally the secure chat flag
+   * depending on the protocol version. Newer versions remove some boolean flags and
+   * replace the favicon with a raw byte array.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                            final ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_4) || buf.readBoolean()) {
       this.description = ComponentHolder.read(buf, protocolVersion);
@@ -100,8 +111,18 @@ public class ServerDataPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this server data packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the server description and favicon in protocol-dependent formats,
+   * and optionally includes the secure chat enforcement flag for applicable versions.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                            final ProtocolVersion protocolVersion) {
     boolean hasDescription = this.description != null;
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_19_4)) {
@@ -134,8 +155,16 @@ public class ServerDataPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this server data packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates packet processing to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

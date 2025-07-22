@@ -395,8 +395,16 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return startTime;
   }
 
+  /**
+   * Returns the {@link ProxyVersion} instance representing the proxy's implementation metadata.
+   *
+   * <p>This includes the proxy's name, vendor, and version string as defined by the package metadata.
+   * If package metadata is unavailable (e.g., in a dev environment), default values will be used.</p>
+   *
+   * @return a {@link ProxyVersion} describing the proxy's implementation
+   */
   @Override
-  public final ProxyVersion getVersion() {
+  public ProxyVersion getVersion() {
     Package pkg = VelocityServer.class.getPackage();
     String implName;
     String implVersion;
@@ -434,18 +442,43 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return container;
   }
 
+  /**
+   * Returns the {@link VelocityCommandManager} responsible for handling Velocity's command framework.
+   *
+   * <p>This includes command registration, execution, Brigadier support, and alias management.</p>
+   *
+   * @return the {@link VelocityCommandManager} instance
+   */
   @Override
-  public final VelocityCommandManager getCommandManager() {
+  public VelocityCommandManager getCommandManager() {
     return commandManager;
   }
 
-  final void awaitProxyShutdown() {
+  /**
+   * Blocks the current thread until the proxy has completed its shutdown process.
+   *
+   * <p>This method is typically invoked to wait on termination of the Netty event loop group
+   * managing the server listeners.</p>
+   */
+  void awaitProxyShutdown() {
     cm.getBossGroup().terminationFuture().syncUninterruptibly();
   }
 
+  /**
+   * Starts the Velocity proxy, initializing all required systems including networking,
+   * plugin management, configuration loading, and event dispatching.
+   *
+   * <p>This method should be called exactly once during proxy bootstrap. It prepares the proxy
+   * to begin accepting player connections and enables plugin interactions.</p>
+   *
+   * <p>This method ensures that all critical fields (such as {@code serverKeyPair}, {@code scheduler},
+   * {@code cm}, and {@code configuration}) are initialized before completing.</p>
+   *
+   * @throws RuntimeException if startup configuration is invalid or plugin loading fails
+   */
   @EnsuresNonNull({"serverKeyPair", "servers", "pluginManager", "eventManager", "scheduler",
       "console", "cm", "configuration"})
-  final void start() {
+  void start() {
     logger.info("Booting up {} {}...", getVersion().getName(), getVersion().getVersion());
     console.setupStreams();
     pluginManager.registerPlugin(this.createVirtualPlugin());
@@ -1261,12 +1294,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   @Override
-  public final void shutdown(final Component reason) {
+  public void shutdown(final Component reason) {
     shutdown(true, reason);
   }
 
   @Override
-  public final void shutdown() {
+  public void shutdown() {
     shutdown(true);
   }
 
@@ -1312,7 +1345,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   @Override
-  public final void closeListeners() {
+  public void closeListeners() {
     this.cm.closeEndpoints(false);
   }
 
@@ -1410,20 +1443,38 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     connection.disconnected();
   }
 
+  /**
+   * Attempts to locate a player by their username (case-insensitive).
+   *
+   * @param username the player's username to search for
+   * @return an {@link Optional} containing the {@link Player} if found, otherwise empty
+   */
   @Override
-  public final Optional<Player> getPlayer(final String username) {
+  public Optional<Player> getPlayer(final String username) {
     Preconditions.checkNotNull(username, "username");
     return Optional.ofNullable(connectionsByName.get(username.toLowerCase(Locale.US)));
   }
 
+  /**
+   * Attempts to locate a player by their unique UUID.
+   *
+   * @param uuid the UUID of the player
+   * @return an {@link Optional} containing the {@link Player} if found, otherwise empty
+   */
   @Override
-  public final Optional<Player> getPlayer(final UUID uuid) {
+  public Optional<Player> getPlayer(final UUID uuid) {
     Preconditions.checkNotNull(uuid, "uuid");
     return Optional.ofNullable(connectionsByUuid.get(uuid));
   }
 
+  /**
+   * Returns a collection of players whose usernames match the given partial input.
+   *
+   * @param partialName the partial name to match
+   * @return a collection of matching {@link Player}s
+   */
   @Override
-  public final Collection<Player> matchPlayer(final String partialName) {
+  public Collection<Player> matchPlayer(final String partialName) {
     Objects.requireNonNull(partialName);
 
     return getAllPlayers().stream().filter(p -> p.getUsername()
@@ -1431,8 +1482,14 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Returns a collection of servers whose names match the given partial input.
+   *
+   * @param partialName the partial server name
+   * @return a collection of matching {@link RegisteredServer}s
+   */
   @Override
-  public final Collection<RegisteredServer> matchServer(final String partialName) {
+  public Collection<RegisteredServer> matchServer(final String partialName) {
     Objects.requireNonNull(partialName);
 
     return getAllServers().stream().filter(s -> s.getServerInfo().getName()
@@ -1440,73 +1497,147 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Returns an immutable collection of all players currently connected to the proxy.
+   *
+   * @return all connected players
+   */
   @Override
-  public final Collection<Player> getAllPlayers() {
+  public Collection<Player> getAllPlayers() {
     return ImmutableList.copyOf(connectionsByUuid.values());
   }
 
+  /**
+   * Gets the number of players currently connected to the proxy.
+   *
+   * @return the number of connected players
+   */
   @Override
-  public final int getPlayerCount() {
+  public int getPlayerCount() {
     return connectionsByUuid.size();
   }
 
+  /**
+   * Attempts to retrieve a server by its registered name.
+   *
+   * @param name the name of the server
+   * @return an {@link Optional} containing the {@link RegisteredServer}, if present
+   */
   @Override
-  public final Optional<RegisteredServer> getServer(final String name) {
+  public Optional<RegisteredServer> getServer(final String name) {
     return servers.getServer(name);
   }
 
+  /**
+   * Gets all servers currently registered with the proxy.
+   *
+   * @return a collection of all registered servers
+   */
   @Override
-  public final Collection<RegisteredServer> getAllServers() {
+  public Collection<RegisteredServer> getAllServers() {
     return servers.getAllServers();
   }
 
+  /**
+   * Creates a {@link RegisteredServer} from the specified {@link ServerInfo} without registering it.
+   *
+   * @param server the server info to wrap
+   * @return a {@link RegisteredServer} representing the server
+   */
   @Override
-  public final RegisteredServer createRawRegisteredServer(final ServerInfo server) {
+  public RegisteredServer createRawRegisteredServer(final ServerInfo server) {
     return servers.createRawRegisteredServer(server);
   }
 
+  /**
+   * Registers the specified server with the proxy, or returns the existing one if already registered.
+   *
+   * @param server the server to register
+   * @return the registered server instance
+   */
   @Override
-  public final RegisteredServer registerServer(final ServerInfo server) {
+  public RegisteredServer registerServer(final ServerInfo server) {
     return servers.register(server);
   }
 
+  /**
+   * Unregisters a server from the proxy, if it is currently registered.
+   *
+   * @param server the server to unregister
+   */
   @Override
-  public final void unregisterServer(final ServerInfo server) {
+  public void unregisterServer(final ServerInfo server) {
     servers.unregister(server);
   }
 
+  /**
+   * Gets the proxy console, which acts as a {@link Command} source for console-issued commands.
+   *
+   * @return the {@link VelocityConsole} instance
+   */
   @Override
-  public final VelocityConsole getConsoleCommandSource() {
+  public VelocityConsole getConsoleCommandSource() {
     return console;
   }
 
+  /**
+   * Returns the plugin manager instance used to register and manage Velocity plugins.
+   *
+   * @return the {@link PluginManager}
+   */
   @Override
-  public final PluginManager getPluginManager() {
+  public PluginManager getPluginManager() {
     return pluginManager;
   }
 
+  /**
+   * Returns the event manager used to register, fire, and dispatch plugin events.
+   *
+   * @return the {@link VelocityEventManager}
+   */
   @Override
-  public final VelocityEventManager getEventManager() {
+  public VelocityEventManager getEventManager() {
     return eventManager;
   }
 
+  /**
+   * Returns the proxy's scheduler for running asynchronous and synchronous tasks.
+   *
+   * @return the {@link VelocityScheduler}
+   */
   @Override
-  public final VelocityScheduler getScheduler() {
+  public VelocityScheduler getScheduler() {
     return scheduler;
   }
 
+  /**
+   * Returns the registrar responsible for plugin channel registration and translation.
+   *
+   * @return the {@link VelocityChannelRegistrar}
+   */
   @Override
-  public final VelocityChannelRegistrar getChannelRegistrar() {
+  public VelocityChannelRegistrar getChannelRegistrar() {
     return channelRegistrar;
   }
 
+  /**
+   * Returns whether the proxy is currently shutting down.
+   *
+   * @return {@code true} if a shutdown is in progress
+   */
   @Override
-  public final boolean isShuttingDown() {
+  public boolean isShuttingDown() {
     return shutdownInProgress.get();
   }
 
+  /**
+   * Returns the address the proxy is currently bound to for accepting connections.
+   *
+   * @return the {@link InetSocketAddress} the proxy is listening on
+   * @throws IllegalStateException if the configuration has not been loaded
+   */
   @Override
-  public final InetSocketAddress getBoundAddress() {
+  public InetSocketAddress getBoundAddress() {
     if (configuration == null) {
       throw new IllegalStateException(
           "No configuration"); // even though you'll never get the chance... heh, heh
@@ -1515,8 +1646,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return configuration.getBind();
   }
 
+  /**
+   * Returns all available audiences, including the console and all online players.
+   *
+   * @return an iterable of {@link Audience} instances
+   */
   @Override
-  public final @NonNull Iterable<? extends Audience> audiences() {
+  public @NonNull Iterable<? extends Audience> audiences() {
     Collection<Audience> audiences = new ArrayList<>(this.getPlayerCount() + 1);
     audiences.add(this.console);
     audiences.addAll(this.getAllPlayers());
@@ -1542,8 +1678,17 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return PRE_1_16_PING_SERIALIZER;
   }
 
+  /**
+   * Creates a new {@link ResourcePackInfo.Builder} for constructing a resource pack to send to players.
+   *
+   * <p>This builder allows you to specify metadata such as the pack's SHA-1 hash, whether it's forced,
+   * the prompt message, and more.</p>
+   *
+   * @param url the URL from which the resource pack should be downloaded
+   * @return a new {@link ResourcePackInfo.Builder} instance
+   */
   @Override
-  public final ResourcePackInfo.Builder createResourcePackBuilder(final String url) {
+  public ResourcePackInfo.Builder createResourcePackBuilder(final String url) {
     return new VelocityResourcePackInfo.BuilderImpl(url);
   }
 }

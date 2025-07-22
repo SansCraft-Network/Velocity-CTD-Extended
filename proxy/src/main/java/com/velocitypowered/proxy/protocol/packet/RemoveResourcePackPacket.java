@@ -62,15 +62,35 @@ public class RemoveResourcePackPacket implements MinecraftPacket {
     return id;
   }
 
+  /**
+   * Decodes this resource pack removal packet from the given {@link ByteBuf}.
+   *
+   * <p>This method reads a boolean flag indicating whether a UUID is present,
+   * and then reads the UUID if applicable.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     if (buf.readBoolean()) {
       this.id = ProtocolUtils.readUuid(buf);
     }
   }
 
+  /**
+   * Encodes this resource pack removal packet into the given {@link ByteBuf}.
+   *
+   * <p>This method writes a boolean flag and the UUID (if present) identifying
+   * the resource pack to be removed.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     buf.writeBoolean(id != null);
 
     if (id != null) {
@@ -78,8 +98,16 @@ public class RemoveResourcePackPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this resource pack removal packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to apply resource pack cleanup logic.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

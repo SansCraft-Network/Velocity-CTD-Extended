@@ -79,8 +79,15 @@ public class PingSessionHandler implements MinecraftSessionHandler {
     this.virtualHostString = virtualHostString;
   }
 
+  /**
+   * Called when this session handler is activated.
+   *
+   * <p>Sends a {@link HandshakePacket} and a {@link StatusRequestPacket} to the server using the
+   * provided protocol version and virtual host information. The session state is updated to
+   * {@link StateRegistry#STATUS}, and all packets are flushed to initiate the ping sequence.</p>
+   */
   @Override
-  public final void activated() {
+  public void activated() {
     HandshakePacket handshake = new HandshakePacket();
     handshake.setIntent(HandshakeIntent.STATUS);
     handshake.setServerAddress(this.virtualHostString == null || this.virtualHostString.isEmpty()
@@ -96,8 +103,17 @@ public class PingSessionHandler implements MinecraftSessionHandler {
     connection.flush();
   }
 
+  /**
+   * Handles a {@link StatusResponsePacket} containing the server's ping data.
+   *
+   * <p>Parses the response into a {@link ServerPing} using the appropriate GSON instance
+   * for the client's protocol version, completes the result future, and closes the connection.</p>
+   *
+   * @param packet the status response packet from the remote server
+   * @return {@code true} once processed
+   */
   @Override
-  public final boolean handle(final StatusResponsePacket packet) {
+  public boolean handle(final StatusResponsePacket packet) {
     // All good!
     completed = true;
     connection.close(true);
@@ -108,15 +124,29 @@ public class PingSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Called when the connection is closed before receiving a {@link StatusResponsePacket}.
+   *
+   * <p>If the ping was not completed, the result future is completed exceptionally with
+   * an {@link IOException} indicating unexpected disconnection.</p>
+   */
   @Override
-  public final void disconnected() {
+  public void disconnected() {
     if (!completed) {
       result.completeExceptionally(new IOException("Unexpectedly disconnected from remote server"));
     }
   }
 
+  /**
+   * Called when an exception occurs during the ping process.
+   *
+   * <p>The result future is completed exceptionally with the provided {@code throwable}
+   * and the session is marked as completed to avoid duplicate results.</p>
+   *
+   * @param throwable the exception that occurred during ping
+   */
   @Override
-  public final void exception(final Throwable throwable) {
+  public void exception(final Throwable throwable) {
     completed = true;
     result.completeExceptionally(throwable);
   }

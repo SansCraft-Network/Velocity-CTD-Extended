@@ -67,19 +67,44 @@ public class RegistryKeyArgument implements ArgumentType<String> {
     return identifier;
   }
 
+  /**
+   * Parses the input string as a registry key.
+   *
+   * <p>This method reads an unquoted string token from the input stream and returns it
+   * as-is. No validation is performed on the string format.</p>
+   *
+   * @param stringReader the input reader positioned at the start of the key
+   * @return the parsed registry key string
+   * @throws CommandSyntaxException if the input is invalid or cannot be read
+   */
   @Override
-  public final String parse(final StringReader stringReader) throws CommandSyntaxException {
+  public String parse(final StringReader stringReader) throws CommandSyntaxException {
     return stringReader.readString();
   }
 
+  /**
+   * Returns an empty {@link Suggestions} result, as this argument type does not support suggestions.
+   *
+   * @param context the command context
+   * @param builder the suggestions builder
+   * @return a {@link CompletableFuture} containing an empty suggestions list
+   */
   @Override
-  public final <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
+  public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
                                                             final SuggestionsBuilder builder) {
     return Suggestions.empty();
   }
 
+  /**
+   * Returns a fixed set of example registry keys.
+   *
+   * <p>These examples are used for syntax help and client-side tab completion,
+   * and demonstrate typical formats accepted by this argument type.</p>
+   *
+   * @return a collection of example input strings
+   */
   @Override
-  public final Collection<String> getExamples() {
+  public Collection<String> getExamples() {
     return EXAMPLES;
   }
 }

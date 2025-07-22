@@ -72,13 +72,30 @@ public class ServerLoginPluginMessageEvent implements ResultedEvent<ResponseResu
     this.result = ResponseResult.UNKNOWN;
   }
 
+  /**
+   * Gets the current {@link ResponseResult} associated with this plugin message event.
+   *
+   * <p>If the result is {@link ResponseResult#unknown()}, the proxy will indicate that it did not handle
+   * the plugin message and will return a negative response to the backend server.</p>
+   *
+   * @return the result of this event
+   */
   @Override
-  public final ResponseResult getResult() {
+  public ResponseResult getResult() {
     return this.result;
   }
 
+  /**
+   * Sets the {@link ResponseResult} for this plugin message event.
+   *
+   * <p>Use {@link ResponseResult#reply(byte[])} to respond with data, or {@link ResponseResult#unknown()}
+   * to indicate that the plugin message was not handled.</p>
+   *
+   * @param result the new result to apply to this event
+   * @throws NullPointerException if {@code result} is null
+   */
   @Override
-  public final void setResult(final ResponseResult result) {
+  public void setResult(final ResponseResult result) {
     this.result = checkNotNull(result, "result");
   }
 
@@ -138,8 +155,16 @@ public class ServerLoginPluginMessageEvent implements ResultedEvent<ResponseResu
     return sequenceId;
   }
 
+  /**
+   * Returns a string representation of this {@code ServerLoginPluginMessageEvent}.
+   *
+   * <p>The output includes the connection, message channel identifier, sequence ID,
+   * base-16 encoded message content, and the current response result.</p>
+   *
+   * @return a human-readable string describing the event state
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "ServerLoginPluginMessageEvent{"
         + "connection=" + connection
         + ", identifier=" + identifier

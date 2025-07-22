@@ -46,30 +46,64 @@ public class TitleSubtitlePacket extends GenericTitlePacket {
     setAction(ActionType.SET_SUBTITLE);
   }
 
+  /**
+   * Encodes this {@code TitleSubtitlePacket} into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the subtitle component to the buffer using the appropriate format for the given protocol version.</p>
+   *
+   * @param buf the byte buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version used for encoding
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     component.write(buf);
   }
 
+  /**
+   * Returns the {@link ComponentHolder} representing the subtitle.
+   *
+   * @return the subtitle text component
+   */
   @Override
-  public final ComponentHolder getComponent() {
+  public ComponentHolder getComponent() {
     return component;
   }
 
+  /**
+   * Sets the {@link ComponentHolder} that contains the subtitle text.
+   *
+   * @param component the subtitle text component to display
+   */
   @Override
-  public final void setComponent(final ComponentHolder component) {
+  public void setComponent(final ComponentHolder component) {
     this.component = component;
   }
 
+  /**
+   * Returns a string representation of this {@code TitleSubtitlePacket}.
+   *
+   * <p>The output includes the subtitle component.</p>
+   *
+   * @return a human-readable description of the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "TitleSubtitlePacket{"
         + ", component='" + component + '\''
         + '}';
   }
 
+  /**
+   * Handles this {@code TitleSubtitlePacket} by passing it to the provided session handler.
+   *
+   * <p>This delegates to {@link MinecraftSessionHandler#handle(TitleSubtitlePacket)}.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the handler successfully processed the packet
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

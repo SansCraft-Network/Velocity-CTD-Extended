@@ -52,13 +52,27 @@ public final class RegistryKeyArgumentList {
        */
       static final ResourceOrTag.Serializer REGISTRY = new ResourceOrTag.Serializer();
 
+      /**
+       * Deserializes a {@link ResourceOrTag} argument from the given buffer.
+       *
+       * @param buf the buffer containing the serialized argument
+       * @param protocolVersion the protocol version being used
+       * @return the deserialized {@link ResourceOrTag} instance
+       */
       @Override
-      public final ResourceOrTag deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceOrTag deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
         return new ResourceOrTag(ProtocolUtils.readString(buf));
       }
 
+      /**
+       * Serializes the given {@link ResourceOrTag} argument to the specified buffer.
+       *
+       * @param object the argument to serialize
+       * @param buf the buffer to write to
+       * @param protocolVersion the protocol version being used
+       */
       @Override
-      public final void serialize(final ResourceOrTag object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(final ResourceOrTag object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }
@@ -88,13 +102,27 @@ public final class RegistryKeyArgumentList {
        */
       static final ResourceOrTagKey.Serializer REGISTRY = new ResourceOrTagKey.Serializer();
 
+      /**
+       * Deserializes a {@link ResourceOrTagKey} argument from the given buffer.
+       *
+       * @param buf the buffer containing the serialized argument
+       * @param protocolVersion the protocol version being used
+       * @return the deserialized {@link ResourceOrTagKey} instance
+       */
       @Override
-      public final ResourceOrTagKey deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceOrTagKey deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
         return new ResourceOrTagKey(ProtocolUtils.readString(buf));
       }
 
+      /**
+       * Serializes the given {@link ResourceOrTagKey} argument to the specified buffer.
+       *
+       * @param object the argument to serialize
+       * @param buf the buffer to write to
+       * @param protocolVersion the protocol version being used
+       */
       @Override
-      public final void serialize(final ResourceOrTagKey object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(final ResourceOrTagKey object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }
@@ -124,13 +152,27 @@ public final class RegistryKeyArgumentList {
        */
       static final ResourceSelector.Serializer REGISTRY = new ResourceSelector.Serializer();
 
+      /**
+       * Deserializes a {@link ResourceSelector} argument from the given buffer.
+       *
+       * @param buf the buffer containing the serialized argument
+       * @param protocolVersion the protocol version being used
+       * @return the deserialized {@link ResourceSelector} instance
+       */
       @Override
-      public final ResourceSelector deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceSelector deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
         return new ResourceSelector(ProtocolUtils.readString(buf));
       }
 
+      /**
+       * Serializes the given {@link ResourceSelector} argument to the specified buffer.
+       *
+       * @param object the argument to serialize
+       * @param buf the buffer to write to
+       * @param protocolVersion the protocol version being used
+       */
       @Override
-      public final void serialize(final ResourceSelector object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(final ResourceSelector object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }
@@ -160,13 +202,27 @@ public final class RegistryKeyArgumentList {
        */
       static final ResourceKey.Serializer REGISTRY = new ResourceKey.Serializer();
 
+      /**
+       * Deserializes a {@link ResourceKey} argument from the given buffer.
+       *
+       * @param buf the buffer containing the serialized argument
+       * @param protocolVersion the protocol version being used
+       * @return the deserialized {@link ResourceKey} instance
+       */
       @Override
-      public final ResourceKey deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceKey deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
         return new ResourceKey(ProtocolUtils.readString(buf));
       }
 
+      /**
+       * Serializes the given {@link ResourceKey} argument to the specified buffer.
+       *
+       * @param object the argument to serialize
+       * @param buf the buffer to write to
+       * @param protocolVersion the protocol version being used
+       */
       @Override
-      public final void serialize(final ResourceKey object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(final ResourceKey object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }

@@ -490,8 +490,16 @@ public class VelocityEventManager implements EventManager {
         .collect(Collectors.toList()));
   }
 
+  /**
+   * Registers all event listener methods in the given {@code listener} object on behalf of the specified plugin.
+   *
+   * <p>This will inspect all {@code @Subscribe} methods and adapt them into handlers based on their signature.</p>
+   *
+   * @param plugin the plugin registering the listener
+   * @param listener the listener instance containing event methods
+   */
   @Override
-  public final void register(final Object plugin, final Object listener) {
+  public void register(final Object plugin, final Object listener) {
     requireNonNull(listener, "listener");
     final PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
     if (plugin == listener) {
@@ -501,8 +509,19 @@ public class VelocityEventManager implements EventManager {
     registerInternally(pluginContainer, listener);
   }
 
+  /**
+   * Registers an individual event handler for the specified event type and {@link PostOrder}.
+   *
+   * <p>Custom post orders are not supported by this method—use the short-based variant instead.</p>
+   *
+   * @param plugin the plugin registering the handler
+   * @param eventClass the event type
+   * @param order the event firing order
+   * @param handler the handler to invoke
+   * @param <E> the event type
+   */
   @Override
-  public final <E> void register(final Object plugin, final Class<E> eventClass, final PostOrder order, final EventHandler<E> handler) {
+  public <E> void register(final Object plugin, final Class<E> eventClass, final PostOrder order, final EventHandler<E> handler) {
     if (order == PostOrder.CUSTOM) {
       throw new IllegalArgumentException(
           "This method does not support custom post orders. Use the overload with short instead."
@@ -512,8 +531,17 @@ public class VelocityEventManager implements EventManager {
     register(plugin, eventClass, (short) POST_ORDER_MAP.get(order), handler, AsyncType.ALWAYS);
   }
 
+  /**
+   * Registers an individual event handler with an explicit short-based order priority.
+   *
+   * @param plugin the plugin registering the handler
+   * @param eventClass the event type
+   * @param postOrder the numeric event priority
+   * @param handler the handler to invoke
+   * @param <E> the event type
+   */
   @Override
-  public final <E> void register(final Object plugin, final Class<E> eventClass, final short postOrder, final EventHandler<E> handler) {
+  public <E> void register(final Object plugin, final Class<E> eventClass, final short postOrder, final EventHandler<E> handler) {
     register(plugin, eventClass, postOrder, handler, AsyncType.SOMETIMES);
   }
 
@@ -563,22 +591,40 @@ public class VelocityEventManager implements EventManager {
     register(registrations);
   }
 
+  /**
+   * Unregisters all event listeners associated with the given plugin.
+   *
+   * @param plugin the plugin to remove listeners for
+   */
   @Override
-  public final void unregisterListeners(final Object plugin) {
+  public void unregisterListeners(final Object plugin) {
     final PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
     unregisterIf(registration -> registration.plugin == pluginContainer);
   }
 
+  /**
+   * Unregisters all event listeners from a specific handler instance for a given plugin.
+   *
+   * @param plugin the plugin the handler belongs to
+   * @param handler the specific instance to unregister
+   */
   @Override
-  public final void unregisterListener(final Object plugin, final Object handler) {
+  public void unregisterListener(final Object plugin, final Object handler) {
     final PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
     requireNonNull(handler, "handler");
     unregisterIf(registration ->
         registration.plugin == pluginContainer && registration.instance == handler);
   }
 
+  /**
+   * Unregisters a specific handler function from the given plugin.
+   *
+   * @param plugin the plugin the handler belongs to
+   * @param handler the handler instance
+   * @param <E> the event type
+   */
   @Override
-  public final <E> void unregister(final Object plugin, final EventHandler<E> handler) {
+  public <E> void unregister(final Object plugin, final EventHandler<E> handler) {
     unregisterListener(plugin, handler);
   }
 
@@ -618,8 +664,13 @@ public class VelocityEventManager implements EventManager {
     return handlersCache != null && handlersCache.handlers.length > 0;
   }
 
+  /**
+   * Fires an event without waiting for a result.
+   *
+   * @param event the event to fire
+   */
   @Override
-  public final void fireAndForget(final Object event) {
+  public void fireAndForget(final Object event) {
     requireNonNull(event, "event");
     final HandlersCache handlersCache = this.handlersCache.get(event.getClass());
     if (handlersCache == null || handlersCache.handlers.length == 0) {
@@ -630,8 +681,16 @@ public class VelocityEventManager implements EventManager {
     fire(null, event, handlersCache);
   }
 
+  /**
+   * Fires an event and returns a {@link CompletableFuture} that completes
+   * once all handlers have finished executing.
+   *
+   * @param event the event to fire
+   * @param <E> the event type
+   * @return a future that completes with the original event once finished
+   */
   @Override
-  public final <E> CompletableFuture<E> fire(final E event) {
+  public <E> CompletableFuture<E> fire(final E event) {
     requireNonNull(event, "event");
     final HandlersCache handlersCache = this.handlersCache.get(event.getClass());
     if (handlersCache == null || handlersCache.handlers.length == 0) {

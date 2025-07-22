@@ -152,8 +152,15 @@ public class HandshakePacket implements MinecraftPacket {
     return this.intent;
   }
 
+  /**
+   * Returns a string representation of this handshake packet for debugging purposes.
+   *
+   * <p>This includes the protocol version, server address, port, and next status.</p>
+   *
+   * @return a string containing the protocol version, server address, port, and next status
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "Handshake{"
         + "protocolVersion=" + protocolVersion
         + ", serverAddress='" + serverAddress + '\''
@@ -162,8 +169,18 @@ public class HandshakePacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this handshake packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads the protocol version, server address, port, and next connection intent
+   * from the buffer, and sets the appropriate fields on this packet.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param ignored the protocol version (not used for handshake decoding)
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion ignored) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion ignored) {
     int realProtocolVersion = ProtocolUtils.readVarInt(buf);
     this.protocolVersion = ProtocolVersion.getProtocolVersion(realProtocolVersion);
     this.serverAddress = ProtocolUtils.readString(buf, MAXIMUM_HOSTNAME_LENGTH);
@@ -172,8 +189,18 @@ public class HandshakePacket implements MinecraftPacket {
     this.intent = HandshakeIntent.getById(nextStatus);
   }
 
+  /**
+   * Encodes this handshake packet into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes the protocol version, server address, port, and next connection intent
+   * to the buffer.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param ignored the protocol version (not used for handshake encoding)
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion ignored) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion ignored) {
     ProtocolUtils.writeVarInt(buf, this.protocolVersion.getProtocol());
     ProtocolUtils.writeString(buf, this.serverAddress);
     buf.writeShort(this.port);
@@ -181,18 +208,38 @@ public class HandshakePacket implements MinecraftPacket {
   }
 
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
+  /**
+   * Returns the expected minimum length (in bytes) of this packet when read from a buffer.
+   *
+   * <p>This value is used to verify packet length validity during decoding.</p>
+   *
+   * @param buf the buffer to inspect
+   * @param direction the direction of the packet
+   * @param version the protocol version
+   * @return the minimum expected byte length
+   */
   @Override
-  public final int expectedMinLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public int expectedMinLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
                                final ProtocolVersion version) {
     return 7;
   }
 
+  /**
+   * Returns the expected maximum length (in bytes) of this packet when read from a buffer.
+   *
+   * <p>This helps guard against malformed or excessively large packets, particularly for hostnames.</p>
+   *
+   * @param buf the buffer to inspect
+   * @param direction the direction of the packet
+   * @param version the protocol version
+   * @return the maximum expected byte length
+   */
   @Override
-  public final int expectedMaxLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public int expectedMaxLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
                                final ProtocolVersion version) {
     return 9 + (MAXIMUM_HOSTNAME_LENGTH * 3);
   }

@@ -34,13 +34,27 @@ public class RegistryKeyArgumentSerializer implements ArgumentPropertySerializer
    */
   static final RegistryKeyArgumentSerializer REGISTRY = new RegistryKeyArgumentSerializer();
 
+  /**
+   * Deserializes a {@link RegistryKeyArgument} from the given {@link ByteBuf}.
+   *
+   * @param buf the buffer containing the serialized registry key argument
+   * @param protocolVersion the protocol version to use during deserialization
+   * @return the deserialized {@link RegistryKeyArgument} instance
+   */
   @Override
-  public final RegistryKeyArgument deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public RegistryKeyArgument deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
     return new RegistryKeyArgument(ProtocolUtils.readString(buf));
   }
 
+  /**
+   * Serializes the given {@link RegistryKeyArgument} to the specified {@link ByteBuf}.
+   *
+   * @param object the registry key argument to serialize
+   * @param buf the buffer to write the serialized data into
+   * @param protocolVersion the protocol version to use during serialization
+   */
   @Override
-  public final void serialize(final RegistryKeyArgument object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void serialize(final RegistryKeyArgument object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, object.getIdentifier());
   }
 }

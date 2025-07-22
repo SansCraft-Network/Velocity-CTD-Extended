@@ -80,19 +80,40 @@ public class ModArgumentProperty implements ArgumentType<ByteBuf> {
     return data.slice();
   }
 
+  /**
+   * This operation is not supported for mod argument types.
+   *
+   * @param reader the string reader
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
+   */
   @Override
-  public final ByteBuf parse(final StringReader reader) throws CommandSyntaxException {
+  public ByteBuf parse(final StringReader reader) throws CommandSyntaxException {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * This operation is not supported for mod argument types.
+   *
+   * @param context the command context
+   * @param builder the suggestion builder
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
+   */
   @Override
-  public final <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
-                                                                  final SuggestionsBuilder builder) {
+  public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
+                                                            final SuggestionsBuilder builder) {
     throw new UnsupportedOperationException();
   }
 
+  /**
+   * This operation is not supported for mod argument types.
+   *
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
+   */
   @Override
-  public final Collection<String> getExamples() {
+  public Collection<String> getExamples() {
     throw new UnsupportedOperationException();
   }
 }

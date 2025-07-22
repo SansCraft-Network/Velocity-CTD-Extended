@@ -103,18 +103,45 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     this.serverInfo = Preconditions.checkNotNull(serverInfo, "serverInfo");
   }
 
+  /**
+   * Returns the {@link ServerInfo} representing this registered backend server.
+   *
+   * <p>This includes metadata such as the server's name and network address
+   * used for connecting players.</p>
+   *
+   * @return the {@link ServerInfo} object describing this server
+   */
   @Override
-  public final ServerInfo getServerInfo() {
+  public ServerInfo getServerInfo() {
     return serverInfo;
   }
 
+  /**
+   * Returns an immutable collection of players currently connected to this server
+   * from this proxy instance.
+   *
+   * <p>This does not include players connected via other proxy instances in a
+   * Redis multi-proxy setup.</p>
+   *
+   * @return the connected players on this server from this proxy instance
+   */
   @Override
-  public final Collection<Player> getPlayersConnected() {
+  public Collection<Player> getPlayersConnected() {
     return ImmutableList.copyOf(players.values());
   }
 
+  /**
+   * Returns the total number of players currently connected to this server,
+   * including remote players if Redis support is enabled.
+   *
+   * <p>If Redis is enabled, this includes players connected across all proxies
+   * that report to the same Redis server. Otherwise, this only includes players
+   * connected to this proxy instance.</p>
+   *
+   * @return the total number of players on this server
+   */
   @Override
-  public final long getTotalPlayerCount() {
+  public long getTotalPlayerCount() {
     if (this.server.getMultiProxyHandler().isRedisEnabled()) {
       int amount = 0;
 
@@ -130,8 +157,17 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     }
   }
 
+  /**
+   * Returns a list of {@link PlayerInfo} entries representing all players
+   * connected to this server.
+   *
+   * <p>If Redis is enabled, this list includes remote players across all proxies.
+   * Otherwise, it only contains players connected to this proxy instance.</p>
+   *
+   * @return a list of {@link PlayerInfo} for the players on this server
+   */
   @Override
-  public final List<PlayerInfo> getPlayerInfo() {
+  public List<PlayerInfo> getPlayerInfo() {
     if (this.server == null || !this.server.getMultiProxyHandler().isRedisEnabled()) {
       List<PlayerInfo> info = new ArrayList<>();
       players.forEach((uuid, player) -> info.add(new PlayerInfo(player.getUsername(), player.getUniqueId())));
@@ -169,13 +205,27 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     return players.get(uuid);
   }
 
+  /**
+   * Pings the server using the specified {@link PingOptions}.
+   *
+   * <p>This method initiates a server list ping to the backend server to retrieve
+   * information such as MOTD, player count, and version, using the given options.</p>
+   *
+   * @param pingOptions the ping options to apply
+   * @return a {@link CompletableFuture} that completes with the {@link ServerPing} result
+   */
   @Override
-  public final CompletableFuture<ServerPing> ping(final PingOptions pingOptions) {
+  public CompletableFuture<ServerPing> ping(final PingOptions pingOptions) {
     return ping(null, pingOptions);
   }
 
+  /**
+   * Pings the server using the default {@link PingOptions}.
+   *
+   * @return a {@link CompletableFuture} that completes with the {@link ServerPing} result
+   */
   @Override
-  public final CompletableFuture<ServerPing> ping() {
+  public CompletableFuture<ServerPing> ping() {
     return ping(null, PingOptions.DEFAULT);
   }
 
@@ -239,15 +289,37 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     players.remove(player.getUniqueId(), player);
   }
 
+  /**
+   * Sends a plugin message to this server using the given channel identifier and raw byte data.
+   *
+   * <p>If a player is currently connected to the server, the plugin message is sent using that
+   * connection. If no players are connected, the message is discarded and the buffer is released.</p>
+   *
+   * @param identifier the plugin message channel identifier
+   * @param data the plugin message payload
+   * @return {@code true} if the message was sent, {@code false} otherwise
+   */
   @Override
-  public final boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final byte @NotNull [] data) {
+  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final byte @NotNull [] data) {
     requireNonNull(identifier);
     requireNonNull(data);
     return sendPluginMessage(identifier, Unpooled.wrappedBuffer(data));
   }
 
+  /**
+   * Sends a plugin message to this server using the given {@link ChannelIdentifier} and
+   * a {@link PluginMessageEncoder} to encode the message payload.
+   *
+   * <p>The encoder writes the message data into a {@link ByteBuf}, which is then dispatched
+   * to the backend server via a connected player. If the buffer contains no data after
+   * encoding, the message is not sent and the buffer is released.</p>
+   *
+   * @param identifier the plugin message channel identifier
+   * @param dataEncoder the encoder that writes the message data
+   * @return {@code true} if the message was successfully sent, {@code false} otherwise
+   */
   @Override
-  public final boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
+  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
     requireNonNull(identifier);
     requireNonNull(dataEncoder);
     final ByteBuf buf = Unpooled.buffer();
@@ -282,13 +354,27 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     return false;
   }
 
+  /**
+   * Returns a string representation of this registered server, including its {@link ServerInfo}.
+   *
+   * @return a string representing this server
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "registered server: " + serverInfo;
   }
 
+  /**
+   * Returns an iterable collection of {@link Audience} instances representing
+   * all players currently connected to this server from this proxy.
+   *
+   * <p>This is used for forwarding chat and other Adventure-based interactions
+   * to all players on the server.</p>
+   *
+   * @return the connected player audiences on this server
+   */
   @Override
-  public final @NonNull Iterable<? extends Audience> audiences() {
+  public @NonNull Iterable<? extends Audience> audiences() {
     return this.getPlayersConnected();
   }
 

@@ -56,14 +56,24 @@ public class KeepAlivePacket implements MinecraftPacket {
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return "KeepAlive{"
         + "randomId=" + randomId
         + '}';
   }
 
+  /**
+   * Decodes this keep-alive packet from the given {@link ByteBuf}.
+   *
+   * <p>This method reads the keep-alive ID according to the protocol version. Depending
+   * on the version, the ID is encoded as a {@code long}, {@code varint}, or {@code int}.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_12_2)) {
       randomId = buf.readLong();
     } else if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -73,8 +83,18 @@ public class KeepAlivePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this keep-alive packet into the given {@link ByteBuf}.
+   *
+   * <p>This method writes the keep-alive ID using the appropriate encoding for
+   * the specified protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_12_2)) {
       buf.writeLong(randomId);
     } else if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -84,8 +104,17 @@ public class KeepAlivePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this keep-alive packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} for further
+   * connection validation logic.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

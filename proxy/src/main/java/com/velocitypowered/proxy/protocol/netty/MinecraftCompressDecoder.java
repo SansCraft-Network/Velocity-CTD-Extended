@@ -80,8 +80,23 @@ public class MinecraftCompressDecoder extends MessageToMessageDecoder<ByteBuf> {
     this.compressor = compressor;
   }
 
+  /**
+   * Decompresses a compressed Minecraft packet using the configured {@link VelocityCompressor}.
+   *
+   * <p>If the incoming packet's uncompressed size is {@code 0}, it is treated as uncompressed and
+   * forwarded directly (with optional validation). Otherwise, the decoder verifies that the declared
+   * uncompressed size falls within acceptable limits and decompresses the payload.</p>
+   *
+   * <p>The uncompressed buffer is added to the output list. If decompression fails,
+   * any allocated resources are released and the exception is propagated.</p>
+   *
+   * @param ctx the Netty channel context
+   * @param in the compressed input buffer
+   * @param out the list to which the decompressed output will be added
+   * @throws Exception if decompression fails or validation fails
+   */
   @Override
-  protected final void decode(final ChannelHandlerContext ctx, final ByteBuf in, final List<Object> out) throws Exception {
+  protected void decode(final ChannelHandlerContext ctx, final ByteBuf in, final List<Object> out) throws Exception {
     int claimedUncompressedSize = ProtocolUtils.readVarInt(in);
     if (claimedUncompressedSize == 0) {
       if (!SKIP_COMPRESSION_VALIDATION) {
@@ -114,8 +129,15 @@ public class MinecraftCompressDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
   }
 
+  /**
+   * Called when this decoder is removed from the Netty pipeline.
+   *
+   * <p>This method closes the associated {@link VelocityCompressor} to release any native resources.</p>
+   *
+   * @param ctx the Netty channel context
+   */
   @Override
-  public final void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(final ChannelHandlerContext ctx) {
     compressor.close();
   }
 

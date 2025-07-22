@@ -49,8 +49,19 @@ public class VelocityNettyThreadFactory implements ThreadFactory {
     this.nameFormat = checkNotNull(nameFormat, "nameFormat");
   }
 
+  /**
+   * Creates a new {@link Thread} that wraps the provided {@link Runnable}.
+   *
+   * <p>The thread is named using the {@code nameFormat} provided to this factory,
+   * using an incrementing thread number. The thread class used is
+   * {@link FastThreadLocalThread}, which is optimized for Netty's internal
+   * thread-local storage model.</p>
+   *
+   * @param r the {@link Runnable} to execute in the new thread
+   * @return a newly created {@link Thread}
+   */
   @Override
-  public final Thread newThread(@NotNull final Runnable r) {
+  public Thread newThread(@NotNull final Runnable r) {
     String name = String.format(nameFormat, threadNumber.getAndIncrement());
     return new FastThreadLocalThread(name) {
       @Override

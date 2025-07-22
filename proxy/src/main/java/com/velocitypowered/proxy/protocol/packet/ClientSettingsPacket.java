@@ -310,8 +310,15 @@ public class ClientSettingsPacket implements MinecraftPacket {
     this.particleStatus = particleStatus;
   }
 
+  /**
+   * Returns a string representation of this client settings packet.
+   *
+   * <p>This includes locale, view distance, chat, and UI preferences.</p>
+   *
+   * @return a string describing the packet's contents
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "ClientSettings{"
         + "locale='" + locale + '\''
         + ", viewDistance=" + viewDistance
@@ -324,8 +331,18 @@ public class ClientSettingsPacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this client settings packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the client's locale, view distance, chat settings, skin parts, main hand,
+   * and additional flags depending on the protocol version (e.g., filtering, listing, particles).</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     this.locale = ProtocolUtils.readString(buf, 16);
     this.viewDistance = buf.readByte();
     this.chatVisibility = ProtocolUtils.readVarInt(buf);
@@ -354,11 +371,23 @@ public class ClientSettingsPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this client settings packet into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the client's locale, preferences, and optional settings depending on
+   * the target protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @throws IllegalStateException if required fields like locale are not set
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (locale == null) {
       throw new IllegalStateException("No locale specified");
     }
+
     ProtocolUtils.writeString(buf, locale);
     buf.writeByte(viewDistance);
     ProtocolUtils.writeVarInt(buf, chatVisibility);
@@ -387,13 +416,30 @@ public class ClientSettingsPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this client settings packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates packet processing to {@code handler.handle(this)} to apply the client’s
+   * settings to the session.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
+  /**
+   * Compares this client settings packet with another for equality.
+   *
+   * <p>Two packets are equal if all setting fields are equivalent.</p>
+   *
+   * @param o the object to compare against
+   * @return {@code true} if equal, {@code false} otherwise
+   */
   @Override
-  public final boolean equals(@Nullable final Object o) {
+  public boolean equals(@Nullable final Object o) {
     if (this == o) {
       return true;
     }
@@ -415,8 +461,16 @@ public class ClientSettingsPacket implements MinecraftPacket {
         && Objects.equals(locale, that.locale);
   }
 
+  /**
+   * Returns a hash code for this client settings packet.
+   *
+   * <p>This is based on all relevant setting fields such as locale, distance,
+   * visibility, filtering, and hand preferences.</p>
+   *
+   * @return the computed hash code
+   */
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return Objects.hash(
         locale,
         viewDistance,
@@ -427,6 +481,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
         mainHand,
         textFilteringEnabled,
         clientListingAllowed,
-        particleStatus);
+        particleStatus
+    );
   }
 }

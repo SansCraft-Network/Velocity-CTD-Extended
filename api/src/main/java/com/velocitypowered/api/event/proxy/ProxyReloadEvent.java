@@ -12,8 +12,15 @@ package com.velocitypowered.api.event.proxy;
  */
 public class ProxyReloadEvent {
 
+  /**
+   * Returns a string representation of this {@code ProxyReloadEvent}.
+   *
+   * <p>As this event has no fields, the output is a fixed string identifier.</p>
+   *
+   * @return the string {@code "ProxyReloadEvent"}
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "ProxyReloadEvent";
   }
 }

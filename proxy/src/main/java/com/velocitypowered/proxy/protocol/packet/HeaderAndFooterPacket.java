@@ -82,19 +82,49 @@ public class HeaderAndFooterPacket implements MinecraftPacket {
     return footer;
   }
 
+  /**
+   * Throws an {@link UnsupportedOperationException} because decoding is not supported.
+   *
+   * <p>This packet is intended to be sent from the server to the client only,
+   * and decoding is not implemented by design.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the packet direction
+   * @param version the Minecraft protocol version
+   * @throws UnsupportedOperationException always
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     throw new UnsupportedOperationException("Decode is not implemented");
   }
 
+  /**
+   * Encodes this header and footer packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes both the header and footer components to the buffer using the protocol
+   * version-specific serialization rules defined in {@link ComponentHolder}.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     header.write(buf);
     footer.write(buf);
   }
 
+  /**
+   * Handles this header and footer packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to update
+   * the player's tab list components.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

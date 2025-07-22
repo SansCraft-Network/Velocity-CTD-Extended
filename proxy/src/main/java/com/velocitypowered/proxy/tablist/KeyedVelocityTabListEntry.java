@@ -74,18 +74,38 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
     this.playerKey = playerKey;
   }
 
+  /**
+   * Returns the {@link TabList} that this entry belongs to.
+   *
+   * @return the parent tab list
+   */
   @Override
-  public final TabList getTabList() {
+  public TabList getTabList() {
     return tabList;
   }
 
+  /**
+   * Returns the {@link GameProfile} associated with this entry.
+   *
+   * <p>This includes the UUID and username of the player shown in the tab list.</p>
+   *
+   * @return the game profile of the entry
+   */
   @Override
-  public final GameProfile getProfile() {
+  public GameProfile getProfile() {
     return profile;
   }
 
+  /**
+   * Retrieves the display name component shown in the tab list for this entry.
+   *
+   * <p>This component is optional and may be {@code null} if no display name override
+   * was set. When absent, the client will typically display the player's username instead.</p>
+   *
+   * @return an {@link Optional} containing the display name, or empty if not set
+   */
   @Override
-  public final Optional<Component> getDisplayNameComponent() {
+  public Optional<Component> getDisplayNameComponent() {
     return Optional.ofNullable(displayName);
   }
 
@@ -113,13 +133,27 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
     this.displayName = displayName;
   }
 
+  /**
+   * Returns the latency (ping) value associated with this entry.
+   *
+   * @return the latency in milliseconds
+   */
   @Override
-  public final int getLatency() {
+  public int getLatency() {
     return latency;
   }
 
+  /**
+   * Sets the latency (ping) value for this tab list entry and notifies the client of the update.
+   *
+   * <p>This value is typically shown in the client as the connection bar indicator
+   * beside the player's name in the tab list.</p>
+   *
+   * @param latency the new latency value in milliseconds
+   * @return this {@link TabListEntry} instance for chaining
+   */
   @Override
-  public final TabListEntry setLatency(final int latency) {
+  public TabListEntry setLatency(final int latency) {
     this.latency = latency;
     tabList.updateEntry(LegacyPlayerListItemPacket.UPDATE_LATENCY, this);
     return this;
@@ -136,13 +170,35 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
     this.latency = latency;
   }
 
+  /**
+   * Returns the game mode for this tab list entry.
+   *
+   * <p>This is typically represented as an integer (e.g., 0 for survival, 1 for creative).</p>
+   *
+   * @return the integer game mode value
+   */
   @Override
-  public final int getGameMode() {
+  public int getGameMode() {
     return gameMode;
   }
 
+  /**
+   * Sets the game mode for this tab list entry and triggers an update to the client.
+   *
+   * <p>Game mode values typically follow Minecraft's internal representation:
+   * <ul>
+   *   <li>0 - Survival</li>
+   *   <li>1 - Creative</li>
+   *   <li>2 - Adventure</li>
+   *   <li>3 - Spectator</li>
+   * </ul>
+   * This information is shown in the client tab list entry, though usage may vary by client version.</p>
+   *
+   * @param gameMode the new game mode value
+   * @return this {@link TabListEntry} instance for chaining
+   */
   @Override
-  public final TabListEntry setGameMode(final int gameMode) {
+  public TabListEntry setGameMode(final int gameMode) {
     this.gameMode = gameMode;
     tabList.updateEntry(LegacyPlayerListItemPacket.UPDATE_GAMEMODE, this);
     return this;
@@ -159,13 +215,26 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
     this.gameMode = gameMode;
   }
 
+  /**
+   * Returns the {@link ChatSession} representing this entry's chat capabilities.
+   *
+   * <p>For tab list entries, this typically wraps the player's {@link IdentifiedKey}
+   * for signed message support in modern clients.</p>
+   *
+   * @return the remote chat session for the entry
+   */
   @Override
-  public final ChatSession getChatSession() {
+  public ChatSession getChatSession() {
     return new RemoteChatSession(null, this.playerKey);
   }
 
+  /**
+   * Returns the {@link IdentifiedKey} used by this player for chat signing.
+   *
+   * @return the player's identity key, or {@code null} if not present
+   */
   @Override
-  public final IdentifiedKey getIdentifiedKey() {
+  public IdentifiedKey getIdentifiedKey() {
     return playerKey;
   }
 

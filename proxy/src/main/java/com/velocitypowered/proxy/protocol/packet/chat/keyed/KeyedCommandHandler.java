@@ -57,13 +57,35 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
     this.server = server;
   }
 
+  /**
+   * Returns the class of packets this handler is responsible for.
+   *
+   * <p>This identifies the handler as responsible for {@link KeyedPlayerCommandPacket}
+   * in the command pipeline.</p>
+   *
+   * @return the class of {@code KeyedPlayerCommandPacket}
+   */
   @Override
-  public final Class<KeyedPlayerCommandPacket> packetClass() {
+  public Class<KeyedPlayerCommandPacket> packetClass() {
     return KeyedPlayerCommandPacket.class;
   }
 
+  /**
+   * Handles the execution of a player-issued command represented by {@link KeyedPlayerCommandPacket}.
+   *
+   * <p>This method performs the following:</p>
+   * <ul>
+   *   <li>Fires a {@link CommandExecuteEvent} for plugin handling.</li>
+   *   <li>Enforces chat signing rules for signed commands (1.19.1+).</li>
+   *   <li>Handles both local command execution and forwarding to backend servers.</li>
+   *   <li>If a plugin illegally cancels or alters a signed command when signing is enforced,
+   *       the player is disconnected.</li>
+   * </ul>
+   *
+   * @param packet the inbound command packet from the player
+   */
   @Override
-  public final void handlePlayerCommandInternal(final KeyedPlayerCommandPacket packet) {
+  public void handlePlayerCommandInternal(final KeyedPlayerCommandPacket packet) {
     queueCommandResult(this.server, this.player, (event, newLastSeenMessages) -> {
       CommandExecuteEvent.CommandResult result = event.getResult();
       IdentifiedKey playerKey = player.getIdentifiedKey();

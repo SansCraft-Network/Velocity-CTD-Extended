@@ -160,8 +160,16 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
     this.transactionId = transactionId;
   }
 
+  /**
+   * Returns a string representation of this tab-complete request packet.
+   *
+   * <p>This includes the command string, transaction ID, assume-command flag,
+   * block position flag, and block position (if applicable).</p>
+   *
+   * @return a string describing the tab-complete request
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("command", command)
         .add("transactionId", transactionId)
@@ -171,8 +179,18 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
         .toString();
   }
 
+  /**
+   * Decodes this tab-complete request packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the command string and optionally a transaction ID, assume-command flag,
+   * and block position based on the protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(MINECRAFT_1_13)) {
       this.transactionId = ProtocolUtils.readVarInt(buf);
       this.command = ProtocolUtils.readString(buf, VANILLA_MAX_TAB_COMPLETE_LEN);
@@ -223,8 +241,17 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this tab-complete request packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates to {@code handler.handle(this)} to generate command suggestions
+   * or forward the request to the backend server.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

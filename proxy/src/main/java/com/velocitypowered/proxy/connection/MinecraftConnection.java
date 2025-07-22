@@ -127,7 +127,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
   /**
    * The session handlers associated with each state in the connection lifecycle.
    */
-  private final Map<StateRegistry, MinecraftSessionHandler> sessionHandlers;
+  private Map<StateRegistry, MinecraftSessionHandler> sessionHandlers;
 
   /**
    * The currently active session handler responsible for processing packets in the current state.
@@ -175,8 +175,16 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     this.sessionHandlers = new HashMap<>();
   }
 
+  /**
+   * Called when the channel becomes active.
+   *
+   * <p>Subclasses overriding this method should ensure they invoke
+   * {@code super.channelActive(ctx)} to preserve connection initialization behavior.</p>
+   *
+   * @param ctx the {@link ChannelHandlerContext} associated with this handler
+   */
   @Override
-  public final void channelActive(@NotNull final ChannelHandlerContext ctx) {
+  public void channelActive(@NotNull final ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.connected();
     }
@@ -186,8 +194,16 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     }
   }
 
+  /**
+   * Called when the channel becomes inactive.
+   *
+   * <p>Subclasses overriding this method should invoke
+   * {@code super.channelInactive(ctx)} to ensure cleanup and disconnect logging occur properly.</p>
+   *
+   * @param ctx the {@link ChannelHandlerContext} associated with this handler
+   */
   @Override
-  public final void channelInactive(@NotNull final ChannelHandlerContext ctx) {
+  public void channelInactive(@NotNull final ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.disconnected();
     }
@@ -203,8 +219,18 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     }
   }
 
+  /**
+   * Called for each message read from the channel.
+   *
+   * <p>Subclasses may override this method to intercept inbound traffic. If doing so,
+   * they must call {@code super.channelRead(ctx, msg)} unless they fully replace
+   * all handling logic.</p>
+   *
+   * @param ctx the {@link ChannelHandlerContext} associated with this handler
+   * @param msg the inbound message to process
+   */
   @Override
-  public final void channelRead(@NotNull final ChannelHandlerContext ctx, @NotNull final Object msg) {
+  public void channelRead(@NotNull final ChannelHandlerContext ctx, @NotNull final Object msg) {
     try {
       if (activeSessionHandler == null) {
         // No session handler available, do nothing
@@ -244,15 +270,33 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     }
   }
 
+  /**
+   * Called when the last read operation on the channel is completed.
+   *
+   * <p>Subclasses overriding this method should invoke
+   * {@code super.channelReadComplete(ctx)} to preserve internal read-completion logic.</p>
+   *
+   * @param ctx the {@link ChannelHandlerContext} for this handler
+   */
   @Override
-  public final void channelReadComplete(final ChannelHandlerContext ctx) {
+  public void channelReadComplete(final ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.readCompleted();
     }
   }
 
+  /**
+   * Called when an exception is raised during channel operations.
+   *
+   * <p>Subclasses may override to implement custom error handling, but should
+   * invoke {@code super.exceptionCaught(ctx, cause)} unless the default behavior
+   * is to be completely suppressed.</p>
+   *
+   * @param ctx the {@link ChannelHandlerContext}
+   * @param cause the {@link Throwable} that was caught
+   */
   @Override
-  public final void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
+  public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
     if (ctx.channel().isActive()) {
       if (activeSessionHandler != null) {
         try {
@@ -288,8 +332,16 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     }
   }
 
+  /**
+   * Called when the writability of the channel changes.
+   *
+   * <p>Subclasses should invoke {@code super.channelWritabilityChanged(ctx)} if they override
+   * this method to preserve session handler integration.</p>
+   *
+   * @param ctx the {@link ChannelHandlerContext} for this handler
+   */
   @Override
-  public final void channelWritabilityChanged(final ChannelHandlerContext ctx) {
+  public void channelWritabilityChanged(final ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.writabilityChanged();
     }
@@ -307,7 +359,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @return the Netty {@link EventLoop} associated with this connection
    */
-  public final EventLoop eventLoop() {
+  public EventLoop eventLoop() {
     return channel.eventLoop();
   }
 
@@ -381,7 +433,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * <p>This is equivalent to calling {@link #close(boolean)} with {@code true}, indicating that
    * the disconnect was expected (e.g., player quit or server-initiated).</p>
    */
-  public final void close() {
+  public void close() {
     close(true);
   }
 
@@ -546,7 +598,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @return the {@link ProtocolVersion} associated with this connection
    */
-  public final ProtocolVersion getProtocolVersion() {
+  public ProtocolVersion getProtocolVersion() {
     return protocolVersion;
   }
 
@@ -580,7 +632,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @return the active session handler, or {@code null} if none is set
    */
-  public final @Nullable MinecraftSessionHandler getActiveSessionHandler() {
+  public @Nullable MinecraftSessionHandler getActiveSessionHandler() {
     return activeSessionHandler;
   }
 
@@ -590,7 +642,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @param registry the protocol state for which the handler is queried
    * @return the session handler for the specified state, or {@code null} if not registered
    */
-  public final @Nullable MinecraftSessionHandler getSessionHandlerForRegistry(final StateRegistry registry) {
+  public @Nullable MinecraftSessionHandler getSessionHandlerForRegistry(final StateRegistry registry) {
     return this.sessionHandlers.getOrDefault(registry, null);
   }
 
@@ -734,7 +786,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @return the current connection association, or {@code null} if not yet associated
    */
-  public final @Nullable MinecraftConnectionAssociation getAssociation() {
+  public @Nullable MinecraftConnectionAssociation getAssociation() {
     return association;
   }
 
@@ -746,7 +798,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @param association the association to set
    * @throws IllegalStateException if called outside the Netty event loop
    */
-  public final void setAssociation(final MinecraftConnectionAssociation association) {
+  public void setAssociation(final MinecraftConnectionAssociation association) {
     ensureInEventLoop();
     this.association = association;
   }

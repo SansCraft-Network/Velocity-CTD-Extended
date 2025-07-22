@@ -64,8 +64,13 @@ public class SignaturePair {
     return signer;
   }
 
+  /**
+   * Returns a string representation of this signature pair for debugging.
+   *
+   * @return a formatted string including the signer UUID and signature bytes
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "SignaturePair{"
         + "signer=" + signer
         + ", signature=" + Arrays.toString(signature)

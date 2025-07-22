@@ -47,30 +47,65 @@ public class TitleActionbarPacket extends GenericTitlePacket {
     setAction(ActionType.SET_TITLE);
   }
 
+  /**
+   * Encodes this {@code TitleActionbarPacket} into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the component content of the action bar directly to the buffer,
+   * using the appropriate serialization format based on the protocol version.</p>
+   *
+   * @param buf the buffer to write the encoded component to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version used for encoding
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     component.write(buf);
   }
 
+  /**
+   * Returns the {@link ComponentHolder} representing the action bar content.
+   *
+   * @return the action bar text component
+   */
   @Override
-  public final ComponentHolder getComponent() {
+  public ComponentHolder getComponent() {
     return component;
   }
 
+  /**
+   * Sets the {@link ComponentHolder} to be used as the action bar content.
+   *
+   * @param component the component to display in the action bar
+   */
   @Override
-  public final void setComponent(final ComponentHolder component) {
+  public void setComponent(final ComponentHolder component) {
     this.component = component;
   }
 
+  /**
+   * Returns a string representation of this {@code TitleActionbarPacket}.
+   *
+   * <p>The output includes the action bar's text component.</p>
+   *
+   * @return a human-readable string describing the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "TitleActionbarPacket{"
         + ", component='" + component + '\''
         + '}';
   }
 
+  /**
+   * Handles this {@code TitleActionbarPacket} by delegating to the provided session handler.
+   *
+   * <p>This calls {@link MinecraftSessionHandler#handle(TitleActionbarPacket)}.</p>
+   *
+   * @param handler the session handler responsible for processing the packet
+   * @return {@code true} if the packet was handled successfully; {@code false} otherwise
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

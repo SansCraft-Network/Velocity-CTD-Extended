@@ -71,20 +71,48 @@ public class TransferPacket implements MinecraftPacket {
     return new InetSocketAddress(host, port);
   }
 
+  /**
+   * Decodes this transfer packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the hostname and port number of the destination server
+   * that the player should be transferred to.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
     this.host = ProtocolUtils.readString(buf);
     this.port = ProtocolUtils.readVarInt(buf);
   }
 
+  /**
+   * Encodes this transfer packet into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the hostname and port of the target server for player transfer.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, host);
     ProtocolUtils.writeVarInt(buf, port);
   }
 
+  /**
+   * Handles this transfer packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to initiate
+   * transfer of the player to another backend server.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

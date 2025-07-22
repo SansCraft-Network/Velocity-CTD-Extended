@@ -127,8 +127,15 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     this.minimumVersion = server.getConfiguration().getMinimumVersion();
   }
 
+  /**
+   * Called when this session handler is activated.
+   *
+   * <p>Performs version checks, fires a {@link GameProfileRequestEvent}, and initializes the {@link ConnectedPlayer}.
+   * If allowed, transitions into permission setup and then continues with login protocol completion.
+   * Players using older protocol versions or failing validation will be disconnected.</p>
+   */
   @Override
-  public final void activated() {
+  public void activated() {
     // Some connection types may need to alter the game profile.
     profile = mcConnection.getType().addGameProfileTokensIfRequired(profile, server.getConfiguration().getPlayerInfoForwardingMode());
     GameProfileRequestEvent profileRequestEvent = new GameProfileRequestEvent(inbound, profile, onlineMode);
@@ -254,8 +261,17 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     completeLoginProtocolPhaseAndInitialize(player);
   }
 
+  /**
+   * Handles a {@link LoginAcknowledgedPacket} from the client confirming receipt of the login success.
+   *
+   * <p>If the state is valid, switches the session to {@link ClientConfigSessionHandler} (1.20.2+) or proceeds
+   * to post-login events and connects the player to their initial server (older versions).</p>
+   *
+   * @param packet the login acknowledgment packet
+   * @return {@code true} if handled successfully
+   */
   @Override
-  public final boolean handle(final LoginAcknowledgedPacket packet) {
+  public boolean handle(final LoginAcknowledgedPacket packet) {
     if (loginState != State.SUCCESS_SENT) {
       inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_player_data"));
     } else {
@@ -280,8 +296,18 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link ServerboundCookieResponsePacket} received from the client during login.
+   *
+   * <p>Proxy plugins are not allowed to process cookie responses in this phase,
+   * so an exception is thrown if any plugin previously initiated a cookie request.</p>
+   *
+   * @param packet the cookie response packet
+   * @return {@code true} to continue handling
+   * @throws IllegalStateException if a response is received in the login phase
+   */
   @Override
-  public final boolean handle(final ServerboundCookieResponsePacket packet) {
+  public boolean handle(final ServerboundCookieResponsePacket packet) {
     server.getEventManager()
         .fire(new CookieReceiveEvent(connectedPlayer, packet.getKey(), packet.getPayload()))
         .thenAcceptAsync(event -> {
@@ -370,13 +396,26 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     }, mcConnection.eventLoop());
   }
 
+  /**
+   * Handles an unknown or unexpected packet during the login phase.
+   *
+   * <p>The connection is immediately closed as unexpected input indicates a protocol violation.</p>
+   *
+   * @param buf the raw packet data
+   */
   @Override
-  public final void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(final ByteBuf buf) {
     mcConnection.close(true);
   }
 
+  /**
+   * Called when the client disconnects during the login process.
+   *
+   * <p>Cleans up the {@link ConnectedPlayer} if present and also invokes login-level cleanup
+   * routines on the inbound connection.</p>
+   */
   @Override
-  public final void disconnected() {
+  public void disconnected() {
     if (connectedPlayer != null) {
       connectedPlayer.teardown();
     }

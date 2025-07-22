@@ -43,8 +43,17 @@ public class VelocityChannelRegistrar implements ChannelRegistrar {
    */
   private final Map<String, ChannelIdentifier> identifierMap = new ConcurrentHashMap<>();
 
+  /**
+   * Registers the provided {@link ChannelIdentifier} instances into the proxy channel registry.
+   *
+   * <p>Legacy identifiers will be registered under both their original ID and the transformed
+   * modern ID (e.g., {@code BungeeCord} → {@code legacy:bungeecord}).</p>
+   *
+   * @param identifiers the channel identifiers to register
+   * @throws IllegalArgumentException if any identifier is not a {@link LegacyChannelIdentifier} or {@link MinecraftChannelIdentifier}
+   */
   @Override
-  public final void register(final ChannelIdentifier... identifiers) {
+  public void register(final ChannelIdentifier... identifiers) {
     for (ChannelIdentifier identifier : identifiers) {
       Preconditions.checkArgument(identifier instanceof LegacyChannelIdentifier
           || identifier instanceof MinecraftChannelIdentifier, "identifier is unknown");
@@ -61,8 +70,16 @@ public class VelocityChannelRegistrar implements ChannelRegistrar {
     }
   }
 
+  /**
+   * Unregisters the provided {@link ChannelIdentifier} instances from the proxy channel registry.
+   *
+   * <p>Legacy identifiers are removed from both their raw and transformed forms.</p>
+   *
+   * @param identifiers the channel identifiers to unregister
+   * @throws IllegalArgumentException if any identifier is not a {@link LegacyChannelIdentifier} or {@link MinecraftChannelIdentifier}
+   */
   @Override
-  public final void unregister(final ChannelIdentifier... identifiers) {
+  public void unregister(final ChannelIdentifier... identifiers) {
     for (ChannelIdentifier identifier : identifiers) {
       Preconditions.checkArgument(identifier instanceof LegacyChannelIdentifier
           || identifier instanceof MinecraftChannelIdentifier, "identifier is unknown");

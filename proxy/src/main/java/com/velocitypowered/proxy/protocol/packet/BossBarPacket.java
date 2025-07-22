@@ -365,8 +365,15 @@ public class BossBarPacket implements MinecraftPacket {
     this.flags = flags;
   }
 
+  /**
+   * Returns a string representation of this boss bar packet.
+   *
+   * <p>This includes the UUID, action, name, progress, style, and flags.</p>
+   *
+   * @return a string describing this boss bar packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "BossBar{"
         + "uuid=" + uuid
         + ", action=" + action
@@ -378,8 +385,19 @@ public class BossBarPacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this boss bar packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads the boss bar UUID and action type, then conditionally decodes
+   * the corresponding fields based on the action (e.g., name, progress, style, flags).</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @throws UnsupportedOperationException if the action ID is unknown
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     this.uuid = ProtocolUtils.readUuid(buf);
     this.action = ProtocolUtils.readVarInt(buf);
     switch (action) {
@@ -403,8 +421,20 @@ public class BossBarPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this boss bar packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the UUID and action ID, and conditionally writes fields depending on
+   * the action type (e.g., name, progress, style, flags).</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @throws IllegalStateException if required fields (e.g., UUID, name) are missing
+   * @throws UnsupportedOperationException if the action ID is unknown
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (uuid == null) {
       throw new IllegalStateException("No boss bar UUID specified");
     }
@@ -451,8 +481,17 @@ public class BossBarPacket implements MinecraftPacket {
     return val;
   }
 
+  /**
+   * Handles this boss bar packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling to {@code handler.handle(this)} to update the
+   * boss bar state on the client.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

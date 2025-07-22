@@ -152,8 +152,15 @@ public class LegacyChatPacket implements MinecraftPacket {
     this.sender = sender;
   }
 
+  /**
+   * Returns a string representation of this legacy chat packet.
+   *
+   * <p>This includes the message text, type, and sender UUID.</p>
+   *
+   * @return a string describing the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "Chat{"
         + "message='" + message + '\''
         + ", type=" + type
@@ -161,8 +168,18 @@ public class LegacyChatPacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this legacy chat packet from the given {@link ByteBuf}.
+   *
+   * <p>This method reads the chat message, type, and optionally the sender UUID
+   * depending on the direction and protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     message = ProtocolUtils.readString(buf, direction == ProtocolUtils.Direction.CLIENTBOUND
         ? 262144 : version.noLessThan(ProtocolVersion.MINECRAFT_1_11) ? 256 : 100);
     if (direction == ProtocolUtils.Direction.CLIENTBOUND && version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -173,8 +190,19 @@ public class LegacyChatPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this legacy chat packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the message string, type, and optionally the sender UUID
+   * depending on the direction and protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @throws IllegalStateException if the message is not set
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (message == null) {
       throw new IllegalStateException("Message is not specified");
     }
@@ -188,8 +216,16 @@ public class LegacyChatPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this legacy chat packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates packet processing to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

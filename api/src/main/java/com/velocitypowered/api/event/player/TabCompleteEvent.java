@@ -79,8 +79,16 @@ public class TabCompleteEvent {
     return suggestions;
   }
 
+  /**
+   * Returns a string representation of this {@code TabCompleteEvent}.
+   *
+   * <p>The output includes the player who requested the tab completion, the partial message that triggered it,
+   * and the current list of suggestions (which may have been modified by plugins).</p>
+   *
+   * @return a human-readable string describing the tab complete event
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "TabCompleteEvent{"
         + "player=" + player
         + ", partialMessage='" + partialMessage + '\''

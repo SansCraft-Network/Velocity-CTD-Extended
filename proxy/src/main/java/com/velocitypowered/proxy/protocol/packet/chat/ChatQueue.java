@@ -149,8 +149,15 @@ public class ChatQueue implements AutoCloseable {
     }, smc.eventLoop());
   }
 
+  /**
+   * Closes this {@code ChatQueue}, preventing any further packet submissions.
+   *
+   * <p>This method sets an internal flag indicating that the queue is no longer active.
+   * Any future attempts to queue packets or tasks will result in an {@link IllegalStateException}.
+   * Pending tasks will continue to execute, but new ones will be rejected.</p>
+   */
   @Override
-  public final void close() {
+  public void close() {
     closed = true;
   }
 
@@ -184,7 +191,7 @@ public class ChatQueue implements AutoCloseable {
      * considers forwarding a {@link ChatAcknowledgementPacket}.
      *
      * <p>This threshold ensures that message acknowledgements are not flushed too early,
-     * preserving a consistent and efficient stream of acknowledgment updates.</p>
+     * preserving a consistent and efficient stream of acknowledgement updates.</p>
      */
     private static final int MINIMUM_DELAYED_ACK_COUNT = LastSeenMessages.WINDOW_SIZE;
 

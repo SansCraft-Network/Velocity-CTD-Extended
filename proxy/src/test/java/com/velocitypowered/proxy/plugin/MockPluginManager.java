@@ -34,23 +34,46 @@ public class MockPluginManager implements PluginManager {
    */
   public static final PluginManager INSTANCE = new MockPluginManager();
 
+  /**
+   * Returns an empty {@link Optional}, as this mock manager does not track plugin instances.
+   *
+   * @param instance the plugin instance
+   * @return an empty optional
+   */
   @Override
-  public final Optional<PluginContainer> fromInstance(final Object instance) {
+  public Optional<PluginContainer> fromInstance(final Object instance) {
     return Optional.empty();
   }
 
+  /**
+   * Returns an empty {@link Optional}, as this mock manager has no registered plugins.
+   *
+   * @param id the plugin ID
+   * @return an empty optional
+   */
   @Override
-  public final Optional<PluginContainer> getPlugin(final String id) {
+  public Optional<PluginContainer> getPlugin(final String id) {
     return Optional.empty();
   }
 
+  /**
+   * Returns an empty immutable collection of plugins.
+   *
+   * @return an empty plugin collection
+   */
   @Override
-  public final Collection<PluginContainer> getPlugins() {
+  public Collection<PluginContainer> getPlugins() {
     return ImmutableList.of();
   }
 
+  /**
+   * Always returns {@code false}, as this mock manager does not track plugin load state.
+   *
+   * @param id the plugin ID
+   * @return {@code false}
+   */
   @Override
-  public final boolean isLoaded(final String id) {
+  public boolean isLoaded(final String id) {
     return false;
   }
 

@@ -75,8 +75,18 @@ public class SystemChatPacket implements MinecraftPacket {
     return component;
   }
 
+  /**
+   * Decodes this system chat packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the chat component and type of message, which may be represented
+   * as a boolean or VarInt depending on the protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     component = ComponentHolder.read(buf, version);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       type = buf.readBoolean() ? ChatType.GAME_INFO : ChatType.SYSTEM;
@@ -85,8 +95,19 @@ public class SystemChatPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this system chat packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the chat component and message type using version-specific
+   * serialization rules (boolean or VarInt).</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @throws IllegalArgumentException if the chat type is not recognized
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     component.write(buf);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       switch (type) {
@@ -99,8 +120,16 @@ public class SystemChatPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this system chat packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates packet processing to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

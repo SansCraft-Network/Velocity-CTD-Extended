@@ -63,20 +63,39 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
     super(player, server);
   }
 
+  /**
+   * Returns the first applied resource pack for this player.
+   *
+   * <p>For legacy clients, only a single pack can be applied at a time.</p>
+   *
+   * @return the currently applied pack, or {@code null} if none
+   */
   @Override
   @Nullable
-  public final ResourcePackInfo getFirstAppliedPack() {
+  public ResourcePackInfo getFirstAppliedPack() {
     return appliedResourcePack;
   }
 
+  /**
+   * Returns the resource pack currently offered to the player and awaiting a response.
+   *
+   * @return the pending resource pack, or {@code null} if none
+   */
   @Override
   @Nullable
-  public final ResourcePackInfo getFirstPendingPack() {
+  public ResourcePackInfo getFirstPendingPack() {
     return pendingResourcePack;
   }
 
+  /**
+   * Returns a collection containing the applied resource pack.
+   *
+   * <p>Legacy clients only support a single applied pack at a time.</p>
+   *
+   * @return a singleton collection or an empty collection if none is applied
+   */
   @Override
-  public final @NotNull Collection<ResourcePackInfo> getAppliedResourcePacks() {
+  public @NotNull Collection<ResourcePackInfo> getAppliedResourcePacks() {
     if (appliedResourcePack == null) {
       return List.of();
     }
@@ -84,8 +103,15 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
     return List.of(appliedResourcePack);
   }
 
+  /**
+   * Returns a collection containing the resource pack currently pending.
+   *
+   * <p>Legacy clients only support one pending pack at a time.</p>
+   *
+   * @return a singleton collection or an empty collection if none is pending
+   */
   @Override
-  public final @NotNull Collection<ResourcePackInfo> getPendingResourcePacks() {
+  public @NotNull Collection<ResourcePackInfo> getPendingResourcePacks() {
     if (pendingResourcePack == null) {
       return List.of();
     }
@@ -93,19 +119,38 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
     return List.of(pendingResourcePack);
   }
 
+  /**
+   * Clears the applied resource pack state.
+   *
+   * <p>This is only valid for legacy clients when handling reapplication or forced resets.</p>
+   */
   @Override
-  public final void clearAppliedResourcePacks() {
+  public void clearAppliedResourcePacks() {
     // This is valid only for players with 1.20.2 versions
     this.appliedResourcePack = null;
   }
 
+  /**
+   * Throws {@link UnsupportedOperationException} because legacy clients do not support removing packs.
+   *
+   * @param id the UUID of the resource pack to remove
+   * @return never returns normally
+   * @throws UnsupportedOperationException always
+   */
   @Override
-  public final boolean remove(final @NotNull UUID id) throws UnsupportedOperationException {
+  public boolean remove(final @NotNull UUID id) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Cannot remove a ResourcePack from a legacy client");
   }
 
+  /**
+   * Adds a resource pack to the sending queue.
+   *
+   * <p>If the queue was previously empty, this immediately begins the process of offering the pack.</p>
+   *
+   * @param info the resource pack to queue
+   */
   @Override
-  public final void queueResourcePack(@NotNull final ResourcePackInfo info) {
+  public void queueResourcePack(@NotNull final ResourcePackInfo info) {
     outstandingResourcePacks.add(info);
     if (outstandingResourcePacks.size() == 1) {
       tickResourcePackQueue();
@@ -142,8 +187,17 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
     }
   }
 
+  /**
+   * Handles a resource pack response from the player and updates internal state accordingly.
+   *
+   * <p>This method fires the {@link PlayerResourcePackStatusEvent}, updates the applied/pending state,
+   * and determines whether to disconnect the player based on forced pack policy.</p>
+   *
+   * @param bundle the response bundle from the client
+   * @return {@code true} if the response was successfully processed
+   */
   @Override
-  public final boolean onResourcePackResponse(final @NotNull ResourcePackResponseBundle bundle) {
+  public boolean onResourcePackResponse(final @NotNull ResourcePackResponseBundle bundle) {
     final boolean peek = bundle.status().isIntermediate();
     final ResourcePackInfo queued = peek ? outstandingResourcePacks.peek() : outstandingResourcePacks.poll();
 
@@ -187,8 +241,14 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
     return handleResponseResult(queued, bundle);
   }
 
+  /**
+   * Checks whether the given resource pack hash matches the applied resource pack.
+   *
+   * @param hash the SHA-1 hash of the resource pack
+   * @return {@code true} if the applied pack matches the given hash
+   */
   @Override
-  public final boolean hasPackAppliedByHash(final byte[] hash) {
+  public boolean hasPackAppliedByHash(final byte[] hash) {
     if (hash == null) {
       return false;
     }

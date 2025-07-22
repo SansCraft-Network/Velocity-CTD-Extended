@@ -52,8 +52,18 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
     this.serverLinks = serverLinks;
   }
 
+  /**
+   * Decodes this server links packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads the list of server links, each consisting of an ID or display name
+   * and an associated URL, and populates the internal list.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     int linksCount = ProtocolUtils.readVarInt(buf);
 
     this.serverLinks = new ArrayList<>(linksCount);
@@ -62,8 +72,18 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this server links packet into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes each link in the internal list, serializing the ID or display name
+   * and URL for each entry.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, serverLinks.size());
 
     for (ServerLink serverLink : serverLinks) {
@@ -71,8 +91,17 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this server links packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling to {@code handler.handle(this)} to process or display the links
+   * on the client side.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

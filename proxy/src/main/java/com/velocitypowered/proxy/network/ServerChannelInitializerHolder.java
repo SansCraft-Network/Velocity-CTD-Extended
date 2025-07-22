@@ -40,8 +40,11 @@ public class ServerChannelInitializerHolder implements Supplier<ChannelInitializ
     this.initializer = initializer;
   }
 
+  /**
+   * The currently configured {@link ChannelInitializer} used to initialize incoming client channels.
+   */
   @Override
-  public final ChannelInitializer<Channel> get() {
+  public ChannelInitializer<Channel> get() {
     return this.initializer;
   }
 

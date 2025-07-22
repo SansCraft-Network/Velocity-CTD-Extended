@@ -111,8 +111,20 @@ public class LegacyPlayerListItemPacket implements MinecraftPacket {
     return items;
   }
 
+  /**
+   * Decodes the contents of this packet from the given {@link ByteBuf}.
+   *
+   * <p>This method is called during packet deserialization and populates the internal state
+   * of the packet based on the provided protocol version and direction.
+   * Subclasses overriding this method must ensure compatibility with legacy (pre-1.8)
+   * and modern protocols.</p>
+   *
+   * @param buf the buffer containing the raw packet data
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
       action = ProtocolUtils.readVarInt(buf);
       int length = ProtocolUtils.readVarInt(buf);
@@ -161,8 +173,19 @@ public class LegacyPlayerListItemPacket implements MinecraftPacket {
     return null;
   }
 
+  /**
+   * Encodes this packet's contents into the given {@link ByteBuf}.
+   *
+   * <p>This method serializes the packet data based on the current protocol version.
+   * Subclasses overriding this method should preserve compatibility with legacy
+   * and modern formats as needed.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
       ProtocolUtils.writeVarInt(buf, action);
       ProtocolUtils.writeVarInt(buf, items.size());
@@ -213,8 +236,17 @@ public class LegacyPlayerListItemPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this packet via the given {@link MinecraftSessionHandler}.
+   *
+   * <p>This method delegates handling logic to the provided session handler, which
+   * determines whether this packet is supported or should be handled generically.</p>
+   *
+   * @param handler the session handler that should process this packet
+   * @return {@code true} if the packet was successfully handled; {@code false} otherwise
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

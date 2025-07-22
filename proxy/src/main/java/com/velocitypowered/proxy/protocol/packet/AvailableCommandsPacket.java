@@ -162,8 +162,18 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     return rootNode;
   }
 
+  /**
+   * Decodes the available commands packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads and reconstructs the command node tree from the incoming buffer
+   * and initializes the {@code rootNode} reference.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     int commands = ProtocolUtils.readVarInt(buf);
     WireNode[] wireNodes = new WireNode[commands];
     for (int i = 0; i < commands; i++) {
@@ -195,8 +205,18 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     rootNode = (RootCommandNode<CommandSource>) wireNodes[rootIdx].built;
   }
 
+  /**
+   * Encodes the available commands packet into the provided {@link ByteBuf}.
+   *
+   * <p>This method serializes the root command tree into a flat node array, preserving
+   * redirect and child relationships for the target protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     // Assign all the children an index.
     Deque<CommandNode<CommandSource>> childrenQueue = new ArrayDeque<>(ImmutableList.of(rootNode));
     Object2IntMap<CommandNode<CommandSource>> idMappings = new Object2IntLinkedOpenCustomHashMap<>(
@@ -276,8 +296,17 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this available commands packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates the logic to {@code handler.handle(this)} to populate
+   * the command dispatcher with supported commands.</p>
+   *
+   * @param handler the session handler to process this packet
+   * @return {@code true} if handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -486,9 +515,18 @@ public class AvailableCommandsPacket implements MinecraftPacket {
       this.name = name;
     }
 
+    /**
+     * Provides command suggestions for the current context.
+     *
+     * <p>This implementation returns an empty set of suggestions via {@link SuggestionsBuilder}.</p>
+     *
+     * @param context the command execution context
+     * @param builder the suggestions builder to populate
+     * @return a {@link CompletableFuture} containing the final suggestions
+     */
     @Override
-    public final CompletableFuture<Suggestions> getSuggestions(final CommandContext<CommandSource> context,
-                                                               final SuggestionsBuilder builder) {
+    public CompletableFuture<Suggestions> getSuggestions(final CommandContext<CommandSource> context,
+                                                         final SuggestionsBuilder builder) {
       return builder.buildFuture();
     }
   }

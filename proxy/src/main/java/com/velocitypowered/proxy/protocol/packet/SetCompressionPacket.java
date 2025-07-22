@@ -72,24 +72,50 @@ public class SetCompressionPacket implements MinecraftPacket {
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return "SetCompression{"
         + "threshold=" + threshold
         + '}';
   }
 
+  /**
+   * Decodes this compression packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the compression threshold value encoded as a VarInt.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     this.threshold = ProtocolUtils.readVarInt(buf);
   }
 
+  /**
+   * Encodes this compression packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the compression threshold value as a VarInt.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     ProtocolUtils.writeVarInt(buf, threshold);
   }
 
+  /**
+   * Handles this compression packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to apply compression settings.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

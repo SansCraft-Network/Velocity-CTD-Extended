@@ -55,45 +55,92 @@ public class TitleTimesPacket extends GenericTitlePacket {
     setAction(ActionType.SET_TIMES);
   }
 
+  /**
+   * Encodes this {@code TitleTimesPacket} into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes the fade-in, stay, and fade-out durations (in ticks) to the buffer
+   * in the order expected by the Minecraft client.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version used for encoding
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     buf.writeInt(fadeIn);
     buf.writeInt(stay);
     buf.writeInt(fadeOut);
   }
 
+  /**
+   * Returns the fade-in duration in ticks.
+   *
+   * @return the number of ticks the title should take to fade in
+   */
   @Override
-  public final int getFadeIn() {
+  public int getFadeIn() {
     return fadeIn;
   }
 
+  /**
+   * Sets the fade-in duration in ticks.
+   *
+   * @param fadeIn the number of ticks to fade in the title
+   */
   @Override
-  public final void setFadeIn(final int fadeIn) {
+  public void setFadeIn(final int fadeIn) {
     this.fadeIn = fadeIn;
   }
 
+  /**
+   * Returns the duration in ticks that the title should remain fully visible.
+   *
+   * @return the stay time in ticks
+   */
   @Override
-  public final int getStay() {
+  public int getStay() {
     return stay;
   }
 
+  /**
+   * Sets the duration in ticks that the title should remain fully visible.
+   *
+   * @param stay the number of ticks the title should stay
+   */
   @Override
-  public final void setStay(final int stay) {
+  public void setStay(final int stay) {
     this.stay = stay;
   }
 
+  /**
+   * Returns the fade-out duration in ticks.
+   *
+   * @return the number of ticks the title should take to fade out
+   */
   @Override
-  public final int getFadeOut() {
+  public int getFadeOut() {
     return fadeOut;
   }
 
+  /**
+   * Sets the fade-out duration in ticks.
+   *
+   * @param fadeOut the number of ticks to fade out the title
+   */
   @Override
-  public final void setFadeOut(final int fadeOut) {
+  public void setFadeOut(final int fadeOut) {
     this.fadeOut = fadeOut;
   }
 
+  /**
+   * Returns a string representation of this {@code TitleTimesPacket}.
+   *
+   * <p>The output includes the fade-in, stay, and fade-out timing values.</p>
+   *
+   * @return a human-readable string describing the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "TitleTimesPacket{"
         + ", fadeIn=" + fadeIn
         + ", stay=" + stay
@@ -101,8 +148,16 @@ public class TitleTimesPacket extends GenericTitlePacket {
         + '}';
   }
 
+  /**
+   * Handles this {@code TitleTimesPacket} by delegating it to the session handler.
+   *
+   * <p>This invokes {@link MinecraftSessionHandler#handle(TitleTimesPacket)}.</p>
+   *
+   * @param handler the session handler that should process the packet
+   * @return {@code true} if the packet was successfully handled
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

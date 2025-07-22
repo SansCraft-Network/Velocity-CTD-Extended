@@ -102,6 +102,7 @@ public final class ArgumentPropertyRegistry {
    * Deserializes the {@link ArgumentType}.
    *
    * @param buf the buffer to deserialize
+   * @param protocolVersion the protocol version used to resolve serializer compatibility
    * @return the deserialized {@link ArgumentType}
    */
   public static ArgumentType<?> deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
@@ -125,12 +126,13 @@ public final class ArgumentPropertyRegistry {
    * Serializes the {@code type} into the provided {@code buf}.
    *
    * @param buf  the buffer to serialize into
+   * @param protocolVersion the protocol version used for compatibility
    * @param type the type to serialize
    */
   public static void serialize(final ByteBuf buf, final ArgumentType<?> type,
                                final ProtocolVersion protocolVersion) {
     if (type instanceof PassthroughProperty) {
-      final PassthroughProperty property = (PassthroughProperty) type;
+      PassthroughProperty property = (PassthroughProperty) type;
       writeIdentifier(buf, property.getIdentifier(), protocolVersion);
       if (property.getResult() != null) {
         property.getSerializer().serialize(property.getResult(), buf, protocolVersion);

@@ -157,8 +157,16 @@ public class PlayerResourcePackStatusEvent {
     this.overwriteKick = overwriteKick;
   }
 
+  /**
+   * Returns a string representation of this {@code PlayerResourcePackStatusEvent}.
+   *
+   * <p>The output includes the player, current resource pack status, and the associated
+   * {@link ResourcePackInfo} (if available).</p>
+   *
+   * @return a human-readable string describing the event state
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "PlayerResourcePackStatusEvent{"
         + "player=" + player
         + ", status=" + status

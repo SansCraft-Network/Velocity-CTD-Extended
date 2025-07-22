@@ -58,8 +58,16 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
     this.server = server;
   }
 
+  /**
+   * Returns the class of command packets this handler is responsible for.
+   *
+   * <p>This links {@code SessionCommandHandler} to {@link SessionPlayerCommandPacket}
+   * in the command pipeline system.</p>
+   *
+   * @return the {@code SessionPlayerCommandPacket} class
+   */
   @Override
-  public final Class<SessionPlayerCommandPacket> packetClass() {
+  public Class<SessionPlayerCommandPacket> packetClass() {
     return SessionPlayerCommandPacket.class;
   }
 
@@ -122,8 +130,24 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
         .toServer();
   }
 
+  /**
+   * Handles the execution of a session-based command sent by the player.
+   *
+   * <p>This method performs the following logic:</p>
+   * <ul>
+   *   <li>Fires a {@link CommandExecuteEvent} to allow plugin inspection or modification.</li>
+   *   <li>If denied and the command was signed, the player is disconnected due to
+   *       an illegal protocol state.</li>
+   *   <li>If unchanged or forwarded, the command is sent to the backend server.</li>
+   *   <li>If modified and allowed, it is rebuilt using the session-aware.</li>
+   *   <li>Unconsumed or no-op commands may yield a {@link ChatAcknowledgementPacket}
+   *       if {@code lastSeenMessages} are present and offset is non-zero.</li>
+   * </ul>
+   *
+   * @param packet the session command packet sent by the player
+   */
   @Override
-  public final void handlePlayerCommandInternal(final SessionPlayerCommandPacket packet) {
+  public void handlePlayerCommandInternal(final SessionPlayerCommandPacket packet) {
     queueCommandResult(this.server, this.player, (event, newLastSeenMessages) -> {
       SessionPlayerCommandPacket fixedPacket = packet.withLastSeenMessages(newLastSeenMessages);
 

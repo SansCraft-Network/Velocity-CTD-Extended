@@ -105,28 +105,54 @@ public class VelocityTabListEntry implements TabListEntry {
     this.showHat = showHat;
   }
 
+  /**
+   * Returns the {@link ChatSession} associated with this tab list entry.
+   *
+   * @return the chat session, or {@code null} if none is present
+   */
   @Override
-  public final @Nullable ChatSession getChatSession() {
+  public @Nullable ChatSession getChatSession() {
     return this.session;
   }
 
+  /**
+   * Returns the {@link TabList} that this entry belongs to.
+   *
+   * @return the owning tab list
+   */
   @Override
-  public final TabList getTabList() {
+  public TabList getTabList() {
     return this.tabList;
   }
 
+  /**
+   * Returns the {@link GameProfile} associated with this entry.
+   *
+   * @return the profile identifying this player
+   */
   @Override
-  public final GameProfile getProfile() {
+  public GameProfile getProfile() {
     return this.profile;
   }
 
+  /**
+   * Returns the display name of this entry, if set.
+   *
+   * @return an {@link Optional} containing the display name, or empty if not set
+   */
   @Override
-  public final Optional<Component> getDisplayNameComponent() {
+  public Optional<Component> getDisplayNameComponent() {
     return Optional.ofNullable(displayName);
   }
 
+  /**
+   * Sets the display name for this tab entry and sends an update to the client.
+   *
+   * @param displayName the new display name to use, or {@code null} to clear
+   * @return this tab list entry for method chaining
+   */
   @Override
-  public final TabListEntry setDisplayName(@Nullable final Component displayName) {
+  public TabListEntry setDisplayName(@Nullable final Component displayName) {
     this.displayName = displayName;
     UpsertPlayerInfoPacket.Entry upsertEntry = this.tabList.createRawEntry(this);
     upsertEntry.setDisplayName(displayName == null ? null : new ComponentHolder(this.tabList.getPlayer().getProtocolVersion(), displayName));
@@ -145,13 +171,24 @@ public class VelocityTabListEntry implements TabListEntry {
     this.displayName = displayName;
   }
 
+  /**
+   * Returns the latency (ping) value for this player.
+   *
+   * @return the latency in milliseconds
+   */
   @Override
-  public final int getLatency() {
+  public int getLatency() {
     return this.latency;
   }
 
+  /**
+   * Updates the latency and sends an update packet to the client.
+   *
+   * @param latency the new latency value
+   * @return this tab list entry for method chaining
+   */
   @Override
-  public final TabListEntry setLatency(final int latency) {
+  public TabListEntry setLatency(final int latency) {
     this.latency = latency;
     UpsertPlayerInfoPacket.Entry upsertEntry = this.tabList.createRawEntry(this);
     upsertEntry.setLatency(latency);
@@ -168,13 +205,24 @@ public class VelocityTabListEntry implements TabListEntry {
     this.latency = latency;
   }
 
+  /**
+   * Returns the game mode of the player (e.g., 0 = survival).
+   *
+   * @return the game mode value
+   */
   @Override
-  public final int getGameMode() {
+  public int getGameMode() {
     return this.gameMode;
   }
 
+  /**
+   * Sets the player's game mode and updates the client.
+   *
+   * @param gameMode the new game mode value
+   * @return this tab list entry for method chaining
+   */
   @Override
-  public final TabListEntry setGameMode(final int gameMode) {
+  public TabListEntry setGameMode(final int gameMode) {
     this.gameMode = gameMode;
     UpsertPlayerInfoPacket.Entry upsertEntry = this.tabList.createRawEntry(this);
     upsertEntry.setGameMode(gameMode);
@@ -200,13 +248,24 @@ public class VelocityTabListEntry implements TabListEntry {
     this.session = session;
   }
 
+  /**
+   * Returns whether this player is currently listed in the tab list.
+   *
+   * @return {@code true} if listed, {@code false} otherwise
+   */
   @Override
-  public final boolean isListed() {
+  public boolean isListed() {
     return listed;
   }
 
+  /**
+   * Updates the listed status and sends an update to the client.
+   *
+   * @param listed whether the player should be listed
+   * @return this tab list entry for method chaining
+   */
   @Override
-  public final VelocityTabListEntry setListed(final boolean listed) {
+  public VelocityTabListEntry setListed(final boolean listed) {
     this.listed = listed;
     UpsertPlayerInfoPacket.Entry upsertEntry = this.tabList.createRawEntry(this);
     upsertEntry.setListed(listed);
@@ -223,13 +282,24 @@ public class VelocityTabListEntry implements TabListEntry {
     this.listed = listed;
   }
 
+  /**
+   * Returns the list order used to sort this entry in the tab list.
+   *
+   * @return the numeric sort order
+   */
   @Override
-  public final int getListOrder() {
+  public int getListOrder() {
     return listOrder;
   }
 
+  /**
+   * Sets the list order and sends an update to the client if supported by the protocol version.
+   *
+   * @param listOrder the new list order value
+   * @return this tab list entry for method chaining
+   */
   @Override
-  public final VelocityTabListEntry setListOrder(final int listOrder) {
+  public VelocityTabListEntry setListOrder(final int listOrder) {
     this.listOrder = listOrder;
     if (tabList.getPlayer().getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
       UpsertPlayerInfoPacket.Entry upsertEntry = this.tabList.createRawEntry(this);
@@ -249,13 +319,24 @@ public class VelocityTabListEntry implements TabListEntry {
     this.listOrder = listOrder;
   }
 
+  /**
+   * Returns whether the player's hat layer is shown.
+   *
+   * @return {@code true} if hat is visible, {@code false} otherwise
+   */
   @Override
-  public final boolean isShowHat() {
+  public boolean isShowHat() {
     return showHat;
   }
 
+  /**
+   * Sets whether the hat layer should be shown and sends an update if supported.
+   *
+   * @param showHat {@code true} to show hat layer, {@code false} to hide
+   * @return this tab list entry for method chaining
+   */
   @Override
-  public final VelocityTabListEntry setShowHat(final boolean showHat) {
+  public VelocityTabListEntry setShowHat(final boolean showHat) {
     this.showHat = showHat;
     if (tabList.getPlayer().getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21_4)) {
       UpsertPlayerInfoPacket.Entry upsertEntry = this.tabList.createRawEntry(this);

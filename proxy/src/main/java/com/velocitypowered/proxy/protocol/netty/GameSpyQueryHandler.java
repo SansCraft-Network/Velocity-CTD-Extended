@@ -154,8 +154,24 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
         .build();
   }
 
+  /**
+   * Handles an incoming GS4 (GameSpy4) query {@link DatagramPacket}.
+   *
+   * <p>This method distinguishes between handshake (0x09) and stat (0x00) requests,
+   * validates the packet header and session, and constructs appropriate query responses
+   * using the Velocity server configuration and plugins.</p>
+   *
+   * <ul>
+   *   <li>If the packet is a handshake, a challenge token is generated and sent back to the client.</li>
+   *   <li>If the packet is a stat request, the challenge token is verified and a query response is built.</li>
+   *   <li>If the packet type is unknown or invalid, the request is ignored silently.</li>
+   * </ul>
+   *
+   * @param ctx the Netty channel context
+   * @param msg the incoming datagram query packet
+   */
   @Override
-  protected final void channelRead0(final ChannelHandlerContext ctx, final DatagramPacket msg) {
+  protected void channelRead0(final ChannelHandlerContext ctx, final DatagramPacket msg) {
     ByteBuf queryMessage = msg.content();
     InetAddress senderAddress = msg.sender().getAddress();
 

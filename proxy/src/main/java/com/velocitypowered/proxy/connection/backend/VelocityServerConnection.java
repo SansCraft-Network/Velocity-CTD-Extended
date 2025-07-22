@@ -165,7 +165,12 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
     return result;
   }
 
-  final String getPlayerRemoteAddressAsString() {
+  /**
+   * Gets the remote IP address of the player in string format, stripping any IPv6 scope suffix.
+   *
+   * @return the player's IP address as a string
+   */
+  String getPlayerRemoteAddressAsString() {
     final String addr = proxyPlayer.getRemoteAddress().getAddress().getHostAddress();
     int ipv6ScopeIdx = addr.indexOf('%');
     if (ipv6ScopeIdx == -1) {
@@ -260,23 +265,43 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
     return connection;
   }
 
+  /**
+   * Gets the {@link RegisteredServer} this connection is targeting.
+   *
+   * @return the registered server this connection points to
+   */
   @Override
-  public final VelocityRegisteredServer getServer() {
+  public VelocityRegisteredServer getServer() {
     return registeredServer;
   }
 
+  /**
+   * Gets the previously connected server for the player, if any.
+   *
+   * @return an {@link Optional} containing the previous server or empty if not applicable
+   */
   @Override
-  public final Optional<RegisteredServer> getPreviousServer() {
+  public Optional<RegisteredServer> getPreviousServer() {
     return Optional.ofNullable(this.previousServer);
   }
 
+  /**
+   * Gets the {@link ServerInfo} associated with the target server.
+   *
+   * @return the {@link ServerInfo} of the destination server
+   */
   @Override
-  public final ServerInfo getServerInfo() {
+  public ServerInfo getServerInfo() {
     return registeredServer.getServerInfo();
   }
 
+  /**
+   * Gets the {@link ConnectedPlayer} associated with this connection.
+   *
+   * @return the player associated with this server connection
+   */
   @Override
-  public final ConnectedPlayer getPlayer() {
+  public ConnectedPlayer getPlayer() {
     return proxyPlayer;
   }
 
@@ -291,19 +316,40 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
     }
   }
 
+  /**
+   * Returns a debug-friendly string representation of this server connection.
+   *
+   * @return a string describing the connection (e.g. "[server connection] Player -> Server")
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "[server connection] " + proxyPlayer.getGameProfile().getName() + " -> "
         + registeredServer.getServerInfo().getName();
   }
 
+  /**
+   * Sends a plugin message to the server using a raw byte array payload.
+   *
+   * @param identifier the plugin channel to send the message on
+   * @param data       the raw message payload
+   * @return {@code true} if the message was sent, {@code false} if the buffer was empty
+   */
   @Override
-  public final boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final byte @NotNull [] data) {
+  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final byte @NotNull [] data) {
     return sendPluginMessage(identifier, Unpooled.wrappedBuffer(data));
   }
 
+  /**
+   * Sends a plugin message to the server using a {@link PluginMessageEncoder} to encode the payload.
+   *
+   * <p>If the resulting buffer is empty, the message will not be sent.</p>
+   *
+   * @param identifier   the plugin channel to send the message on
+   * @param dataEncoder  the encoder used to write the message payload
+   * @return {@code true} if the message was sent, {@code false} if the encoded payload was empty
+   */
   @Override
-  public final boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
+  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
     requireNonNull(identifier);
     requireNonNull(dataEncoder);
     final ByteBuf buf = Unpooled.buffer();
@@ -351,7 +397,12 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
     }
   }
 
-  final boolean isGracefulDisconnect() {
+  /**
+   * Returns whether the connection to the backend server was closed gracefully.
+   *
+   * @return {@code true} if the disconnect was cleanly handled, {@code false} otherwise
+   */
+  boolean isGracefulDisconnect() {
     return gracefulDisconnect;
   }
 

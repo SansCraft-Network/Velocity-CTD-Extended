@@ -157,8 +157,19 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
     this.salt = 0L;
   }
 
+  /**
+   * Decodes this keyed player command packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the command string, timestamp, salt, argument map with signatures,
+   * preview flag, and optionally previous message acknowledgments depending on protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   * @throws QuietDecoderException if the argument list or previous messages exceed protocol limits
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
     command = ProtocolUtils.readString(buf, 256);
     timestamp = Instant.ofEpochMilli(buf.readLong());
@@ -209,8 +220,19 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this keyed player command packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the command string, timestamp, salt, argument map with signatures,
+   * and optionally previous message acknowledgments depending on protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   * @throws QuietDecoderException if the argument list exceeds protocol limits
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, command);
     buf.writeLong(timestamp.toEpochMilli());
@@ -248,8 +270,15 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Returns a string representation of this keyed player command packet.
+   *
+   * <p>This includes command name, timestamp, cryptographic flags, and argument signatures.</p>
+   *
+   * @return a string describing this packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "PlayerCommand{"
         + "unsigned=" + unsigned
         + ", command='" + command + '\''
@@ -261,8 +290,17 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Handles this keyed player command packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling logic to {@code handler.handle(this)} to execute or verify
+   * the command and its associated cryptographic data.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

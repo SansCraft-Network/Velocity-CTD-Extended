@@ -75,8 +75,14 @@ public class FakePluginManager implements PluginManager {
   private final ExecutorService service = Executors.newCachedThreadPool(
       new ThreadFactoryBuilder().setNameFormat("Test Async Thread").setDaemon(true).build());
 
+  /**
+   * Returns a {@link PluginContainer} based on a known test plugin instance.
+   *
+   * @param instance the plugin instance
+   * @return the associated plugin container, or {@code Optional.empty()} if unknown
+   */
   @Override
-  public final @NonNull Optional<PluginContainer> fromInstance(@NonNull final Object instance) {
+  public @NonNull Optional<PluginContainer> fromInstance(@NonNull final Object instance) {
     if (instance == PLUGIN_A) {
       return Optional.of(containerA);
     } else if (instance == PLUGIN_B) {
@@ -88,8 +94,14 @@ public class FakePluginManager implements PluginManager {
     }
   }
 
+  /**
+   * Returns a {@link PluginContainer} based on a known test plugin ID.
+   *
+   * @param id the plugin ID
+   * @return the plugin container if registered, or {@code Optional.empty()}
+   */
   @Override
-  public final @NonNull Optional<PluginContainer> getPlugin(@NonNull final String id) {
+  public @NonNull Optional<PluginContainer> getPlugin(@NonNull final String id) {
     return switch (id) {
       case "a" -> Optional.of(containerA);
       case "b" -> Optional.of(containerB);
@@ -98,18 +110,42 @@ public class FakePluginManager implements PluginManager {
     };
   }
 
+  /**
+   * Returns all registered plugin containers including {@code velocity}, {@code a}, and {@code b}.
+   *
+   * @return an immutable list of known plugin containers
+   */
   @Override
-  public final @NonNull Collection<PluginContainer> getPlugins() {
+  public @NonNull Collection<PluginContainer> getPlugins() {
     return ImmutableList.of(containerVelocity, containerA, containerB);
   }
 
+  /**
+   * Determines whether the specified plugin is loaded.
+   *
+   * <p>Only test plugins with the IDs {@code "a"} or {@code "b"} are considered loaded
+   * in this simulated environment.</p>
+   *
+   * @param id the plugin ID to check
+   * @return {@code true} if the plugin is "a" or "b", otherwise {@code false}
+   */
   @Override
-  public final boolean isLoaded(@NonNull final String id) {
+  public boolean isLoaded(@NonNull final String id) {
     return id.equals("a") || id.equals("b");
   }
 
+  /**
+   * Unsupported operation in the mock plugin manager.
+   *
+   * <p>This method is not implemented in test environments and always throws
+   * {@link UnsupportedOperationException} if called.</p>
+   *
+   * @param plugin the plugin instance
+   * @param path the path to add to the plugin's classpath
+   * @throws UnsupportedOperationException always
+   */
   @Override
-  public final void addToClasspath(@NonNull final Object plugin, @NonNull final Path path) {
+  public void addToClasspath(@NonNull final Object plugin, @NonNull final Path path) {
     throw new UnsupportedOperationException();
   }
 

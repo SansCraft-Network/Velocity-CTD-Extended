@@ -94,8 +94,17 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
     this.minimumVersion = server.getConfiguration().getMinimumVersion();
   }
 
+  /**
+   * Handles a {@link LegacyPingPacket} sent by clients using the legacy ping protocol.
+   *
+   * <p>This method initializes a {@link StatusSessionHandler} for legacy connections and
+   * processes the ping accordingly.</p>
+   *
+   * @param packet the legacy ping packet
+   * @return {@code true} always, since the packet is fully handled
+   */
   @Override
-  public final boolean handle(final LegacyPingPacket packet) {
+  public boolean handle(final LegacyPingPacket packet) {
     connection.setProtocolVersion(ProtocolVersion.LEGACY);
     final StatusSessionHandler handler = new StatusSessionHandler(server, new LegacyInboundConnection(connection, packet));
     connection.setActiveSessionHandler(StateRegistry.STATUS, handler);
@@ -103,8 +112,16 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link LegacyHandshakePacket} sent by clients using extremely old protocol versions.
+   *
+   * <p>This method immediately disconnects the client with an appropriate message.</p>
+   *
+   * @param packet the legacy handshake packet
+   * @return {@code true} always, since the packet is handled by closing the connection
+   */
   @Override
-  public final boolean handle(final LegacyHandshakePacket packet) {
+  public boolean handle(final LegacyHandshakePacket packet) {
     connection.closeWith(LegacyDisconnect.from(Component.text(
         "Your client is extremely old. Please update to a newer version of Minecraft.",
         NamedTextColor.RED)
@@ -113,8 +130,17 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link HandshakePacket} sent by a connecting client.
+   *
+   * <p>This method determines the connection intent and transitions to the appropriate
+   * session handler (status or login).</p>
+   *
+   * @param handshake the handshake packet from the client
+   * @return {@code true} always, since the handshake intent is always processed
+   */
   @Override
-  public final boolean handle(final HandshakePacket handshake) {
+  public boolean handle(final HandshakePacket handshake) {
     final StateRegistry nextState = getStateForProtocol(handshake.getNextStatus());
     if (nextState == null) {
       LOGGER.error("{} provided invalid protocol {}", this, handshake.getNextStatus());
@@ -238,20 +264,41 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
     return cleaned;
   }
 
+  /**
+   * Handles an unrecognized or invalid packet.
+   *
+   * <p>This method closes the connection as a safety measure.</p>
+   *
+   * @param packet the unknown Minecraft packet
+   */
   @Override
-  public final void handleGeneric(final MinecraftPacket packet) {
+  public void handleGeneric(final MinecraftPacket packet) {
     // Unknown packet received. Better to close the connection.
     connection.close(true);
   }
 
+  /**
+   * Handles an unrecognized raw byte buffer during packet decoding.
+   *
+   * <p>This method closes the connection to prevent further processing.</p>
+   *
+   * @param buf the unknown buffer contents
+   */
   @Override
-  public final void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(final ByteBuf buf) {
     // Unknown packet received. Better to close the connection.
     connection.close(true);
   }
 
+  /**
+   * Returns a string representation of this session handler for logging purposes.
+   *
+   * <p>This includes the remote IP address if player address logging is enabled.</p>
+   *
+   * @return a formatted string representing the connection
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     final boolean isPlayerAddressLoggingEnabled = connection.server.getConfiguration().isPlayerAddressLoggingEnabled();
     final String playerIp = isPlayerAddressLoggingEnabled ? this.connection.getRemoteAddress().toString() : "<ip address withheld>";
     return "[initial connection] " + playerIp;

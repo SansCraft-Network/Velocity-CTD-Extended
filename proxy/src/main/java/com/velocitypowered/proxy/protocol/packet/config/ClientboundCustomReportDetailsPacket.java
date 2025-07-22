@@ -51,8 +51,18 @@ public class ClientboundCustomReportDetailsPacket implements MinecraftPacket {
     this.details = details;
   }
 
+  /**
+   * Decodes this custom report details packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the size of the map followed by a series of key-value string pairs
+   * representing report metadata.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
     int detailsCount = ProtocolUtils.readVarInt(buf);
 
     this.details = new HashMap<>(detailsCount);
@@ -61,8 +71,18 @@ public class ClientboundCustomReportDetailsPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this custom report details packet into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the size of the map followed by all key-value string pairs
+   * contained in the report details.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, details.size());
 
     details.forEach((key, detail) -> {
@@ -71,8 +91,17 @@ public class ClientboundCustomReportDetailsPacket implements MinecraftPacket {
     });
   }
 
+  /**
+   * Handles this custom report details packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to make report metadata
+   * available to the server or plugins.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

@@ -131,8 +131,14 @@ public class RegistrationTest {
     return tests.stream();
   }
 
+  /**
+   * Generates dynamic test cases for single registration followed by unregistration,
+   * ensuring listeners are invoked once and then removed.
+   *
+   * @return a stream of dynamic tests
+   */
   @TestFactory
-  final Stream<DynamicNode> simpleRegisterAndUnregister() {
+  Stream<DynamicNode> simpleRegisterAndUnregister() {
     return composeTests("simpleRegisterAndUnregister", (annotated, generator) -> {
       if (annotated) {
         eventManager.register(PLUGIN_A, new AnnotatedListener());
@@ -147,8 +153,13 @@ public class RegistrationTest {
     });
   }
 
+  /**
+   * Verifies that registering the same listener twice results in double invocation.
+   *
+   * @return a stream of dynamic tests
+   */
   @TestFactory
-  final Stream<DynamicNode> doubleRegisterListener() {
+  Stream<DynamicNode> doubleRegisterListener() {
     return composeTests("doubleRegisterListener", (annotated, generator) -> {
       if (annotated) {
         Object annotatedListener = new AnnotatedListener();
@@ -164,8 +175,14 @@ public class RegistrationTest {
     });
   }
 
+  /**
+   * Verifies that registering the same listener to two different plugins results
+   * in both firing independently.
+   *
+   * @return a stream of dynamic tests
+   */
   @TestFactory
-  final Stream<DynamicNode> doubleRegisterListenerDifferentPlugins() {
+  Stream<DynamicNode> doubleRegisterListenerDifferentPlugins() {
     return composeTests("doubleRegisterListenerDifferentPlugins", (annotated, generator) -> {
       if (annotated) {
         Object annotatedListener = new AnnotatedListener();
@@ -181,8 +198,14 @@ public class RegistrationTest {
     });
   }
 
+  /**
+   * Verifies that a double-registered listener can be unregistered fully with
+   * a single call to {@code unregisterListener()}.
+   *
+   * @return a stream of dynamic tests
+   */
   @TestFactory
-  final Stream<DynamicNode> doubleRegisterListenerThenUnregister() {
+  Stream<DynamicNode> doubleRegisterListenerThenUnregister() {
     return composeTests("doubleRegisterListenerThenUnregister", (annotated, generator) -> {
       if (annotated) {
         Object annotatedListener = new AnnotatedListener();
@@ -200,8 +223,13 @@ public class RegistrationTest {
     });
   }
 
+  /**
+   * Ensures that calling {@code unregisterListener()} twice does not fail or throw.
+   *
+   * @return a stream of dynamic tests
+   */
   @TestFactory
-  final Stream<DynamicNode> doubleUnregisterListener() {
+  Stream<DynamicNode> doubleUnregisterListener() {
     return composeTests("doubleUnregisterListener", (annotated, generator) -> {
       if (annotated) {
         Object annotatedListener = new AnnotatedListener();

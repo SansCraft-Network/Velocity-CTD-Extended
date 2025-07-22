@@ -40,8 +40,13 @@ public class BackendChannelInitializerHolder implements Supplier<ChannelInitiali
     this.initializer = initializer;
   }
 
+  /**
+   * Returns the currently assigned {@link ChannelInitializer} for backend connections.
+   *
+   * @return the channel initializer
+   */
   @Override
-  public final ChannelInitializer<Channel> get() {
+  public ChannelInitializer<Channel> get() {
     return this.initializer;
   }
 

@@ -34,26 +34,60 @@ public class PingIdentifyPacket implements MinecraftPacket {
    */
   private int id;
 
+  /**
+   * Returns a string representation of this ping identify packet.
+   *
+   * <p>This includes the ping identifier value.</p>
+   *
+   * @return a string describing the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "Ping{"
         + "proxyId="
         + id
         + '}';
   }
 
+  /**
+   * Decodes this ping identify packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the integer identifier used to correlate the ping response.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     id = buf.readInt();
   }
 
+  /**
+   * Encodes this ping identify packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the integer identifier so it can be echoed by the recipient.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     buf.writeInt(id);
   }
 
+  /**
+   * Handles this ping identify packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to match or respond
+   * to the ping identifier.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

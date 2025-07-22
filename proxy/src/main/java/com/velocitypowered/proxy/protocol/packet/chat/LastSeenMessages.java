@@ -138,8 +138,16 @@ public class LastSeenMessages {
     return new LastSeenMessages(this.offset + offset, acknowledged, checksum);
   }
 
+  /**
+   * Returns a string representation of this {@code LastSeenMessages} instance.
+   *
+   * <p>The output includes the current offset, acknowledged messages {@link BitSet},
+   * and checksum value used for integrity verification in newer protocol versions.</p>
+   *
+   * @return a human-readable string describing this instance
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "LastSeenMessages{"
         + "offset=" + offset
         + ", acknowledged=" + acknowledged

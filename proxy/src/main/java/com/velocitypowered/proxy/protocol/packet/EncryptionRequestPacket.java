@@ -91,15 +91,26 @@ public class EncryptionRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public final String toString() {
+  public  String toString() {
     return "EncryptionRequest{"
         + "publicKey=" + Arrays.toString(publicKey)
         + ", verifyToken=" + Arrays.toString(verifyToken)
         + '}';
   }
 
+  /**
+   * Decodes this encryption request packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the server ID, public key, and verification token using
+   * protocol-specific formats. For Minecraft 1.20.5+, it also reads the
+   * {@code shouldAuthenticate} flag.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     this.serverId = ProtocolUtils.readString(buf, 20);
 
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -114,8 +125,19 @@ public class EncryptionRequestPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this encryption request packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the server ID, public key, and verification token using
+   * protocol-specific formats. For Minecraft 1.20.5+, it also writes the
+   * {@code shouldAuthenticate} flag.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     ProtocolUtils.writeString(buf, this.serverId);
 
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -130,8 +152,17 @@ public class EncryptionRequestPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this encryption request packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to begin the
+   * encryption handshake with the client.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

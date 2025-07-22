@@ -50,25 +50,59 @@ public class ChatAcknowledgementPacket implements MinecraftPacket {
   public ChatAcknowledgementPacket() {
   }
 
+  /**
+   * Decodes this chat acknowledgement packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the offset of the last message acknowledged by the client.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                           final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                     final ProtocolVersion protocolVersion) {
     offset = ProtocolUtils.readVarInt(buf);
   }
 
+  /**
+   * Encodes this chat acknowledgement packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the offset indicating the last chat message acknowledged by the client.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                           final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                     final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, offset);
   }
 
+  /**
+   * Handles this chat acknowledgement packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to track client-side
+   * message acknowledgment state.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
+  /**
+   * Returns a string representation of this chat acknowledgement packet.
+   *
+   * <p>This includes the acknowledged message offset value.</p>
+   *
+   * @return a string describing the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "ChatAcknowledgement{"
         + "offset=" + offset
         + '}';

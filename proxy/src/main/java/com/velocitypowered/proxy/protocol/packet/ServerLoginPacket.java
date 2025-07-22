@@ -134,8 +134,15 @@ public class ServerLoginPacket implements MinecraftPacket {
     return holderUuid;
   }
 
+  /**
+   * Returns a string representation of this server login packet.
+   *
+   * <p>This includes the username, optional cryptographic key, and key holder UUID.</p>
+   *
+   * @return a string describing this packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "ServerLogin{"
         + "username='" + username + '\''
         + "playerKey='" + playerKey + '\''
@@ -143,8 +150,18 @@ public class ServerLoginPacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes the server login packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the player's username and optionally the cryptographic key and UUID
+   * of the key-holder, depending on the protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
     username = ProtocolUtils.readString(buf, 16);
     if (username.isEmpty()) {
       throw EMPTY_USERNAME;
@@ -176,8 +193,18 @@ public class ServerLoginPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this server login packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the player's username and any cryptographic key or holder UUID,
+   * following protocol version-specific rules.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (username == null) {
       throw new IllegalStateException("No username found!");
     }
@@ -213,8 +240,19 @@ public class ServerLoginPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Calculates the expected maximum length (in bytes) of this packet.
+   *
+   * <p>This accounts for all fields including cryptographic key data and optional
+   * UUID fields depending on protocol version.</p>
+   *
+   * @param buf the buffer for context
+   * @param direction the packet direction
+   * @param version the protocol version
+   * @return the upper-bound byte size of the encoded packet
+   */
   @Override
-  public final int expectedMaxLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public int expectedMaxLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
     // Accommodate the rare (but likely malicious) use of UTF-8 usernames, since it is technically
     // legal on the protocol level.
     int base = 1 + (16 * 3);
@@ -240,8 +278,16 @@ public class ServerLoginPacket implements MinecraftPacket {
     return base;
   }
 
+  /**
+   * Handles this server login packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates the packet processing to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

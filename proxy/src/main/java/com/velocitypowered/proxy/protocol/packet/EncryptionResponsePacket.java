@@ -101,16 +101,33 @@ public class EncryptionResponsePacket implements MinecraftPacket {
     return salt;
   }
 
+  /**
+   * Returns a string representation of this encryption response packet.
+   *
+   * <p>This includes the contents of the shared secret and verify token arrays.</p>
+   *
+   * @return a string describing this packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "EncryptionResponse{"
         + "sharedSecret=" + Arrays.toString(sharedSecret)
         + ", verifyToken=" + Arrays.toString(verifyToken)
         + '}';
   }
 
+  /**
+   * Decodes this encryption response packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the encrypted shared secret, an optional salt (for Minecraft 1.19–1.19.2),
+   * and the encrypted verify token using version-dependent encoding logic.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
       this.sharedSecret = ProtocolUtils.readByteArray(buf, 128);
 
@@ -128,8 +145,18 @@ public class EncryptionResponsePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this encryption response packet into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the encrypted shared secret, the optional salt (1.19–1.19.2),
+   * and the encrypted verify token depending on protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
       ProtocolUtils.writeByteArray(buf, sharedSecret);
       if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19) && version.lessThan(ProtocolVersion.MINECRAFT_1_19_3)) {
@@ -148,13 +175,33 @@ public class EncryptionResponsePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this encryption response packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates to {@code handler.handle(this)} to verify the encrypted data
+   * and complete the login encryption handshake.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
+  /**
+   * Returns the expected maximum length (in bytes) of this encryption response packet.
+   *
+   * <p>This includes the shared secret, verify token, and optional salt and marker
+   * depending on the protocol version.</p>
+   *
+   * @param buf the input buffer
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @return the maximum length in bytes
+   */
   @Override
-  public final int expectedMaxLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public int expectedMaxLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
     // It turns out these come out to the same length, whether we're talking >=1.8 or not.
     // The length prefix always winds up being 2 bytes.
     int base = 256 + 2 + 2;
@@ -170,8 +217,18 @@ public class EncryptionResponsePacket implements MinecraftPacket {
     return base;
   }
 
+  /**
+   * Returns the expected minimum length (in bytes) of this encryption response packet.
+   *
+   * <p>This subtracts the salt and extra token length in versions where they are optional.</p>
+   *
+   * @param buf the input buffer
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @return the minimum length in bytes
+   */
   @Override
-  public final int expectedMinLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public int expectedMinLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
     int base = expectedMaxLength(buf, direction, version);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19)) {
       // These are "optional"

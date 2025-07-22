@@ -84,6 +84,13 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
     this.channel = channel;
   }
 
+  /**
+   * Returns a string representation of this plugin message packet for debugging purposes.
+   *
+   * <p>This includes the channel name and a reference to the underlying byte buffer data.</p>
+   *
+   * @return a string representation of the plugin message
+   */
   @Override
   public String toString() {
     return "PluginMessage{"
@@ -92,8 +99,18 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
         + '}';
   }
 
+  /**
+   * Decodes this plugin message packet from the given {@link ByteBuf}.
+   *
+   * <p>This method reads the channel string and message payload from the buffer.
+   * The channel name is optionally transformed based on the protocol version.</p>
+   *
+   * @param buf the buffer containing the encoded packet
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version used to determine encoding rules
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     this.channel = ProtocolUtils.readString(buf);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_13)) {
       this.channel = transformLegacyToModernChannel(this.channel);
@@ -106,8 +123,19 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
     }
   }
 
+  /**
+   * Encodes this plugin message packet into the given {@link ByteBuf}.
+   *
+   * <p>This method writes the channel and message payload according to the protocol version.
+   * A legacy-to-modern channel name mapping is applied for 1.13+ clients.</p>
+   *
+   * @param buf the buffer to write the encoded packet to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version used to determine encoding rules
+   * @throws IllegalStateException if the channel is not set or the payload was released
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (channel == null) {
       throw new IllegalStateException("Channel is not specified.");
     }
@@ -130,48 +158,111 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
     }
   }
 
+  /**
+   * Handles this plugin message packet using the given {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling to the session handler’s {@code handle(PluginMessagePacket)} method.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully; {@code false} otherwise
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
+  /**
+   * Creates a deep copy of this plugin message packet.
+   *
+   * <p>This includes copying the internal buffer and retaining the same channel name.</p>
+   *
+   * @return a copied instance of this packet
+   */
   @Override
-  public final PluginMessagePacket copy() {
+  public PluginMessagePacket copy() {
     return (PluginMessagePacket) super.copy();
   }
 
+  /**
+   * Creates a shallow duplicate of this plugin message packet.
+   *
+   * <p>The content buffer is shared between the original and the duplicate.</p>
+   *
+   * @return a duplicate instance of this packet
+   */
   @Override
-  public final PluginMessagePacket duplicate() {
+  public PluginMessagePacket duplicate() {
     return (PluginMessagePacket) super.duplicate();
   }
 
+  /**
+   * Creates a shallow duplicate of this plugin message packet and retains the buffer.
+   *
+   * <p>This is used when buffer reference counting must be preserved during duplication.</p>
+   *
+   * @return a retained duplicate of this packet
+   */
   @Override
-  public final PluginMessagePacket retainedDuplicate() {
+  public PluginMessagePacket retainedDuplicate() {
     return (PluginMessagePacket) super.retainedDuplicate();
   }
 
+  /**
+   * Replaces the current packet payload with the given {@link ByteBuf}.
+   *
+   * <p>The new content will be used while preserving the existing channel.</p>
+   *
+   * @param content the new payload buffer
+   * @return a new {@code PluginMessagePacket} with the updated content
+   */
   @Override
-  public final PluginMessagePacket replace(final ByteBuf content) {
+  public PluginMessagePacket replace(final ByteBuf content) {
     return (PluginMessagePacket) super.replace(content);
   }
 
+  /**
+   * Increments the reference count of this packet’s content buffer.
+   *
+   * <p>This allows the buffer to be safely reused across Netty operations.</p>
+   *
+   * @return this packet instance
+   */
   @Override
-  public final PluginMessagePacket retain() {
+  public PluginMessagePacket retain() {
     return (PluginMessagePacket) super.retain();
   }
 
+  /**
+   * Increments the reference count of this packet’s content buffer by the specified amount.
+   *
+   * @param increment the number of references to add
+   * @return this packet instance
+   */
   @Override
-  public final PluginMessagePacket retain(final int increment) {
+  public PluginMessagePacket retain(final int increment) {
     return (PluginMessagePacket) super.retain(increment);
   }
 
+  /**
+   * Marks this packet as accessed for debugging purposes.
+   *
+   * <p>This helps track potential memory leaks during buffer lifecycle debugging.</p>
+   *
+   * @return this packet instance
+   */
   @Override
   public PluginMessagePacket touch() {
     return (PluginMessagePacket) super.touch();
   }
 
+  /**
+   * Marks this packet as accessed and associates a hint object for debugging.
+   *
+   * @param hint the hint object to associate for tracking purposes
+   * @return this packet instance
+   */
   @Override
-  public final PluginMessagePacket touch(final Object hint) {
+  public PluginMessagePacket touch(final Object hint) {
     return (PluginMessagePacket) super.touch(hint);
   }
 }

@@ -118,8 +118,15 @@ public class TabCompleteResponsePacket implements MinecraftPacket {
     return offers;
   }
 
+  /**
+   * Returns a string representation of this tab-complete response packet.
+   *
+   * <p>This includes the transaction ID, replacement range, and list of suggestions.</p>
+   *
+   * @return a string describing this packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "TabCompleteResponse{"
         + "transactionId=" + transactionId
         + ", start=" + start
@@ -128,8 +135,18 @@ public class TabCompleteResponsePacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this tab-complete response packet from the given {@link ByteBuf}.
+   *
+   * <p>This method reads the transaction ID, replacement range, and suggestion list
+   * based on the protocol version. For Minecraft 1.13+, it also reads optional tooltips.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version used for decoding
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(MINECRAFT_1_13)) {
       this.transactionId = ProtocolUtils.readVarInt(buf);
       this.start = ProtocolUtils.readVarInt(buf);
@@ -148,8 +165,18 @@ public class TabCompleteResponsePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this tab-complete response packet into the given {@link ByteBuf}.
+   *
+   * <p>This method writes the transaction ID, replacement range, and suggestions
+   * in the format appropriate for the target protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version used for encoding
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(MINECRAFT_1_13)) {
       ProtocolUtils.writeVarInt(buf, this.transactionId);
       ProtocolUtils.writeVarInt(buf, this.start);
@@ -170,8 +197,16 @@ public class TabCompleteResponsePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this tab-complete response packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} for further handling.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -210,8 +245,16 @@ public class TabCompleteResponsePacket implements MinecraftPacket {
       this.tooltip = tooltip;
     }
 
+    /**
+     * Compares this offer to another object for equality.
+     *
+     * <p>Two offers are considered equal if their suggestion texts are equal.</p>
+     *
+     * @param o the object to compare with
+     * @return {@code true} if the offers are equal, otherwise {@code false}
+     */
     @Override
-    public final boolean equals(final Object o) {
+    public boolean equals(final Object o) {
       if (this == o) {
         return true;
       }
@@ -225,21 +268,43 @@ public class TabCompleteResponsePacket implements MinecraftPacket {
       return text.equals(offer.text);
     }
 
+    /**
+     * Computes the hash code for this offer.
+     *
+     * <p>This is based solely on the suggestion text.</p>
+     *
+     * @return the hash code for this offer
+     */
     @Override
-    public final int hashCode() {
+    public int hashCode() {
       return text.hashCode();
     }
 
+    /**
+     * Returns a string representation of this tab-complete offer.
+     *
+     * <p>This includes the suggestion text and an optional tooltip.</p>
+     *
+     * @return a string describing the offer
+     */
     @Override
-    public final String toString() {
+    public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("text", text)
           .add("tooltip", tooltip)
           .toString();
     }
 
+    /**
+     * Compares this offer to another for sorting.
+     *
+     * <p>Comparison is based on the lexicographic order of suggestion text.</p>
+     *
+     * @param o the other offer to compare with
+     * @return a negative number, zero, or a positive number depending on sort order
+     */
     @Override
-    public final int compareTo(final Offer o) {
+    public int compareTo(final Offer o) {
       return this.text.compareTo(o.text);
     }
 

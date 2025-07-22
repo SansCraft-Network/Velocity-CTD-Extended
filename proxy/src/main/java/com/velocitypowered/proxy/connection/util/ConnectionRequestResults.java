@@ -136,18 +136,33 @@ public final class ConnectionRequestResults {
       this.safe = safe;
     }
 
+    /**
+     * Returns the status of the connection attempt.
+     *
+     * @return the result status
+     */
     @Override
-    public final Status getStatus() {
+    public Status getStatus() {
       return status;
     }
 
+    /**
+     * Returns the disconnect reason, if provided.
+     *
+     * @return an {@link Optional} containing the reason, or empty if none
+     */
     @Override
-    public final Optional<Component> getReasonComponent() {
+    public Optional<Component> getReasonComponent() {
       return Optional.ofNullable(component);
     }
 
+    /**
+     * Gets the server that the proxy attempted to connect the player to.
+     *
+     * @return the target backend server
+     */
     @Override
-    public final RegisteredServer getAttemptedConnection() {
+    public RegisteredServer getAttemptedConnection() {
       return attemptedConnection;
     }
 

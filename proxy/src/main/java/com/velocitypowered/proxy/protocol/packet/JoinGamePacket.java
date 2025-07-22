@@ -484,8 +484,16 @@ public class JoinGamePacket implements MinecraftPacket {
     return registry;
   }
 
+  /**
+   * Returns a string representation of this join game packet for debugging purposes.
+   *
+   * <p>This includes the entity ID, dimension, view distance, and other game-specific
+   * metadata relevant at the start of a client session.</p>
+   *
+   * @return a string representation of the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "JoinGame{"
         + "entityId=" + entityId
         + ", gamemode=" + gamemode
@@ -511,8 +519,18 @@ public class JoinGamePacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads the fields of the join game packet based on the specified protocol
+   * version and initializes the internal state of the player session.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
       // haha funny, they made 1.20.2 more complicated
       this.decode1202Up(buf, version);
@@ -665,8 +683,18 @@ public class JoinGamePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this packet into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes the player join information (entity ID, game mode, dimension,
+   * view distance, etc.) according to the given protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
       // haha funny, they made 1.20.2 more complicated
       this.encode1202Up(buf, version);
@@ -825,8 +853,17 @@ public class JoinGamePacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this join game packet using the provided {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} and transitions
+   * the connection into the play phase.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

@@ -45,10 +45,17 @@ public final class RawCommandInvocation extends AbstractCommandInvocation<String
    */
   public static class Factory implements CommandInvocationFactory<RawCommand.Invocation> {
 
+    /**
+     * Creates a {@link RawCommandInvocation} instance from the parsed command input.
+     *
+     * @param source the command source
+     * @param nodes the parsed command nodes from the Brigadier parser
+     * @param arguments the parsed argument map from Brigadier
+     * @return a new {@link RawCommandInvocation} instance
+     */
     @Override
-    public final RawCommand.Invocation create(
-        final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
-        final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
+    public RawCommand.Invocation create(final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
+                                        final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
       final String alias = VelocityCommands.readAlias(nodes);
       final String args = VelocityCommands.readArguments(arguments, String.class, "");
       return new RawCommandInvocation(source, alias, args);

@@ -55,8 +55,11 @@ public class EventTest {
    */
   private final VelocityEventManager eventManager = new VelocityEventManager(pluginManager);
 
+  /**
+   * Shuts down the plugin manager after all tests have completed.
+   */
   @AfterAll
-  final void shutdown() {
+  void shutdown() {
     pluginManager.shutdown();
   }
 

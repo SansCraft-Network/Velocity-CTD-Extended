@@ -43,8 +43,16 @@ public class LegacyForgeConnectionType extends ConnectionTypeImpl {
     super(LegacyForgeHandshakeClientPhase.NOT_STARTED, LegacyForgeHandshakeBackendPhase.NOT_STARTED);
   }
 
+  /**
+   * Contains extra logic for {@link ConnectionTypes#LEGACY_FORGE}, supporting
+   * legacy Forge modded client compatibility during connection negotiation.
+   *
+   * <p>This implementation adds a special {@code forgeClient} property to the {@link GameProfile}
+   * when using legacy player info forwarding, allowing modded servers (e.g., SpongeForge) to
+   * recognize Forge clients without requiring a custom hostname.</p>
+   */
   @Override
-  public final GameProfile addGameProfileTokensIfRequired(final GameProfile original,
+  public GameProfile addGameProfileTokensIfRequired(final GameProfile original,
                                                     final PlayerInfoForwarding forwardingType) {
     // We can't forward the FML token to the server when we are running in legacy forwarding mode,
     // since both use the "hostname" field in the handshake. We add a special property to the

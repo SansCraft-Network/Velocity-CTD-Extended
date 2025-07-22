@@ -116,8 +116,14 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     this.state = State.START;
   }
 
+  /**
+   * Called when this session handler is activated.
+   *
+   * <p>For Minecraft 1.20.2 clients, captures the currently applied resource pack (if any)
+   * so it can be reapplied after the configuration phase completes.</p>
+   */
   @Override
-  public final void activated() {
+  public void activated() {
     ConnectedPlayer player = serverConn.getPlayer();
     if (player.getProtocolVersion() == ProtocolVersion.MINECRAFT_1_20_2) {
       resourcePackToApply = player.resourcePackHandler().getFirstAppliedPack();
@@ -125,8 +131,16 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     }
   }
 
+  /**
+   * Called before any packet is handled.
+   *
+   * <p>This checks whether the server connection is still active. If it is not, the connection
+   * is immediately disconnected and packet processing is aborted.</p>
+   *
+   * @return {@code true} if the connection is no longer valid and should be closed
+   */
   @Override
-  public final boolean beforeHandle() {
+  public boolean beforeHandle() {
     if (!serverConn.isActive()) {
       // Obsolete connection
       serverConn.disconnect();
@@ -136,39 +150,76 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return false;
   }
 
+  /**
+   * Handles a {@link StartUpdatePacket} by forwarding it to the backend server.
+   *
+   * @param packet the packet to forward
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final StartUpdatePacket packet) {
+  public boolean handle(final StartUpdatePacket packet) {
     serverConn.ensureConnected().write(packet);
     return true;
   }
 
+  /**
+   * Forwards a {@link TagsUpdatePacket} to the player client.
+   *
+   * @param packet the packet to forward
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final TagsUpdatePacket packet) {
+  public boolean handle(final TagsUpdatePacket packet) {
     serverConn.getPlayer().getConnection().write(packet);
     return true;
   }
 
+  /**
+   * Forwards a {@link ClientboundCustomReportDetailsPacket} to the player client.
+   *
+   * @param packet the packet to forward
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final ClientboundCustomReportDetailsPacket packet) {
+  public boolean handle(final ClientboundCustomReportDetailsPacket packet) {
     serverConn.getPlayer().getConnection().write(packet);
     return true;
   }
 
+  /**
+   * Forwards a {@link ClientboundServerLinksPacket} to the player client.
+   *
+   * @param packet the packet to forward
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final ClientboundServerLinksPacket packet) {
+  public boolean handle(final ClientboundServerLinksPacket packet) {
     serverConn.getPlayer().getConnection().write(packet);
     return true;
   }
 
+  /**
+   * Handles a {@link KeepAlivePacket} by recording the timestamp and forwarding it to the client.
+   *
+   * @param packet the keep-alive packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final KeepAlivePacket packet) {
+  public boolean handle(final KeepAlivePacket packet) {
     serverConn.getPendingPings().put(packet.getRandomId(), System.nanoTime());
     serverConn.getPlayer().getConnection().write(packet);
     return true;
   }
 
+  /**
+   * Handles a {@link ResourcePackRequestPacket} from the backend by optionally queuing or skipping
+   * the resource pack on the player client, based on plugin event results.
+   *
+   * @param packet the resource pack request
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final ResourcePackRequestPacket packet) {
+  public boolean handle(final ResourcePackRequestPacket packet) {
     final MinecraftConnection playerConnection = serverConn.getPlayer().getConnection();
 
     final ResourcePackInfo resourcePackInfo = packet.toServerPromptedPack();
@@ -224,8 +275,15 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link RemoveResourcePackPacket} by clearing or removing a specific pack
+   * from the player’s resource pack handler.
+   *
+   * @param packet the remove resource pack packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final RemoveResourcePackPacket packet) {
+  public boolean handle(final RemoveResourcePackPacket packet) {
     final MinecraftConnection playerConnection = this.serverConn.getPlayer().getConnection();
 
     final ServerResourcePackRemoveEvent event = new ServerResourcePackRemoveEvent(packet.getId(), this.serverConn);
@@ -252,8 +310,16 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link FinishedUpdatePacket} indicating that the backend has completed its configuration phase.
+   *
+   * <p>This method performs session handoff logic and finalizes player state.</p>
+   *
+   * @param packet the packet indicating config completion
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final FinishedUpdatePacket packet) {
+  public boolean handle(final FinishedUpdatePacket packet) {
     final MinecraftConnection smc = serverConn.ensureConnected();
     final ConnectedPlayer player = serverConn.getPlayer();
     final ClientConfigSessionHandler configHandler = (ClientConfigSessionHandler) player.getConnection().getActiveSessionHandler();
@@ -284,15 +350,30 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link DisconnectPacket} from the backend server during configuration.
+   *
+   * @param packet the disconnect packet
+   * @return {@code true} if the disconnect was handled and session ended
+   */
   @Override
-  public final boolean handle(final DisconnectPacket packet) {
+  public boolean handle(final DisconnectPacket packet) {
     serverConn.disconnect();
     resultFuture.complete(ConnectionRequestResults.forDisconnect(packet, serverConn.getServer()));
     return true;
   }
 
+  /**
+   * Handles a {@link PluginMessagePacket} sent during the config phase.
+   *
+   * <p>If the message is a brand packet, it is rewritten. Otherwise, it is passed through
+   * the plugin messaging system, firing a {@link PluginMessageEvent}.</p>
+   *
+   * @param packet the plugin message
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final PluginMessagePacket packet) {
+  public boolean handle(final PluginMessagePacket packet) {
     if (PluginMessageUtil.isMcBrand(packet)) {
       serverConn.getPlayer().getConnection().write(PluginMessageUtil.rewriteMinecraftBrand(packet,
           server.getVersion(),
@@ -331,14 +412,27 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link RegistrySyncPacket} by forwarding it directly to the client.
+   *
+   * @param packet the registry sync packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final RegistrySyncPacket packet) {
+  public boolean handle(final RegistrySyncPacket packet) {
     serverConn.getPlayer().getConnection().write(packet.retain());
     return true;
   }
 
+  /**
+   * Handles a {@link TransferPacket} during the configuration phase by optionally
+   * forwarding the transfer request after firing a {@link PreTransferEvent}.
+   *
+   * @param packet the transfer packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final TransferPacket packet) {
+  public boolean handle(final TransferPacket packet) {
     final InetSocketAddress originalAddress = packet.address();
     if (originalAddress == null) {
       logger.error("""
@@ -362,8 +456,15 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link ClientboundStoreCookiePacket} by firing a {@link CookieStoreEvent}
+   * and forwarding the result if allowed.
+   *
+   * @param packet the cookie packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final ClientboundStoreCookiePacket packet) {
+  public boolean handle(final ClientboundStoreCookiePacket packet) {
     server.getEventManager()
         .fire(new CookieStoreEvent(serverConn.getPlayer(), packet.getKey(), packet.getPayload()))
         .thenAcceptAsync(event -> {
@@ -381,8 +482,15 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link ClientboundCookieRequestPacket} by firing a {@link CookieRequestEvent}
+   * and forwarding the request if permitted.
+   *
+   * @param packet the cookie request packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final ClientboundCookieRequestPacket packet) {
+  public boolean handle(final ClientboundCookieRequestPacket packet) {
     server.getEventManager().fire(new CookieRequestEvent(serverConn.getPlayer(), packet.getKey()))
         .thenAcceptAsync(event -> {
           if (event.getResult().isAllowed()) {
@@ -395,14 +503,24 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Called when the backend server connection is closed during configuration.
+   *
+   * <p>This shuts down the player's connection.</p>
+   */
   @Override
-  public final void disconnected() {
+  public void disconnected() {
     final ConnectedPlayer player = serverConn.getPlayer();
     player.teardown();
   }
 
+  /**
+   * Handles any packet not explicitly defined by forwarding it to the client connection.
+   *
+   * @param packet the generic packet
+   */
   @Override
-  public final void handleGeneric(final MinecraftPacket packet) {
+  public void handleGeneric(final MinecraftPacket packet) {
     serverConn.getPlayer().getConnection().write(packet);
   }
 
@@ -418,7 +536,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
    *
    * @return the current {@link State} of this configuration handler
    */
-  public final State getState() {
+  public State getState() {
     return state;
   }
 

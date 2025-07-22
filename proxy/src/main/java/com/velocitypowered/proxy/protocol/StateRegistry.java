@@ -919,7 +919,23 @@ public enum StateRegistry {
       return registry;
     }
 
-    final <P extends MinecraftPacket> void register(final Class<P> clazz, final Supplier<P> packetSupplier,
+    /**
+     * Registers a packet with the registry using one or more protocol version mappings.
+     *
+     * <p>This method associates a packet class and its factory with the corresponding protocol versions
+     * and packet IDs, enabling both encoding and decoding during runtime.</p>
+     *
+     * <p>If multiple mappings are provided, the packet will be registered across a version range.
+     * The final mapping may optionally define a {@code lastValidProtocolVersion} to limit the range.</p>
+     *
+     * @param <P> the packet type
+     * @param clazz the class of the packet to register
+     * @param packetSupplier a {@link Supplier} used to instantiate the packet during decoding
+     * @param mappings one or more {@link PacketMapping} entries defining protocol version ranges and IDs
+     * @throws IllegalArgumentException if mappings are invalid, duplicate IDs are found, or registration conflicts exist
+     */
+    @SuppressWarnings("checkstyle:DesignForExtension")
+    <P extends MinecraftPacket> void register(final Class<P> clazz, final Supplier<P> packetSupplier,
                                               final PacketMapping... mappings) {
       if (mappings.length == 0) {
         throw new IllegalArgumentException("At least one mapping must be provided.");

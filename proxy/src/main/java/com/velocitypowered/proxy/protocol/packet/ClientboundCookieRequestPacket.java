@@ -62,18 +62,44 @@ public class ClientboundCookieRequestPacket implements MinecraftPacket {
     this.key = key;
   }
 
+  /**
+   * Decodes this cookie request packet from the given {@link ByteBuf}.
+   *
+   * <p>This method reads the {@link Key} identifying the type of cookie being requested.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     this.key = ProtocolUtils.readKey(buf);
   }
 
+  /**
+   * Encodes this cookie request packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the {@link Key} identifying the cookie type the client should respond with.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeKey(buf, key);
   }
 
+  /**
+   * Handles this cookie request packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling to {@code handler.handle(this)} to process the request.</p>
+   *
+   * @param handler the session handler responsible for handling this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

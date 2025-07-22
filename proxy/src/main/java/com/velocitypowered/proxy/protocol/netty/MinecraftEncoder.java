@@ -68,8 +68,20 @@ public class MinecraftEncoder extends MessageToByteEncoder<MinecraftPacket> {
     this.state = StateRegistry.HANDSHAKE;
   }
 
+  /**
+   * Encodes a {@link MinecraftPacket} into its binary representation for transmission.
+   *
+   * <p>This method first writes the packet ID using VarInt encoding, then delegates
+   * to the packet's {@link MinecraftPacket#encode(ByteBuf, ProtocolUtils.Direction, ProtocolVersion)}
+   * method to write the packet-specific data.</p>
+   *
+   * @param ctx the Netty channel context
+   * @param msg the Minecraft packet to encode
+   * @param out the output buffer to write the encoded packet into
+   * @throws RuntimeException if the packet is not registered in the current protocol registry
+   */
   @Override
-  protected final void encode(final ChannelHandlerContext ctx, final MinecraftPacket msg, final ByteBuf out) {
+  protected void encode(final ChannelHandlerContext ctx, final MinecraftPacket msg, final ByteBuf out) {
     int packetId = this.registry.getPacketId(msg);
     ProtocolUtils.writeVarInt(out, packetId);
     msg.encode(out, direction, registry.version);

@@ -70,13 +70,31 @@ public class ServerResourcePackRemoveEvent implements ResultedEvent<ResultedEven
     return serverConnection;
   }
 
+  /**
+   * Returns the current {@link GenericResult} that determines whether the resource pack
+   * removal should proceed.
+   *
+   * <p>By default, the result is {@code allowed()}, meaning the resource pack removal
+   * or clear will be forwarded to the client unless explicitly denied.</p>
+   *
+   * @return the current result
+   */
   @Override
-  public final GenericResult getResult() {
+  public GenericResult getResult() {
     return this.result;
   }
 
+  /**
+   * Sets the {@link GenericResult} to control whether the resource pack removal proceeds.
+   *
+   * <p>Use {@link GenericResult#denied()} to prevent removal, or {@link GenericResult#allowed()}
+   * to allow it. If denied, the packet will not be forwarded to the player.</p>
+   *
+   * @param result the result to apply to this event
+   * @throws NullPointerException if {@code result} is null
+   */
   @Override
-  public final void setResult(final GenericResult result) {
+  public void setResult(final GenericResult result) {
     this.result = Preconditions.checkNotNull(result, "result");
   }
 }

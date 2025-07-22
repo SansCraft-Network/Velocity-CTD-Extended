@@ -142,9 +142,19 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
     this.entries.addAll(entries);
   }
 
+  /**
+   * Decodes the {@code UpsertPlayerInfoPacket} from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads the actions as a bitmask, followed by the number of entries,
+   * and then decodes each entry based on the selected actions.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the protocol version used during decoding
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                           final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                     final ProtocolVersion protocolVersion) {
     Action[] actions = Action.class.getEnumConstants();
     byte[] bytes = new byte[-Math.floorDiv(-actions.length, 8)];
     buf.readBytes(bytes);
@@ -167,9 +177,19 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes the {@code UpsertPlayerInfoPacket} into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes the selected actions as a bitmask, the number of entries,
+   * and encodes each entry based on the selected actions.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the protocol version used during encoding
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                           final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                     final ProtocolVersion protocolVersion) {
     Action[] actions = Action.class.getEnumConstants();
     BitSet set = new BitSet(actions.length);
     for (int idx = 0; idx < actions.length; idx++) {
@@ -189,8 +209,16 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>Delegates handling logic to the session handler's {@code handle(UpsertPlayerInfoPacket)} method.</p>
+   *
+   * @param handler the session handler to handle this packet
+   * @return {@code true} if the packet was handled successfully, {@code false} otherwise
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -534,8 +562,16 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
       this.chatSession = chatSession;
     }
 
+    /**
+     * Returns a string representation of this entry for debugging purposes.
+     *
+     * <p>This includes the player's profile ID, game profile, listed status,
+     * latency, game mode, display name, list order, and chat session.</p>
+     *
+     * @return a string representation of the {@code Entry}
+     */
     @Override
-    public final String toString() {
+    public String toString() {
       return "Entry{"
           + "profileId=" + profileId
           + ", profile=" + profile

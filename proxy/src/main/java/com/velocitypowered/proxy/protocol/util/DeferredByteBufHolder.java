@@ -45,8 +45,15 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     this.backing = backing;
   }
 
+  /**
+   * Returns the backing {@link ByteBuf} for this holder.
+   *
+   * @return the content buffer
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   * @throws IllegalReferenceCountException if the buffer has been released
+   */
   @Override
-  public final ByteBuf content() {
+  public ByteBuf content() {
     if (backing == null) {
       throw new IllegalStateException("Trying to obtain contents of holder with a null buffer");
     }
@@ -58,6 +65,12 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return backing;
   }
 
+  /**
+   * Creates a deep copy of this buffer holder.
+   *
+   * @return a new {@code DeferredByteBufHolder} with a copied buffer
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
   public ByteBufHolder copy() {
     if (backing == null) {
@@ -67,6 +80,12 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return new DeferredByteBufHolder(backing.copy());
   }
 
+  /**
+   * Creates a shallow duplicate of this buffer holder.
+   *
+   * @return a new {@code DeferredByteBufHolder} with a duplicated buffer
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
   public ByteBufHolder duplicate() {
     if (backing == null) {
@@ -76,6 +95,12 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return new DeferredByteBufHolder(backing.duplicate());
   }
 
+  /**
+   * Creates a retained duplicate of this buffer holder.
+   *
+   * @return a new {@code DeferredByteBufHolder} with a retained duplicate
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
   public ByteBufHolder retainedDuplicate() {
     if (backing == null) {
@@ -85,6 +110,13 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return new DeferredByteBufHolder(backing.retainedDuplicate());
   }
 
+  /**
+   * Replaces the internal buffer with a new one.
+   *
+   * @param content the new {@link ByteBuf} to use
+   * @return this holder instance
+   * @throws NullPointerException if {@code content} is {@code null}
+   */
   @Override
   public ByteBufHolder replace(final ByteBuf content) {
     if (content == null) {
@@ -95,8 +127,14 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return this;
   }
 
+  /**
+   * Returns the reference count of the backing buffer.
+   *
+   * @return the reference count
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
-  public final int refCnt() {
+  public int refCnt() {
     if (backing == null) {
       throw new IllegalStateException("Trying to obtain contents of holder with a null buffer");
     }
@@ -104,6 +142,12 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return backing.refCnt();
   }
 
+  /**
+   * Increments the reference count of the backing buffer by 1.
+   *
+   * @return this holder
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
   public ByteBufHolder retain() {
     if (backing == null) {
@@ -114,6 +158,13 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return this;
   }
 
+  /**
+   * Increments the reference count of the backing buffer.
+   *
+   * @param increment the amount to increment
+   * @return this holder
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
   public ByteBufHolder retain(final int increment) {
     if (backing == null) {
@@ -124,6 +175,12 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return this;
   }
 
+  /**
+   * Records access to the buffer for leak detection.
+   *
+   * @return this holder
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
   public ByteBufHolder touch() {
     if (backing == null) {
@@ -134,6 +191,13 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return this;
   }
 
+  /**
+   * Records access to the buffer for leak detection with a hint.
+   *
+   * @param hint an arbitrary object to record with the access
+   * @return this holder
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
   public ByteBufHolder touch(final Object hint) {
     if (backing == null) {
@@ -144,8 +208,14 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return this;
   }
 
+  /**
+   * Decrements the reference count and releases the buffer if it reaches zero.
+   *
+   * @return {@code true} if the buffer was released
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
-  public final boolean release() {
+  public boolean release() {
     if (backing == null) {
       throw new IllegalStateException("Trying to obtain contents of holder with a null buffer");
     }
@@ -153,8 +223,15 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return backing.release();
   }
 
+  /**
+   * Decrements the reference count by the specified value and releases the buffer if zero.
+   *
+   * @param decrement the amount to decrease the reference count
+   * @return {@code true} if the buffer was released
+   * @throws IllegalStateException if the backing buffer is {@code null}
+   */
   @Override
-  public final boolean release(final int decrement) {
+  public boolean release(final int decrement) {
     if (backing == null) {
       throw new IllegalStateException("Trying to obtain contents of holder with a null buffer");
     }
@@ -162,6 +239,11 @@ public class DeferredByteBufHolder implements ByteBufHolder {
     return backing.release(decrement);
   }
 
+  /**
+   * Returns a string representation of this buffer holder, including the buffer state.
+   *
+   * @return string representation of this holder
+   */
   @Override
   public String toString() {
     String str = "DeferredByteBufHolder[";

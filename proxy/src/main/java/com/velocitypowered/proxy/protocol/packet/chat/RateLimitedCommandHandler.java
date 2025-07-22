@@ -58,8 +58,24 @@ public abstract class RateLimitedCommandHandler<T extends MinecraftPacket> imple
     this.velocityServer = velocityServer;
   }
 
+  /**
+   * Handles a player-issued command with rate limiting.
+   *
+   * <p>This method performs the following logic:</p>
+   * <ul>
+   *   <li>Validates that the packet is an instance of the expected {@link #packetClass()}.</li>
+   *   <li>Checks the rate limiter to determine if the player is allowed to send a command.</li>
+   *   <li>If the rate limit is exceeded and configured to kick, the player is disconnected after
+   *       a threshold number of failed attempts.</li>
+   *   <li>If forwarding is enabled while rate-limited, the packet is passed to the backend server.</li>
+   *   <li>If allowed, resets the failure counter and invokes {@link #handlePlayerCommandInternal(MinecraftPacket)}.</li>
+   * </ul>
+   *
+   * @param packet the incoming {@link MinecraftPacket} containing a command
+   * @return {@code true} if the command was handled internally; {@code false} if it should be forwarded
+   */
   @Override
-  public final boolean handlePlayerCommand(final MinecraftPacket packet) {
+  public boolean handlePlayerCommand(final MinecraftPacket packet) {
     if (packetClass().isInstance(packet)) {
       if (!velocityServer.getCommandRateLimiter().attempt(player.getUniqueId())) {
         if (velocityServer.getConfiguration().isKickOnCommandRateLimit() && failedAttempts++

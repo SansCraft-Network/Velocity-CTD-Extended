@@ -42,14 +42,33 @@ public class LoginAcknowledgedPacket implements MinecraftPacket {
                      final ProtocolVersion protocolVersion) {
   }
 
+  /**
+   * Returns the expected maximum length of this packet in bytes.
+   *
+   * <p>This implementation always returns {@code 0} since the login acknowledgment
+   * packet contains no payload.</p>
+   *
+   * @param buf the buffer being read
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version
+   * @return the maximum number of bytes expected (always {@code 0})
+   */
   @Override
-  public final int expectedMaxLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                                     final ProtocolVersion version) {
+  public int expectedMaxLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                               final ProtocolVersion version) {
     return 0;
   }
 
+  /**
+   * Handles this packet using the given {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to the handler’s {@code handle(LoginAcknowledgedPacket)} method.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

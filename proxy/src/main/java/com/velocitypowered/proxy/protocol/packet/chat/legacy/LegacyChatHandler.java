@@ -53,13 +53,34 @@ public class LegacyChatHandler implements ChatHandler<LegacyChatPacket> {
     this.player = player;
   }
 
+  /**
+   * Returns the class of chat packets that this handler processes.
+   *
+   * <p>Used by the chat framework to associate this handler with {@link LegacyChatPacket}
+   * instances for legacy-format message processing.</p>
+   *
+   * @return the {@code LegacyChatPacket} class
+   */
   @Override
-  public final Class<LegacyChatPacket> packetClass() {
+  public Class<LegacyChatPacket> packetClass() {
     return LegacyChatPacket.class;
   }
 
+  /**
+   * Handles a player-sent legacy chat packet internally.
+   *
+   * <p>This method performs the following steps:</p>
+   * <ul>
+   *   <li>Ensures the player is connected to a backend server.</li>
+   *   <li>Fires a {@link PlayerChatEvent} to allow plugins to observe or modify the message.</li>
+   *   <li>If the message is not cancelled, the message (possibly modified) is sent to the backend server
+   *       using the legacy chat format.</li>
+   * </ul>
+   *
+   * @param packet the incoming legacy-format chat packet from the player
+   */
   @Override
-  public final void handlePlayerChatInternal(final LegacyChatPacket packet) {
+  public void handlePlayerChatInternal(final LegacyChatPacket packet) {
     MinecraftConnection serverConnection = player.ensureAndGetCurrentServer().ensureConnected();
     if (serverConnection == null) {
       return;

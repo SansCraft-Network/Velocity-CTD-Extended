@@ -30,8 +30,14 @@ public class MockCommandSource implements CommandSource {
    */
   public static final CommandSource INSTANCE = new MockCommandSource();
 
+  /**
+   * Always returns {@link Tristate#UNDEFINED} for any permission query.
+   *
+   * @param permission the permission string to check
+   * @return {@link Tristate#UNDEFINED}
+   */
   @Override
-  public final Tristate getPermissionValue(final String permission) {
+  public Tristate getPermissionValue(final String permission) {
     return Tristate.UNDEFINED;
   }
 }

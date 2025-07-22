@@ -162,8 +162,18 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
     this.prompt = prompt;
   }
 
+  /**
+   * Decodes this resource pack request packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the pack UUID (if supported), URL, SHA1 hash, and optionally
+   * whether the pack is required and a prompt message, depending on the protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       this.id = ProtocolUtils.readUuid(buf);
     }
@@ -180,8 +190,19 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this resource pack request packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the pack UUID, URL, SHA1 hash, required flag, and optional prompt
+   * according to the target protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   * @throws IllegalStateException if required fields like URL or hash are not set
+   */
   @Override
-  public final void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       if (id == null) {
         throw new IllegalStateException("Resource pack proxyId not set yet!");
@@ -228,13 +249,28 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
     return (VelocityResourcePackInfo) builder.build();
   }
 
+  /**
+   * Handles this resource pack request packet using the provided {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling logic to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
+  /**
+   * Returns a string representation of this resource pack request packet.
+   *
+   * <p>This includes the pack UUID, URL, hash, requirement flag, and optional prompt.</p>
+   *
+   * @return a string representation of this packet for debugging purposes
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "ResourcePackRequestPacket{"
         + "id=" + id
         + ", url='" + url + '\''

@@ -151,8 +151,19 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
     return signedPreview;
   }
 
+  /**
+   * Decodes this keyed player chat packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the message text, optional signature, preview flag, expiration timestamp,
+   * and previous message signature metadata depending on the protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   * @throws QuietDecoderException if signature data is malformed or too many previous messages
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
     message = ProtocolUtils.readString(buf, 256);
 
@@ -197,8 +208,19 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this keyed player chat packet into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the message, signature (or placeholder), salt, preview flag,
+   * and prior message acknowledgment metadata according to the protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   * @throws NullPointerException if required fields are missing when not unsigned
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, message);
 
@@ -226,8 +248,17 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this keyed player chat packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to verify or process
+   * the message content, signature, and metadata.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

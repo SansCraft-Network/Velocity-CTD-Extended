@@ -156,8 +156,14 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     this.bungeecordMessageResponder = new BungeeCordMessageResponder(server, serverConn.getPlayer());
   }
 
+  /**
+   * Called when this session handler is activated.
+   *
+   * <p>Registers the player with the backend server and sends the BungeeCord plugin channel
+   * registration packet if BungeeCord plugin messaging is enabled in the configuration.</p>
+   */
   @Override
-  public final void activated() {
+  public void activated() {
     serverConn.getServer().addPlayer(serverConn.getPlayer());
 
     MinecraftConnection serverMc = serverConn.ensureConnected();
@@ -168,8 +174,16 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     }
   }
 
+  /**
+   * Called before handling each inbound packet.
+   *
+   * <p>If the backend server connection is no longer active, the connection is closed and
+   * packet handling is aborted.</p>
+   *
+   * @return {@code true} if the connection is obsolete and packet handling should be skipped
+   */
   @Override
-  public final boolean beforeHandle() {
+  public boolean beforeHandle() {
     if (!serverConn.isActive()) {
       // Obsolete connection
       serverConn.disconnect();
@@ -179,14 +193,29 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return false;
   }
 
+  /**
+   * Handles a {@link BundleDelimiterPacket} by toggling the bundle state on the player's bundle handler.
+   *
+   * @param bundleDelimiterPacket the packet signaling a bundle boundary
+   * @return {@code false} to allow the packet to continue being forwarded
+   */
   @Override
-  public final boolean handle(final BundleDelimiterPacket bundleDelimiterPacket) {
+  public boolean handle(final BundleDelimiterPacket bundleDelimiterPacket) {
     serverConn.getPlayer().getBundleHandler().toggleBundleSession();
     return false;
   }
 
+  /**
+   * Handles a {@link StartUpdatePacket} that transitions the player to the CONFIGURATION state.
+   *
+   * <p>Stops automatic reading, updates decoder state, and transitions the player’s client
+   * session to configuration mode.</p>
+   *
+   * @param packet the update packet
+   * @return {@code true} if handled successfully
+   */
   @Override
-  public final boolean handle(final StartUpdatePacket packet) {
+  public boolean handle(final StartUpdatePacket packet) {
     MinecraftConnection smc = serverConn.ensureConnected();
     smc.setAutoReading(false);
     // Even when not auto reading messages are still decoded. Decode them with the correct state
@@ -196,27 +225,52 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link KeepAlivePacket} by tracking the ping ID and timestamp for latency measurement.
+   *
+   * @param packet the keep-alive packet
+   * @return {@code false} to continue forwarding the packet
+   */
   @Override
-  public final boolean handle(final KeepAlivePacket packet) {
+  public boolean handle(final KeepAlivePacket packet) {
     serverConn.getPendingPings().put(packet.getRandomId(), System.nanoTime());
     return false; // forwards on
   }
 
+  /**
+   * Forwards a {@link ClientSettingsPacket} from the player to the backend server.
+   *
+   * @param packet the client settings
+   * @return {@code true} if forwarded successfully
+   */
   @Override
-  public final boolean handle(final ClientSettingsPacket packet) {
+  public boolean handle(final ClientSettingsPacket packet) {
     serverConn.ensureConnected().write(packet);
     return true;
   }
 
+  /**
+   * Handles a {@link DisconnectPacket} by closing the connection and notifying the player
+   * with the disconnect reason.
+   *
+   * @param packet the disconnect packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final DisconnectPacket packet) {
+  public boolean handle(final DisconnectPacket packet) {
     serverConn.disconnect();
     serverConn.getPlayer().handleConnectionException(serverConn.getServer(), packet, true);
     return true;
   }
 
+  /**
+   * Processes a {@link BossBarPacket}, updating the player's server-side boss bar state.
+   *
+   * @param packet the boss bar packet
+   * @return {@code false} to allow forwarding to the client
+   */
   @Override
-  public final boolean handle(final BossBarPacket packet) {
+  public boolean handle(final BossBarPacket packet) {
     if (packet.getAction() == BossBarPacket.ADD) {
       playerSessionHandler.getServerBossBars().add(packet.getUuid());
     } else if (packet.getAction() == BossBarPacket.REMOVE) {
@@ -226,8 +280,17 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return false; // forward
   }
 
+  /**
+   * Handles a {@link ResourcePackRequestPacket} sent by the backend.
+   *
+   * <p>This triggers a {@link ServerResourcePackSendEvent} and, depending on the result,
+   * queues or skips the resource pack.</p>
+   *
+   * @param packet the resource pack request
+   * @return {@code true} if the event was fired and processed
+   */
   @Override
-  public final boolean handle(final ResourcePackRequestPacket packet) {
+  public boolean handle(final ResourcePackRequestPacket packet) {
     final ResourcePackInfo.Builder builder = new VelocityResourcePackInfo.BuilderImpl(Preconditions.checkNotNull(packet.getUrl()))
         .setId(packet.getId())
         .setPrompt(packet.getPrompt() == null ? null : packet.getPrompt().getComponent())
@@ -303,8 +366,14 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link RemoveResourcePackPacket} by clearing or removing a resource pack from the player.
+   *
+   * @param packet the packet instructing a resource pack to be removed
+   * @return {@code true} if handled
+   */
   @Override
-  public final boolean handle(final RemoveResourcePackPacket packet) {
+  public boolean handle(final RemoveResourcePackPacket packet) {
     final ServerResourcePackRemoveEvent event = new ServerResourcePackRemoveEvent(packet.getId(), this.serverConn);
     server.getEventManager().fire(event).thenAcceptAsync(serverResourcePackRemoveEvent -> {
       if (playerConnection.isClosed()) {
@@ -329,8 +398,17 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link PluginMessagePacket} from the backend server.
+   *
+   * <p>Processes BungeeCord plugin messages, rewrite brand messages, or fires a
+   * {@link PluginMessageEvent} for custom channels.</p>
+   *
+   * @param packet the plugin message
+   * @return {@code true} if the packet was handled or processed asynchronously
+   */
   @Override
-  public final boolean handle(final PluginMessagePacket packet) {
+  public boolean handle(final PluginMessagePacket packet) {
     if (bungeecordMessageResponder.process(packet)) {
       return true;
     }
@@ -379,32 +457,63 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link TabCompleteResponsePacket} by passing it to the player's client session.
+   *
+   * @param packet the tab completion response
+   * @return {@code true} if handled
+   */
   @Override
-  public final boolean handle(final TabCompleteResponsePacket packet) {
+  public boolean handle(final TabCompleteResponsePacket packet) {
     playerSessionHandler.handleTabCompleteResponse(packet);
     return true;
   }
 
+  /**
+   * Handles a legacy player list update and applies it to the player's tab list.
+   *
+   * @param packet the legacy tab list update
+   * @return {@code false} to allow forwarding
+   */
   @Override
-  public final boolean handle(final LegacyPlayerListItemPacket packet) {
+  public boolean handle(final LegacyPlayerListItemPacket packet) {
     serverConn.getPlayer().getTabList().processLegacy(packet);
     return false;
   }
 
+  /**
+   * Applies a player info update to the tab list.
+   *
+   * @param packet the player info update
+   * @return {@code false} to allow forwarding
+   */
   @Override
-  public final boolean handle(final UpsertPlayerInfoPacket packet) {
+  public boolean handle(final UpsertPlayerInfoPacket packet) {
     serverConn.getPlayer().getTabList().processUpdate(packet);
     return false;
   }
 
+  /**
+   * Applies a player info removal to the tab list.
+   *
+   * @param packet the player removal packet
+   * @return {@code false} to allow forwarding
+   */
   @Override
-  public final boolean handle(final RemovePlayerInfoPacket packet) {
+  public boolean handle(final RemovePlayerInfoPacket packet) {
     serverConn.getPlayer().getTabList().processRemove(packet);
     return false;
   }
 
+  /**
+   * Handles a {@link AvailableCommandsPacket}, injecting proxy commands and firing a
+   * {@link PlayerAvailableCommandsEvent}.
+   *
+   * @param commands the available commands packet
+   * @return {@code true} if handled successfully
+   */
   @Override
-  public final boolean handle(final AvailableCommandsPacket commands) {
+  public boolean handle(final AvailableCommandsPacket commands) {
     RootCommandNode<CommandSource> rootNode = commands.getRootNode();
     if (server.getConfiguration().isAnnounceProxyCommands()) {
       // Inject commands from the proxy.
@@ -423,8 +532,16 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link ServerDataPacket} containing server MOTD and ping metadata.
+   *
+   * <p>This fires a {@link ProxyPingEvent} and writes the resulting description back to the player.</p>
+   *
+   * @param packet the server data packet
+   * @return {@code true} if handled
+   */
   @Override
-  public final boolean handle(final ServerDataPacket packet) {
+  public boolean handle(final ServerDataPacket packet) {
     server.getServerListPingHandler().getInitialPing(this.serverConn.getPlayer()).thenComposeAsync(ping -> server.getEventManager()
             .fire(new ProxyPingEvent(this.serverConn.getPlayer(), ping)),
         playerConnection.eventLoop()).thenAcceptAsync(pingEvent -> this.playerConnection.write(new ServerDataPacket(new ComponentHolder(
@@ -435,8 +552,16 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link TransferPacket} from the backend server.
+   *
+   * <p>This triggers a {@link PreTransferEvent} and rewrites the target address if allowed.</p>
+   *
+   * @param packet the transfer packet
+   * @return {@code true} if handled
+   */
   @Override
-  public final boolean handle(final TransferPacket packet) {
+  public boolean handle(final TransferPacket packet) {
     final InetSocketAddress originalAddress = packet.address();
     if (originalAddress == null) {
       logger.error("""
@@ -461,8 +586,16 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link ClientboundStoreCookiePacket} from the backend.
+   *
+   * <p>Fires a {@link CookieStoreEvent} and forwards the cookie if allowed.</p>
+   *
+   * @param packet the store cookie packet
+   * @return {@code true} if handled
+   */
   @Override
-  public final boolean handle(final ClientboundStoreCookiePacket packet) {
+  public boolean handle(final ClientboundStoreCookiePacket packet) {
     server.getEventManager()
         .fire(new CookieStoreEvent(serverConn.getPlayer(), packet.getKey(), packet.getPayload()))
         .thenAcceptAsync(event -> {
@@ -479,8 +612,16 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link ClientboundCookieRequestPacket} from the backend.
+   *
+   * <p>Fires a {@link CookieRequestEvent} and writes the request to the client if permitted.</p>
+   *
+   * @param packet the cookie request packet
+   * @return {@code true} if handled
+   */
   @Override
-  public final boolean handle(final ClientboundCookieRequestPacket packet) {
+  public boolean handle(final ClientboundCookieRequestPacket packet) {
     server.getEventManager().fire(new CookieRequestEvent(serverConn.getPlayer(), packet.getKey()))
         .thenAcceptAsync(event -> {
           if (event.getResult().isAllowed()) {
@@ -494,8 +635,13 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Forwards all unrecognized packets to the client connection with buffering.
+   *
+   * @param packet the generic Minecraft packet
+   */
   @Override
-  public final void handleGeneric(final MinecraftPacket packet) {
+  public void handleGeneric(final MinecraftPacket packet) {
     if (packet instanceof PluginMessagePacket) {
       ((PluginMessagePacket) packet).retain();
     }
@@ -507,8 +653,13 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     }
   }
 
+  /**
+   * Forwards raw unhandled packet buffers to the client connection.
+   *
+   * @param buf the raw packet buffer
+   */
   @Override
-  public final void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(final ByteBuf buf) {
     playerConnection.delayedWrite(buf.retain());
     if (++packetsFlushed >= MAXIMUM_PACKETS_TO_FLUSH) {
       playerConnection.flush();
@@ -516,14 +667,26 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     }
   }
 
+  /**
+   * Called after a full read cycle is completed.
+   *
+   * <p>This flushes any buffered packets to the client and resets the flush counter.</p>
+   */
   @Override
-  public final void readCompleted() {
+  public void readCompleted() {
     playerConnection.flush();
     packetsFlushed = 0;
   }
 
+  /**
+   * Called when an exception occurs in the backend connection.
+   *
+   * <p>Passes the exception to the player and initiates error handling logic.</p>
+   *
+   * @param throwable the exception
+   */
   @Override
-  public final void exception(final Throwable throwable) {
+  public void exception(final Throwable throwable) {
     exceptionTriggered = true;
     serverConn.getPlayer().handleConnectionException(serverConn.getServer(), throwable,
         !(throwable instanceof ReadTimeoutException));
@@ -534,12 +697,18 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
    *
    * @return the Velocity server
    */
-  public final VelocityServer getServer() {
+  public VelocityServer getServer() {
     return server;
   }
 
+  /**
+   * Called when the backend connection is closed.
+   *
+   * <p>If the disconnect was unexpected, the player is either kicked or fallback logic is triggered,
+   * depending on the proxy configuration.</p>
+   */
   @Override
-  public final void disconnected() {
+  public void disconnected() {
     serverConn.getServer().removePlayer(serverConn.getPlayer());
     if (!serverConn.isGracefulDisconnect() && !exceptionTriggered) {
       if (server.getConfiguration().isFailoverOnUnexpectedServerDisconnect()) {
@@ -553,8 +722,13 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
     }
   }
 
+  /**
+   * Called when the backend connection's writability changes due to backpressure.
+   *
+   * <p>Pauses or resumes auto-reading from the player connection accordingly.</p>
+   */
   @Override
-  public final void writabilityChanged() {
+  public void writabilityChanged() {
     Channel serverChan = serverConn.ensureConnected().getChannel();
     boolean writable = serverChan.isWritable();
 

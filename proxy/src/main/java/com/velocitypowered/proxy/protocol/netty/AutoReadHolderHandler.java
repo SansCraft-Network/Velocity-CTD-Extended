@@ -43,8 +43,16 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
     this.queuedMessages = new ArrayDeque<>();
   }
 
+  /**
+   * Processes all queued messages before performing a downstream read operation.
+   *
+   * <p>This ensures that previously held messages are propagated before new reads are issued.</p>
+   *
+   * @param ctx the Netty channel context
+   * @throws Exception if an error occurs during read propagation
+   */
   @Override
-  public final void read(final ChannelHandlerContext ctx) throws Exception {
+  public void read(final ChannelHandlerContext ctx) throws Exception {
     drainQueuedMessages(ctx);
     ctx.read();
   }
@@ -60,8 +68,14 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
     }
   }
 
+  /**
+   * Either immediately forwards or queues the incoming message depending on {@code autoRead} status.
+   *
+   * @param ctx the Netty channel context
+   * @param msg the received message
+   */
   @Override
-  public final void channelRead(final ChannelHandlerContext ctx, @NotNull final Object msg) {
+  public void channelRead(final ChannelHandlerContext ctx, @NotNull final Object msg) {
     if (ctx.channel().config().isAutoRead()) {
       ctx.fireChannelRead(msg);
     } else {
@@ -69,8 +83,14 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
     }
   }
 
+  /**
+   * Propagates a {@code channelReadComplete} if {@code autoRead} is enabled,
+   * or drains any remaining queued messages first.
+   *
+   * @param ctx the Netty channel context
+   */
   @Override
-  public final void channelReadComplete(final ChannelHandlerContext ctx) {
+  public void channelReadComplete(final ChannelHandlerContext ctx) {
     if (ctx.channel().config().isAutoRead()) {
       if (!this.queuedMessages.isEmpty()) {
         this.drainQueuedMessages(ctx); // will also call fireChannelReadComplete()
@@ -80,8 +100,15 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
     }
   }
 
+  /**
+   * Releases any queued messages when the handler is removed from the pipeline.
+   *
+   * <p>This ensures that no retained objects cause memory leaks.</p>
+   *
+   * @param ctx the Netty channel context
+   */
   @Override
-  public final void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(final ChannelHandlerContext ctx) {
     for (Object message : this.queuedMessages) {
       ReferenceCountUtil.release(message);
     }

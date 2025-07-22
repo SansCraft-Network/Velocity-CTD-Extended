@@ -51,80 +51,158 @@ public class ByteBufDataOutput extends OutputStream implements ByteArrayDataOutp
     this.utf8out = new DataOutputStream(this);
   }
 
+  /**
+   * Returns a copy of the data currently written to the underlying buffer.
+   *
+   * @return a byte array containing the buffer's contents
+   */
   @Override
-  public final byte @NotNull [] toByteArray() {
+  public byte @NotNull [] toByteArray() {
     return ByteBufUtil.getBytes(buf);
   }
 
+  /**
+   * Writes a single byte to the output buffer.
+   *
+   * @param b the byte value to write (only the least-significant 8 bits are used)
+   */
   @Override
-  public final void write(final int b) {
+  public void write(final int b) {
     buf.writeByte(b);
   }
 
+  /**
+   * Writes the entire byte array to the output buffer.
+   *
+   * @param b the byte array to write
+   */
   @Override
-  public final void write(final byte @NotNull [] b) {
+  public void write(final byte @NotNull [] b) {
     buf.writeBytes(b);
   }
 
+  /**
+   * Writes {@code len} bytes from the given byte array starting at {@code off}.
+   *
+   * @param b   the byte array to write from
+   * @param off the starting offset in the array
+   * @param len the number of bytes to write
+   */
   @Override
-  public final void write(final byte @NotNull [] b, final int off, final int len) {
+  public void write(final byte @NotNull [] b, final int off, final int len) {
     buf.writeBytes(b, off, len);
   }
 
+  /**
+   * Writes a boolean value to the buffer.
+   *
+   * @param v the boolean value to write
+   */
   @Override
-  public final void writeBoolean(final boolean v) {
+  public void writeBoolean(final boolean v) {
     buf.writeBoolean(v);
   }
 
+  /**
+   * Writes a single byte value to the buffer.
+   *
+   * @param v the byte value
+   */
   @Override
-  public final void writeByte(final int v) {
+  public void writeByte(final int v) {
     buf.writeByte(v);
   }
 
+  /**
+   * Writes a 2-byte short value to the buffer.
+   *
+   * @param v the short value
+   */
   @Override
-  public final void writeShort(final int v) {
+  public void writeShort(final int v) {
     buf.writeShort(v);
   }
 
+  /**
+   * Writes a 2-byte character to the buffer.
+   *
+   * @param v the char value
+   */
   @Override
-  public final void writeChar(final int v) {
+  public void writeChar(final int v) {
     buf.writeChar(v);
   }
 
+  /**
+   * Writes a 4-byte integer value to the buffer.
+   *
+   * @param v the int value
+   */
   @Override
-  public final void writeInt(final int v) {
+  public void writeInt(final int v) {
     buf.writeInt(v);
   }
 
+  /**
+   * Writes an 8-byte long value to the buffer.
+   *
+   * @param v the long value
+   */
   @Override
-  public final void writeLong(final long v) {
+  public void writeLong(final long v) {
     buf.writeLong(v);
   }
 
+  /**
+   * Writes a 4-byte float value to the buffer.
+   *
+   * @param v the float value
+   */
   @Override
-  public final void writeFloat(final float v) {
+  public void writeFloat(final float v) {
     buf.writeFloat(v);
   }
 
+  /**
+   * Writes an 8-byte double value to the buffer.
+   *
+   * @param v the double value
+   */
   @Override
-  public final void writeDouble(final double v) {
+  public void writeDouble(final double v) {
     buf.writeDouble(v);
   }
 
+  /**
+   * Writes the characters of the string as ASCII bytes.
+   *
+   * @param s the string to write
+   */
   @Override
-  public final void writeBytes(@NotNull final String s) {
+  public void writeBytes(@NotNull final String s) {
     buf.writeCharSequence(s, StandardCharsets.US_ASCII);
   }
 
+  /**
+   * Writes each character of the string as a 2-byte {@code char}.
+   *
+   * @param s the string to write
+   */
   @Override
-  public final void writeChars(final String s) {
+  public void writeChars(final String s) {
     for (char c : s.toCharArray()) {
       buf.writeChar(c);
     }
   }
 
+  /**
+   * Writes the string in UTF-8 format using {@link DataOutputStream#writeUTF(String)}.
+   *
+   * @param s the string to write
+   * @throws IllegalStateException if an I/O error occurs
+   */
   @Override
-  public final void writeUTF(@NotNull final String s) {
+  public void writeUTF(@NotNull final String s) {
     try {
       this.utf8out.writeUTF(s);
     } catch (IOException e) {

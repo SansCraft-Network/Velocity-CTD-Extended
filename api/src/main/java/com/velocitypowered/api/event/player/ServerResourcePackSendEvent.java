@@ -93,13 +93,31 @@ public class ServerResourcePackSendEvent implements ResultedEvent<ResultedEvent.
     this.providedResourcePack = providedResourcePack;
   }
 
+  /**
+   * Gets the {@link GenericResult} that determines whether the resource pack will be forwarded
+   * to the player.
+   *
+   * <p>By default, the result is {@code allowed()}, meaning the proxy will forward the resource pack
+   * unless explicitly denied by a plugin.</p>
+   *
+   * @return the current event result
+   */
   @Override
-  public final GenericResult getResult() {
+  public GenericResult getResult() {
     return this.result;
   }
 
+  /**
+   * Sets the {@link GenericResult} that controls whether the resource pack is forwarded to the player.
+   *
+   * <p>If set to {@code denied()}, the proxy will send a DENIED response to the backend server instead
+   * of forwarding the pack to the player. If the pack was marked as forced, the server may then disconnect the player.</p>
+   *
+   * @param result the new result for this event
+   * @throws NullPointerException if {@code result} is {@code null}
+   */
   @Override
-  public final void setResult(final GenericResult result) {
+  public void setResult(final GenericResult result) {
     this.result = result;
   }
 }

@@ -61,8 +61,17 @@ public class PlayPacketQueueInboundHandler extends ChannelDuplexHandler {
     this.registry = StateRegistry.CONFIG.getProtocolRegistry(direction, version);
   }
 
+  /**
+   * Intercepts incoming packets and conditionally queues them based on the current protocol state.
+   *
+   * <p>If the packet is part of the {@code CONFIG} state, it is immediately passed through.
+   * Otherwise, it is queued and deferred until the channel transitions to the {@code PLAY} state.</p>
+   *
+   * @param ctx the Netty channel context
+   * @param msg the incoming message (typically a {@link MinecraftPacket})
+   */
   @Override
-  public final void channelRead(@NotNull final ChannelHandlerContext ctx, @NotNull final Object msg) {
+  public void channelRead(@NotNull final ChannelHandlerContext ctx, @NotNull final Object msg) {
     if (msg instanceof final MinecraftPacket packet) {
       // If the packet exists in the CONFIG state, we want to always
       // ensure that it gets handled by the current handler
@@ -76,15 +85,32 @@ public class PlayPacketQueueInboundHandler extends ChannelDuplexHandler {
     this.queue.offer(msg);
   }
 
+  /**
+   * Invoked when the channel becomes inactive.
+   *
+   * <p>This method clears and releases all queued packets, as the connection
+   * will no longer reach the {@code PLAY} state.</p>
+   *
+   * @param ctx the Netty channel context
+   * @throws Exception if an error occurs during release
+   */
   @Override
-  public final void channelInactive(@NotNull final ChannelHandlerContext ctx) throws Exception {
+  public void channelInactive(@NotNull final ChannelHandlerContext ctx) throws Exception {
     this.releaseQueue(ctx, false);
 
     super.channelInactive(ctx);
   }
 
+  /**
+   * Called when this handler is removed from the pipeline.
+   *
+   * <p>Flushes all queued packets. If the channel is still active,
+   * they are forwarded downstream. Otherwise, their buffers are released.</p>
+   *
+   * @param ctx the Netty channel context
+   */
   @Override
-  public final void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(final ChannelHandlerContext ctx) {
     this.releaseQueue(ctx, ctx.channel().isActive());
   }
 

@@ -102,6 +102,13 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     this.success = success;
   }
 
+  /**
+   * Returns a string representation of this login plugin response packet.
+   *
+   * <p>This includes the plugin message ID, success status, and content buffer.</p>
+   *
+   * @return a string representation of the packet
+   */
   @Override
   public String toString() {
     return "LoginPluginResponse{"
@@ -111,8 +118,18 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
         + '}';
   }
 
+  /**
+   * Decodes this login plugin response packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads the plugin message ID, success flag, and any remaining payload
+   * data from the buffer, retaining it in the internal buffer.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version being used
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     this.id = ProtocolUtils.readVarInt(buf);
     this.success = buf.readBoolean();
     if (buf.isReadable()) {
@@ -122,15 +139,33 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     }
   }
 
+  /**
+   * Encodes this login plugin response packet into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes the plugin message ID, success flag, and any payload data
+   * to the output buffer.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version being used
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     ProtocolUtils.writeVarInt(buf, id);
     buf.writeBoolean(success);
     buf.writeBytes(content());
   }
 
+  /**
+   * Handles this login plugin response packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

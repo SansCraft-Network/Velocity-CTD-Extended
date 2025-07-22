@@ -46,8 +46,12 @@ public class CommandGraphInjectorTests extends CommandTestSuite {
    */
   private RootCommandNode<CommandSource> dest;
 
+  /**
+   * Initializes the command test suite and prepares the Brigadier root node
+   * for command injection testing.
+   */
   @BeforeEach
-  final void setUp() {
+  void setUp() {
     super.setUp();
     this.dest = new RootCommandNode<>();
   }

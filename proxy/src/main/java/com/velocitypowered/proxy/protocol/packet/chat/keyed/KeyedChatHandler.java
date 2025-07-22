@@ -66,8 +66,16 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
     this.player = player;
   }
 
+  /**
+   * Returns the class of packets this handler is responsible for.
+   *
+   * <p>This identifies the handler as responsible for {@link KeyedPlayerChatPacket}
+   * packets in the chat pipeline.</p>
+   *
+   * @return the class of {@code KeyedPlayerChatPacket}
+   */
   @Override
-  public final Class<KeyedPlayerChatPacket> packetClass() {
+  public Class<KeyedPlayerChatPacket> packetClass() {
     return KeyedPlayerChatPacket.class;
   }
 
@@ -105,8 +113,22 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
         + "Contact your network administrator."));
   }
 
+  /**
+   * Handles inbound player chat messages represented by {@link KeyedPlayerChatPacket}.
+   *
+   * <p>This method performs the following logic:</p>
+   * <ul>
+   *   <li>Fires a {@link PlayerChatEvent} for plugins to observe or modify the message.</li>
+   *   <li>If the message is signed and signing is enforced, cancellation or modification
+   *       by plugins results in the player being disconnected.</li>
+   *   <li>Otherwise, the chat is converted to a {@link MinecraftPacket} and queued
+   *       to be sent to the server.</li>
+   * </ul>
+   *
+   * @param packet the inbound {@code KeyedPlayerChatPacket} sent by the client
+   */
   @Override
-  public final void handlePlayerChatInternal(final KeyedPlayerChatPacket packet) {
+  public void handlePlayerChatInternal(final KeyedPlayerChatPacket packet) {
     ChatQueue chatQueue = this.player.getChatQueue();
     EventManager eventManager = this.server.getEventManager();
     PlayerChatEvent toSend = new PlayerChatEvent(player, packet.getMessage());

@@ -47,9 +47,20 @@ public final class SimpleCommandInvocation extends AbstractCommandInvocation<Str
    */
   public static class Factory implements CommandInvocationFactory<SimpleCommand.Invocation> {
 
+    /**
+     * Creates a {@link SimpleCommand.Invocation} from the parsed command context.
+     *
+     * <p>This method extracts the command alias and arguments from the provided parse results
+     * and returns a new {@link SimpleCommandInvocation} instance representing the invocation.</p>
+     *
+     * @param source the command source (e.g., player or console)
+     * @param nodes the parsed command nodes from Brigadier
+     * @param arguments the parsed arguments mapped by name
+     * @return a new {@link SimpleCommandInvocation} instance
+     */
     @Override
-    public final SimpleCommand.Invocation create(final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
-                                                 final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
+    public SimpleCommand.Invocation create(final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
+                                           final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
       final String alias = VelocityCommands.readAlias(nodes);
       final String[] args = VelocityCommands.readArguments(arguments, String[].class, StringArrayArgumentType.EMPTY);
       return new SimpleCommandInvocation(source, alias, args);

@@ -124,8 +124,18 @@ public class SessionPlayerChatPacket implements MinecraftPacket {
     return lastSeenMessages;
   }
 
+  /**
+   * Decodes this session-based player chat packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the message content, timestamp, salt, signature presence flag,
+   * fixed-length signature (if signed), and the {@link LastSeenMessages} metadata.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
     this.message = ProtocolUtils.readString(buf, 256);
     this.timestamp = Instant.ofEpochMilli(buf.readLong());
@@ -140,9 +150,19 @@ public class SessionPlayerChatPacket implements MinecraftPacket {
     this.lastSeenMessages = new LastSeenMessages(buf, protocolVersion);
   }
 
+  /**
+   * Encodes this session-based player chat packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the message content, timestamp, salt, signature flag, signature bytes (if signed),
+   * and the {@link LastSeenMessages} metadata to the buffer.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                           final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                     final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, this.message);
     buf.writeLong(this.timestamp.toEpochMilli());
     buf.writeLong(this.salt);
@@ -154,8 +174,17 @@ public class SessionPlayerChatPacket implements MinecraftPacket {
     this.lastSeenMessages.encode(buf, protocolVersion);
   }
 
+  /**
+   * Handles this session-based player chat packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates packet processing to {@code handler.handle(this)} for signature
+   * validation, context matching, and chat routing.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

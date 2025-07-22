@@ -84,8 +84,19 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
     this.state = StateRegistry.HANDSHAKE;
   }
 
+  /**
+   * Handles inbound messages from the Netty pipeline.
+   *
+   * <p>If the message is a {@link ByteBuf}, it is treated as a raw Minecraft packet
+   * and passed to {@link #tryDecode(ChannelHandlerContext, ByteBuf)} for decoding.
+   * Otherwise, the message is forwarded through the pipeline unchanged.</p>
+   *
+   * @param ctx the Netty channel context
+   * @param msg the inbound message to process
+   * @throws Exception if an error occurs during decoding
+   */
   @Override
-  public final void channelRead(@NotNull final ChannelHandlerContext ctx, @NotNull final Object msg) throws Exception {
+  public void channelRead(@NotNull final ChannelHandlerContext ctx, @NotNull final Object msg) throws Exception {
     if (msg instanceof ByteBuf buf) {
       tryDecode(ctx, buf);
     } else {

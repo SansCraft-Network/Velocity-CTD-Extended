@@ -88,8 +88,17 @@ public class VelocityScheduler implements Scheduler {
             .setNameFormat("Velocity Task Scheduler Timer").build());
   }
 
+  /**
+   * Creates a new {@link TaskBuilder} to construct a scheduled task that runs the given {@link Runnable}.
+   *
+   * @param plugin the plugin creating the task
+   * @param runnable the logic to execute
+   * @return a builder for scheduling the task
+   * @throws NullPointerException if {@code plugin} or {@code runnable} is {@code null}
+   * @throws IllegalArgumentException if {@code plugin} is not registered
+   */
   @Override
-  public final TaskBuilder buildTask(@NotNull final Object plugin, @NotNull final Runnable runnable) {
+  public TaskBuilder buildTask(@NotNull final Object plugin, @NotNull final Runnable runnable) {
     checkNotNull(plugin, "plugin");
     checkNotNull(runnable, "runnable");
     final Optional<PluginContainer> container = pluginManager.fromInstance(plugin);
@@ -97,8 +106,19 @@ public class VelocityScheduler implements Scheduler {
     return new TaskBuilderImpl(container.get(), runnable);
   }
 
+  /**
+   * Creates a new {@link TaskBuilder} to construct a scheduled task that executes the given {@link Consumer}.
+   *
+   * <p>The consumer receives the {@link ScheduledTask} instance when the task is run.</p>
+   *
+   * @param plugin the plugin creating the task
+   * @param consumer the task logic receiving the task context
+   * @return a builder for scheduling the task
+   * @throws NullPointerException if {@code plugin} or {@code consumer} is {@code null}
+   * @throws IllegalArgumentException if {@code plugin} is not registered
+   */
   @Override
-  public final TaskBuilder buildTask(@NotNull final Object plugin, @NotNull final Consumer<ScheduledTask> consumer) {
+  public TaskBuilder buildTask(@NotNull final Object plugin, @NotNull final Consumer<ScheduledTask> consumer) {
     checkNotNull(plugin, "plugin");
     checkNotNull(consumer, "consumer");
     final Optional<PluginContainer> container = pluginManager.fromInstance(plugin);
@@ -106,8 +126,16 @@ public class VelocityScheduler implements Scheduler {
     return new TaskBuilderImpl(container.get(), consumer);
   }
 
+  /**
+   * Retrieves all active tasks associated with the given plugin.
+   *
+   * @param plugin the plugin to query tasks for
+   * @return an immutable view of tasks owned by the plugin
+   * @throws NullPointerException if {@code plugin} is {@code null}
+   * @throws IllegalArgumentException if {@code plugin} is not registered
+   */
   @Override
-  public final @NonNull Collection<ScheduledTask> tasksByPlugin(@NonNull final Object plugin) {
+  public @NonNull Collection<ScheduledTask> tasksByPlugin(@NonNull final Object plugin) {
     checkNotNull(plugin, "plugin");
     checkArgument(pluginManager.fromInstance(plugin).isPresent(), "plugin is not registered");
     final Collection<ScheduledTask> tasks = tasksByPlugin.get(plugin);

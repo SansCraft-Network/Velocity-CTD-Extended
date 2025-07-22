@@ -33,8 +33,18 @@ public class TimeArgumentSerializer implements ArgumentPropertySerializer<Intege
    */
   static final TimeArgumentSerializer TIME = new TimeArgumentSerializer();
 
+  /**
+   * Deserializes a time-based argument from the given {@link ByteBuf}.
+   *
+   * <p>For protocol versions {@code 1.19.4} and above, this reads a 4-byte {@code int}.
+   * For earlier versions, this returns {@code 0}.</p>
+   *
+   * @param buf the buffer containing the serialized data
+   * @param protocolVersion the protocol version to use during deserialization
+   * @return the deserialized time value as an {@link Integer}
+   */
   @Override
-  public final Integer deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public Integer deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_4)) {
       return buf.readInt();
     }
@@ -42,8 +52,18 @@ public class TimeArgumentSerializer implements ArgumentPropertySerializer<Intege
     return 0;
   }
 
+  /**
+   * Serializes a time-based argument into the given {@link ByteBuf}.
+   *
+   * <p>For protocol versions {@code 1.19.4} and above, this writes a 4-byte {@code int}.
+   * For earlier versions, nothing is written.</p>
+   *
+   * @param object the time value to serialize
+   * @param buf the buffer to write to
+   * @param protocolVersion the protocol version to use during serialization
+   */
   @Override
-  public final void serialize(final Integer object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void serialize(final Integer object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_4)) {
       buf.writeInt(object);
     }

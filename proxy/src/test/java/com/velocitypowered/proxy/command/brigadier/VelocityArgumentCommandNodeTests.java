@@ -52,8 +52,12 @@ public class VelocityArgumentCommandNodeTests {
    */
   private CommandContextBuilder<Object> contextBuilder;
 
+  /**
+   * Sets up the {@link CommandContextBuilder} used by each test by initializing a root
+   * context with a dummy source.
+   */
   @BeforeEach
-  final void setUp() {
+  void setUp() {
     final CommandDispatcher<Object> dispatcher = new CommandDispatcher<>();
     this.contextBuilder = new CommandContextBuilder<>(dispatcher, new Object(),
         dispatcher.getRoot(), 0);

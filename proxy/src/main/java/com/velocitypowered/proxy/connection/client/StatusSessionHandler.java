@@ -74,16 +74,32 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
     this.inbound = inbound;
   }
 
+  /**
+   * Called when this session handler is activated.
+   *
+   * <p>If ping logging is enabled in the configuration, this logs the fact that
+   * the client has initiated a status ping and identifies the protocol version used.</p>
+   */
   @Override
-  public final void activated() {
+  public void activated() {
     if (server.getConfiguration().isShowPingRequests()) {
       logger.info("{} is pinging the server with version {}", this.inbound,
           this.connection.getProtocolVersion());
     }
   }
 
+  /**
+   * Handles a {@link LegacyPingPacket} sent by a pre-1.7 client.
+   *
+   * <p>This method ensures only one ping request is processed per session. It then generates a ping response
+   * and closes the connection after responding.</p>
+   *
+   * @param packet the legacy ping packet
+   * @return {@code true} if the packet was handled
+   * @throws QuietRuntimeException if a ping was already received for this session
+   */
   @Override
-  public final boolean handle(final LegacyPingPacket packet) {
+  public boolean handle(final LegacyPingPacket packet) {
     if (this.pingReceived) {
       throw EXPECTED_AWAITING_REQUEST;
     }
@@ -107,14 +123,32 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link StatusPingPacket} which completes the 1.7+ ping process.
+   *
+   * <p>This closes the connection after sending the pong response (handled by Netty).</p>
+   *
+   * @param packet the status ping packet
+   * @return {@code true} if the packet was handled
+   */
   @Override
-  public final boolean handle(final StatusPingPacket packet) {
+  public boolean handle(final StatusPingPacket packet) {
     connection.closeWith(packet);
     return true;
   }
 
+  /**
+   * Handles a {@link StatusRequestPacket} from modern (1.7+) clients requesting status info.
+   *
+   * <p>This triggers the {@link ProxyPingEvent} and responds with a {@link StatusResponsePacket}
+   * if the event is allowed. If not, the connection is closed.</p>
+   *
+   * @param packet the status request
+   * @return {@code true} if the request was processed
+   * @throws QuietRuntimeException if a ping was already received for this session
+   */
   @Override
-  public final boolean handle(final StatusRequestPacket packet) {
+  public boolean handle(final StatusRequestPacket packet) {
     if (this.pingReceived) {
       throw EXPECTED_AWAITING_REQUEST;
     }
@@ -143,8 +177,16 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Called when an unknown packet is received during a status ping session.
+   *
+   * <p>This forcefully closes the connection because status sessions only expect a
+   * small, fixed set of packet types.</p>
+   *
+   * @param buf the buffer containing the unknown packet
+   */
   @Override
-  public final void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(final ByteBuf buf) {
     // what even is going on?
     connection.close(true);
   }

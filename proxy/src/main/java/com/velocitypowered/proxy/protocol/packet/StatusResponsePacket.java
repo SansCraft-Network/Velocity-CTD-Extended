@@ -63,20 +63,46 @@ public class StatusResponsePacket implements MinecraftPacket {
     return status.toString();
   }
 
+  /**
+   * Returns a string representation of this status response packet.
+   *
+   * <p>This includes the JSON-like status string representing the server response.</p>
+   *
+   * @return a string describing the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "StatusResponse{"
         + "status='" + status + '\''
         + '}';
   }
 
+  /**
+   * Decodes this status response packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the server status message as a {@link String}, typically JSON-formatted.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     status = ProtocolUtils.readString(buf, Short.MAX_VALUE);
   }
 
+  /**
+   * Encodes this status response packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the server status message as a {@link String}, typically JSON-formatted.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @throws IllegalStateException if the status is not specified
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (status == null) {
       throw new IllegalStateException("Status is not specified");
     }
@@ -84,8 +110,17 @@ public class StatusResponsePacket implements MinecraftPacket {
     ProtocolUtils.writeString(buf, status);
   }
 
+  /**
+   * Handles this status response packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)} to complete the client's
+   * status query handshake.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

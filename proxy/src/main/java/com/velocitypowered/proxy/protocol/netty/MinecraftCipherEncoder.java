@@ -48,8 +48,21 @@ public class MinecraftCipherEncoder extends MessageToMessageEncoder<ByteBuf> {
     this.cipher = Preconditions.checkNotNull(cipher, "cipher");
   }
 
+  /**
+   * Encrypts the given Minecraft {@link ByteBuf} using the configured {@link VelocityCipher}.
+   *
+   * <p>This method ensures the input buffer is compatible with native cipher operations,
+   * then encrypts the contents in-place. The encrypted buffer is added to the output list.</p>
+   *
+   * <p>If encryption fails, the buffer is released and the exception is propagated.</p>
+   *
+   * @param ctx the Netty channel context
+   * @param msg the outgoing unencrypted Minecraft packet
+   * @param out the list to which the encrypted buffer is added
+   * @throws Exception if an error occurs during encryption
+   */
   @Override
-  protected final void encode(final ChannelHandlerContext ctx, final ByteBuf msg, final List<Object> out) throws Exception {
+  protected void encode(final ChannelHandlerContext ctx, final ByteBuf msg, final List<Object> out) throws Exception {
     ByteBuf compatible = MoreByteBufUtils.ensureCompatible(ctx.alloc(), cipher, msg);
     try {
       cipher.process(compatible);
@@ -60,8 +73,16 @@ public class MinecraftCipherEncoder extends MessageToMessageEncoder<ByteBuf> {
     }
   }
 
+  /**
+   * Called when the encoder is removed from the Netty pipeline.
+   *
+   * <p>This ensures that the associated {@link VelocityCipher} is properly closed and
+   * any native resources are released.</p>
+   *
+   * @param ctx the Netty channel context
+   */
   @Override
-  public final void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(final ChannelHandlerContext ctx) {
     cipher.close();
   }
 }

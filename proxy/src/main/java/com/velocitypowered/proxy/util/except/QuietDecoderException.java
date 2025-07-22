@@ -34,8 +34,17 @@ public class QuietDecoderException extends DecoderException {
     super(message);
   }
 
+  /**
+   * Overrides the default behavior of {@link Throwable#fillInStackTrace()} to prevent
+   * generating a full stack trace.
+   *
+   * <p>This is used to suppress noisy exception logs in cases where the decoding failure
+   * is expected or non-critical, improving performance and log clarity.</p>
+   *
+   * @return this exception instance without a stack trace
+   */
   @Override
-  public final synchronized Throwable fillInStackTrace() {
+  public synchronized Throwable fillInStackTrace() {
     return this;
   }
 }

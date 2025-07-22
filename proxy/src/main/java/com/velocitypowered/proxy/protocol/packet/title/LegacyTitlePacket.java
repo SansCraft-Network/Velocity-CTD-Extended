@@ -56,8 +56,21 @@ public class LegacyTitlePacket extends GenericTitlePacket {
    */
   private int fadeOut;
 
+  /**
+   * Encodes this {@code LegacyTitlePacket} into the provided {@link ByteBuf}.
+   *
+   * <p>This method serializes the packet depending on the current {@link ActionType}.
+   * For versions older than 1.11, {@link ActionType#SET_ACTION_BAR} is disallowed and
+   * will throw an exception. Based on the action, it may write a {@link ComponentHolder}
+   * or timing values for fade-in, stay, and fade-out durations.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the protocol version used during encoding
+   * @throws IllegalStateException if required data is missing or the action is unsupported
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_11)
         && getAction() == ActionType.SET_ACTION_BAR) {
       throw new IllegalStateException("Action bars are only supported on 1.11 and newer");
@@ -83,53 +96,123 @@ public class LegacyTitlePacket extends GenericTitlePacket {
     }
   }
 
+  /**
+   * Sets the action type for this legacy title packet.
+   *
+   * <p>This method delegates to {@link GenericTitlePacket#setAction(ActionType)}.</p>
+   *
+   * @param action the action type to set
+   */
   @Override
-  public final void setAction(final ActionType action) {
+  public void setAction(final ActionType action) {
     super.setAction(action);
   }
 
+  /**
+   * Returns the {@link ComponentHolder} used in this packet.
+   *
+   * <p>This component represents the text used for title, subtitle,
+   * or action bar based on the {@link ActionType}.</p>
+   *
+   * @return the component used in this packet, or {@code null} if unset
+   */
   @Override
-  public final @Nullable ComponentHolder getComponent() {
+  public @Nullable ComponentHolder getComponent() {
     return component;
   }
 
+  /**
+   * Sets the {@link ComponentHolder} to be used in this packet.
+   *
+   * @param component the component to assign; may be {@code null}
+   */
   @Override
-  public final void setComponent(@Nullable final ComponentHolder component) {
+  public void setComponent(@Nullable final ComponentHolder component) {
     this.component = component;
   }
 
+  /**
+   * Gets the fade-in duration in ticks.
+   *
+   * <p>This value is only relevant when the action is {@link ActionType#SET_TIMES}.</p>
+   *
+   * @return the fade-in time in ticks
+   */
   @Override
-  public final int getFadeIn() {
+  public int getFadeIn() {
     return fadeIn;
   }
 
+  /**
+   * Sets the fade-in duration in ticks.
+   *
+   * <p>This value is only used for {@link ActionType#SET_TIMES}.</p>
+   *
+   * @param fadeIn the number of ticks to fade in the title
+   */
   @Override
-  public final void setFadeIn(final int fadeIn) {
+  public void setFadeIn(final int fadeIn) {
     this.fadeIn = fadeIn;
   }
 
+  /**
+   * Gets the duration in ticks for which the title remains on screen.
+   *
+   * <p>This value is only applicable for {@link ActionType#SET_TIMES}.</p>
+   *
+   * @return the stay time in ticks
+   */
   @Override
-  public final int getStay() {
+  public int getStay() {
     return stay;
   }
 
+  /**
+   * Sets the duration in ticks for which the title remains on screen.
+   *
+   * <p>This value is only used for {@link ActionType#SET_TIMES}.</p>
+   *
+   * @param stay the number of ticks the title should stay
+   */
   @Override
-  public final void setStay(final int stay) {
+  public void setStay(final int stay) {
     this.stay = stay;
   }
 
+  /**
+   * Gets the fade-out duration in ticks.
+   *
+   * <p>This value is only used for {@link ActionType#SET_TIMES}.</p>
+   *
+   * @return the fade-out time in ticks
+   */
   @Override
-  public final int getFadeOut() {
+  public int getFadeOut() {
     return fadeOut;
   }
 
+  /**
+   * Sets the fade-out duration in ticks.
+   *
+   * <p>This value is only used for {@link ActionType#SET_TIMES}.</p>
+   *
+   * @param fadeOut the number of ticks to fade out the title
+   */
   @Override
-  public final void setFadeOut(final int fadeOut) {
+  public void setFadeOut(final int fadeOut) {
     this.fadeOut = fadeOut;
   }
 
+  /**
+   * Returns a string representation of this {@code LegacyTitlePacket}.
+   *
+   * <p>The output includes the current title action, component (if any), and
+   * timing fields such as fade-in, stay, and fade-out durations.</p>
+   *
+   * @return a human-readable string describing this packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "GenericTitlePacket{"
         + "action=" + getAction()
         + ", component='" + component + '\''
@@ -139,8 +222,16 @@ public class LegacyTitlePacket extends GenericTitlePacket {
         + '}';
   }
 
+  /**
+   * Handles this {@code LegacyTitlePacket} by passing it to the provided session handler.
+   *
+   * <p>This delegates processing to {@link MinecraftSessionHandler#handle(LegacyTitlePacket)}.</p>
+   *
+   * @param handler the session handler responsible for handling the packet
+   * @return {@code true} if handled successfully, otherwise {@code false}
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

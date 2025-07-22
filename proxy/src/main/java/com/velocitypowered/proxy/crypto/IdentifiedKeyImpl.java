@@ -92,33 +92,63 @@ public class IdentifiedKeyImpl implements IdentifiedKey {
     this.signature = signature;
   }
 
+  /**
+   * Returns the signed public key contained in this identified key.
+   *
+   * @return the public key
+   */
   @Override
-  public final PublicKey getSignedPublicKey() {
+  public PublicKey getSignedPublicKey() {
     return publicKey;
   }
 
+  /**
+   * Returns the key used to sign the public key, typically the Yggdrasil session public key.
+   *
+   * @return the signer public key
+   */
   @Override
-  public final PublicKey getSigner() {
+  public PublicKey getSigner() {
     return EncryptionUtils.getYggdrasilSessionKey();
   }
 
+  /**
+   * Returns the expiration time of the key.
+   *
+   * @return the expiry time
+   */
   @Override
-  public final Instant getExpiryTemporal() {
+  public Instant getExpiryTemporal() {
     return expiryTemporal;
   }
 
+  /**
+   * Returns a copy of the signature associated with the key.
+   *
+   * @return the signature byte array
+   */
   @Override
-  public final byte[] getSignature() {
+  public byte[] getSignature() {
     return signature.clone();
   }
 
+  /**
+   * Returns the UUID of the player who owns this key, if known.
+   *
+   * @return the signature holder UUID or {@code null} if not set
+   */
   @Override
-  public final @Nullable UUID getSignatureHolder() {
+  public @Nullable UUID getSignatureHolder() {
     return holder;
   }
 
+  /**
+   * Returns the revision of the key format.
+   *
+   * @return the key revision
+   */
   @Override
-  public final Revision getKeyRevision() {
+  public Revision getKeyRevision() {
     return revision;
   }
 
@@ -147,8 +177,15 @@ public class IdentifiedKeyImpl implements IdentifiedKey {
     return this.holder.equals(holder) && isSignatureValid();
   }
 
+  /**
+   * Returns whether the signature on this key is valid.
+   *
+   * <p>The result is cached after the first evaluation.</p>
+   *
+   * @return {@code true} if the signature is valid, otherwise {@code false}
+   */
   @Override
-  public final boolean isSignatureValid() {
+  public boolean isSignatureValid() {
     if (isSignatureValid == null) {
       isSignatureValid = validateData(holder);
     }
@@ -180,8 +217,15 @@ public class IdentifiedKeyImpl implements IdentifiedKey {
     }
   }
 
+  /**
+   * Verifies an arbitrary data signature using the key's public key.
+   *
+   * @param signature the signature to verify
+   * @param toVerify the data segments used to verify the signature
+   * @return {@code true} if the signature is valid, otherwise {@code false}
+   */
   @Override
-  public final boolean verifyDataSignature(final byte[] signature, final byte[]... toVerify) {
+  public boolean verifyDataSignature(final byte[] signature, final byte[]... toVerify) {
     try {
       return EncryptionUtils.verifySignature(EncryptionUtils.SHA256_WITH_RSA, publicKey, signature, toVerify);
     } catch (IllegalArgumentException e) {
@@ -189,8 +233,13 @@ public class IdentifiedKeyImpl implements IdentifiedKey {
     }
   }
 
+  /**
+   * Returns a debug-friendly string representation of this identified key.
+   *
+   * @return string describing the key fields
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "IdentifiedKeyImpl{"
         + "revision=" + revision
         + ", publicKey=" + publicKey
@@ -201,8 +250,16 @@ public class IdentifiedKeyImpl implements IdentifiedKey {
         + '}';
   }
 
+  /**
+   * Compares this identified key to another for equality.
+   *
+   * <p>Equality is based on public key, expiration time, signature, and signer.</p>
+   *
+   * @param o the object to compare
+   * @return {@code true} if the keys are logically equal
+   */
   @Override
-  public final boolean equals(final Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }

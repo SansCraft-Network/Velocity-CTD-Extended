@@ -117,8 +117,15 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     this.properties = properties;
   }
 
+  /**
+   * Returns a string representation of this login success packet.
+   *
+   * <p>This includes the UUID, username, and profile properties if present.</p>
+   *
+   * @return a string describing this packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "ServerLoginSuccess{"
         + "uuid=" + uuid
         + ", username='" + username + '\''
@@ -126,8 +133,18 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this server login success packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the UUID, username, optional properties, and strict error handling flag
+   * depending on the Minecraft protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19)) {
       uuid = ProtocolUtils.readUuid(buf);
     } else if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
@@ -149,8 +166,19 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this server login success packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the UUID, username, optional profile properties, and strict error handling flag
+   * depending on the Minecraft protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @throws IllegalStateException if UUID or username is not set
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (uuid == null) {
       throw new IllegalStateException("No UUID specified!");
     }
@@ -184,8 +212,16 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this server login success packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates packet handling logic to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

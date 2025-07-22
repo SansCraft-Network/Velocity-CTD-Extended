@@ -223,8 +223,14 @@ public class VelocityPluginManager implements PluginManager {
     }
   }
 
+  /**
+   * Resolves the {@link PluginContainer} associated with the given plugin instance.
+   *
+   * @param instance the plugin instance or container
+   * @return an {@link Optional} containing the plugin container, if registered
+   */
   @Override
-  public final Optional<PluginContainer> fromInstance(final Object instance) {
+  public Optional<PluginContainer> fromInstance(final Object instance) {
     checkNotNull(instance, "instance");
 
     if (instance instanceof PluginContainer) {
@@ -234,24 +240,51 @@ public class VelocityPluginManager implements PluginManager {
     return Optional.ofNullable(pluginInstances.get(instance));
   }
 
+  /**
+   * Looks up a registered plugin by its ID.
+   *
+   * @param id the plugin ID
+   * @return an {@link Optional} containing the plugin container, if found
+   */
   @Override
-  public final Optional<PluginContainer> getPlugin(final String id) {
+  public Optional<PluginContainer> getPlugin(final String id) {
     checkNotNull(id, "id");
     return Optional.ofNullable(pluginsById.get(id));
   }
 
+  /**
+   * Returns an unmodifiable collection of all registered plugins.
+   *
+   * @return a collection of plugin containers
+   */
   @Override
-  public final Collection<PluginContainer> getPlugins() {
+  public Collection<PluginContainer> getPlugins() {
     return Collections.unmodifiableCollection(pluginsById.values());
   }
 
+  /**
+   * Returns whether a plugin with the given ID is currently loaded.
+   *
+   * @param id the plugin ID to check
+   * @return {@code true} if the plugin is loaded
+   */
   @Override
-  public final boolean isLoaded(final String id) {
+  public boolean isLoaded(final String id) {
     return pluginsById.containsKey(id);
   }
 
+  /**
+   * Dynamically adds a new file to the classpath of the specified plugin.
+   *
+   * <p>This operation is only supported for Java-based Velocity plugins using {@link PluginClassLoader}.</p>
+   *
+   * @param plugin the plugin instance
+   * @param path the path to add to the plugin's classpath
+   * @throws UnsupportedOperationException if the plugin is not Java-based
+   * @throws IllegalArgumentException if the plugin is not loaded or has no instance
+   */
   @Override
-  public final void addToClasspath(final Object plugin, final Path path) {
+  public void addToClasspath(final Object plugin, final Path path) {
     checkNotNull(plugin, "instance");
     checkNotNull(path, "path");
     Optional<PluginContainer> optContainer = fromInstance(plugin);

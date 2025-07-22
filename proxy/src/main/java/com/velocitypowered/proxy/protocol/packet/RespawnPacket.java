@@ -339,8 +339,16 @@ public class RespawnPacket implements MinecraftPacket {
     this.seaLevel = seaLevel;
   }
 
+  /**
+   * Returns a string representation of this respawn packet.
+   *
+   * <p>This includes dimension, gamemode, seed, difficulty, flags, and
+   * optional NBT and location data relevant to respawn behavior.</p>
+   *
+   * @return a string describing this packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "Respawn{"
         + "dimension=" + dimension
         + ", partialHashedSeed=" + partialHashedSeed
@@ -357,8 +365,18 @@ public class RespawnPacket implements MinecraftPacket {
         + '}';
   }
 
+  /**
+   * Decodes this respawn packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads dimension information, gamemode, terrain seed, optional
+   * death location, portal cooldown, and sea level, depending on the protocol version.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     String dimensionKey = "";
     String levelName = null;
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
@@ -419,8 +437,18 @@ public class RespawnPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Encodes this respawn packet into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes dimension metadata, gamemode, terrain seed, flags, and optional
+   * death location and environmental data based on the protocol version.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
       if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16_2)
           && version.lessThan(ProtocolVersion.MINECRAFT_1_19)) {
@@ -484,8 +512,17 @@ public class RespawnPacket implements MinecraftPacket {
     }
   }
 
+  /**
+   * Handles this respawn packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling to {@code handler.handle(this)} to trigger
+   * client-side state resets after respawn or dimension change.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

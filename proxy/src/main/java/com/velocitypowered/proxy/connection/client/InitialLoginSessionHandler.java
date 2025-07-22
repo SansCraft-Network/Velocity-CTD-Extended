@@ -148,8 +148,19 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     }
   }
 
+  /**
+   * Handles a {@link ServerLoginPacket} sent by the client to initiate login.
+   *
+   * <p>This validates the client’s public key (if present), fires a {@link PreLoginEvent},
+   * and initiates encryption or offline-mode authentication depending on the event result and
+   * proxy configuration. If the public key is missing when required, or validation fails,
+   * the player is disconnected with an appropriate message.</p>
+   *
+   * @param packet the server login packet
+   * @return {@code true} if the login packet was processed
+   */
   @Override
-  public final boolean handle(final ServerLoginPacket packet) {
+  public boolean handle(final ServerLoginPacket packet) {
     assertState(LoginState.LOGIN_PACKET_EXPECTED);
     this.currentState = LoginState.LOGIN_PACKET_RECEIVED;
     IdentifiedKey playerKey = packet.getPlayerKey();
@@ -226,14 +237,34 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
+  /**
+   * Handles a {@link LoginPluginResponsePacket} received during login plugin message exchange.
+   *
+   * <p>This delegates handling to {@link LoginInboundConnection#handleLoginPluginResponse}.</p>
+   *
+   * @param packet the plugin response
+   * @return {@code true} always
+   */
   @Override
-  public final boolean handle(final LoginPluginResponsePacket packet) {
+  public boolean handle(final LoginPluginResponsePacket packet) {
     this.inbound.handleLoginPluginResponse(packet);
     return true;
   }
 
+  /**
+   * Handles an {@link EncryptionResponsePacket} from the client.
+   *
+   * <p>This decrypts the shared secret and verification token, performs optional public key signature
+   * verification, and contacts Mojang’s session servers (if online-mode) to authenticate the user.
+   * If authentication succeeds, encryption is enabled and the session proceeds. If authentication fails,
+   * the connection is closed with a detailed error message.</p>
+   *
+   * @param packet the encryption response packet
+   * @return {@code true} if the encryption response was processed
+   * @throws IllegalStateException if required preconditions are not met (e.g., missing verify token or login packet)
+   */
   @Override
-  public final boolean handle(final EncryptionResponsePacket packet) {
+  public boolean handle(final EncryptionResponsePacket packet) {
     assertState(LoginState.ENCRYPTION_REQUEST_SENT);
     this.currentState = LoginState.ENCRYPTION_RESPONSE_RECEIVED;
     ServerLoginPacket login = this.login;
@@ -372,13 +403,26 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     return request;
   }
 
+  /**
+   * Handles any unknown or unexpected packet received during login.
+   *
+   * <p>Since no additional packets are expected, the connection is immediately closed.</p>
+   *
+   * @param buf the unrecognized packet buffer
+   */
   @Override
-  public final void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(final ByteBuf buf) {
     mcConnection.close(true);
   }
 
+  /**
+   * Called when the connection is closed during the login phase.
+   *
+   * <p>This triggers cleanup logic in the {@link LoginInboundConnection}, such as releasing held
+   * references or updating connection tracking.</p>
+   */
   @Override
-  public final void disconnected() {
+  public void disconnected() {
     this.inbound.cleanup();
   }
 

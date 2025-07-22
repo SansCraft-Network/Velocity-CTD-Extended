@@ -43,8 +43,17 @@ public class LegacyChatBuilder extends ChatBuilderV2 {
     super(version);
   }
 
+  /**
+   * Builds a {@link LegacyChatPacket} for sending a chat message to the client.
+   *
+   * <p>This method constructs a packet compatible with older Minecraft versions
+   * by serializing the message as a legacy JSON string. If the sender identity is not set,
+   * it falls back to {@link Identity#nil()}.</p>
+   *
+   * @return the constructed {@link LegacyChatPacket} to send to the client
+   */
   @Override
-  public final MinecraftPacket toClient() {
+  public MinecraftPacket toClient() {
     // This is temporary (this also has been here for a good while)
     UUID identity = sender == null ? (senderIdentity == null ? Identity.nil().uuid() : senderIdentity.uuid()) : sender.getUniqueId();
     Component msg = component == null ? Component.text(message) : component;
@@ -52,8 +61,17 @@ public class LegacyChatBuilder extends ChatBuilderV2 {
     return new LegacyChatPacket(ProtocolUtils.getJsonChatSerializer(version).serialize(msg), type.getId(), identity);
   }
 
+  /**
+   * Builds a {@link LegacyChatPacket} for sending a chat message to the server.
+   *
+   * <p>This method creates a new {@code LegacyChatPacket} and populates it with the plain
+   * message content. No identity, chat type, or additional metadata is applied, as this format
+   * targets legacy client-to-server communication.</p>
+   *
+   * @return the constructed {@link LegacyChatPacket} to send to the server
+   */
   @Override
-  public final MinecraftPacket toServer() {
+  public MinecraftPacket toServer() {
     LegacyChatPacket chat = new LegacyChatPacket();
     chat.setMessage(message);
     return chat;

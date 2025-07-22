@@ -92,25 +92,55 @@ public class DisconnectPacket implements MinecraftPacket {
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return "Disconnect{"
         + "reason='" + reason + '\''
         + '}';
   }
 
+  /**
+   * Decodes this disconnect packet from the given {@link ByteBuf}.
+   *
+   * <p>This reads the disconnection reason component based on the current protocol state.
+   * If the packet is being decoded during the login state, it uses a fixed protocol version
+   * to ensure compatibility.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     reason = ComponentHolder.read(buf, state == StateRegistry.LOGIN
         ? ProtocolVersion.MINECRAFT_1_20_2 : version);
   }
 
+  /**
+   * Encodes this disconnect packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes the reason component using the format appropriate to the current
+   * protocol state.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param version the Minecraft protocol version
+   * @throws IllegalStateException if no reason is set before encoding
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     getReason().write(buf);
   }
 
+  /**
+   * Handles this disconnect packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling to {@code handler.handle(this)} to apply disconnection logic.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

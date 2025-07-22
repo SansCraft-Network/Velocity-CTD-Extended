@@ -60,8 +60,19 @@ public class TagsUpdatePacket implements MinecraftPacket {
     this.tags = Map.of();
   }
 
+  /**
+   * Decodes this tags update packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads a nested map structure from the buffer, where each outer entry corresponds
+   * to a registry (e.g., {@code minecraft:block}), and each inner entry maps tag names
+   * to arrays of integer identifiers.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
     ImmutableMap.Builder<String, Map<String, int[]>> builder = ImmutableMap.builder();
     int size = ProtocolUtils.readVarInt(buf);
@@ -82,8 +93,18 @@ public class TagsUpdatePacket implements MinecraftPacket {
     tags = builder.build();
   }
 
+  /**
+   * Encodes this tags update packet into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the registry-to-tag structure by serializing each registry name,
+   * followed by its associated tags and integer ID arrays.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, tags.size());
     for (Map.Entry<String, Map<String, int[]>> entry : tags.entrySet()) {
@@ -91,15 +112,24 @@ public class TagsUpdatePacket implements MinecraftPacket {
       // Oh, joy
       ProtocolUtils.writeVarInt(buf, entry.getValue().size());
       for (Map.Entry<String, int[]> innerEntry : entry.getValue().entrySet()) {
-        // Yea, object oriented programming be damned
+        // Yeah, object oriented programming be damned
         ProtocolUtils.writeString(buf, innerEntry.getKey());
         ProtocolUtils.writeVarIntArray(buf, innerEntry.getValue());
       }
     }
   }
 
+  /**
+   * Handles this tags update packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates to {@code handler.handle(this)} to propagate updated tag metadata
+   * to the session for compatibility or synchronization.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

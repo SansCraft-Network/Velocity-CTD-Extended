@@ -53,13 +53,23 @@ public class VelocityPluginContainer implements PluginContainer {
     this.description = description;
   }
 
+  /**
+   * Returns the plugin's {@link PluginDescription}.
+   *
+   * @return the plugin description
+   */
   @Override
-  public final PluginDescription getDescription() {
+  public PluginDescription getDescription() {
     return this.description;
   }
 
+  /**
+   * Returns the instance of the plugin's main class, if it has been initialized.
+   *
+   * @return an {@link Optional} containing the plugin instance, or empty if not yet available
+   */
   @Override
-  public final Optional<?> getInstance() {
+  public Optional<?> getInstance() {
     return Optional.ofNullable(instance);
   }
 
@@ -72,8 +82,15 @@ public class VelocityPluginContainer implements PluginContainer {
     this.instance = instance;
   }
 
+  /**
+   * Returns the {@link ExecutorService} used by this plugin for asynchronous task execution.
+   *
+   * <p>The service is created lazily and is named after the plugin for visibility in thread dumps.</p>
+   *
+   * @return the plugin's executor service
+   */
   @Override
-  public final ExecutorService getExecutorService() {
+  public ExecutorService getExecutorService() {
     if (this.service == null) {
       synchronized (this) {
         if (this.service == null) {
@@ -97,7 +114,7 @@ public class VelocityPluginContainer implements PluginContainer {
    *
    * @return {@code true} if the executor service is initialized, {@code false} otherwise
    */
-  public final boolean hasExecutorService() {
+  public boolean hasExecutorService() {
     return this.service != null;
   }
 }

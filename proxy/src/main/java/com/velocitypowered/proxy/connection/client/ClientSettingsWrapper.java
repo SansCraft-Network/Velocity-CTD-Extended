@@ -58,8 +58,16 @@ public class ClientSettingsWrapper implements PlayerSettings {
     this.parts = new SkinParts((byte) settings.getSkinParts());
   }
 
+  /**
+   * Returns the client's preferred {@link Locale}, derived from their language setting.
+   *
+   * <p>This is lazily computed and cached from the locale string in the client settings packet,
+   * replacing underscores with hyphens to be compatible with {@link Locale#forLanguageTag(String)}.</p>
+   *
+   * @return the {@link Locale} specified by the client
+   */
   @Override
-  public final Locale getLocale() {
+  public Locale getLocale() {
     if (locale == null) {
       locale = Locale.forLanguageTag(settings.getLocale().replaceAll("_", "-"));
     }
@@ -67,13 +75,23 @@ public class ClientSettingsWrapper implements PlayerSettings {
     return locale;
   }
 
+  /**
+   * Returns the client's configured view distance (in chunks).
+   *
+   * @return the view distance specified in the client settings
+   */
   @Override
-  public final byte getViewDistance() {
+  public byte getViewDistance() {
     return settings.getViewDistance();
   }
 
+  /**
+   * Returns the client's configured chat visibility preference.
+   *
+   * @return the {@link ChatMode} representing chat visibility
+   */
   @Override
-  public final ChatMode getChatMode() {
+  public ChatMode getChatMode() {
     return switch (settings.getChatVisibility()) {
       case 1 -> ChatMode.COMMANDS_ONLY;
       case 2 -> ChatMode.HIDDEN;
@@ -81,33 +99,64 @@ public class ClientSettingsWrapper implements PlayerSettings {
     };
   }
 
+  /**
+   * Indicates whether the client has chat colors enabled in their settings.
+   *
+   * @return {@code true} if chat colors are enabled, {@code false} otherwise
+   */
   @Override
-  public final boolean hasChatColors() {
+  public boolean hasChatColors() {
     return settings.isChatColors();
   }
 
+  /**
+   * Returns the set of enabled skin parts (e.g., hat, jacket, sleeves).
+   *
+   * @return the {@link SkinParts} object representing enabled visual features
+   */
   @Override
-  public final SkinParts getSkinParts() {
+  public SkinParts getSkinParts() {
     return parts;
   }
 
+  /**
+   * Returns the client's preferred main hand setting.
+   *
+   * @return {@link MainHand#RIGHT} if the value is 1, otherwise {@link MainHand#LEFT}
+   */
   @Override
-  public final MainHand getMainHand() {
+  public MainHand getMainHand() {
     return settings.getMainHand() == 1 ? MainHand.RIGHT : MainHand.LEFT;
   }
 
+  /**
+   * Indicates whether the client allows their profile to be included in public listings
+   * (i.e., whether the player is discoverable by others).
+   *
+   * @return {@code true} if allowed, {@code false} otherwise
+   */
   @Override
-  public final boolean isClientListingAllowed() {
+  public boolean isClientListingAllowed() {
     return settings.isClientListingAllowed();
   }
 
+  /**
+   * Indicates whether the client has enabled Mojang's text filtering feature.
+   *
+   * @return {@code true} if filtering is enabled, {@code false} otherwise
+   */
   @Override
-  public final boolean isTextFilteringEnabled() {
+  public boolean isTextFilteringEnabled() {
     return settings.isTextFilteringEnabled();
   }
 
+  /**
+   * Returns the client's selected particle detail level.
+   *
+   * @return the {@link ParticleStatus} representing particle visibility
+   */
   @Override
-  public final ParticleStatus getParticleStatus() {
+  public ParticleStatus getParticleStatus() {
     return switch (settings.getParticleStatus()) {
       case 1 -> ParticleStatus.DECREASED;
       case 2 -> ParticleStatus.MINIMAL;
@@ -115,8 +164,19 @@ public class ClientSettingsWrapper implements PlayerSettings {
     };
   }
 
+  /**
+   * Compares this {@code ClientSettingsWrapper} to another object for equality.
+   *
+   * <p>Two {@code ClientSettingsWrapper} instances are considered equal if they wrap
+   * identical {@link ClientSettingsPacket} objects, {@link SkinParts} values,
+   * and computed {@link Locale} instances.</p>
+   *
+   * @param o the object to compare against
+   * @return {@code true} if the given object is a {@code ClientSettingsWrapper} with equal content,
+   *         {@code false} otherwise
+   */
   @Override
-  public final boolean equals(@Nullable final Object o) {
+  public boolean equals(@Nullable final Object o) {
     if (this == o) {
       return true;
     }
@@ -129,8 +189,14 @@ public class ClientSettingsWrapper implements PlayerSettings {
     return Objects.equals(settings, that.settings) && Objects.equals(parts, that.parts) && Objects.equals(locale, that.locale);
   }
 
+  /**
+   * Computes the hash code for this {@code ClientSettingsWrapper} based on its internal state.
+   *
+   * @return a hash code derived from the {@link ClientSettingsPacket}, {@link SkinParts}, and
+   *         {@link Locale} values
+   */
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return Objects.hash(settings, parts, locale);
   }
 }

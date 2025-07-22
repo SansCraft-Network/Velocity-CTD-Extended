@@ -33,18 +33,45 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public class UnsignedPlayerCommandPacket extends SessionPlayerCommandPacket {
 
+  /**
+   * Decodes this unsigned player command packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads the raw command string sent by the player without any signing
+   * or timestamp metadata.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
     this.command = ProtocolUtils.readString(buf, 256);
   }
 
+  /**
+   * Encodes this unsigned player command packet into the given {@link ByteBuf}.
+   *
+   * <p>This writes only the raw command string. No signing or metadata is included.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, this.command);
   }
 
+  /**
+   * Returns this same instance, as unsigned command packets do not track last-seen messages.
+   *
+   * <p>Signed command metadata is not applicable to unsigned command packets.</p>
+   *
+   * @param lastSeenMessages ignored
+   * @return this {@code UnsignedPlayerCommandPacket} instance
+   */
   @Override
-  public final SessionPlayerCommandPacket withLastSeenMessages(@Nullable final LastSeenMessages lastSeenMessages) {
+  public SessionPlayerCommandPacket withLastSeenMessages(@Nullable final LastSeenMessages lastSeenMessages) {
     return this;
   }
 
@@ -57,13 +84,26 @@ public class UnsignedPlayerCommandPacket extends SessionPlayerCommandPacket {
     return false;
   }
 
+  /**
+   * Returns {@link CommandExecuteEvent.SignedState#UNSIGNED} to indicate the
+   * unsigned status of this command for event handling purposes.
+   *
+   * @return {@code UNSIGNED} signed state
+   */
   @Override
-  public final CommandExecuteEvent.SignedState getEventSignedState() {
+  public CommandExecuteEvent.SignedState getEventSignedState() {
     return CommandExecuteEvent.SignedState.UNSIGNED;
   }
 
+  /**
+   * Returns a string representation of this unsigned player command packet.
+   *
+   * <p>This includes only the raw command string.</p>
+   *
+   * @return a string describing the packet
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "UnsignedPlayerCommandPacket{"
         + "command='" + command + '\''
         + '}';

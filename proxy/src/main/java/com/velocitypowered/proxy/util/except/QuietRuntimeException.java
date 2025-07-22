@@ -32,8 +32,17 @@ public class QuietRuntimeException extends RuntimeException {
     super(message);
   }
 
+  /**
+   * Overrides the default behavior of {@link Throwable#fillInStackTrace()} to suppress
+   * stack trace generation for this exception.
+   *
+   * <p>This helps reduce log noise and allocation overhead when this exception is
+   * used intentionally for control flow or expected error scenarios.</p>
+   *
+   * @return this exception instance without a stack trace
+   */
   @Override
-  public final synchronized Throwable fillInStackTrace() {
+  public synchronized Throwable fillInStackTrace() {
     return this;
   }
 }

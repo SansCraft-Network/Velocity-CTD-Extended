@@ -72,20 +72,49 @@ public class ActiveFeaturesPacket implements MinecraftPacket {
     return activeFeatures;
   }
 
+  /**
+   * Decodes this active features packet from the provided {@link ByteBuf}.
+   *
+   * <p>This reads an array of {@link Key} entries representing the currently enabled
+   * or advertised feature flags.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                           final ProtocolVersion protocolVersion) {
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                     final ProtocolVersion protocolVersion) {
     activeFeatures = ProtocolUtils.readKeyArray(buf);
   }
 
+  /**
+   * Encodes this active features packet into the provided {@link ByteBuf}.
+   *
+   * <p>This writes the array of {@link Key} entries representing feature flags
+   * to inform the client of the server's capabilities.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param protocolVersion the Minecraft protocol version
+   */
   @Override
-  public final void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                           final ProtocolVersion protocolVersion) {
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
+                     final ProtocolVersion protocolVersion) {
     ProtocolUtils.writeKeyArray(buf, activeFeatures);
   }
 
+  /**
+   * Handles this active features packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates handling to {@code handler.handle(this)} so the session can react
+   * to the active feature set provided by the packet.</p>
+   *
+   * @param handler the session handler responsible for processing this packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
-  public final boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

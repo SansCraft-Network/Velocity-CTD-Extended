@@ -34,8 +34,17 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("UnstableApiUsage")
 public class BossBarImplementationProvider implements BossBarImplementation.Provider {
 
+  /**
+   * Creates a new {@link VelocityBossBarImplementation} for the given {@link BossBar}.
+   *
+   * <p>This method also registers the implementation as a listener to the provided boss bar,
+   * enabling it to react to updates such as name, progress, or visibility changes.</p>
+   *
+   * @param bar the {@link BossBar} for which to create a proxy-side implementation
+   * @return a new {@link VelocityBossBarImplementation} instance
+   */
   @Override
-  public final @NotNull BossBarImplementation create(final @NotNull BossBar bar) {
+  public @NotNull BossBarImplementation create(final @NotNull BossBar bar) {
     final VelocityBossBarImplementation impl = new VelocityBossBarImplementation(bar);
     bar.addListener(impl);
     return impl;

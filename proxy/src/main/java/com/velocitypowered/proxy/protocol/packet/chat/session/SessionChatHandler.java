@@ -65,13 +65,35 @@ public class SessionChatHandler implements ChatHandler<SessionPlayerChatPacket> 
     this.server = server;
   }
 
+  /**
+   * Returns the class of chat packets this handler processes.
+   *
+   * <p>This identifies the handler as responsible for {@link SessionPlayerChatPacket}
+   * within the session-based chat framework.</p>
+   *
+   * @return the class object for {@code SessionPlayerChatPacket}
+   */
   @Override
-  public final Class<SessionPlayerChatPacket> packetClass() {
+  public Class<SessionPlayerChatPacket> packetClass() {
     return SessionPlayerChatPacket.class;
   }
 
+  /**
+   * Handles a player-sent session chat packet internally.
+   *
+   * <p>This method performs the following logic:</p>
+   * <ul>
+   *   <li>Fires a {@link PlayerChatEvent} to allow plugins to observe, cancel, or modify the message.</li>
+   *   <li>Uses {@link ChatQueue} to queue the final packet, preserving timestamp and seen messages.</li>
+   *   <li>If the message is signed and plugins attempt to cancel or change it,
+   *       the player is disconnected to maintain protocol integrity (1.19.1+).</li>
+   *   <li>If unchanged and allowed, the original packet is resent with updated last-seen messages.</li>
+   * </ul>
+   *
+   * @param packet the incoming {@link SessionPlayerChatPacket} from the player
+   */
   @Override
-  public final void handlePlayerChatInternal(final SessionPlayerChatPacket packet) {
+  public void handlePlayerChatInternal(final SessionPlayerChatPacket packet) {
     ChatQueue chatQueue = this.player.getChatQueue();
     EventManager eventManager = this.server.getEventManager();
     PlayerChatEvent toSend = new PlayerChatEvent(player, packet.getMessage());

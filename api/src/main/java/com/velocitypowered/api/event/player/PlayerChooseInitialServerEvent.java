@@ -97,8 +97,15 @@ public class PlayerChooseInitialServerEvent {
     this.reason = reason;
   }
 
+  /**
+   * Returns a string representation of this {@code PlayerChooseInitialServerEvent}.
+   *
+   * <p>The output includes the player, the selected initial server (if any), and the disconnect reason (if set).</p>
+   *
+   * @return a human-readable string describing this event
+   */
   @Override
-  public final String toString() {
+  public String toString() {
     return "PlayerChooseInitialServerEvent{"
         + "player=" + player
         + ", initialServer=" + initialServer

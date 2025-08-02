@@ -24,6 +24,8 @@ import com.velocitypowered.proxy.protocol.packet.BundleDelimiterPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientboundCookieRequestPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientboundStoreCookiePacket;
+import com.velocitypowered.proxy.protocol.packet.DialogClearPacket;
+import com.velocitypowered.proxy.protocol.packet.DialogShowPacket;
 import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
 import com.velocitypowered.proxy.protocol.packet.EncryptionRequestPacket;
 import com.velocitypowered.proxy.protocol.packet.EncryptionResponsePacket;
@@ -766,6 +768,14 @@ public interface MinecraftSessionHandler {
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
   default boolean handle(ClientboundServerLinksPacket packet) {
+    return false;
+  }
+
+  default boolean handle(DialogClearPacket packet) {
+    return false;
+  }
+
+  default boolean handle(DialogShowPacket packet) {
     return false;
   }
 }

@@ -771,11 +771,23 @@ public interface MinecraftSessionHandler {
     return false;
   }
 
-  default boolean handle(DialogClearPacket packet) {
+  /**
+   * Handles {@link DialogClearPacket}.
+   *
+   * @param ignoredPacket the dialog clear packet
+   * @return {@code true} if the packet was handled, {@code false} otherwise
+   */
+  default boolean handle(DialogClearPacket ignoredPacket) {
     return false;
   }
 
-  default boolean handle(DialogShowPacket packet) {
+  /**
+   * Handles {@link DialogShowPacket}.
+   *
+   * @param ignoredPacket the dialog show packet
+   * @return {@code true} if the packet was handled, {@code false} otherwise
+   */
+  default boolean handle(DialogShowPacket ignoredPacket) {
     return false;
   }
 }

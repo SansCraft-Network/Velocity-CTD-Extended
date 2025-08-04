@@ -87,6 +87,7 @@ import com.velocitypowered.proxy.util.VelocityChannelRegistrar;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiter;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiters;
 import com.velocitypowered.proxy.util.translation.VelocityTranslationRegistry;
+import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -205,6 +206,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private MultiProxyHandler multiProxyHandler;
   private QueueManager queueManager;
 
+  private VelocityRedis redis;
+
   VelocityServer(final ProxyOptions options) {
     pluginManager = new VelocityPluginManager(this);
     eventManager = new VelocityEventManager(pluginManager);
@@ -232,6 +235,15 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   public QueueManager getQueueManager() {
     return queueManager;
+  }
+
+  public VelocityRedis getRedis() {
+    if (redis == null) throw new IllegalStateException("Redis is not configured");
+    return redis;
+  }
+
+  public boolean hasRedis() {
+    return redis != null;
   }
 
   @Override
@@ -357,6 +369,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     } else {
       queueManager = new QueueManagerNoRedisImpl(this);
     }
+    this.redis = new VelocityRedis(this);
 
     registerCommands();
 
@@ -1193,5 +1206,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   @Override
   public ResourcePackInfo.Builder createResourcePackBuilder(final String url) {
     return new VelocityResourcePackInfo.BuilderImpl(url);
+  }
+
+  public String getProxyId() {
+    return Objects.requireNonNullElse(this.configuration.getRedis().getProxyId(), "null");
   }
 }

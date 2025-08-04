@@ -29,7 +29,7 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.multiproxy.EncodedCommandSource;
-import com.velocitypowered.proxy.redis.multiproxy.RedisGetPlayerPingRequest;
+import com.velocitypowered.proxy.xcd_redis.impl.transaction.VelocityGetPlayerPing;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 
@@ -60,7 +60,10 @@ public class PingCommand {
                 .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
                 .executes(context -> {
                   String player = context.getArgument("player", String.class);
-                  return this.getPing(context, player);
+                  new VelocityGetPlayerPing(context.getSource(), player)
+                          .publish(); // todo test dit is
+                  return Command.SINGLE_SUCCESS;
+//                  return this.getPing(context, player);
                 })
         )
         .executes(context -> {
@@ -114,11 +117,9 @@ public class PingCommand {
               .arguments(Component.text(username)));
           return -1;
         }
+        new VelocityGetPlayerPing(context.getSource(), username)
+                .publish(); // todo test dit is
 
-        this.server.getRedisManager().send(new RedisGetPlayerPingRequest(EncodedCommandSource.from(
-            context.getSource(),
-            this.server.getConfiguration().getRedis().getProxyId()),
-            username));
       } else {
         if (player == null) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")

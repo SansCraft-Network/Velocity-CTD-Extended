@@ -78,9 +78,11 @@ public class MultiProxyHandler {
 
     RedisManagerImpl redisManager = this.server.getRedisManager();
 
+    //todo : replace with ProxyEntry#getPlayerCount().sum() ->> ProxyDepotService#init()
     Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()
         -> totalPlayerCount = redisManager.getCache().size(), 100, 100, TimeUnit.MILLISECONDS);
 
+    //todo : replace with PlayerEntry, but maybe with listeners?
     Executors.newScheduledThreadPool(1).scheduleAtFixedRate(this::resyncPlayers, 1, 1, TimeUnit.MINUTES);
 
     redisManager.listen(RedisShuttingDownAnnouncement.ID, RedisShuttingDownAnnouncement.class, it -> {

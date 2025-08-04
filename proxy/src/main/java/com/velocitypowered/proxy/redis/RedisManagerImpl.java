@@ -128,6 +128,7 @@ public class RedisManagerImpl {
       }
     });
 
+    //todo DONE
     listen(RedisGetPlayerPingRequest.ID, RedisGetPlayerPingRequest.class, it -> {
       proxy.getPlayer(it.playerToCheck()).ifPresent(player -> {
         Component component = Component.translatable("velocity.command.ping.other",

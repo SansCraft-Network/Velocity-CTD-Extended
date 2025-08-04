@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,9 +29,11 @@ import java.util.Map;
 /**
  * Implements {@link RawCommand.Invocation}.
  */
-public final class RawCommandInvocation extends AbstractCommandInvocation<String>
-    implements RawCommand.Invocation {
+public final class RawCommandInvocation extends AbstractCommandInvocation<String> implements RawCommand.Invocation {
 
+  /**
+   * A factory for creating {@link RawCommandInvocation} instances.
+   */
   public static final Factory FACTORY = new Factory();
 
   /**
@@ -43,20 +45,29 @@ public final class RawCommandInvocation extends AbstractCommandInvocation<String
    */
   public static class Factory implements CommandInvocationFactory<RawCommand.Invocation> {
 
+    /**
+     * Creates a {@link RawCommandInvocation} instance from the parsed command input.
+     *
+     * @param source the command source
+     * @param nodes the parsed command nodes from the Brigadier parser
+     * @param arguments the parsed argument map from Brigadier
+     * @return a new {@link RawCommandInvocation} instance
+     */
     @Override
-    public RawCommand.Invocation create(
-        final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
-        final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
+    public RawCommand.Invocation create(final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
+                                        final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
       final String alias = VelocityCommands.readAlias(nodes);
       final String args = VelocityCommands.readArguments(arguments, String.class, "");
       return new RawCommandInvocation(source, alias, args);
     }
   }
 
+  /**
+   * The alias used to invoke the command.
+   */
   private final String alias;
 
-  private RawCommandInvocation(final CommandSource source,
-      final String alias, final String arguments) {
+  private RawCommandInvocation(final CommandSource source, final String alias, final String arguments) {
     super(source, arguments);
     this.alias = Preconditions.checkNotNull(alias, "alias");
   }
@@ -71,9 +82,11 @@ public final class RawCommandInvocation extends AbstractCommandInvocation<String
     if (this == o) {
       return true;
     }
+
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     if (!super.equals(o)) {
       return false;
     }

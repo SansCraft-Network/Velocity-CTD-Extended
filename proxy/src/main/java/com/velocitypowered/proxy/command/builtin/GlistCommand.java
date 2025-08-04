@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,6 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.multiproxy.MultiProxyHandler;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import java.util.ArrayList;
@@ -48,20 +47,34 @@ import net.kyori.adventure.text.format.NamedTextColor;
  */
 public class GlistCommand {
 
+  /**
+   * The name of the argument used to specify the server in the {@code /glist} command.
+   */
   private static final String SERVER_ARG = "server";
 
+  /**
+   * The {@link VelocityServer} instance used to retrieve server and player information.
+   */
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@link GlistCommand}.
+   *
+   * @param server the Velocity server instance
+   */
   public GlistCommand(final VelocityServer server) {
     this.server = server;
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isGlistEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isGlistEnabled) {
+  public BrigadierCommand register(final boolean isGlistEnabled) {
     if (!isGlistEnabled) {
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
@@ -75,34 +88,34 @@ public class GlistCommand {
           final String argument = context.getArguments().containsKey(SERVER_ARG)
               ? context.getArgument(SERVER_ARG, String.class)
               : "";
+
           for (RegisteredServer server : server.getAllServers()) {
             final String serverName = server.getServerInfo().getName();
             if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
               builder.suggest(serverName);
             }
           }
+
           if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
             builder.suggest("all");
           }
+
           return builder.buildFuture();
         })
         .executes(this::serverCount)
         .build();
+
     rootNode.then(serverNode);
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(rootNode);
   }
 
   private int totalCount(final CommandContext<CommandSource> context) {
     final CommandSource source = context.getSource();
     sendTotalProxyCount(source);
     source.sendMessage(
-        Component.translatable("velocity.command.glist-view-all", NamedTextColor.YELLOW));
+        Component.translatable("velocity.command.glist-view-all", NamedTextColor.YELLOW)
+            .arguments(Component.text(VelocityCommands.readAlias(context.getNodes()))));
+
     return 1;
   }
 
@@ -124,6 +137,7 @@ public class GlistCommand {
       }
       sendServerPlayers(source, registeredServer.get(), false);
     }
+
     return Command.SINGLE_SUCCESS;
   }
 

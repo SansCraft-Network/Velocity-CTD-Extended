@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,10 @@
 package com.velocitypowered.proxy.command.builtin;
 
 import com.google.common.base.Suppliers;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -42,12 +44,16 @@ import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.redis.multiproxy.RedisSudo;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.util.InformationUtils;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
+import java.net.HttpURLConnection;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -78,6 +84,21 @@ import org.apache.logging.log4j.Logger;
  * Implements the {@code /velocity} command and friends.
  */
 public final class VelocityCommand {
+
+  /**
+   * Implements the {@code /velocity} command and its subcommands.
+   *
+   * <p>This command provides access to administrative utilities such as:</p>
+   * <ul>
+   *   <li>{@code /velocity dump} - Creates a diagnostic dump</li>
+   *   <li>{@code /velocity heap} - Triggers a heap dump</li>
+   *   <li>{@code /velocity info} - Displays version and environment info</li>
+   *   <li>{@code /velocity plugins} - Lists installed plugins</li>
+   *   <li>{@code /velocity reload} - Reloads the proxy configuration</li>
+   *   <li>{@code /velocity sudo} - Forces player(s) to run a command or message</li>
+   *   <li>{@code /velocity uptime} - Shows how long the proxy has been running</li>
+   * </ul>
+   */
   private static final String USAGE = "/velocity <%s>";
 
   /**
@@ -116,6 +137,7 @@ public final class VelocityCommand {
               Component.translatable("velocity.command.sudo.usage", NamedTextColor.YELLOW)
                   .arguments(Component.text("velocity sudo"))
           );
+
           return Command.SINGLE_SUCCESS;
         })
         .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
@@ -170,6 +192,7 @@ public final class VelocityCommand {
               Component.translatable("velocity.command.sudo.usage", NamedTextColor.YELLOW)
                   .arguments(Component.text("velocity sudo"))
           );
+
           return Command.SINGLE_SUCCESS;
         })
         .then(BrigadierCommand.requiredArgumentBuilder("message/command", StringArgumentType.greedyString())
@@ -432,6 +455,9 @@ public final class VelocityCommand {
 
   private record Reload(VelocityServer server) implements Command<CommandSource> {
 
+    /**
+     * Logger instance used for reporting reload-related errors.
+     */
     private static final Logger logger = LogManager.getLogger(Reload.class);
 
     @Override
@@ -483,7 +509,29 @@ public final class VelocityCommand {
 
   private static final class Info implements Command<CommandSource> {
 
+    /**
+     * Primary color used for Velocity branding in info output.
+     */
     private static final TextColor VELOCITY_COLOR = TextColor.color(0xff3a4c);
+
+    /**
+     * Version distance constant indicating the current version is up to date with GitHub.
+     */
+    private static final int DISTANCE_LATEST = 0;
+
+    /**
+     * Version distance constant indicating an error occurred during GitHub comparison.
+     */
+    private static final int DISTANCE_ERROR = -1;
+
+    /**
+     * Version distance constant indicating the specified commit hash was not found.
+     */
+    private static final int DISTANCE_UNKNOWN = -2;
+
+    /**
+     * Memoized supplier that builds the {@code /velocity info} output component.
+     */
     private final Supplier<Component> infoSupplier;
 
     private Info(final ProxyServer server) {
@@ -511,8 +559,7 @@ public final class VelocityCommand {
               .append(Component.text()
                   .content("discord.gg/beer")
                   .color(NamedTextColor.RED)
-                  .clickEvent(
-                      ClickEvent.openUrl("https://discord.gg/beer"))
+                  .clickEvent(ClickEvent.openUrl(VelocityServer.VELOCITY_URL))
                   .build())
                   .append(Component.text(" - "))
                   .append(Component.text()
@@ -526,8 +573,50 @@ public final class VelocityCommand {
           infoBuilder.appendNewline().append(embellishment);
         }
 
+        infoBuilder.appendNewline();
+        if (version.getVersion().equalsIgnoreCase("<unknown>") || version.getVersion().contains("SNAPSHOT")) {
+          infoBuilder.append(Component.text("You are running a development build of Velocity.", NamedTextColor.RED));
+        } else {
+          int dist = fetchDistanceFromGitHub(version.getVersion().split("-")[1]);
+          switch (dist) {
+            case DISTANCE_ERROR -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-error", NamedTextColor.RED));
+            case DISTANCE_UNKNOWN -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-unknown", NamedTextColor.RED));
+            case DISTANCE_LATEST -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-latest", NamedTextColor.GREEN));
+            default -> infoBuilder.append(Component.translatable(
+                "velocity.command.version-behind", NamedTextColor.YELLOW,
+                Component.text(dist)));
+          }
+        }
+
         return infoBuilder.build();
       });
+    }
+
+    private static int fetchDistanceFromGitHub(final String hash) {
+      try {
+        final HttpURLConnection connection = (HttpURLConnection) URI.create("https://api.github.com/repos/GemstoneGG/Velocity-CTD/compare/libdeflate..." + hash).toURL().openConnection();
+        connection.connect();
+        if (connection.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+          return DISTANCE_UNKNOWN; // Unidentifiable commit
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+          final JsonObject obj = new Gson().fromJson(reader, JsonObject.class);
+          final String status = obj.get("status").getAsString();
+          return switch (status) {
+            case "identical" -> DISTANCE_LATEST;
+            case "behind" -> obj.get("behind_by").getAsInt();
+            default -> DISTANCE_ERROR;
+          };
+        } catch (final JsonSyntaxException | NumberFormatException e) {
+          return DISTANCE_ERROR;
+        }
+      } catch (final IOException e) {
+        return DISTANCE_ERROR;
+      }
     }
 
     @Override
@@ -611,6 +700,10 @@ public final class VelocityCommand {
   }
 
   private record Dump(ProxyServer server) implements Command<CommandSource> {
+
+    /**
+     * Logger instance for logging errors and output related to the dump command.
+     */
     private static final Logger logger = LogManager.getLogger(Dump.class);
 
     @Override
@@ -668,9 +761,25 @@ public final class VelocityCommand {
    * Heap SubCommand.
    */
   public static final class Heap implements Command<CommandSource> {
+
+    /**
+     * Logger instance for logging errors during heap dump generation.
+     */
     private static final Logger logger = LogManager.getLogger(Heap.class);
+
+    /**
+     * Method handle to the platform-specific heap dump method.
+     */
     private MethodHandle heapGenerator;
+
+    /**
+     * Consumer that triggers heap dump generation and sends output to the command source.
+     */
     private Consumer<CommandSource> heapConsumer;
+
+    /**
+     * Directory path where heap dumps will be saved.
+     */
     private final Path dir = Path.of("./dumps");
 
     @Override

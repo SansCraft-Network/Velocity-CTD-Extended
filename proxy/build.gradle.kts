@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
+import io.papermc.fill.model.BuildChannel
 
 plugins {
     application
@@ -6,6 +7,7 @@ plugins {
     id("velocity-publish")
     id("velocity-init-manifest")
     alias(libs.plugins.shadow)
+    alias(libs.plugins.fill)
 }
 
 application {
@@ -14,10 +16,6 @@ application {
 }
 
 tasks {
-    withType<Checkstyle> {
-        exclude("**/com/velocitypowered/proxy/protocol/packet/**")
-    }
-
     jar {
         manifest {
             attributes["Implementation-Title"] = "Velocity"
@@ -102,10 +100,29 @@ tasks {
     runShadow {
         workingDir = file("run").also(File::mkdirs)
         standardInput = System.`in`
+        jvmArgs("-Dvelocity.packet-decode-logging=true")
     }
     named<JavaExec>("run") {
         workingDir = file("run").also(File::mkdirs)
         standardInput = System.`in` // Doesn't work?
+    }
+}
+
+val projectVersion = version as String
+fill {
+    project("velocity")
+
+    build {
+        channel = BuildChannel.STABLE
+        versionFamily("3.0.0")
+        version(projectVersion)
+
+        downloads {
+            register("server:default") {
+                file = tasks.shadowJar.flatMap { it.archiveFile }
+                nameResolver.set { project, _, version, build -> "$project-$version-$build.jar" }
+            }
+        }
     }
 }
 

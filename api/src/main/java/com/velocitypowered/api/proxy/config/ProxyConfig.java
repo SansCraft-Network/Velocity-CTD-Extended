@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -12,6 +12,7 @@ import com.velocitypowered.api.util.Favicon;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.kyori.adventure.text.Component;
 
 /**
  * Exposes certain proxy configuration information that plugins may use.
@@ -51,14 +52,14 @@ public interface ProxyConfig {
    *
    * @return the motd component
    */
-  net.kyori.adventure.text.Component getMotd();
+  Component getMotd();
 
   /**
    * Get the MOTD hover legacy component shown in the tab list.
    *
    * @return the motd legacy component
    */
-  List<net.kyori.adventure.text.Component> getMotdHover();
+  List<Component> getMotdHover();
 
   /**
    * Get the maximum players shown in the tab list.
@@ -107,6 +108,20 @@ public interface ProxyConfig {
    * @return mapped list of server names
    */
   Map<String, List<String>> getForcedHosts();
+
+  /**
+   * Whether the proxy should cache Mojang profile results to reduce login API pressure.
+   *
+   * @return true if profile result caching is enabled
+   */
+  boolean isCachePlayerProfileResultEnabled();
+
+  /**
+   * How long (in minutes) to cache Mojang profile results.
+   *
+   * @return the profile cache expiration time in minutes
+   */
+  int getProfileCacheExpiryMinutes();
 
   /**
    * Get the minimum compression threshold for packets.
@@ -211,11 +226,4 @@ public interface ProxyConfig {
   default boolean isKickOnTabCompleteRateLimit() {
     return getKickAfterRateLimitedTabCompletes() > 0;
   }
-
-  /**
-   * Get the channel register limit a client can register.
-   *
-   * @return a channel limit that a client can register
-   */
-  int getChannelRegisterLimit();
 }

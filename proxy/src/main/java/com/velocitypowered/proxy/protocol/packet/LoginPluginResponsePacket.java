@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,9 +32,23 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
  */
 public class LoginPluginResponsePacket extends DeferredByteBufHolder implements MinecraftPacket {
 
+  /**
+   * The ID of the plugin message being responded to.
+   * This value is used to correlate responses with their original plugin requests.
+   */
   private int id;
+
+  /**
+   * Indicates whether the plugin message was successfully handled by the client.
+   */
   private boolean success;
 
+  /**
+   * Constructs an empty {@code LoginPluginResponsePacket} with an empty buffer.
+   *
+   * <p>This constructor is typically used during decoding. The buffer content and other fields
+   * will be set via {@link #decode(ByteBuf, ProtocolUtils.Direction, ProtocolVersion)}.</p>
+   */
   public LoginPluginResponsePacket() {
     super(Unpooled.EMPTY_BUFFER);
   }
@@ -52,22 +66,49 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     this.success = success;
   }
 
+  /**
+   * Retrieves the plugin message ID associated with this response.
+   *
+   * @return the plugin message ID
+   */
   public int getId() {
     return id;
   }
 
+  /**
+   * Sets the plugin message ID for this response.
+   *
+   * @param id the plugin message ID to set
+   */
   public void setId(final int id) {
     this.id = id;
   }
 
+  /**
+   * Returns whether the plugin message response indicates success.
+   *
+   * @return {@code true} if the plugin message was successful, {@code false} otherwise
+   */
   public boolean isSuccess() {
     return success;
   }
 
+  /**
+   * Sets whether the plugin message was successful.
+   *
+   * @param success {@code true} if the plugin message was successful, {@code false} otherwise
+   */
   public void setSuccess(final boolean success) {
     this.success = success;
   }
 
+  /**
+   * Returns a string representation of this login plugin response packet.
+   *
+   * <p>This includes the plugin message ID, success status, and content buffer.</p>
+   *
+   * @return a string representation of the packet
+   */
   @Override
   public String toString() {
     return "LoginPluginResponse{"
@@ -77,6 +118,16 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
         + '}';
   }
 
+  /**
+   * Decodes this login plugin response packet from the provided {@link ByteBuf}.
+   *
+   * <p>This method reads the plugin message ID, success flag, and any remaining payload
+   * data from the buffer, retaining it in the internal buffer.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version being used
+   */
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     this.id = ProtocolUtils.readVarInt(buf);
@@ -88,6 +139,16 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     }
   }
 
+  /**
+   * Encodes this login plugin response packet into the provided {@link ByteBuf}.
+   *
+   * <p>This method writes the plugin message ID, success flag, and any payload data
+   * to the output buffer.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the direction of the packet (clientbound or serverbound)
+   * @param version the protocol version being used
+   */
   @Override
   public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     ProtocolUtils.writeVarInt(buf, id);
@@ -95,6 +156,14 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     buf.writeBytes(content());
   }
 
+  /**
+   * Handles this login plugin response packet using the specified {@link MinecraftSessionHandler}.
+   *
+   * <p>This delegates processing to {@code handler.handle(this)}.</p>
+   *
+   * @param handler the session handler to process the packet
+   * @return {@code true} if the packet was handled successfully
+   */
   @Override
   public boolean handle(final MinecraftSessionHandler handler) {
     return handler.handle(this);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,18 +42,37 @@ import org.jetbrains.annotations.NotNull;
  */
 public class PlayPacketQueueOutboundHandler extends ChannelDuplexHandler {
 
+  /**
+   * The CONFIG-state protocol registry used to determine which packets are safe to send early.
+   */
   private final StateRegistry.PacketRegistry.ProtocolRegistry registry;
+
+  /**
+   * The queue of outbound packets to be released once the PLAY state is reached.
+   */
   private final Queue<MinecraftPacket> queue = new ArrayDeque<>();
 
   /**
-   * Provides registries for client &amp; server bound packets.
+   * Provides registries for "client" &amp; server bound packets.
    *
    * @param version the protocol version
+   * @param direction the direction of packet flow (typically {@code CLIENTBOUND})
    */
   public PlayPacketQueueOutboundHandler(final ProtocolVersion version, final ProtocolUtils.Direction direction) {
     this.registry = StateRegistry.CONFIG.getProtocolRegistry(direction, version);
   }
 
+  /**
+   * Intercepts outbound {@link MinecraftPacket}s during the CONFIG protocol state.
+   *
+   * <p>If the packet type is valid for the CONFIG state, it is written immediately.
+   * Otherwise, it is queued until the channel enters the PLAY state.</p>
+   *
+   * @param ctx the Netty channel context
+   * @param msg the outbound message
+   * @param promise the write promise for asynchronous completion
+   * @throws Exception if an I/O error occurs
+   */
   @Override
   public void write(final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise) throws Exception {
     if (!(msg instanceof final MinecraftPacket packet)) {
@@ -72,6 +91,14 @@ public class PlayPacketQueueOutboundHandler extends ChannelDuplexHandler {
     this.queue.offer(packet);
   }
 
+  /**
+   * Invoked when the channel becomes inactive.
+   *
+   * <p>This clears and releases all queued packets since they can no longer be delivered.</p>
+   *
+   * @param ctx the Netty channel context
+   * @throws Exception if an error occurs during cleanup
+   */
   @Override
   public void channelInactive(@NotNull final ChannelHandlerContext ctx) throws Exception {
     this.releaseQueue(ctx, false);
@@ -79,6 +106,14 @@ public class PlayPacketQueueOutboundHandler extends ChannelDuplexHandler {
     super.channelInactive(ctx);
   }
 
+  /**
+   * Called when this handler is removed from the pipeline.
+   *
+   * <p>If the channel is still active, all queued packets are flushed downstream.
+   * Otherwise, queued packets are released to prevent memory leaks.</p>
+   *
+   * @param ctx the Netty channel context
+   */
   @Override
   public void handlerRemoved(final ChannelHandlerContext ctx) {
     this.releaseQueue(ctx, ctx.channel().isActive());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,20 +35,55 @@ import net.kyori.adventure.text.Component;
  */
 public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCommandPacket> {
 
+  /**
+   * The player who sent the command.
+   */
   private final ConnectedPlayer player;
+
+  /**
+   * The server instance managing command execution and configuration.
+   */
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@code KeyedCommandHandler}.
+   *
+   * @param player the player sending the command
+   * @param server the proxy server instance
+   */
   public KeyedCommandHandler(final ConnectedPlayer player, final VelocityServer server) {
     super(player, server);
     this.player = player;
     this.server = server;
   }
 
+  /**
+   * Returns the class of packets this handler is responsible for.
+   *
+   * <p>This identifies the handler as responsible for {@link KeyedPlayerCommandPacket}
+   * in the command pipeline.</p>
+   *
+   * @return the class of {@code KeyedPlayerCommandPacket}
+   */
   @Override
   public Class<KeyedPlayerCommandPacket> packetClass() {
     return KeyedPlayerCommandPacket.class;
   }
 
+  /**
+   * Handles the execution of a player-issued command represented by {@link KeyedPlayerCommandPacket}.
+   *
+   * <p>This method performs the following:</p>
+   * <ul>
+   *   <li>Fires a {@link CommandExecuteEvent} for plugin handling.</li>
+   *   <li>Enforces chat signing rules for signed commands (1.19.1+).</li>
+   *   <li>Handles both local command execution and forwarding to backend servers.</li>
+   *   <li>If a plugin illegally cancels or alters a signed command when signing is enforced,
+   *       the player is disconnected.</li>
+   * </ul>
+   *
+   * @param packet the inbound command packet from the player
+   */
   @Override
   public void handlePlayerCommandInternal(final KeyedPlayerCommandPacket packet) {
     queueCommandResult(this.server, this.player, (event, newLastSeenMessages) -> {
@@ -67,6 +102,7 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
                     + "Contact your network administrator."));
           }
         }
+
         return CompletableFuture.completedFuture(null);
       }
 
@@ -91,8 +127,10 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
                     + "Contact your network administrator."));
             return CompletableFuture.completedFuture(null);
           }
+
           write.message("/" + commandToRun);
         }
+
         return CompletableFuture.completedFuture(write.toServer());
       }
       return runCommand(this.server, this.player, commandToRun, hasRun -> {
@@ -120,8 +158,10 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
               .message("/" + commandToRun)
               .toServer();
         }
+
         return null;
       });
-    }, packet.getCommand(), packet.getTimestamp(), null, new CommandExecuteEvent.InvocationInfo(CommandExecuteEvent.SignedState.UNSUPPORTED, CommandExecuteEvent.Source.PLAYER));
+    }, packet.getCommand(), packet.getTimestamp(), null, new CommandExecuteEvent.InvocationInfo(
+            CommandExecuteEvent.SignedState.UNSUPPORTED, CommandExecuteEvent.Source.PLAYER));
   }
 }

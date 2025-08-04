@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,9 +53,16 @@ import net.kyori.option.OptionSchema;
 /**
  * Utilities for writing and reading data in the Minecraft protocol.
  */
+@SuppressWarnings("unchecked")
 public enum ProtocolUtils {
   ;
 
+  /**
+   * JSON serializer for pre-1.16 clients.
+   *
+   * <p>This serializer disables RGB color output and uses legacy field names and hover/click event serialization
+   * styles compatible with versions prior to Minecraft 1.16.</p>
+   */
   private static final GsonComponentSerializer PRE_1_16_SERIALIZER =
       GsonComponentSerializer.builder()
           .downsampleColors()
@@ -65,13 +72,24 @@ public enum ProtocolUtils {
               // before 1.16
               .value(JSONOptions.EMIT_RGB, Boolean.FALSE)
               .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.VALUE_FIELD)
+              .value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.CAMEL_CASE)
               // before 1.20.3
               .value(JSONOptions.EMIT_COMPACT_TEXT_COMPONENT, Boolean.FALSE)
               .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, Boolean.FALSE)
               .value(JSONOptions.VALIDATE_STRICT_EVENTS, Boolean.FALSE)
+              // before 1.21.5
+              .value(JSONOptions.EMIT_CHANGE_PAGE_CLICK_EVENT_PAGE_AS_STRING, Boolean.TRUE)
               .build()
           )
           .build();
+
+  /**
+   * JSON serializer for clients using protocol versions from 1.16 up to (but not including) 1.20.3.
+   *
+   * <p>This serializer enables RGB output and uses modern hover/click event styles, while
+   * maintaining compatibility with pre-1.20.3 expectations such as non-compact text and
+   * looser validation.</p>
+   */
   private static final GsonComponentSerializer PRE_1_20_3_SERIALIZER =
           GsonComponentSerializer.builder()
           .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
@@ -81,13 +99,24 @@ public enum ProtocolUtils {
               .value(JSONOptions.EMIT_RGB, Boolean.TRUE)
               .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.CAMEL_CASE)
               .value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.CAMEL_CASE)
+              .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_KEY_AS_TYPE_AND_UUID_AS_ID, true)
               // before 1.20.3
               .value(JSONOptions.EMIT_COMPACT_TEXT_COMPONENT, Boolean.FALSE)
               .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, Boolean.FALSE)
               .value(JSONOptions.VALIDATE_STRICT_EVENTS, Boolean.FALSE)
+              // before 1.21.5
+              .value(JSONOptions.EMIT_CHANGE_PAGE_CLICK_EVENT_PAGE_AS_STRING, Boolean.TRUE)
               .build()
           )
           .build();
+
+  /**
+   * JSON serializer for clients using protocol versions from 1.20.3 up to (but not including) 1.21.5.
+   *
+   * <p>This serializer outputs compact JSON components, strict hover event validation,
+   * and entity identifiers in a modern UUID-based format. Used for improved
+   * display accuracy and validation behavior on newer clients.</p>
+   */
   private static final GsonComponentSerializer PRE_1_21_5_SERIALIZER =
       GsonComponentSerializer.builder()
           .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
@@ -97,13 +126,24 @@ public enum ProtocolUtils {
               .value(JSONOptions.EMIT_RGB, Boolean.TRUE)
               .value(JSONOptions.EMIT_HOVER_EVENT_TYPE, JSONOptions.HoverEventValueMode.CAMEL_CASE)
               .value(JSONOptions.EMIT_CLICK_EVENT_TYPE, JSONOptions.ClickEventValueMode.CAMEL_CASE)
+              .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_KEY_AS_TYPE_AND_UUID_AS_ID, true)
               // after 1.20.3
               .value(JSONOptions.EMIT_COMPACT_TEXT_COMPONENT, Boolean.TRUE)
               .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_ID_AS_INT_ARRAY, Boolean.TRUE)
               .value(JSONOptions.VALIDATE_STRICT_EVENTS, Boolean.TRUE)
+              // before 1.21.5
+              .value(JSONOptions.EMIT_CHANGE_PAGE_CLICK_EVENT_PAGE_AS_STRING, Boolean.TRUE)
               .build()
           )
           .build();
+
+  /**
+   * JSON serializer for clients using protocol versions 1.21.5 and above.
+   *
+   * <p>This serializer uses snake_case formatting for click/hover event types,
+   * disables legacy entity hover serialization, and enables all strict validation
+   * and formatting rules introduced in modern protocol versions.</p>
+   */
   private static final GsonComponentSerializer MODERN_SERIALIZER =
       GsonComponentSerializer.builder()
           .legacyHoverEventSerializer(NBTLegacyHoverEventSerializer.get())
@@ -119,25 +159,59 @@ public enum ProtocolUtils {
               // after 1.21.5
               .value(JSONOptions.EMIT_HOVER_SHOW_ENTITY_KEY_AS_TYPE_AND_UUID_AS_ID, Boolean.FALSE)
               .value(JSONOptions.VALIDATE_STRICT_EVENTS, Boolean.TRUE)
+              .value(JSONOptions.EMIT_CHANGE_PAGE_CLICK_EVENT_PAGE_AS_STRING, Boolean.FALSE)
               .build()
           )
           .build();
 
-  public static final int DEFAULT_MAX_STRING_SIZE = 65536; // 64KiB
+  /**
+   * The default maximum allowed length for strings in Minecraft protocol messages.
+   *
+   * <p>This limit is set to 65,536 bytes (64 KiB) to match the protocol’s safe string bound.</p>
+   */
+  public static final int DEFAULT_MAX_STRING_SIZE = 65536;
+
+  /**
+   * The maximum number of bytes a VarInt may occupy in the Minecraft protocol.
+   *
+   * <p>Any VarInt taking more than 5 bytes is considered malformed.</p>
+   */
   private static final int MAXIMUM_VARINT_SIZE = 5;
+
+  /**
+   * Table of all possible {@link BinaryTagType}s used for reading and writing NBT structures.
+   *
+   * <p>This array is indexed by tag ID and must match Mojang’s binary encoding layout.</p>
+   */
   private static final BinaryTagType<? extends BinaryTag>[] BINARY_TAG_TYPES = new BinaryTagType[] {
       BinaryTagTypes.END, BinaryTagTypes.BYTE, BinaryTagTypes.SHORT, BinaryTagTypes.INT,
       BinaryTagTypes.LONG, BinaryTagTypes.FLOAT, BinaryTagTypes.DOUBLE,
       BinaryTagTypes.BYTE_ARRAY, BinaryTagTypes.STRING, BinaryTagTypes.LIST,
-      BinaryTagTypes.COMPOUND, BinaryTagTypes.INT_ARRAY, BinaryTagTypes.LONG_ARRAY};
+      BinaryTagTypes.COMPOUND, BinaryTagTypes.INT_ARRAY, BinaryTagTypes.LONG_ARRAY
+  };
+
+  /**
+   * Cached decoder exception for malformed or oversized VarInts.
+   *
+   * <p>This is used in production to avoid the overhead of new exception construction
+   * unless debug mode is enabled.</p>
+   */
   private static final QuietDecoderException BAD_VARINT_CACHED =
       new QuietDecoderException("Bad VarInt decoded");
+
+  /**
+   * Lookup table mapping leading zero count to VarInt byte length.
+   *
+   * <p>This is used to determine how many bytes are needed to encode
+   * a given integer as a Minecraft VarInt.</p>
+   */
   private static final int[] VAR_INT_LENGTHS = new int[65];
 
   static {
     for (int i = 0; i <= 32; ++i) {
       VAR_INT_LENGTHS[i] = (int) Math.ceil((31d - (i - 1)) / 7d);
     }
+
     VAR_INT_LENGTHS[32] = 1; // Special case for the number 0.
   }
 
@@ -175,6 +249,7 @@ public enum ProtocolUtils {
         return i;
       }
     }
+
     throw badVarint();
   }
 
@@ -244,6 +319,15 @@ public enum ProtocolUtils {
     buf.writeMedium(w);
   }
 
+  /**
+   * Reads a VarInt-prefixed UTF-8 string from the given {@link ByteBuf}.
+   *
+   * <p>The string length is limited to {@link #DEFAULT_MAX_STRING_SIZE} characters.</p>
+   *
+   * @param buf the buffer to read from
+   * @return the decoded string
+   * @throws CorruptedFrameException if the string exceeds maximum allowed length or buffer limits
+   */
   public static String readString(final ByteBuf buf) {
     return readString(buf, DEFAULT_MAX_STRING_SIZE);
   }
@@ -325,6 +409,7 @@ public enum ProtocolUtils {
     for (int i = 0; i < ret.length; i++) {
       ret[i] = ProtocolUtils.readKey(buf);
     }
+
     return ret;
   }
 
@@ -341,6 +426,15 @@ public enum ProtocolUtils {
     }
   }
 
+  /**
+   * Reads a VarInt-prefixed byte array from the given {@link ByteBuf}.
+   *
+   * <p>The byte array length is limited to {@link #DEFAULT_MAX_STRING_SIZE} bytes.</p>
+   *
+   * @param buf the buffer to read from
+   * @return the decoded byte array
+   * @throws CorruptedFrameException if the array length is invalid or exceeds buffer limits
+   */
   public static byte[] readByteArray(final ByteBuf buf) {
     return readByteArray(buf, DEFAULT_MAX_STRING_SIZE);
   }
@@ -365,6 +459,12 @@ public enum ProtocolUtils {
     return array;
   }
 
+  /**
+   * Writes a VarInt-prefixed byte array to the given {@link ByteBuf}.
+   *
+   * @param buf the buffer to write to
+   * @param array the byte array to write
+   */
   public static void writeByteArray(final ByteBuf buf, final byte[] array) {
     writeVarInt(buf, array.length);
     buf.writeBytes(array);
@@ -383,6 +483,7 @@ public enum ProtocolUtils {
     for (int i = 0; i < len; i++) {
       array[i] = readVarInt(buf);
     }
+
     return array;
   }
 
@@ -398,6 +499,12 @@ public enum ProtocolUtils {
     return new UUID(msb, lsb);
   }
 
+  /**
+   * Writes a {@link UUID} as two longs to the given {@link ByteBuf}.
+   *
+   * @param buf the buffer to write to
+   * @param uuid the UUID to write
+   */
   public static void writeUuid(final ByteBuf buf, final UUID uuid) {
     buf.writeLong(uuid.getMostSignificantBits());
     buf.writeLong(uuid.getLeastSignificantBits());
@@ -433,11 +540,13 @@ public enum ProtocolUtils {
   }
 
   /**
-   * Reads a {@link net.kyori.adventure.nbt.CompoundBinaryTag} from the {@code buf}.
+   * Reads a {@link CompoundBinaryTag} from the given {@link ByteBuf}.
    *
-   * @param buf    the buffer to read from
-   * @param reader the {@link BinaryTagIO.Reader} to use
-   * @return {@link net.kyori.adventure.nbt.CompoundBinaryTag} the CompoundTag from the buffer
+   * @param buf the buffer to read from
+   * @param version the protocol version used to determine tag parsing behavior
+   * @param reader the {@link BinaryTagIO.Reader} used to parse the tag (maybe ignored depending on version)
+   * @return the decoded {@link net.kyori.adventure.nbt.CompoundBinaryTag}
+   * @throws DecoderException if the root tag is not a compound tag
    */
   public static CompoundBinaryTag readCompoundTag(final ByteBuf buf, final ProtocolVersion version,
                                                   final BinaryTagIO.Reader reader) {
@@ -446,15 +555,18 @@ public enum ProtocolUtils {
       throw new DecoderException(
           "Expected root tag to be CompoundTag, but is " + binaryTag.getClass().getSimpleName());
     }
+
     return (CompoundBinaryTag) binaryTag;
   }
 
   /**
-   * Reads a {@link net.kyori.adventure.nbt.BinaryTag} from the {@code buf}.
+   * Reads a {@link BinaryTag} from the given {@link ByteBuf}.
    *
-   * @param buf    the buffer to read from
-   * @param ignoredReader the {@link BinaryTagIO.Reader} to use
-   * @return {@link net.kyori.adventure.nbt.BinaryTag} the BinaryTag from the buffer
+   * @param buf the buffer to read from
+   * @param version the protocol version used to determine parsing behavior
+   * @param ignoredReader the {@link BinaryTagIO.Reader} instance (ignored in current implementation)
+   * @return the decoded {@link net.kyori.adventure.nbt.BinaryTag}
+   * @throws DecoderException if an I/O error occurs during tag parsing
    */
   public static BinaryTag readBinaryTag(final ByteBuf buf, final ProtocolVersion version,
                                         final BinaryTagIO.Reader ignoredReader) {
@@ -462,6 +574,7 @@ public enum ProtocolUtils {
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
       buf.skipBytes(buf.readUnsignedShort());
     }
+
     try {
       return type.read(new ByteBufInputStream(buf));
     } catch (IOException thrown) {
@@ -473,8 +586,12 @@ public enum ProtocolUtils {
    * Writes a {@link net.kyori.adventure.nbt.BinaryTag} to the {@code buf}.
    *
    * @param buf the buffer to write to
-   * @param tag the BinaryTag to write
+   * @param version the protocol version used to determine encoding behavior
+   * @param tag the {@link BinaryTag} to encode and write
+   * @param <T> the tag type
+   * @throws EncoderException if encoding fails due to I/O errors
    */
+  @SuppressWarnings("unchecked")
   public static <T extends BinaryTag> void writeBinaryTag(final ByteBuf buf, final ProtocolVersion version,
                                                           final T tag) {
     BinaryTagType<T> type = (BinaryTagType<T>) tag.type();
@@ -484,6 +601,7 @@ public enum ProtocolUtils {
         // Empty name
         buf.writeShort(0);
       }
+
       type.write(tag, new ByteBufOutputStream(buf));
     } catch (IOException e) {
       throw new EncoderException("Unable to encode BinaryTag");
@@ -502,6 +620,7 @@ public enum ProtocolUtils {
     for (int i = 0; i < length; i++) {
       ret[i] = readString(buf);
     }
+
     return ret;
   }
 
@@ -534,6 +653,7 @@ public enum ProtocolUtils {
     for (int i = 0; i < length; i++) {
       ret[i] = readVarInt(buf);
     }
+
     return ret;
   }
 
@@ -588,11 +708,18 @@ public enum ProtocolUtils {
       if (hasSignature) {
         signature = readString(buf);
       }
+
       properties.add(new GameProfile.Property(name, value, signature));
     }
+
     return properties;
   }
 
+  /**
+   * The maximum array length supported for Forge 1.7-style packets.
+   *
+   * <p>This limit is derived from the maximum allowed by Forge's 21-bit "extended short" encoding.</p>
+   */
   private static final int FORGE_MAX_ARRAY_LENGTH = Integer.MAX_VALUE & 0x1FFF9A;
 
   /**
@@ -649,6 +776,7 @@ public enum ProtocolUtils {
       checkFrame(b.length <= Short.MAX_VALUE,
           "Cannot send array longer than Short.MAX_VALUE (got %s bytes)", b.length);
     }
+
     // Write a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
     // No vanilla packet should give a 3-byte packet, this method will still retain vanilla
@@ -673,6 +801,7 @@ public enum ProtocolUtils {
       checkFrame(b.readableBytes() <= Short.MAX_VALUE,
           "Cannot send array longer than Short.MAX_VALUE (got %s bytes)", b.readableBytes());
     }
+
     // Write a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
     // No vanilla packet should give a 3-byte packet, this method will still retain vanilla
@@ -694,6 +823,7 @@ public enum ProtocolUtils {
       low = low & 0x7FFF;
       high = buf.readUnsignedByte();
     }
+
     return ((high & 0xFF) << 15) | low;
   }
 
@@ -709,6 +839,7 @@ public enum ProtocolUtils {
     if (high != 0) {
       low = low | 0x8000;
     }
+
     buf.writeShort(low);
     if (high != 0) {
       buf.writeByte(high);
@@ -738,12 +869,15 @@ public enum ProtocolUtils {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
       return MODERN_SERIALIZER;
     }
+
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       return PRE_1_21_5_SERIALIZER;
     }
+
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
       return PRE_1_20_3_SERIALIZER;
     }
+
     return PRE_1_16_SERIALIZER;
   }
 
@@ -762,8 +896,9 @@ public enum ProtocolUtils {
   /**
    * Reads a players {@link IdentifiedKey} from the buffer.
    *
-   * @param buf the buffer
-   * @return the key
+   * @param version the protocol version to determine key revision strategy
+   * @param buf the buffer to read from
+   * @return the decoded {@link IdentifiedKey}
    */
   public static IdentifiedKey readPlayerKey(final ProtocolVersion version, final ByteBuf buf) {
     long expiry = buf.readLong();
@@ -778,7 +913,15 @@ public enum ProtocolUtils {
    * Represents the direction in which a packet flows.
    */
   public enum Direction {
+
+    /**
+     * Indicates that the packet is sent from the client to the server.
+     */
     SERVERBOUND,
+
+    /**
+     * Indicates that the packet is sent from the server to the client.
+     */
     CLIENTBOUND
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -49,29 +49,33 @@ import net.kyori.adventure.text.format.NamedTextColor;
  */
 public class TransferCommand {
 
+  /**
+   * The Velocity server instance used to handle transfers and access server and proxy data.
+   */
   private final VelocityServer server;
 
   /**
-   * Constructs the /transfer command.
+   * Implements Velocity's {@code /transfer} command.
    *
-   * @param server The proxy.
+   * @param server the Velocity server instance
    */
   public TransferCommand(final VelocityServer server) {
     this.server = server;
   }
 
   /**
-   * Registers the command.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isTransferEnabled Whether to enable it or not.
+   * @param isTransferEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isTransferEnabled) {
+  public BrigadierCommand register(final boolean isTransferEnabled) {
     if (!isTransferEnabled) {
-      return;
+      return null;
     }
 
     if (!this.server.getConfiguration().isAcceptTransfers()) {
-      return;
+      return null;
     }
 
     final LiteralCommandNode<CommandSource> transfer = BrigadierCommand.literalArgumentBuilder("transfer")
@@ -86,6 +90,7 @@ public class TransferCommand {
           if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
             builder.suggest("all");
           }
+
           if ("current".regionMatches(true, 0, argument, 0, argument.length())
               && ctx.getSource() instanceof Player) {
             builder.suggest("current");
@@ -136,13 +141,7 @@ public class TransferCommand {
         .executes(this::transfer)))
         .build();
 
-    final BrigadierCommand command = new BrigadierCommand(transfer);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(transfer);
   }
 
   private int transfer(final CommandContext<CommandSource> context) {
@@ -234,7 +233,6 @@ public class TransferCommand {
           }
         }
       }).delay(1, TimeUnit.SECONDS).schedule();
-
     } else if (player.equalsIgnoreCase("current")) {
       if (!(context.getSource() instanceof Player sender)) {
         context.getSource().sendMessage(Component.translatable("velocity.command.players-only"));

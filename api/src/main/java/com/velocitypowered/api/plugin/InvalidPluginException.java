@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -12,18 +12,37 @@ package com.velocitypowered.api.plugin;
  */
 public class InvalidPluginException extends Exception {
 
+  /**
+   * Creates a new exception with no detail message.
+   */
   public InvalidPluginException() {
     super();
   }
 
+  /**
+   * Creates a new exception with the specified detail message.
+   *
+   * @param message the detail message
+   */
   public InvalidPluginException(final String message) {
     super(message);
   }
 
+  /**
+   * Creates a new exception with the specified detail message and cause.
+   *
+   * @param message the detail message
+   * @param cause the cause of the exception
+   */
   public InvalidPluginException(final String message, final Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Creates a new exception with the specified cause.
+   *
+   * @param cause the cause of the exception
+   */
   public InvalidPluginException(final Throwable cause) {
     super(cause);
   }

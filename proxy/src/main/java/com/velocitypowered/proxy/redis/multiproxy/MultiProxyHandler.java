@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,15 +43,40 @@ import org.slf4j.LoggerFactory;
  * Implements handling for setups with multiple proxies.
  */
 public class MultiProxyHandler {
+
+  /**
+   * The logger instance for this class.
+   */
   private static final Logger logger = LoggerFactory.getLogger(MultiProxyHandler.class);
 
+  /**
+   * The Velocity server instance that owns this multi-proxy handler.
+   */
   private final VelocityServer server;
+
+  /**
+   * The Redis configuration section from the Velocity config.
+   */
   private final VelocityConfiguration.Redis config;
+
+  /**
+   * Indicates whether this proxy is shutting down. Used to suppress updates during shutdown.
+   */
   private boolean shuttingDown = false;
+
+  /**
+   * Stores UUIDs of players being transferred between servers, mapped to the server name.
+   */
   private final Map<UUID, String> transferringServers = new HashMap<>();
 
+  /**
+   * Whether Redis-based multi-proxy functionality is enabled.
+   */
   private final boolean enabled;
 
+  /**
+   * Tracks the total number of players connected across all proxies in the cluster.
+   */
   private int totalPlayerCount;
 
   /**
@@ -79,8 +104,8 @@ public class MultiProxyHandler {
     RedisManagerImpl redisManager = this.server.getRedisManager();
 
     //todo : replace with ProxyEntry#getPlayerCount().sum() ->> ProxyDepotService#init()
-    Executors.newScheduledThreadPool(1).scheduleAtFixedRate(()
-        -> totalPlayerCount = redisManager.getCache().size(), 100, 100, TimeUnit.MILLISECONDS);
+    Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() ->
+            totalPlayerCount = redisManager.getCache().size(), 100, 100, TimeUnit.MILLISECONDS);
 
     //todo : replace with PlayerEntry, but maybe with listeners?
     Executors.newScheduledThreadPool(1).scheduleAtFixedRate(this::resyncPlayers, 1, 1, TimeUnit.MINUTES);
@@ -188,6 +213,11 @@ public class MultiProxyHandler {
     }
   }
 
+  /**
+   * Gets the map of players who are currently in the process of being transferred between servers.
+   *
+   * @return a map containing player UUIDs and their target server names
+   */
   public Map<UUID, String> getTransferringServers() {
     return transferringServers;
   }
@@ -315,6 +345,7 @@ public class MultiProxyHandler {
         server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.full.bypass"),
         server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.bypass")
     );
+
     info.setServerName(serverName);
     return info;
   }
@@ -325,6 +356,7 @@ public class MultiProxyHandler {
     for (RegisteredServer s : this.server.getAllServers()) {
       queuePriorities.put(s.getServerInfo().getName(), player.getQueuePriority(s.getServerInfo().getName()));
     }
+
     queuePriorities.put("all", player.getQueuePriority("all"));
 
     return new RemotePlayerInfo(
@@ -451,6 +483,7 @@ public class MultiProxyHandler {
         return info;
       }
     }
+
     return null;
   }
 
@@ -467,6 +500,7 @@ public class MultiProxyHandler {
         return info;
       }
     }
+
     return null;
   }
 

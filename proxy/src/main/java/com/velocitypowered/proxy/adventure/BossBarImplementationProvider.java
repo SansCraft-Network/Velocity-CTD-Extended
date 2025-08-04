@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,6 +33,16 @@ import org.jetbrains.annotations.NotNull;
 @AutoService(BossBarImplementation.Provider.class)
 @SuppressWarnings("UnstableApiUsage")
 public class BossBarImplementationProvider implements BossBarImplementation.Provider {
+
+  /**
+   * Creates a new {@link VelocityBossBarImplementation} for the given {@link BossBar}.
+   *
+   * <p>This method also registers the implementation as a listener to the provided boss bar,
+   * enabling it to react to updates such as name, progress, or visibility changes.</p>
+   *
+   * @param bar the {@link BossBar} for which to create a proxy-side implementation
+   * @return a new {@link VelocityBossBarImplementation} instance
+   */
   @Override
   public @NotNull BossBarImplementation create(final @NotNull BossBar bar) {
     final VelocityBossBarImplementation impl = new VelocityBossBarImplementation(bar);

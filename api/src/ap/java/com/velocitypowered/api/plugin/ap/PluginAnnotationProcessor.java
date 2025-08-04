@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -37,20 +37,55 @@ import javax.tools.StandardLocation;
 @SupportedAnnotationTypes({"com.velocitypowered.api.plugin.Plugin"})
 public class PluginAnnotationProcessor extends AbstractProcessor {
 
+  /**
+   * The annotation processing environment.
+   *
+   * <p>Used to access utilities for messaging, file generation, and element inspection.</p>
+   */
   private ProcessingEnvironment environment;
+
+  /**
+   * The fully qualified name of the plugin class discovered during processing.
+   *
+   * <p>Only one class annotated with {@link Plugin} is supported. If multiple are present,
+   * a warning is issued and only the first is used.</p>
+   */
   private String pluginClassFound;
+
+  /**
+   * Tracks whether a warning has already been issued for multiple {@link Plugin} annotations.
+   */
   private boolean warnedAboutMultiplePlugins;
 
+  /**
+   * Initializes the annotation processor with the provided processing environment.
+   *
+   * @param processingEnv the annotation processing environment
+   */
   @Override
   public synchronized void init(final ProcessingEnvironment processingEnv) {
     this.environment = processingEnv;
   }
 
+  /**
+   * Returns the latest source version supported by this annotation processor.
+   *
+   * @return the latest supported source version
+   */
   @Override
   public SourceVersion getSupportedSourceVersion() {
     return SourceVersion.latestSupported();
   }
 
+  /**
+   * Processes the {@link Plugin} annotation to generate the {@code velocity-plugin.json} metadata file.
+   *
+   * <p>If multiple plugin classes are found, a warning is issued and only the first is used.</p>
+   *
+   * @param annotations the annotation types requested to be processed
+   * @param roundEnv the environment for information about the current and prior round
+   * @return {@code true} if the annotations are claimed by this processor, {@code false} otherwise
+   */
   @Override
   public synchronized boolean process(final Set<? extends TypeElement> annotations,
                                       final RoundEnvironment roundEnv) {
@@ -76,6 +111,7 @@ public class PluginAnnotationProcessor extends AbstractProcessor {
                   + " for your plugin's main class.");
           warnedAboutMultiplePlugins = true;
         }
+
         return false;
       }
 

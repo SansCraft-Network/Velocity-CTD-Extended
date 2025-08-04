@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +27,6 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.multiproxy.EncodedCommandSource;
 import com.velocitypowered.proxy.xcd_redis.impl.transaction.VelocityGetPlayerPing;
 import net.kyori.adventure.text.Component;
@@ -38,18 +37,29 @@ import net.kyori.adventure.text.format.NamedTextColor;
  */
 public class PingCommand {
 
+  /**
+   * The Velocity server instance.
+   */
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@link PingCommand}.
+   *
+   * @param server the Velocity server instance
+   */
   public PingCommand(final VelocityServer server) {
     this.server = server;
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isPingEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isPingEnabled) {
+  public BrigadierCommand register(final boolean isPingEnabled) {
     if (!isPingEnabled) {
-      return;
+      return null;
     }
 
     LiteralArgumentBuilder<CommandSource> node = BrigadierCommand.literalArgumentBuilder("ping")
@@ -75,17 +85,10 @@ public class PingCommand {
           }
         });
 
-    final BrigadierCommand command = new BrigadierCommand(node);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+    return new BrigadierCommand(node);
   }
 
   private int getPing(final CommandContext<CommandSource> context, final String username) {
-    // Check if sending player matches for the response message.
     boolean matchesSender = false;
     Player player = this.server.getPlayer(username).orElse(null);
 
@@ -133,6 +136,7 @@ public class PingCommand {
         context.getSource().sendMessage(component);
       }
     }
+
     return Command.SINGLE_SUCCESS;
   }
 }

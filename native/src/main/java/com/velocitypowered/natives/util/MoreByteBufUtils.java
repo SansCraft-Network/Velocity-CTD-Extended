@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@ import io.netty.buffer.ByteBufAllocator;
 /**
  * Additional utilities for {@link ByteBuf}.
  */
-public class MoreByteBufUtils {
+public final class MoreByteBufUtils {
   private MoreByteBufUtils() {
     throw new AssertionError();
   }
@@ -54,8 +54,8 @@ public class MoreByteBufUtils {
     BufferPreference preferred = nativeStuff.preferredBufferType();
     return switch (preferred) {
       case DIRECT_PREFERRED, HEAP_PREFERRED ->
-        // The native prefers this type, but doesn't strictly require us to provide it.
-        true;
+          // The native prefers this type, but doesn't strictly require us to provide it.
+          true;
       case DIRECT_REQUIRED -> buf.hasMemoryAddress();
       case HEAP_REQUIRED -> buf.hasArray();
     };

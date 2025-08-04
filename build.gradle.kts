@@ -23,11 +23,11 @@ subprojects {
         testImplementation(rootProject.libs.junit.platform.engine)
     }
 
-    tasks {
-        test {
-            useJUnitPlatform()
-            reports {
-                junitXml.required.set(true)
+    testing.suites.named<JvmTestSuite>("test") {
+        useJUnitJupiter()
+        targets.all {
+            testTask.configure {
+                reports.junitXml.required = true
             }
         }
     }

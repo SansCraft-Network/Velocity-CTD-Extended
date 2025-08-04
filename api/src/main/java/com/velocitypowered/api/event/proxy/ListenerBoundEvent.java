@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -16,18 +16,41 @@ import java.net.InetSocketAddress;
  */
 public final class ListenerBoundEvent {
 
+  /**
+   * The socket address the listener is bound to.
+   */
   private final InetSocketAddress address;
+
+  /**
+   * The type of listener that was bound.
+   */
   private final ListenerType listenerType;
 
+  /**
+   * Constructs a new {@link ListenerBoundEvent}.
+   *
+   * @param address the socket address the listener is bound to
+   * @param listenerType the type of listener that was bound
+   */
   public ListenerBoundEvent(final InetSocketAddress address, final ListenerType listenerType) {
     this.address = Preconditions.checkNotNull(address, "address");
     this.listenerType = Preconditions.checkNotNull(listenerType, "listenerType");
   }
 
+  /**
+   * Returns the socket address the listener is bound to.
+   *
+   * @return the bound socket address
+   */
   public InetSocketAddress getAddress() {
     return address;
   }
 
+  /**
+   * Returns the type of listener that was bound.
+   *
+   * @return the listener type
+   */
   public ListenerType getListenerType() {
     return listenerType;
   }

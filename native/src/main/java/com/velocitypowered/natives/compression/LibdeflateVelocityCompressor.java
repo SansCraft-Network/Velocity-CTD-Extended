@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,10 +27,27 @@ import java.util.zip.DataFormatException;
  */
 public final class LibdeflateVelocityCompressor implements VelocityCompressor {
 
+  /**
+   * A {@link VelocityCompressorFactory} for creating {@link LibdeflateVelocityCompressor} instances.
+   *
+   * <p>This factory integrates the native libdeflate-backed compressor into the Velocity
+   * compression system.</p>
+   */
   public static final VelocityCompressorFactory FACTORY = LibdeflateVelocityCompressor::new;
 
+  /**
+   * Native handle to the libdeflate inflate context.
+   */
   private final long inflateCtx;
+
+  /**
+   * Native handle to the libdeflate deflate context.
+   */
   private final long deflateCtx;
+
+  /**
+   * Whether this compressor instance has been disposed.
+   */
   private boolean disposed = false;
 
   private LibdeflateVelocityCompressor(final int level) {
@@ -65,7 +82,7 @@ public final class LibdeflateVelocityCompressor implements VelocityCompressor {
   public void deflate(final ByteBuf source, final ByteBuf destination) throws DataFormatException {
     ensureNotDisposed();
 
-    while (true) {
+    do {
       long sourceAddress = source.memoryAddress() + source.readerIndex();
       long destinationAddress = destination.memoryAddress() + destination.writerIndex();
 
@@ -80,7 +97,7 @@ public final class LibdeflateVelocityCompressor implements VelocityCompressor {
       } else {
         throw new DataFormatException("libdeflate returned unknown code " + produced);
       }
-    }
+    } while (true);
   }
 
   private void ensureNotDisposed() {
@@ -93,6 +110,7 @@ public final class LibdeflateVelocityCompressor implements VelocityCompressor {
       NativeZlibInflate.free(inflateCtx);
       NativeZlibDeflate.free(deflateCtx);
     }
+
     disposed = true;
   }
 

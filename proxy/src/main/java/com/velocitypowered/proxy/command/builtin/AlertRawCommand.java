@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.util.ComponentUtils;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -36,18 +35,29 @@ import net.kyori.adventure.text.format.NamedTextColor;
  */
 public class AlertRawCommand {
 
+  /**
+   * The {@link VelocityServer} instance used for broadcasting messages and accessing proxy state.
+   */
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@link AlertRawCommand} with the given server instance.
+   *
+   * @param server the proxy server instance
+   */
   public AlertRawCommand(final VelocityServer server) {
     this.server = server;
   }
 
   /**
-   * Registers or unregisters the command based on the configuration value.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isAlertRawEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isAlertRawEnabled) {
+  public BrigadierCommand register(final boolean isAlertRawEnabled) {
     if (!isAlertRawEnabled) {
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
@@ -58,13 +68,8 @@ public class AlertRawCommand {
         .then(BrigadierCommand
             .requiredArgumentBuilder("message", StringArgumentType.greedyString())
             .executes(this::alert));
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+
+    return new BrigadierCommand(rootNode);
   }
 
   private int alert(final CommandContext<CommandSource> context) {
@@ -73,6 +78,7 @@ public class AlertRawCommand {
       context.getSource().sendMessage(
           Component.translatable("velocity.command.alertraw.no-message", NamedTextColor.YELLOW)
       );
+
       return 0;
     }
 

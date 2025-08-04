@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -43,8 +44,24 @@ import net.kyori.adventure.text.Component;
  */
 public class ServerListPingHandler {
 
+  /**
+   * The {@link VelocityServer} instance associated with this ping handler.
+   *
+   * <p>Used to retrieve configuration options, player counts, proxy version info,
+   * and server data during ping construction or passthrough processing.</p>
+   */
   private final VelocityServer server;
 
+  /**
+   * Constructs a new {@link ServerListPingHandler} for managing initial server list ping responses.
+   *
+   * <p>This utility class determines how the proxy responds to Minecraft server list pings
+   * based on configuration and protocol version. It supports both static (local) and passthrough
+   * ping responses.</p>
+   *
+   * @param server the {@link VelocityServer} instance to use for configuration and server access
+   * @throws NullPointerException if {@code server} is null
+   */
   public ServerListPingHandler(final VelocityServer server) {
     this.server = server;
   }
@@ -55,6 +72,7 @@ public class ServerListPingHandler {
     return clientVersion.lessThan(minimumVersion);
   }
 
+  @SuppressWarnings("checkstyle:FinalParameters")
   private ServerPing constructLocalPing(ProtocolVersion version) {
     boolean fallback = displayFallbackPing(version);
     VelocityConfiguration configuration = server.getConfiguration();
@@ -103,9 +121,7 @@ public class ServerListPingHandler {
     }
 
     for (Component s : server.getConfiguration().getMotdHover()) {
-      samplePlayers.add(new ServerPing.SamplePlayer(
-          s,
-          UUID.randomUUID()));
+      samplePlayers.add(new ServerPing.SamplePlayer(s, UUID.randomUUID()));
     }
 
     return new ServerPing(
@@ -145,10 +161,12 @@ public class ServerListPingHandler {
       if (rs.isEmpty()) {
         continue;
       }
+
       VelocityRegisteredServer vrs = (VelocityRegisteredServer) rs.get();
       pings.add(vrs.ping(connection.getConnection().eventLoop(), PingOptions.builder()
               .version(responseProtocolVersion).virtualHost(virtualHostStr).build()));
     }
+
     if (pings.isEmpty()) {
       return CompletableFuture.completedFuture(fallback);
     }
@@ -165,6 +183,7 @@ public class ServerListPingHandler {
             }
             return response;
           }
+
           return fallback;
         });
       case MODS:
@@ -179,6 +198,7 @@ public class ServerListPingHandler {
               return fallback.asBuilder().mods(modInfo.get()).build();
             }
           }
+
           return fallback;
         });
       case DESCRIPTION:
@@ -201,6 +221,7 @@ public class ServerListPingHandler {
                 response.getModinfo().orElse(null)
             );
           }
+
           return fallback;
         });
       // Not possible, but covered for completeness.
@@ -221,15 +242,40 @@ public class ServerListPingHandler {
         ? connection.getProtocolVersion() : ProtocolVersion.MAXIMUM_VERSION;
     PingPassthroughMode passthroughMode = configuration.getPingPassthrough();
 
+    CompletableFuture<ServerPing> result;
+
     if (passthroughMode == PingPassthroughMode.DISABLED) {
-      return CompletableFuture.completedFuture(constructLocalPing(shownVersion));
+      result = CompletableFuture.completedFuture(constructLocalPing(shownVersion));
     } else {
       String virtualHostStr = connection.getVirtualHost().map(InetSocketAddress::getHostString)
           .map(str -> str.toLowerCase(Locale.ROOT))
           .orElse("");
-      List<String> serversToTry = server.getConfiguration().getForcedHosts().getOrDefault(
-          virtualHostStr, server.getConfiguration().getAttemptConnectionOrder());
-      return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHostStr);
+
+      List<String> serversToTry = server.getConfiguration().getForcedHosts().get(virtualHostStr);
+      if (serversToTry == null || serversToTry.isEmpty()) {
+        for (Map.Entry<String, List<String>> entry : server.getConfiguration().getForcedHosts().entrySet()) {
+          String pattern = entry.getKey().toLowerCase(Locale.ROOT);
+          if (pattern.startsWith("*.") && virtualHostStr.endsWith(pattern.substring(1))) {
+            serversToTry = entry.getValue();
+            break;
+          }
+        }
+      }
+
+      if (serversToTry == null || serversToTry.isEmpty()) {
+        serversToTry = server.getConfiguration().getAttemptConnectionOrder();
+      }
+
+      result = attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHostStr);
     }
+
+    return result.thenApply(ping -> {
+      Component motd = ping.getDescriptionComponent();
+      if (motd == null || motd.equals(Component.empty())) {
+        return ping.asBuilder().description(Component.text("")).build();
+      }
+
+      return ping;
+    });
   }
 }

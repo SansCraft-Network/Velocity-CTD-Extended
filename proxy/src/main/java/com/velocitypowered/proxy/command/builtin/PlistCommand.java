@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,21 +43,39 @@ import net.kyori.adventure.text.format.NamedTextColor;
  */
 public class PlistCommand {
 
+  /**
+   * The argument key used for identifying a specific server in command input.
+   */
   private static final String SERVER_ARG = "server";
+
+  /**
+   * The argument key used for identifying a specific proxy in command input.
+   */
   private static final String PROXY_ARG = "proxy";
 
+  /**
+   * The Velocity server instance.
+   */
   private final VelocityServer server;
 
+  /**
+   * Constructs the {@code /plist} command handler.
+   *
+   * @param server the Velocity server instance
+   */
   public PlistCommand(final VelocityServer server) {
     this.server = server;
   }
 
   /**
-   * Registers this command.
+   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
+   *
+   * @param isPlistEnabled whether the command is enabled
+   * @return the command instance or {@code null} if disabled
    */
-  public void register(final boolean isPlistEnabled) {
+  public BrigadierCommand register(final boolean isPlistEnabled) {
     if (!isPlistEnabled || !server.getMultiProxyHandler().isRedisEnabled()) {
-      return;
+      return null;
     }
 
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
@@ -75,30 +93,35 @@ public class PlistCommand {
             final String argument = context.getArguments().containsKey(SERVER_ARG)
                 ? context.getArgument(SERVER_ARG, String.class)
                 : "";
+
             for (RegisteredServer registeredServer : server.getAllServers()) {
               final String serverName = registeredServer.getServerInfo().getName();
               if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
                 builder.suggest(serverName);
               }
             }
+
             if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
               builder.suggest("all");
             }
+
             return builder.buildFuture();
           })
           .executes(this::serverCount)
           .build()
         )
         .build();
+
     rootNode.then(serverNode);
-    server.getCommandManager().register(new BrigadierCommand(rootNode));
+    return new BrigadierCommand(rootNode);
   }
 
   private int totalCount(final CommandContext<CommandSource> context) {
     final CommandSource source = context.getSource();
     sendTotalProxyCount(source, this.server.getMultiProxyHandler().getOwnProxyId(), this.server.getPlayerCount());
     source.sendMessage(
-        Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW));
+        Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW)
+            .arguments(Component.text(VelocityCommands.readAlias(context.getNodes()))));
     return Command.SINGLE_SUCCESS;
   }
 
@@ -171,14 +194,14 @@ public class PlistCommand {
 
   private void sendTotalProxyCount(final CommandSource target, final String proxyId, final int online) {
     final TranslatableComponent.Builder msg = Component.translatable()
-            .key(online == 1
-                  ? "velocity.command.plist-player-singular"
-                  : "velocity.command.plist-player-plural"
-            ).color(NamedTextColor.YELLOW)
-            .arguments(
-                Component.text(Integer.toString(online)),
-                Component.text(proxyId)
-            );
+        .key(online == 1
+              ? "velocity.command.plist-player-singular"
+              : "velocity.command.plist-player-plural"
+        ).color(NamedTextColor.YELLOW)
+        .arguments(
+            Component.text(Integer.toString(online)),
+            Component.text(proxyId)
+        );
     target.sendMessage(msg.build());
   }
 

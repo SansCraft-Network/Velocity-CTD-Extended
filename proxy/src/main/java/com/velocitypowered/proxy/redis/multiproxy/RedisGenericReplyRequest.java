@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,6 +27,10 @@ import com.velocitypowered.proxy.redis.RedisPacket;
  * @param source the encoded command source to reply to
  */
 public record RedisGenericReplyRequest(Type type, String targetProxy, EncodedCommandSource source) implements RedisPacket {
+
+  /**
+   * The Redis channel ID for this packet type.
+   */
   public static final String ID = "generic-command-request";
 
   @Override
@@ -35,7 +39,15 @@ public record RedisGenericReplyRequest(Type type, String targetProxy, EncodedCom
   }
 
   enum Type {
+
+    /**
+     * Requests the target proxy to reload its configuration or perform a reload-related action.
+     */
     RELOAD,
+
+    /**
+     * Requests the target proxy to respond with its current uptime.
+     */
     UPTIME
   }
 }

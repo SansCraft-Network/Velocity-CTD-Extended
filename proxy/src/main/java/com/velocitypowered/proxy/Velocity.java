@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,6 +31,9 @@ import org.apache.logging.log4j.Logger;
  */
 public class Velocity {
 
+  /**
+   * The main logger used throughout the Velocity bootstrap lifecycle.
+   */
   private static final Logger logger;
 
   static {
@@ -45,6 +48,11 @@ public class Velocity {
     // Netty natives are extracted there as well
     if (VelocityProperties.hasProperty("velocity.natives-tmpdir")) {
       System.setProperty("io.netty.native.workdir", System.getProperty("velocity.natives-tmpdir"));
+    }
+
+    // Restore allocator used before Netty 4.2 due to oom issues with the adaptive allocator
+    if (System.getProperty("io.netty.allocator.type") == null) {
+      System.setProperty("io.netty.allocator.type", "pooled");
     }
 
     // Disable the resource leak detector by default as it reduces performance. Allow the user to

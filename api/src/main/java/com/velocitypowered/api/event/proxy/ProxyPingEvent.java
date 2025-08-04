@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -24,10 +24,27 @@ import org.jetbrains.annotations.NotNull;
 @AwaitingEvent
 public final class ProxyPingEvent implements ResultedEvent<ResultedEvent.GenericResult> {
 
+  /**
+   * The inbound connection that requested the server ping.
+   */
   private final InboundConnection connection;
+
+  /**
+   * The ping response that will be sent to the client.
+   */
   private ServerPing ping;
+
+  /**
+   * The result determining whether the ping response should be sent or the connection closed.
+   */
   private GenericResult result = GenericResult.allowed();
 
+  /**
+   * Constructs a new {@code ProxyPingEvent}.
+   *
+   * @param connection the incoming connection requesting server info
+   * @param ping the server ping response to send
+   */
   public ProxyPingEvent(final InboundConnection connection, final ServerPing ping) {
     this.connection = Preconditions.checkNotNull(connection, "connection");
     this.ping = Preconditions.checkNotNull(ping, "ping");
@@ -43,7 +60,7 @@ public final class ProxyPingEvent implements ResultedEvent<ResultedEvent.Generic
   }
 
   /**
-   * Get the ServerPing to send to the connection.
+   * Get the ServerPing to "send" to the connection.
    *
    * @return the ServerPing to send
    */

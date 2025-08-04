@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,24 +58,65 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
  * transmitting text components.
  */
 public class ComponentHolder {
+
+  /**
+   * Logger instance for reporting errors during serialization/deserialization.
+   */
   private static final Logger logger = LogManager.getLogger(ComponentHolder.class);
+
+  /**
+   * The maximum allowed size for JSON strings, used when reading components from buffer.
+   */
   public static final int DEFAULT_MAX_STRING_SIZE = 262143;
 
+  /**
+   * The protocol version associated with this component's format.
+   */
   private final ProtocolVersion version;
+
+  /**
+   * The parsed {@link Component} form, lazily initialized.
+   */
   private @MonotonicNonNull Component component;
+
+  /**
+   * The JSON string form of the component, lazily serialized or deserialized.
+   */
   private @MonotonicNonNull String json;
+
+  /**
+   * The binary (NBT) form of the component, lazily serialized or deserialized.
+   */
   private @MonotonicNonNull BinaryTag binaryTag;
 
+  /**
+   * Creates a new {@code ComponentHolder} using a parsed {@link Component}.
+   *
+   * @param version the protocol version
+   * @param component the component to store
+   */
   public ComponentHolder(final ProtocolVersion version, final Component component) {
     this.version = version;
     this.component = component;
   }
 
+  /**
+   * Creates a new {@code ComponentHolder} using a JSON representation.
+   *
+   * @param version the protocol version
+   * @param json the component JSON string
+   */
   public ComponentHolder(final ProtocolVersion version, final String json) {
     this.version = version;
     this.json = json;
   }
 
+  /**
+   * Creates a new {@code ComponentHolder} using a binary tag representation.
+   *
+   * @param version the protocol version
+   * @param binaryTag the binary tag containing the component
+   */
   public ComponentHolder(final ProtocolVersion version, final BinaryTag binaryTag) {
     this.version = version;
     this.binaryTag = binaryTag;
@@ -104,6 +145,7 @@ public class ComponentHolder {
         }
       }
     }
+
     return component;
   }
 
@@ -118,6 +160,7 @@ public class ComponentHolder {
     if (json == null) {
       json = ProtocolUtils.getJsonChatSerializer(version).serialize(getComponent());
     }
+
     return json;
   }
 
@@ -134,6 +177,7 @@ public class ComponentHolder {
       // TODO: replace this with adventure-text-serializer-nbt
       binaryTag = serialize(ProtocolUtils.getJsonChatSerializer(version).serializeToTree(getComponent()));
     }
+
     return binaryTag;
   }
 
@@ -151,7 +195,6 @@ public class ComponentHolder {
     if (json instanceof JsonPrimitive jsonPrimitive) {
       if (jsonPrimitive.isNumber()) {
         Number number = json.getAsNumber();
-
         if (number instanceof Byte) {
           return ByteBinaryTag.byteBinaryTag((Byte) number);
         } else if (number instanceof Short) {
@@ -252,19 +295,25 @@ public class ComponentHolder {
    */
   public static JsonElement deserialize(final BinaryTag tag) {
     switch (tag.type().id()) {
-      case 1: // BinaryTagTypes.BYTE:
-        return new JsonPrimitive(((ByteBinaryTag) tag).value());
-      case 2: // BinaryTagTypes.SHORT:
-        return new JsonPrimitive(((ShortBinaryTag) tag).value());
-      case 3: // BinaryTagTypes.INT:
-        return new JsonPrimitive(((IntBinaryTag) tag).value());
-      case 4: // BinaryTagTypes.LONG:
-        return new JsonPrimitive(((LongBinaryTag) tag).value());
-      case 5: // BinaryTagTypes.FLOAT:
-        return new JsonPrimitive(((FloatBinaryTag) tag).value());
-      case 6: // BinaryTagTypes.DOUBLE:
-        return new JsonPrimitive(((DoubleBinaryTag) tag).value());
-      case 7: // BinaryTagTypes.BYTE_ARRAY:
+      case 1 -> {
+        return new JsonPrimitive(((ByteBinaryTag) tag).value()); // BinaryTagTypes.BYTE:
+      }
+      case 2 -> {
+        return new JsonPrimitive(((ShortBinaryTag) tag).value()); // BinaryTagTypes.SHORT:
+      }
+      case 3 -> {
+        return new JsonPrimitive(((IntBinaryTag) tag).value()); // BinaryTagTypes.INT:
+      }
+      case 4 -> {
+        return new JsonPrimitive(((LongBinaryTag) tag).value()); // BinaryTagTypes.LONG:
+      }
+      case 5 -> {
+        return new JsonPrimitive(((FloatBinaryTag) tag).value()); // BinaryTagTypes.FLOAT:
+      }
+      case 6 -> {
+        return new JsonPrimitive(((DoubleBinaryTag) tag).value()); // BinaryTagTypes.DOUBLE:
+      }
+      case 7 -> {
         byte[] byteArray = ((ByteArrayBinaryTag) tag).value();
 
         JsonArray jsonByteArray = new JsonArray(byteArray.length);
@@ -273,9 +322,11 @@ public class ComponentHolder {
         }
 
         return jsonByteArray;
-      case 8: // BinaryTagTypes.STRING:
-        return new JsonPrimitive(((StringBinaryTag) tag).value());
-      case 9: // BinaryTagTypes.LIST:
+      }
+      case 8 -> {
+        return new JsonPrimitive(((StringBinaryTag) tag).value()); // BinaryTagTypes.STRING:
+      }
+      case 9 -> {
         ListBinaryTag items = (ListBinaryTag) tag;
         JsonArray jsonList = new JsonArray(items.size());
 
@@ -284,7 +335,8 @@ public class ComponentHolder {
         }
 
         return jsonList;
-      case 10: // BinaryTagTypes.COMPOUND:
+      }
+      case 10 -> {
         CompoundBinaryTag compound = (CompoundBinaryTag) tag;
         JsonObject jsonObject = new JsonObject();
 
@@ -298,7 +350,8 @@ public class ComponentHolder {
         });
 
         return jsonObject;
-      case 11: // BinaryTagTypes.INT_ARRAY:
+      }
+      case 11 -> {
         int[] intArray = ((IntArrayBinaryTag) tag).value();
 
         JsonArray jsonIntArray = new JsonArray(intArray.length);
@@ -307,7 +360,8 @@ public class ComponentHolder {
         }
 
         return jsonIntArray;
-      case 12: // BinaryTagTypes.LONG_ARRAY:
+      }
+      case 12 -> {
         long[] longArray = ((LongArrayBinaryTag) tag).value();
 
         JsonArray jsonLongArray = new JsonArray(longArray.length);
@@ -316,8 +370,8 @@ public class ComponentHolder {
         }
 
         return jsonLongArray;
-      default:
-        throw new IllegalArgumentException("Unknown NBT tag: " + tag);
+      }
+      default -> throw new IllegalArgumentException("Unknown NBT tag: " + tag);
     }
   }
 

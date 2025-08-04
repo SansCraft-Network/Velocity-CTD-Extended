@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
+import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
@@ -39,6 +41,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ProxyVersion;
+import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
 import com.velocitypowered.proxy.command.builtin.AlertCommand;
 import com.velocitypowered.proxy.command.builtin.AlertRawCommand;
@@ -130,7 +133,7 @@ import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationRegistry;
+import net.kyori.adventure.translation.TranslationStore;
 import net.kyori.adventure.translation.Translator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -147,63 +150,187 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 @SuppressWarnings({"unchecked"})
 public class VelocityServer implements ProxyServer, ForwardingAudience {
 
+  /**
+   * The official Velocity GitHub URL used in branding and virtual plugin metadata.
+   */
   public static final String VELOCITY_URL = "https://github.com/GemstoneGG/Velocity-CTD";
 
+  /**
+   * Shared logger used throughout proxy lifecycle events.
+   */
   private static final Logger logger = LogManager.getLogger(VelocityServer.class);
+
+  /**
+   * The primary Gson instance used for general JSON serialization tasks.
+   */
   public static final Gson GENERAL_GSON = new GsonBuilder()
       .registerTypeHierarchyAdapter(Favicon.class, FaviconSerializer.INSTANCE)
       .registerTypeHierarchyAdapter(GameProfile.class, GameProfileSerializer.INSTANCE)
       .create();
+
+  /**
+   * A {@link Gson} instance for serializing server ping responses for Minecraft versions
+   * before 1.16. Uses legacy chat component formatting.
+   */
   private static final Gson PRE_1_16_PING_SERIALIZER = new GsonBuilder()
       .registerTypeHierarchyAdapter(
           Component.class,
           ProtocolUtils.getJsonChatSerializer(ProtocolVersion.MINECRAFT_1_15_2)
-                  .serializer().getAdapter(Component.class)
+              .serializer().getAdapter(Component.class)
       )
       .registerTypeHierarchyAdapter(Favicon.class, FaviconSerializer.INSTANCE)
       .create();
+
+  /**
+   * A {@link Gson} instance for serializing server ping responses for Minecraft versions
+   * between 1.16 and 1.20.2. Uses improved component formatting.
+   */
   private static final Gson PRE_1_20_3_PING_SERIALIZER = new GsonBuilder()
       .registerTypeHierarchyAdapter(
           Component.class,
           ProtocolUtils.getJsonChatSerializer(ProtocolVersion.MINECRAFT_1_20_2)
-                  .serializer().getAdapter(Component.class)
+              .serializer().getAdapter(Component.class)
       )
       .registerTypeHierarchyAdapter(Favicon.class, FaviconSerializer.INSTANCE)
       .create();
+
+  /**
+   * A {@link Gson} instance for serializing server ping responses for Minecraft 1.20.3 and newer.
+   * Reflects modern component structure.
+   */
   private static final Gson MODERN_PING_SERIALIZER = new GsonBuilder()
       .registerTypeHierarchyAdapter(
           Component.class,
           ProtocolUtils.getJsonChatSerializer(ProtocolVersion.MINECRAFT_1_20_3)
-                  .serializer().getAdapter(Component.class)
+              .serializer().getAdapter(Component.class)
       )
       .registerTypeHierarchyAdapter(Favicon.class, FaviconSerializer.INSTANCE)
       .create();
 
+  /**
+   * Manages all active network connections including listeners and backend channels.
+   */
   private final ConnectionManager cm;
+
+  /**
+   * The parsed command-line options used to configure the proxy at startup.
+   */
   private final ProxyOptions options;
+
+  /**
+   * The loaded proxy configuration (velocity.toml).
+   * Set during startup after validation.
+   */
   private @MonotonicNonNull VelocityConfiguration configuration;
+
+  /**
+   * The RSA key pair used during the Mojang login encryption handshake.
+   */
   private @MonotonicNonNull KeyPair serverKeyPair;
+
+  /**
+   * A registry of all backend servers known to the proxy.
+   */
   private final ServerMap servers;
+
+  /**
+   * The command manager responsible for registering and dispatching Velocity commands.
+   */
   private final VelocityCommandManager commandManager;
+
+  /**
+   * Atomic flag used to indicate whether shutdown is currently in progress.
+   */
   private final AtomicBoolean shutdownInProgress = new AtomicBoolean(false);
+
+  /**
+   * Whether the proxy has fully completed shutdown.
+   */
   private boolean shutdown = false;
+
+  /**
+   * Whether the shutdown sequence has officially begun.
+   */
   private boolean startedShutdown = false;
+
+  /**
+   * Manages loaded plugins and handles plugin lifecycle events.
+   */
   private final VelocityPluginManager pluginManager;
 
+  /**
+   * Maps online players by their UUID for fast lookup.
+   */
   private final Map<UUID, ConnectedPlayer> connectionsByUuid = new ConcurrentHashMap<>();
+
+  /**
+   * Maps online players by their lowercase usernames.
+   */
   private final Map<String, ConnectedPlayer> connectionsByName = new ConcurrentHashMap<>();
+
+  /**
+   * The proxy's console interface, providing command input and logging output.
+   */
   private final VelocityConsole console;
+
+  /**
+   * Rate limiter for login attempts by IP address.
+   */
   private @MonotonicNonNull Ratelimiter<InetAddress> ipAttemptLimiter;
+
+  /**
+   * Rate limiter for command usage by player UUID.
+   */
   private @MonotonicNonNull Ratelimiter<UUID> commandRateLimiter;
+
+  /**
+   * Rate limiter for tab completion requests by player UUID.
+   */
   private @MonotonicNonNull Ratelimiter<UUID> tabCompleteRateLimiter;
+
+  /**
+   * The event manager responsible for firing and dispatching plugin events.
+   */
   private final VelocityEventManager eventManager;
+
+  /**
+   * Task scheduler for asynchronous work managed by the proxy or plugins.
+   */
   private final VelocityScheduler scheduler;
+
+  /**
+   * Manages plugin messaging channels and handles namespaced vs legacy support.
+   */
   private final VelocityChannelRegistrar channelRegistrar = new VelocityChannelRegistrar();
+
+  /**
+   * Handles Minecraft client pings to the proxy, including response formatting and favicon.
+   */
   private final ServerListPingHandler serverListPingHandler;
+
+  /**
+   * The system timestamp (in milliseconds) when the proxy started.
+   */
   private final long startTime;
+
+  /**
+   * The {@link Key} used to register Velocity's translation source in the Adventure global translator.
+   */
   private final Key translationRegistryKey = Key.key("velocity", "translations");
+
+  /**
+   * Manages Redis pub/sub channels and state sharing across multiple proxy instances.
+   */
   private RedisManagerImpl redisManager;
+
+  /**
+   * Tracks cross-proxy player state and facilitates proxy-to-proxy player movement.
+   */
   private MultiProxyHandler multiProxyHandler;
+
+  /**
+   * Coordinates server queues and handles queue assignment logic.
+   */
   private QueueManager queueManager;
 
   private VelocityRedis redis;
@@ -221,18 +348,38 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     this.options = options;
   }
 
+  /**
+   * Returns the RSA key pair used for player encryption handshakes.
+   *
+   * @return the proxy's {@link KeyPair}, or {@code null} before startup
+   */
   public KeyPair getServerKeyPair() {
     return serverKeyPair;
   }
 
+  /**
+   * Returns the Redis manager for this proxy, used for multiproxy communication.
+   *
+   * @return the {@link RedisManagerImpl}, or {@code null} if not initialized
+   */
   public RedisManagerImpl getRedisManager() {
     return redisManager;
   }
 
+  /**
+   * Returns the multiproxy handler managing Redis-based cross-proxy state.
+   *
+   * @return the multiproxy handler, or {@code null} if not initialized
+   */
   public MultiProxyHandler getMultiProxyHandler() {
     return multiProxyHandler;
   }
 
+  /**
+   * Returns the queue manager currently in use.
+   *
+   * @return the {@link QueueManager}, or {@code null} if not initialized
+   */
   public QueueManager getQueueManager() {
     return queueManager;
   }
@@ -247,14 +394,27 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   @Override
-  public VelocityConfiguration getConfiguration() {
+  public final VelocityConfiguration getConfiguration() {
     return this.configuration;
   }
 
+  /**
+   * Gets the system timestamp (in milliseconds) when the proxy started.
+   *
+   * @return the proxy startup time
+   */
   public long getStartTime() {
     return startTime;
   }
 
+  /**
+   * Returns the {@link ProxyVersion} instance representing the proxy's implementation metadata.
+   *
+   * <p>This includes the proxy's name, vendor, and version string as defined by the package metadata.
+   * If package metadata is unavailable (e.g., in a dev environment), default values will be used.</p>
+   *
+   * @return a {@link ProxyVersion} describing the proxy's implementation
+   */
   @Override
   public ProxyVersion getVersion() {
     Package pkg = VelocityServer.class.getPackage();
@@ -274,6 +434,11 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return new ProxyVersion(implName, implVendor, implVersion);
   }
 
+  /**
+   * Indicates whether the shutdown sequence has begun.
+   *
+   * @return {@code true} if shutdown has started, otherwise {@code false}
+   */
   public boolean isStartedShutdown() {
     return this.startedShutdown;
   }
@@ -282,21 +447,47 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     ProxyVersion version = getVersion();
     PluginDescription description = new VelocityPluginDescription(
         "velocity", version.getName(), version.getVersion(), "The Velocity proxy",
-        VELOCITY_URL, ImmutableList.of(version.getVendor()), Collections.emptyList(), null);
+            version.getName().equals("Velocity") ? VELOCITY_URL : null,
+            ImmutableList.of(version.getVendor()), Collections.emptyList(), null);
     VelocityPluginContainer container = new VelocityPluginContainer(description);
     container.setInstance(VelocityVirtualPlugin.INSTANCE);
     return container;
   }
 
+  /**
+   * Returns the {@link VelocityCommandManager} responsible for handling Velocity's command framework.
+   *
+   * <p>This includes command registration, execution, Brigadier support, and alias management.</p>
+   *
+   * @return the {@link VelocityCommandManager} instance
+   */
   @Override
   public VelocityCommandManager getCommandManager() {
     return commandManager;
   }
 
+  /**
+   * Blocks the current thread until the proxy has completed its shutdown process.
+   *
+   * <p>This method is typically invoked to wait on termination of the Netty event loop group
+   * managing the server listeners.</p>
+   */
   void awaitProxyShutdown() {
     cm.getBossGroup().terminationFuture().syncUninterruptibly();
   }
 
+  /**
+   * Starts the Velocity proxy, initializing all required systems including networking,
+   * plugin management, configuration loading, and event dispatching.
+   *
+   * <p>This method should be called exactly once during proxy bootstrap. It prepares the proxy
+   * to begin accepting player connections and enables plugin interactions.</p>
+   *
+   * <p>This method ensures that all critical fields (such as {@code serverKeyPair}, {@code scheduler},
+   * {@code cm}, and {@code configuration}) are initialized before completing.</p>
+   *
+   * @throws RuntimeException if startup configuration is invalid or plugin loading fails
+   */
   @EnsuresNonNull({"serverKeyPair", "servers", "pluginManager", "eventManager", "scheduler",
       "console", "cm", "configuration"})
   void start() {
@@ -405,8 +596,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       this.cm.queryBind(configuration.getBind().getHostString(), configuration.getQueryPort());
     }
 
-    final String defaultPackage = new String(
-        new byte[] { 'o', 'r', 'g', '.', 'b', 's', 't', 'a', 't', 's' });
+    final String defaultPackage = new String(new byte[] {'o', 'r', 'g', '.', 'b', 's', 't', 'a', 't', 's' });
     if (!MetricsBase.class.getPackage().getName().startsWith(defaultPackage)) {
       Metrics.VelocityMetrics.startMetrics(this, configuration.getMetrics());
     } else {
@@ -424,7 +614,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   private void registerTranslations(final boolean log) {
     final String defaultFile = "messages.properties";
-    final TranslationRegistry translationRegistry = new VelocityTranslationRegistry(TranslationRegistry.create(this.translationRegistryKey));
+    final VelocityTranslationRegistry translationRegistry =
+            new VelocityTranslationRegistry(TranslationStore.messageFormat(this.translationRegistryKey));
     translationRegistry.defaultLocale(Locale.US);
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
@@ -437,7 +628,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         try (Stream<Path> files = Files.walk(path)) {
           if (!Files.exists(langPath)) {
             Files.createDirectory(langPath);
-
             files.filter(Files::isRegularFile).forEach(file -> {
               try {
                 final Path langFile = langPath.resolve(file.getFileName().toString());
@@ -480,7 +670,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
                 try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
                   final ResourceBundle bundle = new PropertyResourceBundle(reader);
 
-                  translationRegistry.registerAll(locale, defaultKeys, (key) -> {
+                  translationRegistry.registerAll(locale, defaultKeys, key -> {
                     final String format = bundle.containsKey(key) ? bundle.getString(key) : defaultBundle.getString(key);
                     final String escapedFormat = format.replace("'", "''");
 
@@ -504,6 +694,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       logger.error("Encountered an I/O error whilst loading translations", e);
       return;
     }
+
     GlobalTranslator.translator().addSource(translationRegistry);
   }
 
@@ -533,6 +724,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     try {
       Path pluginPath = Path.of("plugins");
+      ArrayList<Path> additionalPlugins = new ArrayList<>();
 
       if (!pluginPath.toFile().exists()) {
         Files.createDirectory(pluginPath);
@@ -542,9 +734,24 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
               pluginPath);
           return;
         }
-
-        pluginManager.loadPlugins(pluginPath);
       }
+
+      for (String additionalPluginPath : options.getAdditionalPlugins()) {
+        Path path = Path.of(additionalPluginPath);
+        if (!Files.exists(path)) {
+          logger.warn("Unable to find plugin file by path {}", additionalPluginPath);
+          continue;
+        }
+
+        if (!path.toFile().isFile()) {
+          logger.warn("Plugin {} is not a file", additionalPluginPath);
+          continue;
+        }
+
+        additionalPlugins.add(path);
+      }
+
+      pluginManager.loadPlugins(pluginPath, additionalPlugins);
     } catch (Exception e) {
       logger.error("Couldn't load plugins", e);
     }
@@ -565,18 +772,39 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     logger.info("Loaded {} plugins", pluginManager.getPlugins().size());
   }
 
+  /**
+   * Creates a Netty {@link Bootstrap} instance for establishing new backend or client connections.
+   *
+   * @param group the Netty {@link EventLoopGroup} to use, or {@code null} to use the default
+   * @return a configured {@link Bootstrap} for initiating connections
+   */
   public Bootstrap createBootstrap(@Nullable final EventLoopGroup group) {
     return this.cm.createWorker(group);
   }
 
+  /**
+   * Returns the {@link ChannelInitializer} used for backend server connections.
+   *
+   * @return the backend {@link ChannelInitializer}
+   */
   public ChannelInitializer<Channel> getBackendChannelInitializer() {
     return this.cm.backendChannelInitializer.get();
   }
 
+  /**
+   * Gets the {@link ServerListPingHandler} responsible for processing client pings to the proxy.
+   *
+   * @return the ping handler instance
+   */
   public ServerListPingHandler getServerListPingHandler() {
     return serverListPingHandler;
   }
 
+  /**
+   * Returns whether the proxy has completed shutdown.
+   *
+   * @return {@code true} if shutdown is complete, otherwise {@code false}
+   */
   public boolean isShutdown() {
     return shutdown;
   }
@@ -621,8 +849,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
             throw new IllegalStateException("ConnectedPlayer not found for player " + player
                 + " in server " + rs.get().getServerInfo().getName());
           }
+
           evacuate.add((ConnectedPlayer) player);
         }
+
         servers.unregister(rs.get().getServerInfo());
         servers.register(newInfo);
       }
@@ -685,7 +915,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
           try {
             if (player.getProtocolState() == ProtocolState.CONFIGURATION || player.getProtocolState() == ProtocolState.PLAY) {
-              player.setServerLinks(getConfiguration().getServerLinks());
+              String serverName = player.getCurrentServer().map(s -> s.getServerInfo().getName()).orElse("");
+              List<ServerLink> scopedLinks = getConfiguration().getServerLinksFor(serverName);
+              player.setServerLinks(scopedLinks);
             }
           } catch (IllegalStateException ignored) {
             // Ignore illegal state to ensure each viable reload is successful.
@@ -707,8 +939,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     unregisterCommand("ping");
     unregisterCommand("send");
     unregisterCommand("hub");
-    unregisterCommand("lobby");
     unregisterCommand("transfer");
+
+    for (Map.Entry<String, List<String>> entry : configuration.getCommandAliases().entrySet()) {
+      for (String alias : entry.getValue()) {
+        unregisterCommand(alias);
+      }
+    }
   }
 
   private void unregisterCommand(final String command) {
@@ -720,36 +957,116 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   private void registerCommands() {
 
-    if (!commandManager.hasCommand("alert")) {
-      new AlertCommand(this).register(configuration.isAlertEnabled());
+    if (configuration.isAlertEnabled() && !commandManager.hasCommand("alert")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("alert", List.of());
+      Command command = new AlertCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("alert")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
-    if (!commandManager.hasCommand("alertraw")) {
-      new AlertRawCommand(this).register(configuration.isAlertRawEnabled());
+    if (configuration.isAlertRawEnabled() && !commandManager.hasCommand("alertraw")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("alertraw", List.of());
+      Command command = new AlertRawCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("alertraw")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
-    if (!commandManager.hasCommand("find")) {
-      new FindCommand(this).register(configuration.isFindEnabled());
+    if (configuration.isFindEnabled() && !commandManager.hasCommand("find")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("find", List.of());
+      Command command = new FindCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("find")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
-    if (!commandManager.hasCommand("transfer")) {
-      new TransferCommand(this).register(configuration.isTransferEnabled());
+    if (configuration.isTransferEnabled() && !commandManager.hasCommand("transfer")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("transfer", List.of());
+      Command command = new TransferCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("transfer")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
-    if (!commandManager.hasCommand("glist")) {
-      new GlistCommand(this).register(configuration.isGlistEnabled());
+    if (configuration.isGlistEnabled() && !commandManager.hasCommand("glist")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("glist", List.of());
+      Command command = new GlistCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("glist")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
-    if (!commandManager.hasCommand("plist")) {
-      new PlistCommand(this).register(configuration.isPlistEnabled());
+    if (configuration.isPlistEnabled() && !commandManager.hasCommand("plist")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("plist", List.of());
+      Command command = new PlistCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("plist")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
-    if (!commandManager.hasCommand("ping")) {
-      new PingCommand(this).register(configuration.isPingEnabled());
+    if (configuration.isPingEnabled() && !commandManager.hasCommand("ping")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("ping", List.of());
+      Command command = new PingCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("ping")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
-    if (!commandManager.hasCommand("send")) {
-      new SendCommand(this).register(configuration.isSendEnabled());
+    if (configuration.isSendEnabled() && !commandManager.hasCommand("send")) {
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("send", List.of());
+      Command command = new SendCommand(this).register(true);
+      if (command != null) {
+        commandManager.register(
+            commandManager.metaBuilder("send")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            command
+        );
+      }
     }
 
     if (!commandManager.hasCommand("queueadmin")) {
@@ -765,17 +1082,55 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     if (configuration.isHubEnabled() && !commandManager.hasCommand("hub")) {
-      commandManager.register(
-          commandManager.metaBuilder("hub")
-              .aliases("lobby")
-              .build(),
-          new HubCommand(this).register(configuration.isHubEnabled()));
+      List<String> aliases = configuration.getCommandAliases().getOrDefault("hub", List.of());
+
+      Command hubCommand = new HubCommand(this).register(true);
+      if (hubCommand != null) {
+        commandManager.register(
+            commandManager.metaBuilder("hub")
+                .aliases(aliases.toArray(String[]::new))
+                .plugin(VelocityVirtualPlugin.INSTANCE)
+                .build(),
+            hubCommand
+        );
+      }
     }
 
     for (Map.Entry<String, List<String>> entry : configuration.getSlashServers().entrySet()) {
       for (String alias : entry.getValue()) {
         new SlashServerCommand(this, entry.getKey()).register(alias);
       }
+    }
+
+    for (Map.Entry<String, List<String>> entry : configuration.getCommandAliases().entrySet()) {
+      String baseCommand = entry.getKey();
+
+      if (!commandManager.hasCommand(baseCommand)) {
+        continue;
+      }
+
+      var meta = commandManager.getCommandMeta(baseCommand);
+      if (meta == null) {
+        continue;
+      }
+
+      var node = commandManager.getCommand(baseCommand);
+      if (!(node instanceof LiteralCommandNode<?> literal)) {
+        continue;
+      }
+
+      var command = literal.getCommand();
+      if (!(command instanceof Command commandAlias)) {
+        continue;
+      }
+
+      commandManager.register(
+          commandManager.metaBuilder(baseCommand)
+              .aliases(entry.getValue().toArray(String[]::new))
+              .plugin(VelocityVirtualPlugin.INSTANCE)
+              .build(),
+          commandAlias
+      );
     }
   }
 
@@ -804,7 +1159,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   /**
-   * Loads the server list from the Velocity configuration file.
+   * Loads servers from the [servers] section of the configuration.
+   *
+   * @param config the Velocity configuration
+   * @return list of configured ServerInfo objects
    */
   private static List<ServerInfo> loadServersFromNewList(final VelocityConfiguration config) {
     List<ServerInfo> serverList = new ArrayList<>();
@@ -813,6 +1171,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       InetSocketAddress socketAddress = AddressUtil.parseAddress(address);
       serverList.add(new ServerInfo(serverName, socketAddress));
     });
+
     return serverList;
   }
 
@@ -858,6 +1217,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
           for (ConnectedPlayer player : players) {
             player.disconnect(reason);
           }
+
           return;
         }
 
@@ -959,12 +1319,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private ProxyAddress getProxyAddressToUse() {
     final String filter = getConfiguration().getDynamicProxyFilter();
     List<ProxyAddress> addresses = new ArrayList<>(getConfiguration().getProxyAddresses().stream().toList());
-    if (addresses.isEmpty()) {
-      return null;
-    }
 
     if (getMultiProxyHandler().getOwnProxyId() != null) {
       addresses.removeIf(address -> getMultiProxyHandler().getOwnProxyId().equalsIgnoreCase(address.proxyId()));
+    }
+
+    if (addresses.isEmpty()) {
+      return null;
     }
 
     switch (filter) {
@@ -990,7 +1351,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         return null;
       }
       default -> {
-
       }
     }
 
@@ -1002,18 +1362,38 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     this.cm.closeEndpoints(false);
   }
 
+  /**
+   * Creates a new {@link HttpClient} instance configured with the proxy's connection settings.
+   *
+   * @return a new {@link HttpClient} instance
+   */
   public HttpClient createHttpClient() {
     return cm.createHttpClient();
   }
 
+  /**
+   * Returns the rate limiter used to restrict login attempts per IP address.
+   *
+   * @return the {@link Ratelimiter} for login attempts, or {@code null} if not initialized
+   */
   public @MonotonicNonNull Ratelimiter<InetAddress> getIpAttemptLimiter() {
     return ipAttemptLimiter;
   }
 
+  /**
+   * Returns the rate limiter used to limit command usage by player UUID.
+   *
+   * @return the {@link Ratelimiter} for command usage, or {@code null} if not initialized
+   */
   public @MonotonicNonNull Ratelimiter<UUID> getCommandRateLimiter() {
     return commandRateLimiter;
   }
 
+  /**
+   * Returns the rate limiter used to limit tab completion usage by player UUID.
+   *
+   * @return the {@link Ratelimiter} for tab completion, or {@code null} if not initialized
+   */
   public @MonotonicNonNull Ratelimiter<UUID> getTabCompleteRateLimiter() {
     return tabCompleteRateLimiter;
   }
@@ -1046,6 +1426,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       if (connectionsByName.putIfAbsent(lowerName, connection) != null) {
         return false;
       }
+
       if (connectionsByUuid.putIfAbsent(connection.getUniqueId(), connection) != null) {
         connectionsByName.remove(lowerName, connection);
         return false;
@@ -1060,6 +1441,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       connectionsByName.put(lowerName, connection);
       connectionsByUuid.put(connection.getUniqueId(), connection);
     }
+
     return true;
   }
 
@@ -1074,18 +1456,36 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     connection.disconnected();
   }
 
+  /**
+   * Attempts to locate a player by their username (case-insensitive).
+   *
+   * @param username the player's username to search for
+   * @return an {@link Optional} containing the {@link Player} if found, otherwise empty
+   */
   @Override
   public Optional<Player> getPlayer(final String username) {
     Preconditions.checkNotNull(username, "username");
     return Optional.ofNullable(connectionsByName.get(username.toLowerCase(Locale.US)));
   }
 
+  /**
+   * Attempts to locate a player by their unique UUID.
+   *
+   * @param uuid the UUID of the player
+   * @return an {@link Optional} containing the {@link Player} if found, otherwise empty
+   */
   @Override
   public Optional<Player> getPlayer(final UUID uuid) {
     Preconditions.checkNotNull(uuid, "uuid");
     return Optional.ofNullable(connectionsByUuid.get(uuid));
   }
 
+  /**
+   * Returns a collection of players whose usernames match the given partial input.
+   *
+   * @param partialName the partial name to match
+   * @return a collection of matching {@link Player}s
+   */
   @Override
   public Collection<Player> matchPlayer(final String partialName) {
     Objects.requireNonNull(partialName);
@@ -1095,6 +1495,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Returns a collection of servers whose names match the given partial input.
+   *
+   * @param partialName the partial server name
+   * @return a collection of matching {@link RegisteredServer}s
+   */
   @Override
   public Collection<RegisteredServer> matchServer(final String partialName) {
     Objects.requireNonNull(partialName);
@@ -1104,80 +1510,160 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Returns an immutable collection of all players currently connected to the proxy.
+   *
+   * @return all connected players
+   */
   @Override
   public Collection<Player> getAllPlayers() {
     return ImmutableList.copyOf(connectionsByUuid.values());
   }
 
+  /**
+   * Gets the number of players currently connected to the proxy.
+   *
+   * @return the number of connected players
+   */
   @Override
   public int getPlayerCount() {
     return connectionsByUuid.size();
   }
 
+  /**
+   * Attempts to retrieve a server by its registered name.
+   *
+   * @param name the name of the server
+   * @return an {@link Optional} containing the {@link RegisteredServer}, if present
+   */
   @Override
   public Optional<RegisteredServer> getServer(final String name) {
     return servers.getServer(name);
   }
 
+  /**
+   * Gets all servers currently registered with the proxy.
+   *
+   * @return a collection of all registered servers
+   */
   @Override
   public Collection<RegisteredServer> getAllServers() {
     return servers.getAllServers();
   }
 
+  /**
+   * Creates a {@link RegisteredServer} from the specified {@link ServerInfo} without registering it.
+   *
+   * @param server the server info to wrap
+   * @return a {@link RegisteredServer} representing the server
+   */
   @Override
   public RegisteredServer createRawRegisteredServer(final ServerInfo server) {
     return servers.createRawRegisteredServer(server);
   }
 
+  /**
+   * Registers the specified server with the proxy, or returns the existing one if already registered.
+   *
+   * @param server the server to register
+   * @return the registered server instance
+   */
   @Override
   public RegisteredServer registerServer(final ServerInfo server) {
     return servers.register(server);
   }
 
+  /**
+   * Unregisters a server from the proxy, if it is currently registered.
+   *
+   * @param server the server to unregister
+   */
   @Override
   public void unregisterServer(final ServerInfo server) {
     servers.unregister(server);
   }
 
+  /**
+   * Gets the proxy console, which acts as a {@link Command} source for console-issued commands.
+   *
+   * @return the {@link VelocityConsole} instance
+   */
   @Override
   public VelocityConsole getConsoleCommandSource() {
     return console;
   }
 
+  /**
+   * Returns the plugin manager instance used to register and manage Velocity plugins.
+   *
+   * @return the {@link PluginManager}
+   */
   @Override
   public PluginManager getPluginManager() {
     return pluginManager;
   }
 
+  /**
+   * Returns the event manager used to register, fire, and dispatch plugin events.
+   *
+   * @return the {@link VelocityEventManager}
+   */
   @Override
   public VelocityEventManager getEventManager() {
     return eventManager;
   }
 
+  /**
+   * Returns the proxy's scheduler for running asynchronous and synchronous tasks.
+   *
+   * @return the {@link VelocityScheduler}
+   */
   @Override
   public VelocityScheduler getScheduler() {
     return scheduler;
   }
 
+  /**
+   * Returns the registrar responsible for plugin channel registration and translation.
+   *
+   * @return the {@link VelocityChannelRegistrar}
+   */
   @Override
   public VelocityChannelRegistrar getChannelRegistrar() {
     return channelRegistrar;
   }
-  
+
+  /**
+   * Returns whether the proxy is currently shutting down.
+   *
+   * @return {@code true} if a shutdown is in progress
+   */
   @Override
   public boolean isShuttingDown() {
     return shutdownInProgress.get();
   }
 
+  /**
+   * Returns the address the proxy is currently bound to for accepting connections.
+   *
+   * @return the {@link InetSocketAddress} the proxy is listening on
+   * @throws IllegalStateException if the configuration has not been loaded
+   */
   @Override
   public InetSocketAddress getBoundAddress() {
     if (configuration == null) {
       throw new IllegalStateException(
           "No configuration"); // even though you'll never get the chance... heh, heh
     }
+
     return configuration.getBind();
   }
 
+  /**
+   * Returns all available audiences, including the console and all online players.
+   *
+   * @return an iterable of {@link Audience} instances
+   */
   @Override
   public @NonNull Iterable<? extends Audience> audiences() {
     Collection<Audience> audiences = new ArrayList<>(this.getPlayerCount() + 1);
@@ -1197,12 +1683,23 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         || version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       return MODERN_PING_SERIALIZER;
     }
+
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
       return PRE_1_20_3_PING_SERIALIZER;
     }
+
     return PRE_1_16_PING_SERIALIZER;
   }
 
+  /**
+   * Creates a new {@link ResourcePackInfo.Builder} for constructing a resource pack to send to players.
+   *
+   * <p>This builder allows you to specify metadata such as the pack's SHA-1 hash, whether it's forced,
+   * the prompt message, and more.</p>
+   *
+   * @param url the URL from which the resource pack should be downloaded
+   * @return a new {@link ResourcePackInfo.Builder} instance
+   */
   @Override
   public ResourcePackInfo.Builder createResourcePackBuilder(final String url) {
     return new VelocityResourcePackInfo.BuilderImpl(url);

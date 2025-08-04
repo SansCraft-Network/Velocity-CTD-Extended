@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -66,10 +66,9 @@ public final class LegacyForgeConstants {
   /**
    * The payload for the reset packet.
    */
-  static final byte[] FORGE_LEGACY_HANDSHAKE_RESET_DATA = new byte[]{RESET_DATA_DISCRIMINATOR, 0};
+  static final byte[] FORGE_LEGACY_HANDSHAKE_RESET_DATA = new byte[] {RESET_DATA_DISCRIMINATOR, 0};
 
   private LegacyForgeConstants() {
     throw new AssertionError();
   }
-
 }

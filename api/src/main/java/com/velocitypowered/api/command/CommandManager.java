@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -7,8 +7,10 @@
 
 package com.velocitypowered.api.command;
 
+import com.mojang.brigadier.suggestion.Suggestions;
 import com.velocitypowered.api.event.command.CommandExecuteEvent;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -115,6 +117,27 @@ public interface CommandManager {
    *         Can be completed exceptionally if an exception is thrown during execution.
    */
   CompletableFuture<Boolean> executeImmediatelyAsync(CommandSource source, String cmdLine);
+
+  /**
+   * Asynchronously collects suggestions to fill in the given command {@code cmdLine}.
+   * Returns only the raw completion suggestions without tooltips.
+   *
+   * @param source  the source to execute the command for
+   * @param cmdLine the partially completed command
+   * @return a {@link CompletableFuture} eventually completed with a {@link List}, possibly empty
+   */
+  CompletableFuture<List<String>> offerSuggestions(CommandSource source, String cmdLine);
+
+  /**
+   * Asynchronously collects suggestions to fill in the given command {@code cmdLine}.
+   * Returns the brigadier {@link Suggestions} with tooltips for each result.
+   *
+   * @param source  the source to execute the command for
+   * @param cmdLine the partially completed command
+   * @return a {@link CompletableFuture} eventually completed with {@link Suggestions}, possibly
+   *         empty
+   */
+  CompletableFuture<Suggestions> offerBrigadierSuggestions(CommandSource source, String cmdLine);
 
   /**
    * Returns an immutable collection of the case-insensitive aliases registered

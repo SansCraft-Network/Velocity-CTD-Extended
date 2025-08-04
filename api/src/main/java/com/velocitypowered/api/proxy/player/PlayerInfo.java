@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -14,7 +14,15 @@ import java.util.UUID;
  * to servers when Redis is enabled.
  */
 public class PlayerInfo {
+
+  /**
+   * The username of the player.
+   */
   private final String username;
+
+  /**
+   * The UUID of the player.
+   */
   private final UUID uuid;
 
   /**
@@ -28,10 +36,20 @@ public class PlayerInfo {
     this.uuid = uuid;
   }
 
+  /**
+   * Gets the username of the player.
+   *
+   * @return the player's username
+   */
   public String getUsername() {
     return username;
   }
 
+  /**
+   * Gets the UUID of the player.
+   *
+   * @return the player's UUID
+   */
   public UUID getUuid() {
     return uuid;
   }

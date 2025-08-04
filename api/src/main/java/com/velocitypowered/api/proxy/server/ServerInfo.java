@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -18,7 +18,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public final class ServerInfo implements Comparable<ServerInfo> {
 
+  /**
+   * The name used to identify the server.
+   */
   private final String name;
+
+  /**
+   * The network address the server is reachable at.
+   */
   private final InetSocketAddress address;
 
   /**
@@ -32,10 +39,20 @@ public final class ServerInfo implements Comparable<ServerInfo> {
     this.address = Preconditions.checkNotNull(address, "address");
   }
 
+  /**
+   * Gets the name of the server.
+   *
+   * @return the name of the server
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * Gets the network address of the server.
+   *
+   * @return the {@link InetSocketAddress} of the server
+   */
   public InetSocketAddress getAddress() {
     return address;
   }
@@ -53,9 +70,11 @@ public final class ServerInfo implements Comparable<ServerInfo> {
     if (this == o) {
       return true;
     }
+
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     ServerInfo that = (ServerInfo) o;
     return Objects.equals(name, that.name)
         && Objects.equals(address, that.address);

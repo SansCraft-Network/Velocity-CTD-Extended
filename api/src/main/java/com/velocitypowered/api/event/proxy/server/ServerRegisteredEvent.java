@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * The Velocity API is licensed under the terms of the MIT License. For more details,
  * reference the LICENSE file in the api top-level directory.
@@ -23,6 +23,12 @@ import org.jetbrains.annotations.NotNull;
  * @since 3.3.0
  */
 public record ServerRegisteredEvent(@NotNull RegisteredServer registeredServer) {
+
+  /**
+   * Constructs a new {@link ServerRegisteredEvent}.
+   *
+   * @param registeredServer the server that was registered
+   */
   public ServerRegisteredEvent {
     Preconditions.checkNotNull(registeredServer, "registeredServer");
   }

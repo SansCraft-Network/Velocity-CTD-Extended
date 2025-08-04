@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * Handles sorting plugin dependencies into an order that satisfies all dependencies.
  */
+@SuppressWarnings("UnstableApiUsage")
 public final class PluginDependencyUtils {
 
   private PluginDependencyUtils() {
@@ -60,8 +61,7 @@ public final class PluginDependencyUtils {
         .allowsSelfLoops(false)
         .expectedNodeCount(sortedCandidates.size())
         .build();
-    Map<String, PluginDescription> candidateMap = Maps.uniqueIndex(sortedCandidates,
-        PluginDescription::getId);
+    Map<String, PluginDescription> candidateMap = Maps.uniqueIndex(sortedCandidates, PluginDescription::getId);
 
     for (PluginDescription description : sortedCandidates) {
       graph.addNode(description);
@@ -122,8 +122,21 @@ public final class PluginDependencyUtils {
   }
 
   private enum Mark {
+
+    /**
+     * The plugin has not been visited yet during the traversal.
+     */
     NOT_VISITED,
+
+    /**
+     * The plugin is currently being visited (part of the current recursion stack).
+     * This helps detect circular dependencies.
+     */
     VISITING,
+
+    /**
+     * The plugin and all its dependencies have been fully visited and sorted.
+     */
     VISITED
   }
 }

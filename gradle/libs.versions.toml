@@ -10,7 +10,7 @@ netty = "4.2.3.Final"
 [plugins]
 fill = "io.papermc.fill.gradle:1.0.7"
 indra-publishing = "net.kyori.indra.publishing:3.2.0"
-shadow = "com.gradleup.shadow:9.0.1"
+shadow = "com.gradleup.shadow:8.3.9"
 spotless = "com.diffplug.spotless:7.2.1"
 
 [libraries]
@@ -36,7 +36,7 @@ disruptor = "com.lmax:disruptor:4.0.0"
 fastutil = "it.unimi.dsi:fastutil:8.5.16"
 flare-core = { module = "space.vectrix.flare:flare", version.ref = "flare" }
 flare-fastutil = { module = "space.vectrix.flare:flare-fastutil", version.ref = "flare" }
-jline = "org.jline:jline-terminal-jansi:3.30.4"
+jline = "org.jline:jline-terminal-jansi:3.30.5"
 jedis = "redis.clients:jedis:6.1.0"
 jopt = "net.sf.jopt-simple:jopt-simple:5.0.4"
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit-platform" }

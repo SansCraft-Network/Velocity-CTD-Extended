@@ -59,6 +59,7 @@ import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.adventure.VelocityBossBarImplementation;
+import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftConnectionAssociation;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
@@ -1769,14 +1770,16 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       return 0;
     }
 
+    // First check for global permissions (higher priority for staff members)
     for (int i = 100; i > 0; i--) {
-      if (hasPermission("velocity.queue.priority." + serverName + "." + i)) {
+      if (hasPermission("velocity.queue.priority.all." + i)) {
         return i;
       }
     }
 
+    // Then check for server-specific permissions (lower priority)
     for (int i = 100; i > 0; i--) {
-      if (hasPermission("velocity.queue.priority.all." + i)) {
+      if (hasPermission("velocity.queue.priority." + serverName + "." + i)) {
         return i;
       }
     }
@@ -2214,6 +2217,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             return completedFuture(plainResult(check.get(), realDestination));
           }
 
+          // Check if the player's version is compatible with the server's minimum version
+          if (!checkVersionCompatibility(realDestination)) {
+            return completedFuture(plainResult(ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, realDestination));
+          }
+
           VelocityRegisteredServer vrs = (VelocityRegisteredServer) realDestination;
           VelocityServerConnection con = new VelocityServerConnection(vrs, previousServer, ConnectedPlayer.this, server);
           connectionInFlight = con;
@@ -2281,8 +2289,13 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           case SERVER_DISCONNECTED -> {
             final Component reason = status.getReasonComponent()
                     .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
-            handleConnectionException(toConnect,
-                    DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()), status.isSafe());
+
+            if (connectedServer == null && connection.getState() == StateRegistry.CONFIG) {
+              connection.closeWith(DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()));
+            } else {
+              handleConnectionException(toConnect,
+                      DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()), status.isSafe());
+            }
 
             TextComponent textComponent = (TextComponent) reason;
             if (server.getQueueManager().isQueueEnabled()) {
@@ -2324,5 +2337,42 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     }
 
     return false;
+  }
+
+  /**
+   * Checks if the player's protocol version is compatible with the server's minimum version requirement
+   * and modern forwarding compatibility.
+   *
+   * @param server the server to check compatibility with
+   * @return {@code true} if the player's version is compatible, {@code false} otherwise
+   */
+  private boolean checkVersionCompatibility(final RegisteredServer server) {
+    String serverName = server.getServerInfo().getName();
+    String serverMinimumVersion = ConnectedPlayer.this.server.getConfiguration().getMinimumVersionForServer(serverName);
+    
+    ProtocolVersion minimumProtocolVersion = ProtocolVersion.getVersionByName(serverMinimumVersion);
+    ProtocolVersion maximumProtocolVersion = ProtocolVersion.MAXIMUM_VERSION;
+    ProtocolVersion clientProtocolVersion = getProtocolVersion();
+
+    // Compare the client's protocol version with the server's minimum required version
+    if (clientProtocolVersion.lessThan(minimumProtocolVersion)
+        || clientProtocolVersion.greaterThan(maximumProtocolVersion)) {
+      // Send a message to the player instead of disconnecting them from the proxy
+      sendMessage(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
+          .arguments(Component.text(serverMinimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+      return false;
+    }
+
+    // Check if the server uses modern forwarding and the client is too old
+    PlayerInfoForwarding serverForwardingMode = ConnectedPlayer.this.server.getConfiguration().getServerForwardingMode(serverName);
+    if (serverForwardingMode == PlayerInfoForwarding.MODERN
+        && clientProtocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_13)) {
+      // Disconnect the player with an appropriate message
+      disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
+          .arguments(Component.text("1.13"), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+      return false;
+    }
+
+    return true;
   }
 }

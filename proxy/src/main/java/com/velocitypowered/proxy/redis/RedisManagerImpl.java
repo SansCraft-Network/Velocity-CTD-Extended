@@ -715,12 +715,15 @@ public class RedisManagerImpl {
     if (pubSubConnection != null && pubSubConnection.isOpen()) {
       pubSubConnection.close();
     }
+
     if (connection != null && connection.isOpen()) {
       connection.close();
     }
+
     if (redisClient != null) {
       redisClient.shutdown();
     }
+
     scheduler.shutdown();
   }
 

@@ -202,12 +202,12 @@ public record ConfigDetector(Logger logger) {
         // Option is completely missing
         missingOptions.add(fullPath);
       } else {
-        CommentedConfig defaultValue = entry.getValue();
-        CommentedConfig currentValue = currentConfig.get(key);
+        Object defaultValue = entry.getValue();
+        Object currentValue = currentConfig.get(key);
 
-        if (defaultValue != null && currentValue != null) {
+        if (defaultValue instanceof CommentedConfig && currentValue instanceof CommentedConfig) {
           // Both are configs, recurse into them
-          findMissingOptionsRecursive(defaultValue, currentValue, fullPath, missingOptions);
+          findMissingOptionsRecursive((CommentedConfig) defaultValue, (CommentedConfig) currentValue, fullPath, missingOptions);
         }
         // If they're not both configs, we assume the option exists and skip
       }
@@ -250,12 +250,12 @@ public record ConfigDetector(Logger logger) {
         // Option exists in current but not in default - likely deprecated
         deprecatedOptions.add(fullPath);
       } else {
-        CommentedConfig defaultValue = defaultConfig.get(key);
-        CommentedConfig currentValue = entry.getValue();
+        Object defaultValue = defaultConfig.get(key);
+        Object currentValue = entry.getValue();
 
-        if (defaultValue != null && currentValue != null) {
+        if (defaultValue instanceof CommentedConfig && currentValue instanceof CommentedConfig) {
           // Both are configs, recurse into them
-          findDeprecatedOptionsRecursive(defaultValue, currentValue, fullPath, deprecatedOptions);
+          findDeprecatedOptionsRecursive((CommentedConfig) defaultValue, (CommentedConfig) currentValue, fullPath, deprecatedOptions);
         }
       }
     }

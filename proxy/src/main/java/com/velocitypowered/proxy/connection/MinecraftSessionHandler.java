@@ -792,8 +792,13 @@ public interface MinecraftSessionHandler {
     return false;
   }
 
-  default boolean handle(ServerboundCustomClickActionPacket packet) {
+  /**
+   * Handles {@link ServerboundCustomClickActionPacket}.
+   *
+   * @param ignoredPacket the custom click action packet
+   * @return {@code true} if the packet was handled, {@code false} otherwise
+   */
+  default boolean handle(ServerboundCustomClickActionPacket ignoredPacket) {
     return false;
   }
-
 }

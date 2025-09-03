@@ -24,25 +24,57 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.util.DeferredByteBufHolder;
 import io.netty.buffer.ByteBuf;
 
+/**
+ * Represents a serverbound packet carrying an opaque custom click action payload.
+ *
+ * <p>The payload is retained as-is and forwarded to the session handler without
+ * interpretation by the proxy.</p>
+ */
 public class ServerboundCustomClickActionPacket extends DeferredByteBufHolder implements MinecraftPacket {
 
-    public ServerboundCustomClickActionPacket() {
-        super(null);
-    }
+  /**
+   * Creates a new {@link ServerboundCustomClickActionPacket} with no initial content.
+   */
+  public ServerboundCustomClickActionPacket() {
+    super(null);
+  }
 
-    @Override
-    public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-        replace(buf.readRetainedSlice(buf.readableBytes()));
-    }
+  /**
+   * Decodes this packet from the given buffer.
+   *
+   * <p>All remaining readable bytes are retained as the packet payload.</p>
+   *
+   * @param buf the buffer to read from
+   * @param direction the protocol direction
+   * @param version the protocol version
+   */
+  @Override
+  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+    replace(buf.readRetainedSlice(buf.readableBytes()));
+  }
 
-    @Override
-    public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-        buf.writeBytes(content());
-    }
+  /**
+   * Encodes this packet to the given buffer.
+   *
+   * <p>The stored payload bytes are written verbatim.</p>
+   *
+   * @param buf the buffer to write to
+   * @param direction the protocol direction
+   * @param version the protocol version
+   */
+  @Override
+  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+    buf.writeBytes(content());
+  }
 
-    @Override
-    public boolean handle(MinecraftSessionHandler handler) {
-        return handler.handle(this);
-    }
-
+  /**
+   * Dispatches this packet to the provided session handler.
+   *
+   * @param handler the session handler
+   * @return {@code true} if the packet was handled, {@code false} otherwise
+   */
+  @Override
+  public boolean handle(final MinecraftSessionHandler handler) {
+    return handler.handle(this);
+  }
 }

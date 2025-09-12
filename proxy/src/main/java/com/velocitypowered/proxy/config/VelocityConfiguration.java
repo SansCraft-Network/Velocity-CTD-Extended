@@ -425,8 +425,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     switch (playerInfoForwardingMode) {
-      case NONE ->
-          logger.warn("Player info forwarding is disabled by default! All players will appear to be connecting "
+      case NONE -> logger.warn("Player info forwarding is disabled by default! All players will appear to be connecting "
               + "from the proxy and will have offline-mode UUIDs.");
       case MODERN, BUNGEEGUARD -> requireForwardingSecret = true;
       default -> {
@@ -1198,18 +1197,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       Files.writeString(defaultForwardingSecretPath, generateRandomString(12));
     }
 
-    try {
-      ConfigDetector detector = new ConfigDetector(logger);
-      ConfigDetector.ConfigAnalysis analysis = detector.analyzeConfiguration(path);
-
-      if (!analysis.missingOptions().isEmpty()) {
-        logger.warn("Missing configuration options: " + String.join(", ", analysis.missingOptions()));
-        logger.warn("Run /velocity configcheck for full details");
-      }
-    } catch (IOException e) {
-      logger.debug("Could not perform configuration check during configuration loading", e);
-    }
-
     try (CommentedFileConfig config = CommentedFileConfig.builder(path)
             .defaultData(defaultConfigLocation)
             .autosave()
@@ -1217,6 +1204,18 @@ public final class VelocityConfiguration implements ProxyConfig {
             .sync()
             .build()) {
       config.load();
+
+      try {
+        ConfigDetector detector = new ConfigDetector(logger);
+        ConfigDetector.ConfigAnalysis analysis = detector.analyzeConfiguration(path);
+
+        if (!analysis.missingOptions().isEmpty()) {
+          logger.warn("Missing configuration options: {}", String.join(", ", analysis.missingOptions()));
+          logger.warn("Run /velocity configcheck for full details");
+        }
+      } catch (IOException e) {
+        logger.debug("Could not perform configuration check during configuration loading", e);
+      }
 
       final ConfigurationMigration[] migrations = {
           new ForwardingMigration(),
@@ -2608,18 +2607,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Expose
     private @Nullable String proxyId;
 
-    /**
-     * Connection timeout in seconds for Redis operations.
-     */
-    @Expose
-    private int connectionTimeout;
-
-    /**
-     * Read timeout in seconds for Redis operations.
-     */
-    @Expose
-    private int readTimeout;
-
     private Redis(final CommentedConfig config) {
       if (config == null) {
         return;
@@ -2642,9 +2629,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       if (this.proxyId == null || this.proxyId.isEmpty()) {
         this.proxyId = null;
       }
-
-      this.connectionTimeout = config.getIntOrElse("connection-timeout", 5);
-      this.readTimeout = config.getIntOrElse("read-timeout", 3);
     }
 
     /**
@@ -2720,24 +2704,6 @@ public final class VelocityConfiguration implements ProxyConfig {
       return proxyId;
     }
 
-    /**
-     * Gets the connection timeout in seconds for Redis operations.
-     *
-     * @return the connection timeout in seconds
-     */
-    public int getConnectionTimeout() {
-      return connectionTimeout;
-    }
-
-    /**
-     * Gets the read timeout in seconds for Redis operations.
-     *
-     * @return the read timeout in seconds
-     */
-    public int getReadTimeout() {
-      return readTimeout;
-    }
-
     @Override
     public String toString() {
       return "Redis{"
@@ -2748,8 +2714,6 @@ public final class VelocityConfiguration implements ProxyConfig {
           // password excluded for security
           + ", useSsl=" + useSsl
           + ", maxConcurrentConnections=" + maxConcurrentConnections
-          + ", connectionTimeout=" + connectionTimeout
-          + ", readTimeout=" + readTimeout
           + '}';
     }
   }

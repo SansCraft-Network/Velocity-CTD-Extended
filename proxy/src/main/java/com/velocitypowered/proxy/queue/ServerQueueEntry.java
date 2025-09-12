@@ -170,7 +170,7 @@ public class ServerQueueEntry {
         future = p.createConnectionRequest(foundServer).connect();
       }
 
-      future.whenComplete((result, throwable) -> {
+      future.thenAccept(result -> {
         boolean success = false;
         if (result instanceof Boolean b) {
           success = b;
@@ -274,7 +274,7 @@ public class ServerQueueEntry {
   /**
    * Gets the full bypass status.
    *
-   * @return whether the player can bypass full server restrictions
+   * @return {@code true} if this entry bypasses full server checks, {@code false} otherwise
    */
   public boolean isFullBypass() {
     return fullBypass;
@@ -292,20 +292,22 @@ public class ServerQueueEntry {
   /**
    * Get the username of the player.
    *
-   * @return The username of the player.
+   * @return The username of the player, or null if player not found
    */
   public String getUsername() {
-    if (this.proxy.getRedisManager().isEnabled()) {
+    if (this.proxy.getMultiProxyHandler().isRedisEnabled()) {
       RemotePlayerInfo info = this.proxy.getMultiProxyHandler().getPlayerInfo(player);
       if (info == null) {
-        return "N/A";
+        this.proxy.getQueueManager().getQueue(this.target.getServerInfo().getName()).dequeue(player, false);
+        return null;
       }
 
       return info.getUsername();
     } else {
       Player p = this.proxy.getPlayer(player).orElse(null);
       if (p == null) {
-        return "N/A";
+        this.proxy.getQueueManager().getQueue(this.target.getServerInfo().getName()).dequeue(player, false);
+        return null;
       }
 
       return p.getUsername();

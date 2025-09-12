@@ -241,9 +241,7 @@ public class ServerQueueStatus {
     }
 
     // Redis update outside synchronized block to prevent blocking
-    CompletableFuture.runAsync(() -> {
-      this.velocityServer.getRedisManager().addOrUpdateQueue(this);
-    });
+    CompletableFuture.runAsync(() -> this.velocityServer.getRedisManager().addOrUpdateQueue(this));
   }
 
   private void insertAtPosition(final ServerQueueEntry newEntry, final int position) {
@@ -283,14 +281,14 @@ public class ServerQueueStatus {
       if (maxRetriesReached) {
         if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
           this.velocityServer.getRedisManager().send(new RedisSendMessageToUuidRequest(player,
-                  Component.translatable("velocity.queue.error.max-send-retries-reached")
-                          .arguments(Component.text(getServerName()),
-                                  Component.text(this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
+              Component.translatable("velocity.queue.error.max-send-retries-reached")
+                    .arguments(Component.text(getServerName()),
+                          Component.text(this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
         } else {
           this.velocityServer.getPlayer(player).ifPresent(p ->
-                  p.sendMessage(Component.translatable("velocity.queue.error.max-send-retries-reached")
-                          .arguments(Component.text(getServerName()),
-                                  Component.text(this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
+              p.sendMessage(Component.translatable("velocity.queue.error.max-send-retries-reached")
+                    .arguments(Component.text(getServerName()),
+                          Component.text(this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
         }
       }
     }).delay(1, TimeUnit.SECONDS).schedule();
@@ -299,9 +297,7 @@ public class ServerQueueStatus {
     this.queue.removeIf(entry -> entry.getPlayer().equals(player));
 
     // Redis update outside to prevent blocking
-    CompletableFuture.runAsync(() -> {
-      this.velocityServer.getRedisManager().addOrUpdateQueue(this);
-    });
+    CompletableFuture.runAsync(() -> this.velocityServer.getRedisManager().addOrUpdateQueue(this));
   }
 
   /**
@@ -372,7 +368,7 @@ public class ServerQueueStatus {
   public void broadcast(final Component component) {
     for (ServerQueueEntry status : queue) {
       this.velocityServer.getPlayer(status.getPlayer()).ifPresent(player ->
-              player.sendMessage(component));
+          player.sendMessage(component));
     }
   }
 
@@ -413,33 +409,33 @@ public class ServerQueueStatus {
       return Component.translatable("velocity.queue.player-status.bypass", NamedTextColor.YELLOW);
     } else if (full && !entry.isFullBypass()) {
       return Component.translatable("velocity.queue.player-status.full", NamedTextColor.YELLOW)
-              .arguments(
-                      Component.text(position),
-                      Component.text(queue.size()),
-                      Component.text(entry.getTarget().getServerInfo().getName()),
-                      calculateEta(position)
-              );
+          .arguments(
+              Component.text(position),
+              Component.text(queue.size()),
+              Component.text(entry.getTarget().getServerInfo().getName()),
+              calculateEta(position)
+          );
     } else if (entry.isWaitingForConnection()) {
       return Component.translatable("velocity.queue.player-status.connecting",
-                      NamedTextColor.YELLOW)
+        NamedTextColor.YELLOW)
               .arguments(Component.text(entry.getTarget().getServerInfo().getName()));
     } else if (isPaused()) {
       return Component.translatable("velocity.queue.player-status.paused", NamedTextColor.YELLOW);
     } else if (isOnline()) {
       return Component.translatable("velocity.queue.player-status.online", NamedTextColor.YELLOW)
-              .arguments(
-                      Component.text(position),
-                      Component.text(queue.size()),
-                      Component.text(entry.getTarget().getServerInfo().getName()),
-                      calculateEta(position)
-              );
+          .arguments(
+              Component.text(position),
+              Component.text(queue.size()),
+              Component.text(entry.getTarget().getServerInfo().getName()),
+              calculateEta(position)
+          );
     } else {
       return Component.translatable("velocity.queue.player-status.offline", NamedTextColor.YELLOW)
-              .arguments(
-                      Component.text(position),
-                      Component.text(queue.size()),
-                      Component.text(entry.getTarget().getServerInfo().getName())
-              );
+          .arguments(
+              Component.text(position),
+              Component.text(queue.size()),
+              Component.text(entry.getTarget().getServerInfo().getName())
+          );
     }
   }
 

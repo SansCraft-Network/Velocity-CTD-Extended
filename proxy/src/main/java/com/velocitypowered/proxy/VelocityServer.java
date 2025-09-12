@@ -829,13 +829,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     this.configuration = newConfiguration;
 
+    reloadServerList();
+
     registerCommands();
 
     unregisterTranslations();
 
     registerTranslations(false);
-
-    reloadServerList();
 
     // Re-register servers. If a server is being replaced, make sure to note what players need to
     // move back to a fallback server.
@@ -951,6 +951,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     for (String alias : configuration.getProxyCommandAliases().keySet()) {
       unregisterCommand(alias);
+    }
+
+    for (Map.Entry<String, List<String>> entry : configuration.getSlashServers().entrySet()) {
+      for (String alias : entry.getValue()) {
+        unregisterCommand(alias);
+      }
     }
   }
 
@@ -1344,11 +1350,25 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     shutdown(explicitExit, Component.translatable("velocity.kick.shutdown"));
   }
 
+  /**
+   * Shuts down the proxy with the specified reason.
+   *
+   * <p>This method delegates to {@link #shutdown(boolean, Component)} with
+   * {@code explicitExit = true}.</p>
+   *
+   * @param reason the {@link Component} reason to display to players
+   */
   @Override
   public void shutdown(final Component reason) {
     shutdown(true, reason);
   }
 
+  /**
+   * Shuts down the proxy using the default shutdown reason.
+   *
+   * <p>This method delegates to {@link #shutdown(boolean)} with
+   * {@code explicitExit = true}.</p>
+   */
   @Override
   public void shutdown() {
     shutdown(true);
@@ -1392,9 +1412,15 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       }
     }
 
-    return addresses.get(0);
+    return addresses.getFirst();
   }
 
+  /**
+   * Closes all active network listeners managed by this proxy.
+   *
+   * <p>This method shuts down the underlying endpoints gracefully, preventing
+   * new connections while allowing existing resources to be released.</p>
+   */
   @Override
   public void closeListeners() {
     this.cm.closeEndpoints(false);
@@ -1448,14 +1474,14 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         && configuration.isOnlineMode() && configuration.isOnlineModeKickExistingPlayers()) {
       return true;
     }
-    
+
     // When IP checking is enabled, kick-existing-players works in both online and offline mode
     if (configuration.isKickExistingPlayersCheckIp() && configuration.isOnlineModeKickExistingPlayers()) {
       return true;
     }
-    
+
     String lowerName = connection.getUsername().toLowerCase(Locale.US);
-    
+
     // Check for existing connections by username first
     ConnectedPlayer existingByName = connectionsByName.get(lowerName);
     if (existingByName != null) {
@@ -1471,14 +1497,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         return false;
       }
     }
-    
+
     // Check for UUID conflicts (always block)
-    if (connectionsByUuid.containsKey(connection.getUniqueId())) {
-      return false;
-    }
-    
-    // No username or UUID conflicts, allow connection
-    return true;
+    return !connectionsByUuid.containsKey(connection.getUniqueId());
   }
 
   /**
@@ -1492,7 +1513,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     // Determine if we should use kick-existing-players behavior
     boolean useKickExistingBehavior = this.configuration.isOnlineModeKickExistingPlayers()
-            && (this.configuration.isKickExistingPlayersCheckIp() || this.configuration.isOnlineMode());
+        && (this.configuration.isKickExistingPlayersCheckIp() || this.configuration.isOnlineMode());
 
     if (!useKickExistingBehavior) {
       // Standard behavior: block duplicate connections
@@ -1521,13 +1542,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
       // Register in name map first
       connectionsByName.put(lowerName, connection);
-      
+
       // Check UUID conflicts (always block)
       if (connectionsByUuid.putIfAbsent(connection.getUniqueId(), connection) != null) {
         connectionsByName.remove(lowerName, connection);
         return false;
       }
-      
+
       // Register in IP map if both kick-existing-players and IP checking are enabled
       if (this.configuration.isOnlineModeKickExistingPlayers() && this.configuration.isKickExistingPlayersCheckIp()) {
         InetAddress playerIp = connection.getRemoteAddress().getAddress();
@@ -1539,7 +1560,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       if (existing != null) {
         existing.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
       }
-      
+
       // Check for same username conflicts
       ConnectedPlayer existingByName = connectionsByName.get(lowerName);
       if (existingByName != null) {

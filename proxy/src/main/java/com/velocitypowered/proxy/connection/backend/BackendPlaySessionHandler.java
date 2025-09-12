@@ -647,8 +647,8 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
    */
   @Override
   public void handleGeneric(final MinecraftPacket packet) {
-    if (packet instanceof PluginMessagePacket) {
-      ((PluginMessagePacket) packet).retain();
+    if (packet instanceof PluginMessagePacket pluginMessage) {
+      pluginMessage.retain();
     }
 
     playerConnection.delayedWrite(packet);
@@ -693,8 +693,9 @@ public class BackendPlaySessionHandler implements MinecraftSessionHandler {
   @Override
   public void exception(final Throwable throwable) {
     exceptionTriggered = true;
-    serverConn.getPlayer().handleConnectionException(serverConn.getServer(), throwable,
-        !(throwable instanceof ReadTimeoutException));
+    boolean safe = !(throwable instanceof ReadTimeoutException)
+        || server.getConfiguration().isFailoverOnUnexpectedServerDisconnect();
+    serverConn.getPlayer().handleConnectionException(serverConn.getServer(), throwable, safe);
   }
 
   /**

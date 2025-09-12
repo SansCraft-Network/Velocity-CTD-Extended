@@ -158,27 +158,28 @@ public enum InformationUtils {
    * @return {@link String} address with public parts redacted
    */
   public static String anonymizeInetAddress(final InetAddress address) {
-    if (address instanceof Inet4Address v4) {
-      if (v4.isAnyLocalAddress() || v4.isLoopbackAddress()
-          || v4.isLinkLocalAddress()
-          || v4.isSiteLocalAddress()) {
-        return address.getHostAddress();
-      } else {
-        byte[] addr = v4.getAddress();
-        return (addr[0] & 0xff) + "." + (addr[1] & 0xff) + ".XXX.XXX";
+    return switch (address) {
+      case Inet4Address v4 -> {
+        if (v4.isAnyLocalAddress() || v4.isLoopbackAddress()
+              || v4.isLinkLocalAddress()
+              || v4.isSiteLocalAddress()) {
+          yield address.getHostAddress();
+        } else {
+          byte[] addr = v4.getAddress();
+          yield (addr[0] & 0xff) + "." + (addr[1] & 0xff) + ".XXX.XXX";
+        }
       }
-    } else if (address instanceof Inet6Address v6) {
-      if (v6.isAnyLocalAddress() || v6.isLoopbackAddress()
-          || v6.isSiteLocalAddress()
-          || v6.isSiteLocalAddress()) {
-        return address.getHostAddress();
-      } else {
-        StringBuilder ret = getStringBuilder(v6);
-        return ret.toString();
+      case Inet6Address v6 -> {
+        if (v6.isAnyLocalAddress() || v6.isLoopbackAddress()
+            || v6.isSiteLocalAddress()
+            || v6.isSiteLocalAddress()) {
+          yield address.getHostAddress();
+        } else {
+          yield getStringBuilder(v6).toString();
+        }
       }
-    } else {
-      return address.getHostAddress();
-    }
+      default -> address.getHostAddress();
+    };
   }
 
   private static @NotNull StringBuilder getStringBuilder(final Inet6Address v6) {
@@ -193,9 +194,9 @@ public enum InformationUtils {
 
       if (!bits[iter].equals("0")) {
         if (iter == 0) {
-          ret = new StringBuilder(bits[iter]);
+          ret.append(bits[iter]);
         } else {
-          ret = new StringBuilder("::" + bits[iter]);
+          ret.append("::").append(bits[iter]);
         }
 
         flag = true;

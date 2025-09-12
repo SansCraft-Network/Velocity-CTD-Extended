@@ -562,8 +562,8 @@ public class BungeeCordMessageResponder {
       return false;
     }
 
-    ByteBufDataInput in = new ByteBufDataInput(message.content());
-    String subChannel = in.readUTF();
+    final ByteBufDataInput in = new ByteBufDataInput(message.content());
+    final String subChannel = in.readUTF();
     switch (subChannel) {
       case "GetPlayerServer" -> this.processGetPlayerServer(in);
       case "ForwardToPlayer" -> this.processForwardToPlayer(in);

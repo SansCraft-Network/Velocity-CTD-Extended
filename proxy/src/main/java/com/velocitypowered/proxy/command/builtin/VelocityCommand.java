@@ -683,7 +683,7 @@ public final class VelocityCommand {
         hoverText.append(Component.newline());
         if (description.getAuthors().size() == 1) {
           hoverText.append(Component.translatable("velocity.command.plugin-tooltip-author",
-              Component.text(description.getAuthors().get(0))));
+              Component.text(description.getAuthors().getFirst())));
         } else {
           hoverText.append(
               Component.translatable("velocity.command.plugin-tooltip-author",

@@ -192,96 +192,89 @@ public class ComponentHolder {
    * @throws IllegalArgumentException if the JSON element is of an unsupported or unknown type
    */
   public static BinaryTag serialize(final JsonElement json) {
-    if (json instanceof JsonPrimitive jsonPrimitive) {
-      if (jsonPrimitive.isNumber()) {
+    return switch (json) {
+      case JsonPrimitive jsonPrimitive when jsonPrimitive.isNumber() -> {
         Number number = json.getAsNumber();
-        if (number instanceof Byte) {
-          return ByteBinaryTag.byteBinaryTag((Byte) number);
-        } else if (number instanceof Short) {
-          return ShortBinaryTag.shortBinaryTag((Short) number);
-        } else if (number instanceof Integer) {
-          return IntBinaryTag.intBinaryTag((Integer) number);
-        } else if (number instanceof Long) {
-          return LongBinaryTag.longBinaryTag((Long) number);
-        } else if (number instanceof Float) {
-          return FloatBinaryTag.floatBinaryTag((Float) number);
-        } else if (number instanceof Double) {
-          return DoubleBinaryTag.doubleBinaryTag((Double) number);
-        } else if (number instanceof LazilyParsedNumber) {
-          return IntBinaryTag.intBinaryTag(number.intValue());
-        }
-      } else if (jsonPrimitive.isString()) {
-        return StringBinaryTag.stringBinaryTag(jsonPrimitive.getAsString());
-      } else if (jsonPrimitive.isBoolean()) {
-        return ByteBinaryTag.byteBinaryTag((byte) (jsonPrimitive.getAsBoolean() ? 1 : 0));
-      } else {
-        throw new IllegalArgumentException("Unknown JSON primitive: " + jsonPrimitive);
+        yield switch (number) {
+            case Byte b    -> ByteBinaryTag.byteBinaryTag(b);
+            case Short s   -> ShortBinaryTag.shortBinaryTag(s);
+            case Integer i -> IntBinaryTag.intBinaryTag(i);
+            case Long l    -> LongBinaryTag.longBinaryTag(l);
+            case Float f   -> FloatBinaryTag.floatBinaryTag(f);
+            case Double d  -> DoubleBinaryTag.doubleBinaryTag(d);
+            case LazilyParsedNumber lpn -> IntBinaryTag.intBinaryTag(lpn.intValue());
+            default -> throw new IllegalArgumentException("Unsupported number type: " + number);
+          };
       }
-    } else if (json instanceof JsonObject) {
-      CompoundBinaryTag.Builder compound = CompoundBinaryTag.builder();
+      case JsonPrimitive jsonPrimitive when jsonPrimitive.isString() ->
+          StringBinaryTag.stringBinaryTag(jsonPrimitive.getAsString());
+      case JsonPrimitive jsonPrimitive when jsonPrimitive.isBoolean() ->
+          ByteBinaryTag.byteBinaryTag((byte) (jsonPrimitive.getAsBoolean() ? 1 : 0));
+      case JsonObject jsonObject -> {
+        CompoundBinaryTag.Builder compound = CompoundBinaryTag.builder();
+        for (Map.Entry<String, JsonElement> property : jsonObject.entrySet()) {
+          compound.put(property.getKey(), serialize(property.getValue()));
+        }
 
-      for (Map.Entry<String, JsonElement> property : ((JsonObject) json).entrySet()) {
-        compound.put(property.getKey(), serialize(property.getValue()));
+        yield compound.build();
       }
 
-      return compound.build();
-    } else if (json instanceof JsonArray) {
-      List<JsonElement> jsonArray = ((JsonArray) json).asList();
-
-      if (jsonArray.isEmpty()) {
-        return ListBinaryTag.empty();
-      }
-
-      List<BinaryTag> tagItems = new ArrayList<>(jsonArray.size());
-      BinaryTagType<? extends BinaryTag> listType = null;
-
-      for (JsonElement jsonEl : jsonArray) {
-        BinaryTag tag = serialize(jsonEl);
-        tagItems.add(tag);
-
-        if (listType == null) {
-          listType = tag.type();
-        } else if (listType != tag.type()) {
-          listType = BinaryTagTypes.COMPOUND;
-        }
-      }
-
-      byte id = listType.id();
-      if (id == 1) { // BinaryTagTypes.BYTE:
-        byte[] bytes = new byte[jsonArray.size()];
-        for (int i = 0; i < bytes.length; i++) {
-          bytes[i] = jsonArray.get(i).getAsNumber().byteValue();
+      case JsonArray jsonArray -> {
+        if (jsonArray.isEmpty()) {
+          yield ListBinaryTag.empty();
         }
 
-        return ByteArrayBinaryTag.byteArrayBinaryTag(bytes);
-      } else if (id == 3) { // BinaryTagTypes.INT:
-        int[] ints = new int[jsonArray.size()];
-        for (int i = 0; i < ints.length; i++) {
-          ints[i] = jsonArray.get(i).getAsNumber().intValue();
-        }
+        List<BinaryTag> tagItems = new ArrayList<>(jsonArray.size());
+        BinaryTagType<? extends BinaryTag> listType = null;
 
-        return IntArrayBinaryTag.intArrayBinaryTag(ints);
-      } else if (id == 4) { // BinaryTagTypes.LONG:
-        long[] longs = new long[jsonArray.size()];
-        for (int i = 0; i < longs.length; i++) {
-          longs[i] = jsonArray.get(i).getAsNumber().longValue();
-        }
+        for (JsonElement el : jsonArray) {
+          BinaryTag tag = serialize(el);
+          tagItems.add(tag);
 
-        return LongArrayBinaryTag.longArrayBinaryTag(longs);
-      } else if (id == 10) { // BinaryTagTypes.COMPOUND:
-        tagItems.replaceAll(tag -> {
-          if (tag.type() == BinaryTagTypes.COMPOUND) {
-            return tag;
-          } else {
-            return CompoundBinaryTag.builder().put("", tag).build();
+          if (listType == null) {
+            listType = tag.type();
+          } else if (listType != tag.type()) {
+            listType = BinaryTagTypes.COMPOUND;
           }
-        });
+        }
+
+        byte id = listType.id();
+        if (id == 1) { // BinaryTagTypes.BYTE:
+          byte[] bytes = new byte[jsonArray.size()];
+          for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = jsonArray.get(i).getAsNumber().byteValue();
+          }
+
+          yield ByteArrayBinaryTag.byteArrayBinaryTag(bytes);
+        } else if (id == 3) { // BinaryTagTypes.INT:
+          int[] ints = new int[jsonArray.size()];
+          for (int i = 0; i < ints.length; i++) {
+            ints[i] = jsonArray.get(i).getAsNumber().intValue();
+          }
+
+          yield IntArrayBinaryTag.intArrayBinaryTag(ints);
+        } else if (id == 4) { // BinaryTagTypes.LONG:
+          long[] longs = new long[jsonArray.size()];
+          for (int i = 0; i < longs.length; i++) {
+            longs[i] = jsonArray.get(i).getAsNumber().longValue();
+          }
+
+          yield LongArrayBinaryTag.longArrayBinaryTag(longs);
+        } else if (id == 10) { // BinaryTagTypes.COMPOUND:
+          tagItems.replaceAll(tag -> {
+            if (tag.type() == BinaryTagTypes.COMPOUND) {
+              return tag;
+            } else {
+              return CompoundBinaryTag.builder().put("", tag).build();
+            }
+          });
+        }
+
+        yield ListBinaryTag.listBinaryTag(listType, tagItems);
       }
 
-      return ListBinaryTag.listBinaryTag(listType, tagItems);
-    }
-
-    return EndBinaryTag.endBinaryTag();
+      default -> EndBinaryTag.endBinaryTag();
+    };
   }
 
   /**

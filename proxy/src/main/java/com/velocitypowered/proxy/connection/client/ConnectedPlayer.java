@@ -1294,10 +1294,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         return;
       }
 
-      if (event.getResult() instanceof final DisconnectPlayer res) {
-        disconnect(res.getReasonComponent());
-      } else if (event.getResult() instanceof final RedirectPlayer res) {
-        createConnectionRequest(res.getServer(), previousConnection).connect()
+      switch (event.getResult()) {
+        case final DisconnectPlayer res -> disconnect(res.getReasonComponent());
+        case final RedirectPlayer res -> createConnectionRequest(res.getServer(), previousConnection).connect()
             .whenCompleteAsync((status, throwable) -> {
               if (throwable != null) {
                 handleConnectionException(
@@ -1366,15 +1365,16 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                 // The only remaining value is successful (no need to do anything!)
               }
             }, connection.eventLoop());
-      } else if (event.getResult() instanceof final Notify res) {
-        if (event.kickedDuringServerConnect() && previousConnection != null) {
-          sendMessage(res.getMessageComponent());
-        } else {
-          disconnect(res.getMessageComponent());
+        case final Notify res -> {
+          if (event.kickedDuringServerConnect() && previousConnection != null) {
+            sendMessage(res.getMessageComponent());
+          } else {
+            disconnect(res.getMessageComponent());
+          }
         }
-      } else {
-        // In case someone gets creative, assume we want to disconnect the player.
-        disconnect(friendlyReason);
+        default ->
+            // In case someone gets creative, assume we want to disconnect the player.
+            disconnect(friendlyReason);
       }
     }, connection.eventLoop());
   }
@@ -2222,7 +2222,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           }
 
           // Check if the player's version is compatible with the server's minimum version
-          if (!checkVersionCompatibility(realDestination)) {
+          if (checkVersionCompatibility(realDestination)) {
             return completedFuture(plainResult(ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, realDestination));
           }
 
@@ -2350,7 +2350,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    * @param server the server to check compatibility with
    * @return {@code true} if the player's version is compatible, {@code false} otherwise
    */
-  private boolean checkVersionCompatibility(final RegisteredServer server) {
+  public boolean checkVersionCompatibility(final RegisteredServer server) {
     String serverName = server.getServerInfo().getName();
     String serverMinimumVersion = ConnectedPlayer.this.server.getConfiguration().getMinimumVersionForServer(serverName);
     
@@ -2364,7 +2364,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       // Send a message to the player instead of disconnecting them from the proxy
       sendMessage(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
           .arguments(Component.text(serverMinimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
-      return false;
+      return true;
     }
 
     // Check if the server uses modern forwarding and the client is too old
@@ -2374,9 +2374,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       // Disconnect the player with an appropriate message
       disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
           .arguments(Component.text("1.13"), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
-      return false;
+      return true;
     }
 
-    return true;
+    return false;
   }
 }

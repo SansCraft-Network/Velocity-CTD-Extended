@@ -13,6 +13,12 @@ package com.velocitypowered.api.event.proxy;
 public class ProxyReloadEvent {
 
   /**
+   * Creates a new {@code ProxyReloadEvent}.
+   */
+  public ProxyReloadEvent() {
+  }
+
+  /**
    * Returns a string representation of this {@code ProxyReloadEvent}.
    *
    * <p>As this event has no fields, the output is a fixed string identifier.</p>

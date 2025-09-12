@@ -96,13 +96,13 @@ public class QueueManagerRedisImpl extends QueueManager {
     String ownProxy = this.server.getMultiProxyHandler().getOwnProxyId();
 
     // If no master proxies are configured but there's only one active proxy, use it as master
-    if (masterProxies.isEmpty() || (masterProxies.size() == 1 && masterProxies.get(0).isEmpty())) {
-      if (activeProxies.size() == 1 && activeProxies.get(0).equalsIgnoreCase(ownProxy)) {
+    if (masterProxies.isEmpty() || (masterProxies.size() == 1 && masterProxies.getFirst().isEmpty())) {
+      if (activeProxies.size() == 1 && activeProxies.getFirst().equalsIgnoreCase(ownProxy)) {
         return true;
       }
       // If there's only one active proxy, use it as master regardless of configuration
       if (activeProxies.size() == 1) {
-        return activeProxies.get(0).equalsIgnoreCase(ownProxy);
+        return activeProxies.getFirst().equalsIgnoreCase(ownProxy);
       }
     }
 

@@ -220,7 +220,7 @@ public class LegacyPlayerListItemPacket implements MinecraftPacket {
         }
       }
     } else {
-      Item item = items.get(0);
+      Item item = items.getFirst();
       Component displayNameComponent = item.getDisplayName();
       if (displayNameComponent != null) {
         String displayName = LegacyComponentSerializer.legacySection()

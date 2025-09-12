@@ -45,7 +45,7 @@ import io.lettuce.core.api.async.RedisAsyncCommands;
 import io.lettuce.core.api.sync.RedisCommands;
 import io.lettuce.core.pubsub.RedisPubSubAdapter;
 import io.lettuce.core.pubsub.StatefulRedisPubSubConnection;
-import io.lettuce.core.pubsub.api.async.RedisPubSubAsyncCommands;
+import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -564,64 +564,45 @@ public class RedisManagerImpl {
       RedisURI.Builder uriBuilder = RedisURI.builder()
           .withHost(redisConfig.getHost())
           .withPort(redisConfig.getPort())
-          .withTimeout(Duration.ofSeconds(redisConfig.getConnectionTimeout()))
-          .withDatabase(0);
-
-      if (redisConfig.getUsername() != null && !redisConfig.getUsername().isEmpty()) {
-        uriBuilder.withAuthentication(redisConfig.getUsername(), 
-            redisConfig.getPassword().isEmpty() ? null : redisConfig.getPassword());
-      } else if (!redisConfig.getPassword().isEmpty()) {
-        uriBuilder.withPassword(redisConfig.getPassword());
-      }
+          .withTimeout(Duration.ofSeconds(60));
 
       if (redisConfig.isUseSsl()) {
         uriBuilder.withSsl(true);
+      }
+
+      if (redisConfig.getUsername() != null && !redisConfig.getUsername().isEmpty()) {
+        uriBuilder.withAuthentication(redisConfig.getUsername(),
+            redisConfig.getPassword().equalsIgnoreCase("") ? null : redisConfig.getPassword());
+      } else if (!redisConfig.getPassword().equalsIgnoreCase("")) {
+        uriBuilder.withPassword(redisConfig.getPassword());
       }
 
       RedisURI redisUri = uriBuilder.build();
 
       // Create Redis client with connection pooling
       this.redisClient = RedisClient.create(redisUri);
-      
+
       // Create main connection
       this.connection = redisClient.connect();
-      
+
       // Create pub/sub connection
       this.pubSubConnection = redisClient.connectPubSub();
       this.pubSubConnection.addListener(this.pubSub);
 
-      // Start pub/sub subscription asynchronously with timeout
-      CompletableFuture.runAsync(() -> {
-        try {
-          RedisPubSubAsyncCommands<String, String> commands = pubSubConnection.async();
-          commands.subscribe(CHANNEL)
-              .thenAccept(result -> {
-                // Success - no action needed
-              })
-              .exceptionally(throwable -> {
-                logger.error("Failed to subscribe to Redis channel", throwable);
-                return null;
-              });
-        } catch (Exception e) {
-          logger.error("Error in pubsub listener", e);
-        }
-      }).orTimeout(redisConfig.getReadTimeout(), TimeUnit.SECONDS).exceptionally(throwable -> {
-        logger.error("Failed to subscribe to Redis channel within timeout", throwable);
-        return null;
-      });
+      // Subscribe to the channel
+      RedisPubSubCommands<String, String> pubSubCommands = pubSubConnection.sync();
+      pubSubCommands.subscribe(CHANNEL);
 
       validateProxyId(redisConfig.getProxyId());
       startKeepalive(redisConfig.getProxyId(), server);
       startKeepalivePlayers(server);
-      
-      logger.info("Successfully connected to Redis at {}:{}", redisConfig.getHost(), redisConfig.getPort());
     } catch (Exception e) {
       logger.error("Failed to setup Redis connection", e);
     }
   }
 
   private void startKeepalivePlayers(final VelocityServer proxy) {
-    scheduler.scheduleAtFixedRate(() -> {
+    proxy.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
       for (RemotePlayerInfo info : this.getCache()) {
         if (info.getProxyId().equalsIgnoreCase(proxy.getConfiguration().getRedis().getProxyId())) {
           if (proxy.getPlayer(info.getUuid()).isEmpty()) {
@@ -629,7 +610,7 @@ public class RedisManagerImpl {
           }
         }
       }
-    }, 30, 30, TimeUnit.SECONDS);
+    }).repeat(30, TimeUnit.SECONDS).schedule();
   }
 
   private void validateProxyId(final String proxyId) {
@@ -667,7 +648,7 @@ public class RedisManagerImpl {
         JsonObject object = new JsonObject();
         object.add("obj", packetData);
         object.addProperty("id", packet.getId());
-        
+
         RedisAsyncCommands<String, String> commands = connection.async();
         commands.publish(CHANNEL, gson.toJson(object))
             .thenAccept(result -> {
@@ -705,7 +686,7 @@ public class RedisManagerImpl {
    * @return {@code true} if Redis is enabled and initialized, {@code false} otherwise
    */
   public boolean isEnabled() {
-    return connection != null && connection.isOpen();
+    return redisClient != null && connection != null && connection.isOpen();
   }
 
   /**
@@ -747,6 +728,16 @@ public class RedisManagerImpl {
      */
     private final Map<String, ChannelRegistration<?>> listeners = new ConcurrentHashMap<>();
 
+    /**
+     * Handles an incoming Redis pub/sub message.
+     *
+     * <p>The message is deserialized into a JSON object, the packet ID is extracted,
+     * and the appropriate {@link ChannelRegistration} is looked up. If a matching
+     * registration exists, the message is dispatched via {@link #onMessage0(ChannelRegistration, String, JsonObject)}.</p>
+     *
+     * @param channel the Redis channel the message was published on
+     * @param message the raw JSON message payload
+     */
     @Override
     public void message(final String channel, final String message) {
       try {
@@ -761,7 +752,7 @@ public class RedisManagerImpl {
 
         this.onMessage0(registration, channel, packetObj);
       } catch (Exception e) {
-        logger.error("Error processing Redis message", e);
+        logger.error("Error processing Redis message on channel: {}", channel, e);
       }
     }
 

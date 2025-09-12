@@ -31,6 +31,7 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.queue.ServerQueueEntry;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
@@ -49,22 +50,10 @@ import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
  * Implements the {@code /queueadmin} command.
+ *
+ * @param server The main Velocity server instance used to access server, queue, and configuration data.
  */
-public class QueueAdminCommand {
-
-  /**
-   * The main Velocity server instance used to access server, queue, and configuration data.
-   */
-  private final VelocityServer server;
-
-  /**
-   * Constructs a new {@link QueueAdminCommand} with the given Velocity server instance.
-   *
-   * @param server the Velocity server
-   */
-  public QueueAdminCommand(final VelocityServer server) {
-    this.server = server;
-  }
+public record QueueAdminCommand(VelocityServer server) {
 
   /**
    * Registers or unregisters the command based on the configuration value.
@@ -436,6 +425,14 @@ public class QueueAdminCommand {
       return -1;
     }
 
+    if (player instanceof ConnectedPlayer connectedPlayer && connectedPlayer.checkVersionCompatibility(server)) {
+      ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.version-incompatible")
+          .arguments(
+              Component.text(player.getUsername()),
+              Component.text(server.getServerInfo().getName())));
+      return -1;
+    }
+
     server.getQueueStatus().queue(player.getUniqueId(), player.getQueuePriority(server.getServerInfo().getName()),
         player.hasPermission("velocity.queue.full.bypass"),
         player.hasPermission("velocity.queue.bypass"));
@@ -554,12 +551,10 @@ public class QueueAdminCommand {
       );
     }
 
-    int connectedSize = connected.size();
-
     ctx.getSource()
-        .sendMessage(Component.translatable("velocity.queue.command.addedall-player" + (connectedSize == 1 ? "" : "s"))
+        .sendMessage(Component.translatable("velocity.queue.command.addedall-player" + (connected.size() == 1 ? "" : "s"))
             .arguments(
-                Component.text(connectedSize),
+                Component.text(connected.size()),
                 Component.text(to.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
@@ -612,12 +607,10 @@ public class QueueAdminCommand {
           player.isQueueBypass());
     }
 
-    int connectedSize = connected.size();
-
     ctx.getSource()
-        .sendMessage(Component.translatable("velocity.queue.command.addedall-player" + (connectedSize == 1 ? "" : "s"))
+        .sendMessage(Component.translatable("velocity.queue.command.addedall-player" + (connected.size() == 1 ? "" : "s"))
             .arguments(
-                Component.text(connectedSize),
+                Component.text(connected.size()),
                 Component.text(to.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;

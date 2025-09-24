@@ -1636,11 +1636,14 @@ public final class VelocityConfiguration implements ProxyConfig {
               if (entry2.getKey().equalsIgnoreCase("forwarding-mode")) {
                 forwardingMode = ServerInfoForwardingMode.valueOf(ServerInfoForwardingMode.class, entry2.getValue());
               }
+
+              if (entry2.getKey().equalsIgnoreCase("minimum-version")) {
+                serverMinimumVersions.put(cleanServerName(entry.getKey()), entry2.getValue());
+              }
             }
 
             if (address == null) {
-              throw new IllegalArgumentException(
-                      "Server entry " + entry.getKey() + " is missing address!");
+              throw new IllegalArgumentException("Server entry " + entry.getKey() + " is missing address!");
             }
 
             servers.put(cleanServerName(entry.getKey()), new BackendServerConfig(address, forwardingMode));

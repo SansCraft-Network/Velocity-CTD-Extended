@@ -322,7 +322,7 @@ public class ComponentHolder {
           jsonList.add(deserialize(subTag));
         }
 
-       yield jsonList;
+        yield jsonList;
       }
       // BinaryTagTypes.COMPOUND:
       case 10 -> {

@@ -59,6 +59,7 @@ import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.adventure.VelocityBossBarImplementation;
+import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftConnectionAssociation;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
@@ -133,6 +134,7 @@ import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
+import net.kyori.adventure.text.minimessage.translation.Argument;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import net.kyori.adventure.title.Title;
@@ -1190,7 +1192,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     Component friendlyError;
     if (connectedServer != null && connectedServer.getServerInfo().equals(server.getServerInfo())) {
       friendlyError = Component.translatable("velocity.error.connected-server-error",
-          Component.text(server.getServerInfo().getName()));
+          Argument.string("server", server.getServerInfo().getName()));
     } else {
       if (Boolean.getBoolean("velocity.suppress-connection-timeout-logs")) {
         logger.error("{}: unable to connect to server {}", this, server.getServerInfo().getName());
@@ -1199,7 +1201,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       }
 
       friendlyError = Component.translatable("velocity.error.connecting-server-error",
-          Component.text(server.getServerInfo().getName()));
+          Argument.string("server", server.getServerInfo().getName()));
     }
 
     handleConnectionException(server, null, friendlyError.color(NamedTextColor.RED), safe);
@@ -1222,18 +1224,26 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     Component disconnectReason = disconnect.getReason().getComponent();
     String plainTextReason = PASS_THRU_TRANSLATE.serialize(disconnectReason);
     if (connectedServer != null && connectedServer.getServerInfo().equals(server.getServerInfo())) {
-      logger.info("{}: kicked from server {}: {}", this, server.getServerInfo().getName(), plainTextReason);
+      if (this.server.getConfiguration().isLogPlayerConnections()) {
+        logger.info("{}: kicked from server {}: {}", this, server.getServerInfo().getName(), plainTextReason);
+      }
+
       handleConnectionException(server, disconnectReason,
-          Component.translatable("velocity.error.moved-to-new-server", NamedTextColor.RED,
-              Component.text(server.getServerInfo().getName()),
-              disconnectReason), safe);
+          Component.translatable("velocity.error.moved-to-new-server", NamedTextColor.RED)
+              .arguments(
+                  Argument.string("server", server.getServerInfo().getName()),
+                  Argument.component("reason", disconnectReason)), safe);
     } else {
-      logger.error("{}: disconnected while connecting to {}: {}", this,
-          server.getServerInfo().getName(), plainTextReason);
+      if (this.server.getConfiguration().isLogPlayerConnections()) {
+        logger.error("{}: disconnected while connecting to {}: {}", this,
+            server.getServerInfo().getName(), plainTextReason);
+      }
+
       handleConnectionException(server, disconnectReason,
-          Component.translatable("velocity.error.cant-connect", NamedTextColor.RED,
-              Component.text(server.getServerInfo().getName()),
-              disconnectReason), safe);
+          Component.translatable("velocity.error.cant-connect", NamedTextColor.RED)
+              .arguments(
+                  Argument.string("server", server.getServerInfo().getName()),
+                  Argument.component("reason", disconnectReason)), safe);
     }
   }
 
@@ -1289,10 +1299,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         return;
       }
 
-      if (event.getResult() instanceof final DisconnectPlayer res) {
-        disconnect(res.getReasonComponent());
-      } else if (event.getResult() instanceof final RedirectPlayer res) {
-        createConnectionRequest(res.getServer(), previousConnection).connect()
+      switch (event.getResult()) {
+        case final DisconnectPlayer res -> disconnect(res.getReasonComponent());
+        case final RedirectPlayer res -> createConnectionRequest(res.getServer(), previousConnection).connect()
             .whenCompleteAsync((status, throwable) -> {
               if (throwable != null) {
                 handleConnectionException(
@@ -1361,15 +1370,16 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                 // The only remaining value is successful (no need to do anything!)
               }
             }, connection.eventLoop());
-      } else if (event.getResult() instanceof final Notify res) {
-        if (event.kickedDuringServerConnect() && previousConnection != null) {
-          sendMessage(res.getMessageComponent());
-        } else {
-          disconnect(res.getMessageComponent());
+        case final Notify res -> {
+          if (event.kickedDuringServerConnect() && previousConnection != null) {
+            sendMessage(res.getMessageComponent());
+          } else {
+            disconnect(res.getMessageComponent());
+          }
         }
-      } else {
-        // In case someone gets creative, assume we want to disconnect the player.
-        disconnect(friendlyReason);
+        default ->
+            // In case someone gets creative, assume we want to disconnect the player.
+            disconnect(friendlyReason);
       }
     }, connection.eventLoop());
   }
@@ -1769,14 +1779,16 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       return 0;
     }
 
+    // First check for global permissions (higher priority for staff members)
     for (int i = 100; i > 0; i--) {
-      if (hasPermission("velocity.queue.priority." + serverName + "." + i)) {
+      if (hasPermission("velocity.queue.priority.all." + i)) {
         return i;
       }
     }
 
+    // Then check for server-specific permissions (lower priority)
     for (int i = 100; i > 0; i--) {
-      if (hasPermission("velocity.queue.priority.all." + i)) {
+      if (hasPermission("velocity.queue.priority." + serverName + "." + i)) {
         return i;
       }
     }
@@ -2214,6 +2226,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             return completedFuture(plainResult(check.get(), realDestination));
           }
 
+          // Check if the player's version is compatible with the server's minimum version
+          if (checkVersionCompatibility(realDestination)) {
+            return completedFuture(plainResult(ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, realDestination));
+          }
+
           VelocityRegisteredServer vrs = (VelocityRegisteredServer) realDestination;
           VelocityServerConnection con = new VelocityServerConnection(vrs, previousServer, ConnectedPlayer.this, server);
           connectionInFlight = con;
@@ -2281,8 +2298,13 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           case SERVER_DISCONNECTED -> {
             final Component reason = status.getReasonComponent()
                     .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
-            handleConnectionException(toConnect,
-                    DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()), status.isSafe());
+
+            if (connectedServer == null && connection.getState() == StateRegistry.CONFIG) {
+              connection.closeWith(DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()));
+            } else {
+              handleConnectionException(toConnect,
+                      DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()), status.isSafe());
+            }
 
             TextComponent textComponent = (TextComponent) reason;
             if (server.getQueueManager().isQueueEnabled()) {
@@ -2321,6 +2343,46 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           return true;
         }
       }
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks if the player's protocol version is compatible with the server's minimum version requirement
+   * and modern forwarding compatibility.
+   *
+   * @param server the server to check compatibility with
+   * @return {@code true} if the player's version is compatible, {@code false} otherwise
+   */
+  public boolean checkVersionCompatibility(final RegisteredServer server) {
+    String serverName = server.getServerInfo().getName();
+    String serverMinimumVersion = ConnectedPlayer.this.server.getConfiguration().getMinimumVersionForServer(serverName);
+    
+    ProtocolVersion minimumProtocolVersion = ProtocolVersion.getVersionByName(serverMinimumVersion);
+    ProtocolVersion maximumProtocolVersion = ProtocolVersion.MAXIMUM_VERSION;
+    ProtocolVersion clientProtocolVersion = getProtocolVersion();
+
+    // Compare the client's protocol version with the server's minimum required version
+    if (clientProtocolVersion.lessThan(minimumProtocolVersion)
+        || clientProtocolVersion.greaterThan(maximumProtocolVersion)) {
+      // Send a message to the player instead of disconnecting them from the proxy
+      sendMessage(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
+          .arguments(
+              Argument.string("min", serverMinimumVersion),
+              Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+      return true;
+    }
+
+    // Check if the server uses modern forwarding and the client is too old
+    PlayerInfoForwarding serverForwardingMode = ((VelocityRegisteredServer) server).getConfiguredPlayerInfoForwarding();
+    if (serverForwardingMode == PlayerInfoForwarding.MODERN && clientProtocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_13)) {
+      // Disconnect the player with an appropriate message
+      disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
+          .arguments(
+              Argument.string("min", "1.13"),
+              Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+      return true;
     }
 
     return false;

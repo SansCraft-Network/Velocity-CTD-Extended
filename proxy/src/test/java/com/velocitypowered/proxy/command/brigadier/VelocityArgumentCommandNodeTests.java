@@ -75,8 +75,8 @@ public class VelocityArgumentCommandNodeTests {
     assertFalse(reader.canRead());
 
     assertFalse(this.contextBuilder.getNodes().isEmpty());
-    assertSame(node, this.contextBuilder.getNodes().get(0).getNode());
-    assertEquals(expectedRange, this.contextBuilder.getNodes().get(0).getRange());
+    assertSame(node, this.contextBuilder.getNodes().getFirst().getNode());
+    assertEquals(expectedRange, this.contextBuilder.getNodes().getFirst().getRange());
 
     assertTrue(this.contextBuilder.getArguments().containsKey("foo"));
     final ParsedArgument<Object, String[]> parsed =

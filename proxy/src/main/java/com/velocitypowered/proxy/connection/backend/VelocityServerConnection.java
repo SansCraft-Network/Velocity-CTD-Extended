@@ -201,7 +201,8 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
 
   private void startHandshake() {
     final MinecraftConnection mc = ensureConnected();
-    PlayerInfoForwarding forwardingMode = server.getConfiguration().getServerForwardingMode(registeredServer.getServerInfo().getName());
+
+    PlayerInfoForwarding forwardingMode = registeredServer.getConfiguredPlayerInfoForwarding();
 
     // Initiate the handshake.
     ProtocolVersion protocolVersion = proxyPlayer.getConnection().getProtocolVersion();
@@ -219,9 +220,8 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
       handshake.setServerAddress(createBungeeGuardForwardingAddress(secret));
     } else if (proxyPlayer.getConnection().getType() == ConnectionTypes.LEGACY_FORGE) {
       handshake.setServerAddress(playerVhost + HANDSHAKE_HOSTNAME_TOKEN);
-    } else if (proxyPlayer.getConnection().getType() instanceof ModernForgeConnectionType) {
-      handshake.setServerAddress(playerVhost + ((ModernForgeConnectionType) proxyPlayer
-          .getConnection().getType()).getModernToken());
+    } else if (proxyPlayer.getConnection().getType() instanceof ModernForgeConnectionType forgeConnection) {
+      handshake.setServerAddress(playerVhost + forgeConnection.getModernToken());
     } else {
       handshake.setServerAddress(playerVhost);
     }

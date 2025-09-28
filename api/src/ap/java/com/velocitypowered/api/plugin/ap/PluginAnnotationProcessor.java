@@ -14,7 +14,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -36,6 +35,15 @@ import javax.tools.StandardLocation;
 @AutoService(Processor.class)
 @SupportedAnnotationTypes({"com.velocitypowered.api.plugin.Plugin"})
 public class PluginAnnotationProcessor extends AbstractProcessor {
+
+  /**
+   * Creates a new {@code PluginAnnotationProcessor}.
+   *
+   * <p>The processor is instantiated by the Java compiler and initialized via
+   * {@link #init(ProcessingEnvironment)}.</p>
+   */
+  public PluginAnnotationProcessor() {
+  }
 
   /**
    * The annotation processing environment.
@@ -103,8 +111,8 @@ public class PluginAnnotationProcessor extends AbstractProcessor {
 
       Name qualifiedName = ((TypeElement) element).getQualifiedName();
 
-      if (Objects.equals(pluginClassFound, qualifiedName.toString())) {
-        if (!warnedAboutMultiplePlugins) {
+      if (pluginClassFound != null) {
+        if (!pluginClassFound.equals(qualifiedName.toString()) && !warnedAboutMultiplePlugins) {
           environment.getMessager()
               .printMessage(Diagnostic.Kind.WARNING, "Velocity does not yet currently support "
                   + "multiple plugins. We are using " + pluginClassFound
@@ -127,7 +135,7 @@ public class PluginAnnotationProcessor extends AbstractProcessor {
       for (Dependency dependency : plugin.dependencies()) {
         if (!SerializedPluginDescription.ID_PATTERN.matcher(dependency.id()).matches()) {
           environment.getMessager().printMessage(Diagnostic.Kind.ERROR,
-                  "Invalid dependency ID '" + dependency.id() + "' for plugin " + qualifiedName
+              "Invalid dependency ID '" + dependency.id() + "' for plugin " + qualifiedName
                   + ". IDs must start alphabetically, have lowercase alphanumeric characters, and "
                   + "can contain dashes or underscores.");
           return false;

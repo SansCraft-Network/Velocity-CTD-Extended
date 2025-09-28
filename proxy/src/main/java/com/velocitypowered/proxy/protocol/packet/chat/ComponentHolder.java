@@ -194,22 +194,18 @@ public class ComponentHolder {
   public static BinaryTag serialize(final JsonElement json) {
     if (json instanceof JsonPrimitive jsonPrimitive) {
       if (jsonPrimitive.isNumber()) {
-        Number number = json.getAsNumber();
-        if (number instanceof Byte) {
-          return ByteBinaryTag.byteBinaryTag((Byte) number);
-        } else if (number instanceof Short) {
-          return ShortBinaryTag.shortBinaryTag((Short) number);
-        } else if (number instanceof Integer) {
-          return IntBinaryTag.intBinaryTag((Integer) number);
-        } else if (number instanceof Long) {
-          return LongBinaryTag.longBinaryTag((Long) number);
-        } else if (number instanceof Float) {
-          return FloatBinaryTag.floatBinaryTag((Float) number);
-        } else if (number instanceof Double) {
-          return DoubleBinaryTag.doubleBinaryTag((Double) number);
-        } else if (number instanceof LazilyParsedNumber) {
-          return IntBinaryTag.intBinaryTag(number.intValue());
-        }
+        final Number number = json.getAsNumber();
+
+        return switch (number) {
+          case Byte b -> ByteBinaryTag.byteBinaryTag(b);
+          case Short s -> ShortBinaryTag.shortBinaryTag(s);
+          case Integer i -> IntBinaryTag.intBinaryTag(i);
+          case Long l -> LongBinaryTag.longBinaryTag(l);
+          case Float f -> FloatBinaryTag.floatBinaryTag(f);
+          case Double d -> DoubleBinaryTag.doubleBinaryTag(d);
+          case LazilyParsedNumber l -> IntBinaryTag.intBinaryTag(l.intValue());
+          default -> throw new IllegalArgumentException("Unknown number type: " + number);
+        };
       } else if (jsonPrimitive.isString()) {
         return StringBinaryTag.stringBinaryTag(jsonPrimitive.getAsString());
       } else if (jsonPrimitive.isBoolean()) {
@@ -217,16 +213,16 @@ public class ComponentHolder {
       } else {
         throw new IllegalArgumentException("Unknown JSON primitive: " + jsonPrimitive);
       }
-    } else if (json instanceof JsonObject) {
+    } else if (json instanceof JsonObject object) {
       CompoundBinaryTag.Builder compound = CompoundBinaryTag.builder();
 
-      for (Map.Entry<String, JsonElement> property : ((JsonObject) json).entrySet()) {
+      for (Map.Entry<String, JsonElement> property : object.entrySet()) {
         compound.put(property.getKey(), serialize(property.getValue()));
       }
 
       return compound.build();
-    } else if (json instanceof JsonArray) {
-      List<JsonElement> jsonArray = ((JsonArray) json).asList();
+    } else if (json instanceof JsonArray array) {
+      List<JsonElement> jsonArray = array.asList();
 
       if (jsonArray.isEmpty()) {
         return ListBinaryTag.empty();
@@ -246,36 +242,42 @@ public class ComponentHolder {
         }
       }
 
-      byte id = listType.id();
-      if (id == 1) { // BinaryTagTypes.BYTE:
-        byte[] bytes = new byte[jsonArray.size()];
-        for (int i = 0; i < bytes.length; i++) {
-          bytes[i] = jsonArray.get(i).getAsNumber().byteValue();
-        }
-
-        return ByteArrayBinaryTag.byteArrayBinaryTag(bytes);
-      } else if (id == 3) { // BinaryTagTypes.INT:
-        int[] ints = new int[jsonArray.size()];
-        for (int i = 0; i < ints.length; i++) {
-          ints[i] = jsonArray.get(i).getAsNumber().intValue();
-        }
-
-        return IntArrayBinaryTag.intArrayBinaryTag(ints);
-      } else if (id == 4) { // BinaryTagTypes.LONG:
-        long[] longs = new long[jsonArray.size()];
-        for (int i = 0; i < longs.length; i++) {
-          longs[i] = jsonArray.get(i).getAsNumber().longValue();
-        }
-
-        return LongArrayBinaryTag.longArrayBinaryTag(longs);
-      } else if (id == 10) { // BinaryTagTypes.COMPOUND:
-        tagItems.replaceAll(tag -> {
-          if (tag.type() == BinaryTagTypes.COMPOUND) {
-            return tag;
-          } else {
-            return CompoundBinaryTag.builder().put("", tag).build();
+      switch (listType.id()) {
+        case 1 -> {
+          byte[] bytes = new byte[jsonArray.size()];
+          for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = jsonArray.get(i).getAsNumber().byteValue();
           }
-        });
+
+          return ByteArrayBinaryTag.byteArrayBinaryTag(bytes);
+        }
+        case 3 -> {
+          int[] ints = new int[jsonArray.size()];
+          for (int i = 0; i < ints.length; i++) {
+            ints[i] = jsonArray.get(i).getAsNumber().intValue();
+          }
+
+          return IntArrayBinaryTag.intArrayBinaryTag(ints);
+        }
+        case 4 -> {
+          long[] longs = new long[jsonArray.size()];
+          for (int i = 0; i < longs.length; i++) {
+            longs[i] = jsonArray.get(i).getAsNumber().longValue();
+          }
+
+          return LongArrayBinaryTag.longArrayBinaryTag(longs);
+        }
+        case 10 -> // BinaryTagTypes.COMPOUND:
+            tagItems.replaceAll(tag -> {
+              if (tag.type() == BinaryTagTypes.COMPOUND) {
+                return tag;
+              } else {
+                return CompoundBinaryTag.builder().put("", tag).build();
+              }
+            });
+        default -> {
+          // This does absolutely nothing.
+        }
       }
 
       return ListBinaryTag.listBinaryTag(listType, tagItems);
@@ -294,25 +296,20 @@ public class ComponentHolder {
    * @throws IllegalArgumentException if the NBT tag type is unsupported or unknown
    */
   public static JsonElement deserialize(final BinaryTag tag) {
-    switch (tag.type().id()) {
-      case 1 -> {
-        return new JsonPrimitive(((ByteBinaryTag) tag).value()); // BinaryTagTypes.BYTE:
-      }
-      case 2 -> {
-        return new JsonPrimitive(((ShortBinaryTag) tag).value()); // BinaryTagTypes.SHORT:
-      }
-      case 3 -> {
-        return new JsonPrimitive(((IntBinaryTag) tag).value()); // BinaryTagTypes.INT:
-      }
-      case 4 -> {
-        return new JsonPrimitive(((LongBinaryTag) tag).value()); // BinaryTagTypes.LONG:
-      }
-      case 5 -> {
-        return new JsonPrimitive(((FloatBinaryTag) tag).value()); // BinaryTagTypes.FLOAT:
-      }
-      case 6 -> {
-        return new JsonPrimitive(((DoubleBinaryTag) tag).value()); // BinaryTagTypes.DOUBLE:
-      }
+    return switch (tag.type().id()) {
+      // BinaryTagTypes.BYTE
+      case 1 -> new JsonPrimitive(((ByteBinaryTag) tag).value());
+      // BinaryTagTypes.SHORT
+      case 2 -> new JsonPrimitive(((ShortBinaryTag) tag).value());
+      // BinaryTagTypes.INT:
+      case 3 -> new JsonPrimitive(((IntBinaryTag) tag).value());
+      // BinaryTagTypes.LONG:
+      case 4 -> new JsonPrimitive(((LongBinaryTag) tag).value());
+      // BinaryTagTypes.FLOAT:
+      case 5 -> new JsonPrimitive(((FloatBinaryTag) tag).value());
+      // BinaryTagTypes.DOUBLE:
+      case 6 -> new JsonPrimitive(((DoubleBinaryTag) tag).value());
+      // BinaryTagTypes.BYTE_ARRAY:
       case 7 -> {
         byte[] byteArray = ((ByteArrayBinaryTag) tag).value();
 
@@ -321,11 +318,11 @@ public class ComponentHolder {
           jsonByteArray.add(new JsonPrimitive(b));
         }
 
-        return jsonByteArray;
+        yield jsonByteArray;
       }
-      case 8 -> {
-        return new JsonPrimitive(((StringBinaryTag) tag).value()); // BinaryTagTypes.STRING:
-      }
+      // BinaryTagTypes.STRING:
+      case 8 -> new JsonPrimitive(((StringBinaryTag) tag).value());
+      // BinaryTagTypes.LIST:
       case 9 -> {
         ListBinaryTag items = (ListBinaryTag) tag;
         JsonArray jsonList = new JsonArray(items.size());
@@ -334,8 +331,9 @@ public class ComponentHolder {
           jsonList.add(deserialize(subTag));
         }
 
-        return jsonList;
+        yield jsonList;
       }
+      // BinaryTagTypes.COMPOUND:
       case 10 -> {
         CompoundBinaryTag compound = (CompoundBinaryTag) tag;
         JsonObject jsonObject = new JsonObject();
@@ -349,8 +347,9 @@ public class ComponentHolder {
           jsonObject.add(key.isEmpty() ? "text" : key, deserialize(Objects.requireNonNull(compound.get(key))));
         });
 
-        return jsonObject;
+        yield jsonObject;
       }
+      // BinaryTagTypes.INT_ARRAY:
       case 11 -> {
         int[] intArray = ((IntArrayBinaryTag) tag).value();
 
@@ -359,8 +358,9 @@ public class ComponentHolder {
           jsonIntArray.add(new JsonPrimitive(i));
         }
 
-        return jsonIntArray;
+        yield jsonIntArray;
       }
+      // BinaryTagTypes.LONG_ARRAY:
       case 12 -> {
         long[] longArray = ((LongArrayBinaryTag) tag).value();
 
@@ -369,10 +369,10 @@ public class ComponentHolder {
           jsonLongArray.add(new JsonPrimitive(l));
         }
 
-        return jsonLongArray;
+        yield jsonLongArray;
       }
       default -> throw new IllegalArgumentException("Unknown NBT tag: " + tag);
-    }
+    };
   }
 
   /**

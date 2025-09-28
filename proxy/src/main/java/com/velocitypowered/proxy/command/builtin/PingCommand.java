@@ -31,6 +31,7 @@ import com.velocitypowered.proxy.redis.multiproxy.EncodedCommandSource;
 import com.velocitypowered.proxy.xcd_redis.impl.transaction.VelocityGetPlayerPing;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
  * Implements Velocity's {@code /ping} command.
@@ -104,20 +105,19 @@ public class PingCommand {
       if (ping == -1L) {
         context.getSource().sendMessage(
             Component.translatable("velocity.command.ping.unknown", NamedTextColor.RED)
-                .arguments(Component.text(player.getUsername()))
-        );
+                .arguments(Argument.string("player", player.getUsername())));
         return 0;
       }
 
       context.getSource().sendMessage(
           Component.translatable("velocity.command.ping.self", NamedTextColor.GREEN)
-              .arguments(Component.text(ping))
+              .arguments(Argument.numeric("ping", ping))
       );
     } else {
       if (server.getMultiProxyHandler().isRedisEnabled()) {
         if (this.server.getMultiProxyHandler().isPlayerOnline(username)) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-              .arguments(Component.text(username)));
+              .arguments(Argument.string("player", username)));
           return -1;
         }
         new VelocityGetPlayerPing(context.getSource(), username)
@@ -126,13 +126,15 @@ public class PingCommand {
       } else {
         if (player == null) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-              .arguments(Component.text(username)));
+              .arguments(Argument.string("player", username)));
           return -1;
         }
 
         Component component = Component.translatable("velocity.command.ping.other", NamedTextColor.GREEN)
-            .arguments(Component.text(player.getUsername()),
-                Component.text(player.getPing()));
+            .arguments(
+                Argument.string("player", player.getUsername()),
+                Argument.numeric("ping", player.getPing()));
+
         context.getSource().sendMessage(component);
       }
     }

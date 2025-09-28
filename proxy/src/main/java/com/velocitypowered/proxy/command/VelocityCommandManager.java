@@ -202,7 +202,7 @@ public class VelocityCommandManager implements CommandManager {
               command + " implements multiple registrable Command subinterfaces: "
                       + implementedInterfaces);
     } else {
-      this.internalRegister(commandRegistrars.get(0), command, meta);
+      this.internalRegister(commandRegistrars.getFirst(), command, meta);
     }
   }
 
@@ -327,7 +327,7 @@ public class VelocityCommandManager implements CommandManager {
           source.sendMessage(Component.text(e.getMessage(), NamedTextColor.RED));
         }
 
-        result = com.velocitypowered.api.command.CommandResult.SYNTAX_ERROR;
+        result = CommandResult.SYNTAX_ERROR;
         // This is, of course, a lie, but the API will need to change...
         return true;
       } else {

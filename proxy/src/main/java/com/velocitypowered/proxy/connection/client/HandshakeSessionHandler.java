@@ -19,12 +19,12 @@ package com.velocitypowered.proxy.connection.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.velocitypowered.api.event.connection.ConnectionEstablishEvent;
 import com.velocitypowered.api.event.connection.ConnectionHandshakeEvent;
 import com.velocitypowered.api.network.HandshakeIntent;
 import com.velocitypowered.api.network.ProtocolState;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.connection.ConnectionType;
 import com.velocitypowered.proxy.connection.ConnectionTypes;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -45,6 +45,7 @@ import java.net.InetSocketAddress;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -113,7 +114,7 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
   }
 
   /**
-   * Handles a {@link LegacyHandshakePacket} sent by clients using extremely old protocol versions.
+   * Handles a {@link LegacyHandshakePacket} sent by clients using ancient protocol versions.
    *
    * <p>This method immediately disconnects the client with an appropriate message.</p>
    *
@@ -147,21 +148,34 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
       connection.close(true);
     } else {
       final InitialInboundConnection ic = new InitialInboundConnection(connection, cleanVhost(handshake.getServerAddress()), handshake);
-      if (handshake.getIntent() == HandshakeIntent.TRANSFER && !server.getConfiguration().isAcceptTransfers()) {
-        ic.disconnect(Component.translatable("multiplayer.disconnect.transfers_disabled"));
-        return true;
-      }
+      // Handle connection establish event.
+      connection.setAutoReading(false);
+      server.getEventManager()
+          .fire(new ConnectionEstablishEvent(ic, handshake.getIntent()))
+          .thenAccept(result -> {
+            // Clean up the disabling of auto-read.
+            connection.setAutoReading(true);
 
-      connection.setProtocolVersion(handshake.getProtocolVersion());
-      connection.setAssociation(ic);
+            if (!result.getResult().isAllowed()) {
+              connection.close(true);
+            } else {
+              if (handshake.getIntent() == HandshakeIntent.TRANSFER && !server.getConfiguration().isAcceptTransfers()) {
+                ic.disconnect(Component.translatable("multiplayer.disconnect.transfers_disabled"));
+                return;
+              }
 
-      switch (nextState) {
-        case STATUS -> connection.setActiveSessionHandler(StateRegistry.STATUS, new StatusSessionHandler(server, ic));
-        case LOGIN -> this.handleLogin(handshake, ic);
-        default ->
-          // If you get this, it's a bug in Velocity.
-          throw new AssertionError("getStateForProtocol provided invalid state!");
-      }
+              connection.setProtocolVersion(handshake.getProtocolVersion());
+              connection.setAssociation(ic);
+
+              switch (nextState) {
+                case STATUS -> connection.setActiveSessionHandler(StateRegistry.STATUS, new StatusSessionHandler(server, ic));
+                case LOGIN -> this.handleLogin(handshake, ic);
+                default ->
+                // If you get this, it's a bug in Velocity.
+                throw new AssertionError("getStateForProtocol provided invalid state!");
+              }
+            }
+          });
     }
 
     return true;
@@ -183,7 +197,9 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
       // us to deactivate logging altogether, unlike in the AuthSessionHandler, where logging is by choice.
       connection.setState(StateRegistry.LOGIN);
       ic.disconnectQuietly(Component.translatable("velocity.error.modern-forwarding-needs-new-client")
-          .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+          .arguments(
+              Argument.string("min", minimumVersion),
+              Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
       return;
     }
 
@@ -197,16 +213,9 @@ public class HandshakeSessionHandler implements MinecraftSessionHandler {
 
     connection.setType(this.getHandshakeConnectionType(handshake));
 
-    // If the proxy is configured for modern forwarding, we must deny connections from 1.12.2
-    // and lower otherwise IP information will never get forwarded.
-    if (server.getConfiguration().getPlayerInfoForwardingMode() == PlayerInfoForwarding.MODERN
-        && handshake.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_13)) {
-      // Bump connection into the correct protocol state so that we can send the disconnect packet.
-      connection.setState(StateRegistry.LOGIN);
-      ic.disconnectQuietly(Component.translatable("velocity.error.modern-forwarding-needs-new-client")
-          .arguments(Component.text(minimumVersion), Component.text(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
-      return;
-    }
+    // Note: We defer the modern forwarding version check until we actually know which server
+    // the player is connecting to. This allows 1.7 clients to connect to servers using legacy forwarding
+    // even when the global default is modern forwarding.
 
     final LoginInboundConnection lic = new LoginInboundConnection(ic);
     server.getEventManager().fireAndForget(new ConnectionHandshakeEvent(lic, handshake.getIntent()));

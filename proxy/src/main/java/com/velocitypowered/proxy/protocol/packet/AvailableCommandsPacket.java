@@ -470,7 +470,6 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public String toString() {
       MoreObjects.ToStringHelper helper = MoreObjects.toStringHelper(this)
           .add("idx", idx)
@@ -478,14 +477,10 @@ public class AvailableCommandsPacket implements MinecraftPacket {
           .add("children", children)
           .add("redirectTo", redirectTo);
 
-      if (args != null) {
-        if (args instanceof LiteralArgumentBuilder) {
-          helper.add("argsLabel",
-              ((LiteralArgumentBuilder<CommandSource>) args).getLiteral());
-        } else if (args instanceof RequiredArgumentBuilder) {
-          helper.add("argsName",
-              ((RequiredArgumentBuilder<CommandSource, ?>) args).getName());
-        }
+      if (args instanceof LiteralArgumentBuilder literal) {
+        helper.add("argsLabel", literal.getLiteral());
+      } else if (args instanceof RequiredArgumentBuilder required) {
+        helper.add("argsName", required.getName());
       }
 
       return helper.toString();
@@ -495,25 +490,13 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   /**
    * A placeholder {@link SuggestionProvider} used internally to preserve the suggestion provider
    * name.
+   *
+   * <p>This value is preserved from the original command graph and used when serializing
+   * the node back to the wire format.</p>
+   *
+   * @param name the suggestion provider identifier to retain
    */
-  public static class ProtocolSuggestionProvider implements SuggestionProvider<CommandSource> {
-
-    /**
-     * The identifier name of the suggestion provider (e.g., {@code "minecraft:ask_server"}).
-     *
-     * <p>This value is preserved from the original command graph and used when serializing
-     * the node back to the wire format.</p>
-     */
-    private final String name;
-
-    /**
-     * Constructs a new {@link ProtocolSuggestionProvider} with the given suggestion provider name.
-     *
-     * @param name the suggestion provider identifier to retain
-     */
-    public ProtocolSuggestionProvider(final String name) {
-      this.name = name;
-    }
+  public record ProtocolSuggestionProvider(String name) implements SuggestionProvider<CommandSource> {
 
     /**
      * Provides command suggestions for the current context.

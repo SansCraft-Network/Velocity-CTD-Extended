@@ -40,6 +40,8 @@ import com.velocitypowered.proxy.protocol.packet.PingIdentifyPacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
 import com.velocitypowered.proxy.protocol.packet.ResourcePackResponsePacket;
 import com.velocitypowered.proxy.protocol.packet.ServerboundCookieResponsePacket;
+import com.velocitypowered.proxy.protocol.packet.ServerboundCustomClickActionPacket;
+import com.velocitypowered.proxy.protocol.packet.config.CodeOfConductAcceptPacket;
 import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.KnownPacksPacket;
 import com.velocitypowered.proxy.protocol.util.PluginMessageUtil;
@@ -305,6 +307,44 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
         }, player.getConnection().eventLoop());
 
     return true;
+  }
+
+  /**
+   * Handles a {@link ServerboundCustomClickActionPacket} sent by the client.
+   *
+   * <p>If a backend connection is in flight, the packet is forwarded. Otherwise,
+   * it is ignored.</p>
+   *
+   * @param packet the custom click action packet
+   * @return {@code true} if the packet was forwarded; {@code false} otherwise
+   */
+  @Override
+  public boolean handle(final ServerboundCustomClickActionPacket packet) {
+    if (player.getConnectionInFlight() != null) {
+      player.getConnectionInFlight().ensureConnected().write(packet.retain());
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Handles a {@link CodeOfConductAcceptPacket} sent by the client.
+   *
+   * <p>If a backend connection is in flight, the packet is forwarded; otherwise,
+   * it is ignored.</p>
+   *
+   * @param packet the code of conduct accept packet
+   * @return {@code true} if the packet was forwarded; {@code false} otherwise
+   */
+  @Override
+  public boolean handle(final CodeOfConductAcceptPacket packet) {
+    if (this.player.getConnectionInFlight() != null) {
+      this.player.getConnectionInFlight().ensureConnected().write(packet);
+      return true;
+    }
+
+    return false;
   }
 
   /**

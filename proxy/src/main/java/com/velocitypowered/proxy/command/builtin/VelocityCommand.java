@@ -41,6 +41,8 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.ProxyVersion;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.config.ConfigDetector;
+import com.velocitypowered.proxy.config.ConfigDetector.ConfigAnalysis;
 import com.velocitypowered.proxy.redis.multiproxy.RedisSudo;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.util.InformationUtils;
@@ -77,6 +79,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -135,7 +138,7 @@ public final class VelocityCommand {
         .executes(ctx -> {
           ctx.getSource().sendMessage(
               Component.translatable("velocity.command.sudo.usage", NamedTextColor.YELLOW)
-                  .arguments(Component.text("velocity sudo"))
+                  .arguments(Argument.string("command", "velocity sudo"))
           );
 
           return Command.SINGLE_SUCCESS;
@@ -190,7 +193,7 @@ public final class VelocityCommand {
         .executes(ctx -> {
           ctx.getSource().sendMessage(
               Component.translatable("velocity.command.sudo.usage", NamedTextColor.YELLOW)
-                  .arguments(Component.text("velocity sudo"))
+                  .arguments(Argument.string("command", "velocity sudo"))
           );
 
           return Command.SINGLE_SUCCESS;
@@ -217,8 +220,13 @@ public final class VelocityCommand {
       );
     }
 
+    final LiteralCommandNode<CommandSource> configcheck = BrigadierCommand.literalArgumentBuilder("configcheck")
+        .requires(source -> source.getPermissionValue("velocity.command.configcheck") == Tristate.TRUE)
+        .executes(new ConfigCheck(server))
+        .build();
+
     final List<LiteralCommandNode<CommandSource>> commands = List
-            .of(dump, heap, info, plugins, reload.build(), sudo, uptime.build());
+            .of(dump, heap, info, plugins, reload.build(), sudo, uptime.build(), configcheck);
     return new BrigadierCommand(
       commands.stream()
         .reduce(
@@ -257,11 +265,11 @@ public final class VelocityCommand {
     long seconds = TimeUnit.SECONDS.toSeconds(timeInSeconds) - (TimeUnit.SECONDS.toMinutes(timeInSeconds) * 60);
 
     return Component.translatable("velocity.command.uptime",
-        NamedTextColor.GREEN,
-        Component.text(days),
-        Component.text(hours),
-        Component.text(minutes),
-        Component.text(seconds)
+      NamedTextColor.GREEN).arguments(
+      Argument.numeric("days", days),
+      Argument.numeric("hours", hours),
+      Argument.numeric("minutes", minutes),
+      Argument.numeric("seconds", seconds)
     );
   }
 
@@ -291,12 +299,12 @@ public final class VelocityCommand {
 
       if (!server.getMultiProxyHandler().getAllProxyIdsLowerCase().contains(proxyId.toLowerCase())) {
         source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist")
-            .arguments(Component.text(realId)));
+            .arguments(Argument.string("proxy", realId)));
         return -1;
       }
 
       source.sendMessage(Component.translatable("velocity.command.uptime-remote")
-          .arguments(Component.text(realId)));
+          .arguments(Argument.string("proxy", realId)));
 
       server.getMultiProxyHandler().requestUptime(realId, source);
       return Command.SINGLE_SUCCESS;
@@ -324,7 +332,8 @@ public final class VelocityCommand {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.no-players"));
           } else {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-                .arguments(Component.text("everyone"), Component.text(messageOrCommand)));
+                .arguments(Argument.string("target", "everyone"),
+                    Argument.string("message", messageOrCommand)));
           }
           return Command.SINGLE_SUCCESS;
         } else {
@@ -340,7 +349,8 @@ public final class VelocityCommand {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.no-players"));
           } else {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-                .arguments(Component.text("everyone"), Component.text(messageOrCommand)));
+                .arguments(Argument.string("target", "everyone"),
+                    Argument.string("message", messageOrCommand)));
           }
         }
       } else if (playerName.length() > 1 && playerName.startsWith("-")
@@ -364,19 +374,20 @@ public final class VelocityCommand {
           context.getSource().sendMessage(Component.translatable("velocity.command.sudo.no-players"));
         } else {
           context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-              .arguments(Component.text(realId), Component.text(messageOrCommand)));
+              .arguments(Argument.string("target", realId),
+                  Argument.string("message", messageOrCommand)));
         }
         return Command.SINGLE_SUCCESS;
       } else if (playerName.startsWith("+")) {
         if (playerName.length() == 1) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-server")
-              .arguments(Component.text(playerName)));
+              .arguments(Argument.string("server", playerName)));
           return Command.SINGLE_SUCCESS;
         }
         RegisteredServer registeredServer = this.server.getServer(playerName.substring(1)).orElse(null);
         if (registeredServer == null) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-server")
-              .arguments(Component.text(playerName.substring(1))));
+              .arguments(Argument.string("server", playerName.substring(1))));
           return Command.SINGLE_SUCCESS;
         }
 
@@ -393,7 +404,8 @@ public final class VelocityCommand {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.no-players"));
           } else {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-                .arguments(Component.text(registeredServer.getServerInfo().getName()), Component.text(messageOrCommand)));
+                .arguments(Argument.string("target", registeredServer.getServerInfo().getName()),
+                    Argument.string("message", messageOrCommand)));
           }
           return Command.SINGLE_SUCCESS;
         } else {
@@ -409,33 +421,35 @@ public final class VelocityCommand {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.no-players"));
           } else {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-                .arguments(Component.text(registeredServer.getServerInfo().getName()), Component.text(messageOrCommand)));
+                .arguments(Argument.string("target", registeredServer.getServerInfo().getName()),
+                    Argument.string("message", messageOrCommand)));
           }
         }
       } else {
         if (playerName.startsWith("-") && playerName.length() > 1) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-proxy")
-              .arguments(Component.text(playerName.substring(1))));
+              .arguments(Argument.string("proxy", playerName.substring(1))));
           return Command.SINGLE_SUCCESS;
         }
         if (this.server.getMultiProxyHandler().isRedisEnabled()) {
           RemotePlayerInfo info = this.server.getMultiProxyHandler().getPlayerInfo(playerName);
           if (info == null) {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.invalid-player")
-                .arguments(Component.text(playerName)));
+                .arguments(Argument.string("player", playerName)));
             return Command.SINGLE_SUCCESS;
           }
 
           this.server.getRedisManager().send(new RedisSudo(info.getProxyId(), info.getUuid(), messageOrCommand));
           context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-              .arguments(Component.text(info.getUsername()), Component.text(messageOrCommand)));
+                  .arguments(Argument.string("target", info.getUsername()),
+                          Argument.string("message", messageOrCommand)));
           return Command.SINGLE_SUCCESS;
         } else {
           Player player = this.server.getPlayer(playerName).orElse(null);
 
           if (player == null) {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.invalid-player")
-                .arguments(Component.text(playerName)));
+                .arguments(Argument.string("player", playerName)));
             return Command.SINGLE_SUCCESS;
           }
 
@@ -446,7 +460,8 @@ public final class VelocityCommand {
           }
 
           context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-              .arguments(Component.text(player.getUsername()), Component.text(messageOrCommand)));
+              .arguments(Argument.string("target", player.getUsername()),
+                  Argument.string("message", messageOrCommand)));
         }
       }
       return Command.SINGLE_SUCCESS;
@@ -481,6 +496,7 @@ public final class VelocityCommand {
   }
 
   private record ReloadRemote(VelocityServer server) implements Command<CommandSource> {
+
     @Override
     public int run(final CommandContext<CommandSource> context) {
       final CommandSource source = context.getSource();
@@ -495,12 +511,12 @@ public final class VelocityCommand {
 
       if (realId == null || !server.getMultiProxyHandler().getAllProxyIdsLowerCase().contains(proxyId.toLowerCase())) {
         source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist")
-            .arguments(Component.text(proxyId)));
+            .arguments(Argument.string("proxy", proxyId)));
         return -1;
       }
 
       source.sendMessage(Component.translatable("velocity.command.reload-remote")
-          .arguments(Component.text(realId)));
+          .arguments(Argument.string("proxy", realId)));
 
       server.getMultiProxyHandler().requestReload(realId, source);
       return Command.SINGLE_SUCCESS;
@@ -548,9 +564,9 @@ public final class VelocityCommand {
             .build();
         final Component copyright = Component
             .translatable("velocity.command.version-copyright",
-                Component.text(version.getVendor()),
-                Component.text(version.getName()),
-                Component.text(LocalDate.now().getYear()));
+                Argument.string("vendor", version.getVendor()),
+                Argument.string("name", version.getName()),
+                Argument.component("year", Component.text(LocalDate.now().getYear())));
         infoBuilder.append(velocity)
             .appendNewline()
             .append(copyright);
@@ -586,8 +602,8 @@ public final class VelocityCommand {
             case DISTANCE_LATEST -> infoBuilder.append(Component.translatable(
                 "velocity.command.version-latest", NamedTextColor.GREEN));
             default -> infoBuilder.append(Component.translatable(
-                "velocity.command.version-behind", NamedTextColor.YELLOW,
-                Component.text(dist)));
+                "velocity.command.version-behind", NamedTextColor.YELLOW)
+                    .arguments(Argument.numeric("distance", dist)));
           }
         }
 
@@ -654,7 +670,7 @@ public final class VelocityCommand {
       final TranslatableComponent output = Component.translatable()
           .key("velocity.command.plugins-list")
           .color(NamedTextColor.YELLOW)
-          .arguments(listBuilder.build())
+          .arguments(Argument.component("plugins", listBuilder.build()))
           .build();
       source.sendMessage(output);
       return Command.SINGLE_SUCCESS;
@@ -670,17 +686,17 @@ public final class VelocityCommand {
         hoverText.append(Component.newline());
         hoverText.append(Component.translatable(
             "velocity.command.plugin-tooltip-website",
-            Component.text(url)));
+            Argument.component("url", Component.text(url))));
       });
       if (!description.getAuthors().isEmpty()) {
         hoverText.append(Component.newline());
         if (description.getAuthors().size() == 1) {
-          hoverText.append(Component.translatable("velocity.command.plugin-tooltip-author",
-              Component.text(description.getAuthors().get(0))));
+          hoverText.append(Component.translatable("velocity.command.plugin-tooltip-author")
+              .arguments(Argument.string("author", description.getAuthors().getFirst())));
         } else {
           hoverText.append(
               Component.translatable("velocity.command.plugin-tooltip-author",
-                  Component.text(String.join(", ", description.getAuthors()))
+                  Argument.string("authors", String.join(", ", description.getAuthors()))
               )
           );
         }
@@ -843,6 +859,70 @@ public final class VelocityCommand {
             NamedTextColor.RED));
         logger.error("Could not write heap", t);
       }
+      return Command.SINGLE_SUCCESS;
+    }
+  }
+
+  private record ConfigCheck(VelocityServer server) implements Command<CommandSource> {
+
+    /**
+     * Logger instance for logging configuration analysis errors.
+     */
+    private static final Logger logger = LogManager.getLogger(ConfigCheck.class);
+
+    @Override
+    public int run(final CommandContext<CommandSource> context) {
+      final CommandSource source = context.getSource();
+
+      // Get the default config path
+      Path configPath = Path.of("velocity.toml");
+
+      try {
+        ConfigDetector detector = new ConfigDetector(logger);
+        ConfigAnalysis analysis = detector.analyzeConfiguration(configPath);
+
+        // Send formatted results to the command source
+        source.sendMessage(Component.translatable("velocity.command.config-check.header", NamedTextColor.GOLD));
+
+        if (!analysis.isOutdated()) {
+          source.sendMessage(Component.translatable("velocity.command.config-check.up-to-date", NamedTextColor.GREEN)
+              .arguments(Argument.string("version", analysis.currentVersion())));
+        } else {
+          source.sendMessage(Component.translatable("velocity.command.config-check.needs-updates", NamedTextColor.YELLOW));
+          source.sendMessage(Component.translatable("velocity.command.config-check.current-version", NamedTextColor.GRAY)
+              .arguments(Argument.string("version", analysis.currentVersion())));
+          source.sendMessage(Component.translatable("velocity.command.config-check.latest-version", NamedTextColor.GRAY)
+              .arguments(Argument.string("version", analysis.latestVersion())));
+
+          if (!analysis.missingOptions().isEmpty()) {
+            source.sendMessage(Component.translatable("velocity.command.config-check.missing-options.header", NamedTextColor.RED));
+            for (String option : analysis.missingOptions()) {
+              source.sendMessage(Component.translatable("velocity.command.config-check.missing-options.item", NamedTextColor.RED)
+                  .arguments(Argument.string("option", option)));
+            }
+          }
+
+          if (!analysis.deprecatedOptions().isEmpty()) {
+            source.sendMessage(Component.translatable("velocity.command.config-check.deprecated-options.header", NamedTextColor.YELLOW));
+            for (String option : analysis.deprecatedOptions()) {
+              source.sendMessage(Component.translatable("velocity.command.config-check.deprecated-options.item", NamedTextColor.YELLOW)
+                  .arguments(Argument.string("option", option)));
+            }
+          }
+
+          source.sendMessage(Component.translatable("velocity.command.config-check.recommendations.header", NamedTextColor.GOLD));
+          for (String recommendation : analysis.recommendations()) {
+            source.sendMessage(Component.translatable("velocity.command.config-check.recommendations.item", NamedTextColor.WHITE)
+                .arguments(Argument.string("recommendation", recommendation)));
+          }
+        }
+
+      } catch (IOException e) {
+        source.sendMessage(Component.translatable("velocity.command.config-check.error", NamedTextColor.RED)
+            .arguments(Argument.string("message", e.getMessage())));
+        logger.error("Failed to analyze configuration file: {}", configPath, e);
+      }
+
       return Command.SINGLE_SUCCESS;
     }
   }

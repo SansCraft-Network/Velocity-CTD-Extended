@@ -26,6 +26,7 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyPreShutdownEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
 import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.network.ProtocolState;
@@ -35,6 +36,7 @@ import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.plugin.PluginManager;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.config.BackendServerConfig;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
@@ -52,6 +54,7 @@ import com.velocitypowered.proxy.command.builtin.HubCommand;
 import com.velocitypowered.proxy.command.builtin.LeaveQueueCommand;
 import com.velocitypowered.proxy.command.builtin.PingCommand;
 import com.velocitypowered.proxy.command.builtin.PlistCommand;
+import com.velocitypowered.proxy.command.builtin.ProxyAliasCommand;
 import com.velocitypowered.proxy.command.builtin.QueueAdminCommand;
 import com.velocitypowered.proxy.command.builtin.SendCommand;
 import com.velocitypowered.proxy.command.builtin.ServerCommand;
@@ -89,24 +92,19 @@ import com.velocitypowered.proxy.util.ResourceUtils;
 import com.velocitypowered.proxy.util.VelocityChannelRegistrar;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiter;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiters;
-import com.velocitypowered.proxy.util.translation.VelocityTranslationRegistry;
-import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.http.HttpClient;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -115,9 +113,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.PropertyResourceBundle;
-import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -132,8 +127,8 @@ import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
 import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.TranslationStore;
 import net.kyori.adventure.translation.Translator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -143,6 +138,7 @@ import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Implementation of {@link ProxyServer}.
@@ -159,6 +155,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Shared logger used throughout proxy lifecycle events.
    */
   private static final Logger logger = LogManager.getLogger(VelocityServer.class);
+
+  /**
+   * Timeout in seconds for {@link ProxyPreShutdownEvent} listeners
+   * before the proxy proceeds with shutdown. Configurable via the
+   * {@code velocity.pre-shutdown-timeout} system property.
+   */
+  private static final int PRE_SHUTDOWN_TIMEOUT = Integer.getInteger("velocity.pre-shutdown-timeout", 10);
 
   /**
    * The primary Gson instance used for general JSON serialization tasks.
@@ -269,6 +272,11 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private final Map<String, ConnectedPlayer> connectionsByName = new ConcurrentHashMap<>();
 
   /**
+   * Maps online players by their IP address for duplicate connection detection.
+   */
+  private final Map<InetAddress, ConnectedPlayer> connectionsByIp = new ConcurrentHashMap<>();
+
+  /**
    * The proxy's console interface, providing command input and logging output.
    */
   private final VelocityConsole console;
@@ -333,8 +341,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   private QueueManager queueManager;
 
-  private VelocityRedis redis;
-
   VelocityServer(final ProxyOptions options) {
     pluginManager = new VelocityPluginManager(this);
     eventManager = new VelocityEventManager(pluginManager);
@@ -382,15 +388,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   public QueueManager getQueueManager() {
     return queueManager;
-  }
-
-  public VelocityRedis getRedis() {
-    if (redis == null) throw new IllegalStateException("Redis is not configured");
-    return redis;
-  }
-
-  public boolean hasRedis() {
-    return redis != null;
   }
 
   @Override
@@ -548,8 +545,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     if (!options.isIgnoreConfigServers()) {
-      for (Map.Entry<String, String> entry : configuration.getServers().entrySet()) {
-        servers.register(new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue())));
+      for (Map.Entry<String, BackendServerConfig> entry : configuration.getBackendServers().entrySet()) {
+        servers.register(new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue().address()), entry.getValue().forwardingMode()));
       }
     }
 
@@ -560,7 +557,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     } else {
       queueManager = new QueueManagerNoRedisImpl(this);
     }
-    this.redis = new VelocityRedis(this);
 
     registerCommands();
 
@@ -613,10 +609,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void registerTranslations(final boolean log) {
-    final String defaultFile = "messages.properties";
-    final VelocityTranslationRegistry translationRegistry =
-            new VelocityTranslationRegistry(TranslationStore.messageFormat(this.translationRegistryKey));
+    final MiniMessageTranslationStore translationRegistry =
+            MiniMessageTranslationStore.create(this.translationRegistryKey);
     translationRegistry.defaultLocale(Locale.US);
+
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
         if (log) {
@@ -625,69 +621,53 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
         final Path langPath = Path.of("lang");
 
-        try (Stream<Path> files = Files.walk(path)) {
+        try {
           if (!Files.exists(langPath)) {
-            Files.createDirectory(langPath);
-            files.filter(Files::isRegularFile).forEach(file -> {
-              try {
-                final Path langFile = langPath.resolve(file.getFileName().toString());
-                if (!Files.exists(langFile)) {
-                  try (InputStream is = Files.newInputStream(file)) {
-                    Files.copy(is, langFile);
+            Files.createDirectories(langPath);
+          }
+
+          try (Stream<Path> files = Files.walk(path)) {
+            files.filter(Files::isRegularFile).forEach(src -> {
+              final Path target = langPath.resolve(src.getFileName().toString());
+              if (Files.notExists(target)) {
+                try (InputStream is = Files.newInputStream(src)) {
+                  Files.copy(is, target);
+                  if (log) {
+                    logger.info("Restored missing translation file {}", target.getFileName());
                   }
+                } catch (IOException e) {
+                  logger.error("Failed copying translation file {}", target.getFileName(), e);
                 }
-              } catch (IOException e) {
-                logger.error("Encountered an I/O error whilst loading translations", e);
               }
             });
           }
 
-          Optional<Path> optionalPath;
-          try (Stream<Path> defaultFiles = Files.walk(path)) {
-            optionalPath = defaultFiles.filter(temp -> temp.toString().endsWith(defaultFile)).findFirst();
-          }
-
-          if (optionalPath.isEmpty()) {
-            logger.error("Encountered an error when attempting to read default translations)");
-            return;
-          }
-
-          try (BufferedReader defaultReader = Files.newBufferedReader(optionalPath.get(), StandardCharsets.UTF_8)) {
-            final ResourceBundle defaultBundle = new PropertyResourceBundle(defaultReader);
-            final Set<String> defaultKeys = defaultBundle.keySet();
-
-            try (Stream<Path> langFiles = Files.walk(langPath)) {
-              langFiles.filter(Files::isRegularFile).forEach(file -> {
-                final String filename = com.google.common.io.Files
-                    .getNameWithoutExtension(file.getFileName().toString());
-                final String localeName = filename.replace("messages_", "")
-                    .replace("messages", "")
-                    .replace('_', '-');
-                final Locale locale = localeName.isBlank()
-                    ? Locale.US
-                    : Locale.forLanguageTag(localeName);
-
-                try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
-                  final ResourceBundle bundle = new PropertyResourceBundle(reader);
-
-                  translationRegistry.registerAll(locale, defaultKeys, key -> {
-                    final String format = bundle.containsKey(key) ? bundle.getString(key) : defaultBundle.getString(key);
-                    final String escapedFormat = format.replace("'", "''");
-
-                    return new MessageFormat(escapedFormat, locale);
-                  });
-
-                  ClosestLocaleMatcher.INSTANCE.registerKnown(locale);
-                } catch (Exception e) {
-                  logger.error("Could not read language file: {}", filename, e);
+          try (Stream<Path> langFiles = Files.walk(langPath)) {
+            langFiles.filter(Files::isRegularFile).forEach(file -> {
+              try {
+                String localePart = com.google.common.io.Files
+                      .getNameWithoutExtension(file.getFileName().toString());
+                if (localePart.startsWith("messages")) {
+                  localePart = localePart.substring("messages".length());
                 }
-              });
-            } catch (Exception e) {
-              logger.error("Failed to read directory: {}", path.toString(), e);
-            }
+
+                if (localePart.startsWith("_")) {
+                  localePart = localePart.substring(1);
+                }
+
+                final Locale locale = localePart.isBlank()
+                    ? Locale.US
+                    : Locale.forLanguageTag(localePart.replace('_', '-'));
+
+                translationRegistry.registerAll(locale, file, false);
+                ClosestLocaleMatcher.INSTANCE.registerKnown(locale);
+              } catch (Exception e) {
+                logger.error("Failed registering translations from {}", file, e);
+              }
+            });
           }
         } catch (Exception e) {
-          logger.error("An unknown exception occurred.", e);
+          logger.error("Encountered an error whilst loading translations", e);
         }
       }, "com", "velocitypowered", "proxy", "l10n");
     } catch (IOException e) {
@@ -827,19 +807,19 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     this.configuration = newConfiguration;
 
+    reloadServerList();
+
     registerCommands();
 
     unregisterTranslations();
 
     registerTranslations(false);
 
-    reloadServerList();
-
     // Re-register servers. If a server is being replaced, make sure to note what players need to
     // move back to a fallback server.
     Collection<ConnectedPlayer> evacuate = new ArrayList<>();
-    for (Map.Entry<String, String> entry : newConfiguration.getServers().entrySet()) {
-      ServerInfo newInfo = new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue()));
+    for (Map.Entry<String, BackendServerConfig> entry : newConfiguration.getBackendServers().entrySet()) {
+      ServerInfo newInfo = new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue().address()), entry.getValue().forwardingMode());
       Optional<RegisteredServer> rs = servers.getServer(entry.getKey());
       if (rs.isEmpty()) {
         servers.register(newInfo);
@@ -942,6 +922,16 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     unregisterCommand("transfer");
 
     for (Map.Entry<String, List<String>> entry : configuration.getCommandAliases().entrySet()) {
+      for (String alias : entry.getValue()) {
+        unregisterCommand(alias);
+      }
+    }
+
+    for (String alias : configuration.getProxyCommandAliases().keySet()) {
+      unregisterCommand(alias);
+    }
+
+    for (Map.Entry<String, List<String>> entry : configuration.getSlashServers().entrySet()) {
       for (String alias : entry.getValue()) {
         unregisterCommand(alias);
       }
@@ -1132,6 +1122,24 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
           commandAlias
       );
     }
+
+    for (Map.Entry<String, List<String>> entry : configuration.getProxyCommandAliases().entrySet()) {
+      String alias = entry.getKey();
+      List<String> commands = entry.getValue();
+
+      if (commandManager.hasCommand(alias)) {
+        logger.warn("Proxy command alias '{}' conflicts with existing command, skipping", alias);
+        continue;
+      }
+
+      ProxyAliasCommand proxyAliasCommand = new ProxyAliasCommand(this, alias, commands);
+      commandManager.register(
+          commandManager.metaBuilder(alias)
+              .plugin(VelocityVirtualPlugin.INSTANCE)
+              .build(),
+          proxyAliasCommand
+      );
+    }
   }
 
   /**
@@ -1197,11 +1205,25 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       // Shutdown the connection manager, this should be
       // done first to refuse new connections
       cm.shutdown();
+
       if (multiProxyHandler != null) {
         multiProxyHandler.shutdown();
       }
 
-      ImmutableList<ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
+      try {
+        eventManager.fire(new ProxyPreShutdownEvent())
+            .toCompletableFuture()
+            .get(PRE_SHUTDOWN_TIMEOUT, TimeUnit.SECONDS);
+      } catch (TimeoutException ignored) {
+        logger.warn("Your plugins took over {} seconds during pre shutdown.", PRE_SHUTDOWN_TIMEOUT);
+      } catch (ExecutionException ee) {
+        logger.error("Exception in ProxyPreShutdownEvent handler; continuing shutdown.", ee);
+      } catch (InterruptedException ignored) {
+        Thread.currentThread().interrupt();
+        logger.warn("Interrupted while waiting for ProxyPreShutdownEvent; continuing shutdown.");
+      }
+
+      ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
 
       if (this.getQueueManager().isQueueEnabled()) {
         players.forEach(p -> this.getQueueManager().removeFromAll(p));
@@ -1306,11 +1328,25 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     shutdown(explicitExit, Component.translatable("velocity.kick.shutdown"));
   }
 
+  /**
+   * Shuts down the proxy with the specified reason.
+   *
+   * <p>This method delegates to {@link #shutdown(boolean, Component)} with
+   * {@code explicitExit = true}.</p>
+   *
+   * @param reason the {@link Component} reason to display to players
+   */
   @Override
   public void shutdown(final Component reason) {
     shutdown(true, reason);
   }
 
+  /**
+   * Shuts down the proxy using the default shutdown reason.
+   *
+   * <p>This method delegates to {@link #shutdown(boolean)} with
+   * {@code explicitExit = true}.</p>
+   */
   @Override
   public void shutdown() {
     shutdown(true);
@@ -1354,9 +1390,15 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       }
     }
 
-    return addresses.get(0);
+    return addresses.getFirst();
   }
 
+  /**
+   * Closes all active network listeners managed by this proxy.
+   *
+   * <p>This method shuts down the underlying endpoints gracefully, preventing
+   * new connections while allowing existing resources to be released.</p>
+   */
   @Override
   public void closeListeners() {
     this.cm.closeEndpoints(false);
@@ -1405,12 +1447,37 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return {@code true} if we can register the connection, {@code false} if not
    */
   public boolean canRegisterConnection(final ConnectedPlayer connection) {
-    if (configuration.isOnlineMode() && configuration.isOnlineModeKickExistingPlayers()) {
+    // When IP checking is disabled, kick-existing-players only works in online mode
+    if (!configuration.isKickExistingPlayersCheckIp()
+        && configuration.isOnlineMode() && configuration.isOnlineModeKickExistingPlayers()) {
       return true;
     }
+
+    // When IP checking is enabled, kick-existing-players works in both online and offline mode
+    if (configuration.isKickExistingPlayersCheckIp() && configuration.isOnlineModeKickExistingPlayers()) {
+      return true;
+    }
+
     String lowerName = connection.getUsername().toLowerCase(Locale.US);
-    return !(connectionsByName.containsKey(lowerName)
-        || connectionsByUuid.containsKey(connection.getUniqueId()));
+
+    // Check for existing connections by username first
+    ConnectedPlayer existingByName = connectionsByName.get(lowerName);
+    if (existingByName != null) {
+      // IP checking works when both kick-existing-players and IP checking are enabled
+      if (configuration.isOnlineModeKickExistingPlayers() && configuration.isKickExistingPlayersCheckIp()) {
+        InetAddress newPlayerIp = connection.getRemoteAddress().getAddress();
+        InetAddress existingPlayerIp = existingByName.getRemoteAddress().getAddress();
+        // Allow connection if same username AND same IP (will kick existing)
+        // Block connection if same username but different IP
+        return newPlayerIp.equals(existingPlayerIp);
+      } else {
+        // IP checking disabled or kick-existing-players disabled, block any username conflict
+        return false;
+      }
+    }
+
+    // Check for UUID conflicts (always block)
+    return !connectionsByUuid.containsKey(connection.getUniqueId());
   }
 
   /**
@@ -1422,24 +1489,81 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   public boolean registerConnection(final ConnectedPlayer connection) {
     String lowerName = connection.getUsername().toLowerCase(Locale.US);
 
-    if (!this.configuration.isOnlineModeKickExistingPlayers()) {
-      if (connectionsByName.putIfAbsent(lowerName, connection) != null) {
-        return false;
+    // Determine if we should use kick-existing-players behavior
+    boolean useKickExistingBehavior = this.configuration.isOnlineModeKickExistingPlayers()
+        && (this.configuration.isKickExistingPlayersCheckIp() || this.configuration.isOnlineMode());
+
+    if (!useKickExistingBehavior) {
+      // Standard behavior: block duplicate connections
+      ConnectedPlayer existingByName = connectionsByName.get(lowerName);
+      if (existingByName != null) {
+        // IP checking works when both kick-existing-players and IP checking are enabled
+        if (this.configuration.isOnlineModeKickExistingPlayers() && this.configuration.isKickExistingPlayersCheckIp()) {
+          InetAddress newPlayerIp = connection.getRemoteAddress().getAddress();
+          InetAddress existingPlayerIp = existingByName.getRemoteAddress().getAddress();
+          if (newPlayerIp.equals(existingPlayerIp)) {
+            // Same username, same IP - kick existing player
+            existingByName.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
+            // Remove existing player from all maps
+            connectionsByName.remove(lowerName, existingByName);
+            connectionsByUuid.remove(existingByName.getUniqueId(), existingByName);
+            connectionsByIp.remove(existingPlayerIp, existingByName);
+          } else {
+            // Same username, different IP - block new connection
+            return false;
+          }
+        } else {
+          // IP checking disabled or kick-existing-players disabled, block any username conflict
+          return false;
+        }
       }
 
+      // Register in name map first
+      connectionsByName.put(lowerName, connection);
+
+      // Check UUID conflicts (always block)
       if (connectionsByUuid.putIfAbsent(connection.getUniqueId(), connection) != null) {
         connectionsByName.remove(lowerName, connection);
         return false;
       }
+
+      // Register in IP map if both kick-existing-players and IP checking are enabled
+      if (this.configuration.isOnlineModeKickExistingPlayers() && this.configuration.isKickExistingPlayersCheckIp()) {
+        InetAddress playerIp = connection.getRemoteAddress().getAddress();
+        connectionsByIp.put(playerIp, connection);
+      }
     } else {
+      // Kick-existing-players behavior: handle conflicts by kicking existing players
       ConnectedPlayer existing = connectionsByUuid.get(connection.getUniqueId());
       if (existing != null) {
         existing.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
       }
 
+      // Check for same username conflicts
+      ConnectedPlayer existingByName = connectionsByName.get(lowerName);
+      if (existingByName != null) {
+        if (this.configuration.isKickExistingPlayersCheckIp()) {
+          // With IP checking: only kick if same IP
+          InetAddress newPlayerIp = connection.getRemoteAddress().getAddress();
+          InetAddress existingPlayerIp = existingByName.getRemoteAddress().getAddress();
+          if (newPlayerIp.equals(existingPlayerIp)) {
+            // Same username, same IP - kick existing player
+            existingByName.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
+          }
+          // If different IP, both players can coexist (different usernames will be handled by map replacement)
+        } else {
+          // Without IP checking: kick any existing player with same username
+          existingByName.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
+        }
+      }
+
       // We can now replace the entries as needed.
       connectionsByName.put(lowerName, connection);
       connectionsByUuid.put(connection.getUniqueId(), connection);
+      if (this.configuration.isOnlineModeKickExistingPlayers() && this.configuration.isKickExistingPlayersCheckIp()) {
+        InetAddress playerIp = connection.getRemoteAddress().getAddress();
+        connectionsByIp.put(playerIp, connection);
+      }
     }
 
     return true;
@@ -1453,6 +1577,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   public void unregisterConnection(final ConnectedPlayer connection) {
     connectionsByName.remove(connection.getUsername().toLowerCase(Locale.US), connection);
     connectionsByUuid.remove(connection.getUniqueId(), connection);
+    if (configuration.isOnlineModeKickExistingPlayers() && configuration.isKickExistingPlayersCheckIp()) {
+      InetAddress playerIp = connection.getRemoteAddress().getAddress();
+      connectionsByIp.remove(playerIp, connection);
+    }
     connection.disconnected();
   }
 
@@ -1522,12 +1650,18 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   /**
    * Gets the number of players currently connected to the proxy.
+   * If Redis is enabled, this returns the total player count across all proxies.
+   * Otherwise, this returns only the local proxy's player count.
    *
    * @return the number of connected players
    */
   @Override
   public int getPlayerCount() {
-    return connectionsByUuid.size();
+    if (getMultiProxyHandler().isRedisEnabled()) {
+      return getMultiProxyHandler().getTotalPlayerCount();
+    } else {
+      return connectionsByUuid.size();
+    }
   }
 
   /**
@@ -1703,9 +1837,5 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   @Override
   public ResourcePackInfo.Builder createResourcePackBuilder(final String url) {
     return new VelocityResourcePackInfo.BuilderImpl(url);
-  }
-
-  public String getProxyId() {
-    return Objects.requireNonNullElse(this.configuration.getRedis().getProxyId(), "null");
   }
 }

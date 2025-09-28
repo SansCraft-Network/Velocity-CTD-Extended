@@ -26,6 +26,7 @@ import com.velocitypowered.api.event.player.CookieReceiveEvent;
 import com.velocitypowered.api.event.player.PlayerChannelRegisterEvent;
 import com.velocitypowered.api.event.player.PlayerClientBrandEvent;
 import com.velocitypowered.api.event.player.TabCompleteEvent;
+import com.velocitypowered.api.event.player.TabCompleteRequestEvent;
 import com.velocitypowered.api.event.player.configuration.PlayerEnteredConfigurationEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
@@ -968,35 +969,43 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
 
   private void finishCommandTabComplete(final TabCompleteRequestPacket request,
                                         final TabCompleteResponsePacket response) {
-    String command = request.getCommand().substring(1);
-    server.getCommandManager().offerBrigadierSuggestions(player, command)
-        .thenAcceptAsync(offers -> {
-          boolean legacy = player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_13);
-          try {
-            for (Suggestion suggestion : offers.getList()) {
-              String offer = suggestion.getText();
-              offer = legacy && !offer.startsWith("/") ? "/" + offer : offer;
-              if (legacy && offer.startsWith(command)) {
-                offer = offer.substring(command.length());
-              }
+    server.getEventManager().fire(new TabCompleteRequestEvent(player, request.getCommand().substring(1)))
+        .thenAcceptAsync(e -> {
+          String command = e.getPartialMessage();
+          server.getCommandManager().offerBrigadierSuggestions(player, command)
+              .thenAcceptAsync(offers -> {
+                boolean legacy = player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_13);
+                try {
+                  for (Suggestion suggestion : offers.getList()) {
+                    String offer = suggestion.getText();
+                    offer = legacy && !offer.startsWith("/") ? "/" + offer : offer;
+                    if (legacy && offer.startsWith(command)) {
+                      offer = offer.substring(command.length());
+                    }
 
-              ComponentHolder tooltip = null;
-              if (suggestion.getTooltip() instanceof ComponentLike componentLike) {
-                tooltip = new ComponentHolder(player.getProtocolVersion(), componentLike.asComponent());
-              } else if (suggestion.getTooltip() != null) {
-                tooltip = new ComponentHolder(player.getProtocolVersion(), Component.text(suggestion.getTooltip().getString()));
-              }
+                    ComponentHolder tooltip = null;
+                    if (suggestion.getTooltip() instanceof ComponentLike componentLike) {
+                      tooltip = new ComponentHolder(player.getProtocolVersion(), componentLike.asComponent());
+                    } else if (suggestion.getTooltip() != null) {
+                      tooltip = new ComponentHolder(player.getProtocolVersion(), Component.text(suggestion.getTooltip().getString()));
+                    }
 
-              response.getOffers().add(new Offer(offer, tooltip));
-            }
-            response.getOffers().sort(null);
-            player.getConnection().write(response);
-          } catch (Exception e) {
-            logger.error("Unable to provide tab list completions for {} for command '{}'", player.getUsername(), command, e);
-          }
+                    response.getOffers().add(new Offer(offer, tooltip));
+                  }
+
+                  response.getOffers().sort(null);
+                  player.getConnection().write(response);
+                } catch (Exception ex) {
+                  logger.error("Unable to provide tab list completions for {} for command '{}'", player.getUsername(), command, ex);
+                }
+              }, player.getConnection().eventLoop()).exceptionally((ex) -> {
+                logger.error("Exception while finishing command tab completion,"
+                        + " with request {} and response {}",
+                    request, response, ex);
+                return null;
+              });
         }, player.getConnection().eventLoop()).exceptionally((ex) -> {
-          logger.error(
-              "Exception while finishing command tab completion,"
+          logger.error("Exception while finishing command tab completion,"
                   + " with request {} and response {}",
               request, response, ex);
           return null;

@@ -363,7 +363,7 @@ final class SuggestionsProvider<S> {
         });
       }
 
-      return potentials.get(0);
+      return potentials.getFirst();
     }
 
     return new ParseResults<>(contextSoFar, originalReader, Collections.emptyMap());

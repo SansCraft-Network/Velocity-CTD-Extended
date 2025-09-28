@@ -33,25 +33,14 @@ import com.velocitypowered.proxy.queue.ServerQueueStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.List;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
  * Implements the {@code /leavequeue} command.
+ *
+ * @param server The Velocity server instance used for accessing queue data and player state.
  */
-public class LeaveQueueCommand {
-
-  /**
-   * The Velocity server instance used for accessing queue data and player state.
-   */
-  private final VelocityServer server;
-
-  /**
-   * Constructs a new {@link LeaveQueueCommand} instance.
-   *
-   * @param server the Velocity server instance
-   */
-  public LeaveQueueCommand(final VelocityServer server) {
-    this.server = server;
-  }
+public record LeaveQueueCommand(VelocityServer server) {
 
   /**
    * Registers or unregisters the command based on the configuration value.
@@ -69,7 +58,7 @@ public class LeaveQueueCommand {
       return;
     }
 
-    final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand.literalArgumentBuilder(aliases.remove(0))
+    final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand.literalArgumentBuilder(aliases.removeFirst())
         .requires(source -> source.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)
         .then(BrigadierCommand
             .requiredArgumentBuilder("server", StringArgumentType.word())
@@ -148,11 +137,11 @@ public class LeaveQueueCommand {
         status.dequeue(player.getUniqueId(), false);
         player.sendMessage(
             Component.translatable("velocity.queue.command.left-queue")
-                .arguments(Component.text(server.getServerInfo().getName())));
+                .arguments(Argument.string("server", server.getServerInfo().getName())));
       } else {
         player.sendMessage(
             Component.translatable("velocity.queue.error.not-in-queue")
-                .arguments(Component.text(server.getServerInfo().getName())));
+                .arguments(Argument.string("server", server.getServerInfo().getName())));
       }
     } else {
       ctx.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);

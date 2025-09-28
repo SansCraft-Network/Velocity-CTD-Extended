@@ -245,25 +245,30 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
         return;
       }
 
-      if (msg instanceof MinecraftPacket pkt) {
-        if (!pkt.handle(activeSessionHandler)) {
-          activeSessionHandler.handleGeneric(pkt);
-        }
-      } else if (msg instanceof HAProxyMessage proxyMessage) {
-        this.remoteAddress = new InetSocketAddress(proxyMessage.sourceAddress(),
-            proxyMessage.sourcePort());
-      } else if (msg instanceof ByteBuf buf) {
-        if (activeSessionHandler instanceof ClientPlaySessionHandler) {
-          if (MAX_CLIENT_PACKET_SIZE > 0 && buf.readableBytes() > MAX_CLIENT_PACKET_SIZE) {
-            logger.error("{}: received oversized packet ({} bytes > {} byte limit)", association, buf.readableBytes(), MAX_CLIENT_PACKET_SIZE);
-            Component translated = GlobalTranslator.render(Component.translatable("velocity.kick.oversized-packet"),
-                ClosestLocaleMatcher.INSTANCE.lookupClosest(Locale.getDefault()));
-            closeWith(DisconnectPacket.create(translated, getProtocolVersion(), getState()));
-            return;
+      switch (msg) {
+        case MinecraftPacket pkt -> {
+          if (!pkt.handle(activeSessionHandler)) {
+            activeSessionHandler.handleGeneric(pkt);
           }
         }
+        case HAProxyMessage proxyMessage -> this.remoteAddress = new InetSocketAddress(proxyMessage.sourceAddress(),
+            proxyMessage.sourcePort());
+        case ByteBuf buf -> {
+          if (activeSessionHandler instanceof ClientPlaySessionHandler) {
+            if (MAX_CLIENT_PACKET_SIZE > 0 && buf.readableBytes() > MAX_CLIENT_PACKET_SIZE) {
+              logger.error("{}: received oversized packet ({} bytes > {} byte limit)", association, buf.readableBytes(), MAX_CLIENT_PACKET_SIZE);
+              Component translated = GlobalTranslator.render(Component.translatable("velocity.kick.oversized-packet"),
+                  ClosestLocaleMatcher.INSTANCE.lookupClosest(Locale.getDefault()));
+              closeWith(DisconnectPacket.create(translated, getProtocolVersion(), getState()));
+              return;
+            }
+          }
 
-        activeSessionHandler.handleUnknown(buf);
+          activeSessionHandler.handleUnknown(buf);
+        }
+        default -> {
+            // Do nothing, unknown handler
+        }
       }
     } finally {
       ReferenceCountUtil.release(msg);

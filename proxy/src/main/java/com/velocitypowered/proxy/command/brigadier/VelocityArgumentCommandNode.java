@@ -100,6 +100,7 @@ public class VelocityArgumentCommandNode<S, T> extends ArgumentCommandNode<S, St
     if (getCustomSuggestions() == null) {
       return Suggestions.empty();
     }
+
     return getCustomSuggestions().getSuggestions(context, builder);
   }
 
@@ -171,11 +172,11 @@ public class VelocityArgumentCommandNode<S, T> extends ArgumentCommandNode<S, St
       return true;
     }
 
-    if (!(o instanceof final VelocityArgumentCommandNode<?, ?> that)) {
+    if (!(o instanceof VelocityArgumentCommandNode<?, ?> that)) {
       return false;
     }
 
-    if (!super.equals(o)) {
+    if (!super.equals(that)) {
       return false;
     }
 

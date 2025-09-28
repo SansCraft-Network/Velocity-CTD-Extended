@@ -24,7 +24,9 @@ import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.annotations.Expose;
+import com.velocitypowered.api.proxy.config.BackendServerConfig;
 import com.velocitypowered.api.proxy.config.ProxyConfig;
+import com.velocitypowered.api.proxy.server.ServerInfoForwardingMode;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.config.migration.ConfigurationMigration;
@@ -141,6 +143,13 @@ public final class VelocityConfiguration implements ProxyConfig {
   private boolean onlineModeKickExistingPlayers = false;
 
   /**
+   * If {@code true}, when kick-existing-players is enabled, also check for duplicate connections
+   * from the same IP address in addition to username and UUID checks.
+   */
+  @Expose
+  private boolean kickExistingPlayersCheckIp = false;
+
+  /**
    * Defines how ping data (e.g. MOTD, players, mods) is forwarded to clients.
    */
   @Expose
@@ -173,6 +182,13 @@ public final class VelocityConfiguration implements ProxyConfig {
    */
   @Expose
   private final CommandAliases commandAliases;
+
+  /**
+   * Maps proxy command aliases to their underlying command executions.
+   * These are new commands that execute other commands when invoked.
+   */
+  @Expose
+  private final ProxyCommandAliases proxyCommandAliases;
 
   /**
    * Advanced configuration options for performance and features.
@@ -299,12 +315,15 @@ public final class VelocityConfiguration implements ProxyConfig {
   @Expose
   private Map<String, Integer> playerCaps;
 
-  private VelocityConfiguration(final Servers servers, final ForcedHosts forcedHosts, final CommandAliases commandAliases,
-                                final Commands commands, final Advanced advanced, final Query query, final Metrics metrics, final Redis redis,
-                                final Queue queue) {
+  private VelocityConfiguration(final Servers servers, final ForcedHosts forcedHosts,
+                                final CommandAliases commandAliases,
+                                final ProxyCommandAliases proxyCommandAliases, final Commands commands,
+                                final Advanced advanced, final Query query, final Metrics metrics,
+                                final Redis redis, final Queue queue) {
     this.servers = servers;
     this.forcedHosts = forcedHosts;
     this.commandAliases = commandAliases;
+    this.proxyCommandAliases = proxyCommandAliases;
     this.commands = commands;
     this.advanced = advanced;
     this.query = query;
@@ -317,11 +336,12 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 final int showMaxPlayers, final boolean onlineMode,
                                 final boolean preventClientProxyConnections, final boolean announceForge,
                                 final PlayerInfoForwarding playerInfoForwardingMode, final byte[] forwardingSecret,
-                                final boolean onlineModeKickExistingPlayers, final PingPassthroughMode pingPassthrough,
+                                final boolean onlineModeKickExistingPlayers, final boolean kickExistingPlayersCheckIp,
+                                final PingPassthroughMode pingPassthrough,
                                 final boolean samplePlayersInPing, final boolean enablePlayerAddressLogging,
                                 final Servers servers, final ForcedHosts forcedHosts, final CommandAliases commandAliases,
-                                final Commands commands, final Advanced advanced, final Query query,
-                                final Metrics metrics, final boolean forceKeyAuthentication,
+                                final ProxyCommandAliases proxyCommandAliases, final Commands commands, final Advanced advanced,
+                                final Query query, final Metrics metrics, final boolean forceKeyAuthentication,
                                 final boolean logPlayerConnections, final boolean logPlayerDisconnections,
                                 final boolean logOfflineConnections, final boolean disableForge,
                                 final boolean enforceChatSigning, final boolean translateHeaderFooter,
@@ -339,12 +359,14 @@ public final class VelocityConfiguration implements ProxyConfig {
     this.playerInfoForwardingMode = playerInfoForwardingMode;
     this.forwardingSecret = forwardingSecret;
     this.onlineModeKickExistingPlayers = onlineModeKickExistingPlayers;
+    this.kickExistingPlayersCheckIp = kickExistingPlayersCheckIp;
     this.pingPassthrough = pingPassthrough;
     this.samplePlayersInPing = samplePlayersInPing;
     this.enablePlayerAddressLogging = enablePlayerAddressLogging;
     this.servers = servers;
     this.forcedHosts = forcedHosts;
     this.commandAliases = commandAliases;
+    this.proxyCommandAliases = proxyCommandAliases;
     this.commands = commands;
     this.advanced = advanced;
     this.query = query;
@@ -393,42 +415,38 @@ public final class VelocityConfiguration implements ProxyConfig {
           + "receive any support!");
     }
 
-    boolean requireForwardingSecret = false;
-    for (Map.Entry<String, PlayerInfoForwarding> entry : servers.getServerForwardingModes().entrySet()) {
-      switch (entry.getValue()) {
-        case NONE -> logger.warn("Player info forwarding is disabled for {}!"
-                  + " All players will appear to be connecting from the proxy and will have offline-mode UUIDs.", entry.getKey());
-        case MODERN, BUNGEEGUARD -> requireForwardingSecret = true;
-        default -> {
+    switch (playerInfoForwardingMode) {
+      case NONE -> logger.warn("Player info forwarding is disabled! All players will appear to be connecting "
+              + "from the proxy and will have offline-mode UUIDs.");
+      case MODERN, BUNGEEGUARD -> {
+        if (forwardingSecret == null || forwardingSecret.length == 0) {
+          logger.error("You don't have a forwarding secret set. This is required for security.");
+          valid = false;
         }
       }
-    }
-
-    switch (playerInfoForwardingMode) {
-      case NONE ->
-          logger.warn("Player info forwarding is disabled by default! All players will appear to be connecting "
-              + "from the proxy and will have offline-mode UUIDs.");
-      case MODERN, BUNGEEGUARD -> requireForwardingSecret = true;
       default -> {
       }
     }
 
-    if (requireForwardingSecret && (forwardingSecret == null || forwardingSecret.length == 0)) {
-      logger.error("You don't have a forwarding secret set. This is required for security. "
-          + "See https://docs.papermc.io/velocity for more details.");
-      valid = false;
-    }
-
-    if (servers.getServers().isEmpty()) {
+    if (servers.getBackendServers().isEmpty()) {
       logger.warn("You don't have any servers configured.");
     }
 
-    for (Map.Entry<String, String> entry : servers.getServers().entrySet()) {
+    for (Map.Entry<String, BackendServerConfig> entry : servers.getBackendServers().entrySet()) {
       try {
-        AddressUtil.parseAddress(entry.getValue());
+        AddressUtil.parseAddress(entry.getValue().address());
       } catch (IllegalArgumentException e) {
         logger.error("Server {} does not have a valid IP address.", entry.getKey(), e);
         valid = false;
+      }
+
+      ServerInfoForwardingMode mode = entry.getValue().forwardingMode();
+      if (mode == ServerInfoForwardingMode.MODERN || mode == ServerInfoForwardingMode.BUNGEEGUARD) {
+        if (forwardingSecret == null || forwardingSecret.length == 0) {
+          logger.error("You don't have a forwarding secret set. This is required if "
+                  + "you are using MODERN or BUNGEEGUARD forwarding modes.");
+          valid = false;
+        }
       }
     }
 
@@ -609,19 +627,6 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   /**
-   * Gets the player info forwarding mode used for a specific backend server.
-   *
-   * <p>If no mode is explicitly set for the server, the global
-   * {@link #getPlayerInfoForwardingMode()} value is returned.
-   *
-   * @param server the server name
-   * @return the forwarding mode for that server, or the global default
-   */
-  public PlayerInfoForwarding getServerForwardingMode(final String server) {
-    return servers.getServerForwardingModes().getOrDefault(server, playerInfoForwardingMode);
-  }
-
-  /**
    * Gets the secret used for verifying forwarded player info.
    *
    * <p>This secret is required for {@link PlayerInfoForwarding#MODERN} and
@@ -640,6 +645,11 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
+  public Map<String, BackendServerConfig> getBackendServers() {
+    return servers.getBackendServers();
+  }
+
+  @Override
   public List<String> getAttemptConnectionOrder() {
     return servers.getAttemptConnectionOrder();
   }
@@ -653,6 +663,18 @@ public final class VelocityConfiguration implements ProxyConfig {
    */
   public Map<String, List<String>> getCommandAliases() {
     return commandAliases.getAliases();
+  }
+
+  /**
+   * Returns the map of proxy command aliases configured in the proxy.
+   *
+   * <p>These aliases create new commands that execute other commands when invoked.
+   * Similar to Bukkit's commands.yml functionality.
+   *
+   * @return a map of command names to their associated command executions
+   */
+  public Map<String, List<String>> getProxyCommandAliases() {
+    return proxyCommandAliases.getAliases();
   }
 
   @Override
@@ -1174,6 +1196,18 @@ public final class VelocityConfiguration implements ProxyConfig {
             .build()) {
       config.load();
 
+      try {
+        ConfigDetector detector = new ConfigDetector(logger);
+        ConfigDetector.ConfigAnalysis analysis = detector.analyzeConfiguration(path);
+
+        if (!analysis.missingOptions().isEmpty()) {
+          logger.warn("Missing configuration options: {}", String.join(", ", analysis.missingOptions()));
+          logger.warn("Run /velocity configcheck for full details");
+        }
+      } catch (IOException e) {
+        logger.debug("Could not perform configuration check during configuration loading", e);
+      }
+
       final ConfigurationMigration[] migrations = {
           new ForwardingMigration(),
           new KeyAuthenticationMigration(),
@@ -1215,6 +1249,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       final CommentedConfig serversConfig = config.get("servers");
       final CommentedConfig forcedHostsConfig = config.get("forced-hosts");
       final CommentedConfig commandAliasesConfig = config.get("command-aliases");
+      final CommentedConfig proxyCommandAliasesConfig = config.get("proxy-command-aliases");
       final CommentedConfig commandsConfig = config.get("commands");
       final CommentedConfig advancedConfig = config.get("advanced");
       final CommentedConfig queryConfig = config.get("query");
@@ -1237,6 +1272,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       final boolean preventClientProxyConnections = config.getOrElse(
               "prevent-client-proxy-connections", false);
       final boolean kickExisting = config.getOrElse("kick-existing-players", false);
+      final boolean kickExistingCheckIp = config.getOrElse("kick-existing-players-check-ip", false);
       final boolean enablePlayerAddressLogging = config.getOrElse(
               "enable-player-address-logging", true);
       final boolean logPlayerConnections = config.getOrElse(
@@ -1339,12 +1375,14 @@ public final class VelocityConfiguration implements ProxyConfig {
           forwardingMode,
           forwardingSecret,
           kickExisting,
+          kickExistingCheckIp,
           pingPassthroughMode,
           samplePlayersInPing,
           enablePlayerAddressLogging,
           new Servers(serversConfig),
           new ForcedHosts(forcedHostsConfig),
           new CommandAliases(commandAliasesConfig),
+          new ProxyCommandAliases(proxyCommandAliasesConfig),
           new Commands(commandsConfig),
           new Advanced(advancedConfig),
           new Query(queryConfig),
@@ -1396,6 +1434,19 @@ public final class VelocityConfiguration implements ProxyConfig {
    */
   public boolean isOnlineModeKickExistingPlayers() {
     return onlineModeKickExistingPlayers;
+  }
+
+  /**
+   * Determines whether Velocity should also check for duplicate connections from the same IP address
+   * when kick-existing-players is enabled.
+   *
+   * <p>This provides additional protection against connection loss scenarios where a player
+   * might reconnect from the same IP address with a different username or UUID.
+   *
+   * @return true if IP address checking should be performed for duplicate connections
+   */
+  public boolean isKickExistingPlayersCheckIp() {
+    return kickExistingPlayersCheckIp;
   }
 
   /**
@@ -1483,6 +1534,19 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   /**
+   * Gets the minimum allowed Minecraft version for a specific server.
+   *
+   * <p>If the server has a specific minimum version configured, that value is returned.
+   * Otherwise, the global minimum version is returned.
+   *
+   * @param serverName the name of the server to check
+   * @return the minimum supported version string for the server (e.g., {@code "1.7.2"})
+   */
+  public String getMinimumVersionForServer(final String serverName) {
+    return servers.getServerMinimumVersions().getOrDefault(serverName, minimumVersion);
+  }
+
+  /**
    * Gets a list of aliases that invoke the {@code /server} command or its variations.
    *
    * <p>These aliases are registered for convenience (e.g. {@code /queue}, {@code /joinqueue}).
@@ -1496,16 +1560,20 @@ public final class VelocityConfiguration implements ProxyConfig {
   private static final class Servers {
 
     /**
-     * A mapping of server names to their address (IP:Port).
+     * The configured mapping of backend servers available for player connections.
      *
-     * <p>This map determines which backend servers are available for player connections.
-     * The key is the server name (e.g., "lobby"), and the value is the address string
-     * (e.g., "127.0.0.1:30066").
+     * <p>The key is the unique server name used within the proxy (for example,
+     * {@code "lobby"}), and the value is a {@link BackendServerConfig} describing
+     * the backend server's address and its {@link ServerInfoForwardingMode}.</p>
+     *
+     * <p>This map determines the set of servers players can connect to and
+     * specifies whether each server should inherit the global forwarding mode
+     * or use its own explicit mode.</p>
      */
-    private Map<String, String> servers = ImmutableMap.of(
-        "lobby", "127.0.0.1:30066",
-        "factions", "127.0.0.1:30067",
-        "minigames", "127.0.0.1:30068"
+    private Map<String, BackendServerConfig> servers = ImmutableMap.of(
+        "lobby", new BackendServerConfig("127.0.0.1:30066"),
+        "factions", new BackendServerConfig("127.0.0.1:30067", ServerInfoForwardingMode.MODERN),
+        "minigames", new BackendServerConfig("127.0.0.1:30068", ServerInfoForwardingMode.LEGACY)
     );
 
     /**
@@ -1517,12 +1585,12 @@ public final class VelocityConfiguration implements ProxyConfig {
     private List<String> attemptConnectionOrder = ImmutableList.of("lobby");
 
     /**
-     * Per-server overrides for player info forwarding mode.
+     * Per-server overrides for minimum version requirements.
      *
-     * <p>If a server is listed here, it uses the specified {@link PlayerInfoForwarding}
-     * mode instead of the global configuration.
+     * <p>If a server is listed here, it uses the specified minimum version
+     * instead of the global configuration.
      */
-    private Map<String, PlayerInfoForwarding> serverForwardingModes = ImmutableMap.of();
+    private Map<String, String> serverMinimumVersions = ImmutableMap.of();
 
     /**
      * The strategy used for choosing a fallback server when {@code attemptConnectionOrder}
@@ -1546,64 +1614,82 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     private Servers(final CommentedConfig config) {
+      this.serverAliases = List.of("joinqueue", "queue", "server");
+      this.dynamicFallbackFilter = "FIRST_AVAILABLE";
+
       if (config != null) {
-        Map<String, String> servers = new HashMap<>();
-        Map<String, PlayerInfoForwarding> serverForwardingModes = new HashMap<>();
+        Map<String, BackendServerConfig> servers = new HashMap<>();
+        Map<String, String> serverMinimumVersions = new HashMap<>();
         for (UnmodifiableConfig.Entry entry : config.entrySet()) {
           if (entry.getKey().equalsIgnoreCase("dynamic-fallbacks-filter")) {
             continue;
           }
 
-          if (entry.getValue() instanceof String) {
-            servers.put(cleanServerName(entry.getKey()), entry.getValue());
-          } else if (entry.getValue() instanceof UnmodifiableConfig) {
-            UnmodifiableConfig unmodifiableConfig = entry.getValue();
-            String name = entry.getKey();
+          if (entry.getValue() instanceof CommentedConfig c) {
+            String address = null;
+            ServerInfoForwardingMode forwardingMode = ServerInfoForwardingMode.FOLLOWUP;
+            for (UnmodifiableConfig.Entry entry2 : c.entrySet()) {
+              if (entry2.getKey().equalsIgnoreCase("address")) {
+                address = entry2.getValue();
+              }
 
-            String address = unmodifiableConfig.get("address");
+              if (entry2.getKey().equalsIgnoreCase("forwarding-mode")) {
+                forwardingMode = ServerInfoForwardingMode.valueOf(ServerInfoForwardingMode.class, entry2.getValue());
+              }
+
+              if (entry2.getKey().equalsIgnoreCase("minimum-version")) {
+                serverMinimumVersions.put(cleanServerName(entry.getKey()), entry2.getValue());
+              }
+            }
+
             if (address == null) {
-              throw new IllegalArgumentException("Server " + name + " doesn't have an address!");
+              throw new IllegalArgumentException("Server entry " + entry.getKey() + " is missing address!");
             }
 
-            PlayerInfoForwarding mode = unmodifiableConfig.getEnum("forwarding-mode", PlayerInfoForwarding.class);
-            if (mode != null) {
-              serverForwardingModes.put(name, mode);
-            }
-
-            servers.put(cleanServerName(name), address);
+            servers.put(cleanServerName(entry.getKey()), new BackendServerConfig(address, forwardingMode));
+            // Support for old server config system (forwarding mode will be followup)
+          } else if (entry.getValue() instanceof String v) {
+            servers.put(cleanServerName(entry.getKey()), new BackendServerConfig(v));
           } else {
             if (!entry.getKey().equalsIgnoreCase("try")
                 && !entry.getKey().equalsIgnoreCase("dynamic-fallbacks-filter")
                 && !entry.getKey().equalsIgnoreCase("server-aliases")) {
               throw new IllegalArgumentException(
-                  "Server entry " + entry.getKey() + " is not a string!");
+                  "Server entry " + entry.getKey() + " is not a server!");
             }
           }
         }
 
         this.servers = ImmutableMap.copyOf(servers);
-        this.serverForwardingModes = ImmutableMap.copyOf(serverForwardingModes);
+        this.serverMinimumVersions = ImmutableMap.copyOf(serverMinimumVersions);
         this.attemptConnectionOrder = config.getOrElse("try", attemptConnectionOrder).stream().toList();
         this.dynamicFallbackFilter = config.getOrElse("dynamic-fallbacks-filter", "FIRST_AVAILABLE");
         this.serverAliases = config.getOrElse("server-aliases", List.of("joinqueue", "queue", "server"));
       }
     }
 
-    private Servers(final Map<String, String> servers, final List<String> attemptConnectionOrder,
-                    final Map<String, PlayerInfoForwarding> serverForwardingModes) {
+    private Servers(final Map<String, BackendServerConfig> servers, final List<String> attemptConnectionOrder) {
       this.servers = servers;
       this.attemptConnectionOrder = attemptConnectionOrder;
+      this.serverAliases = List.of("joinqueue", "queue", "server");
+      this.dynamicFallbackFilter = "FIRST_AVAILABLE";
     }
 
     public List<String> getServerAliases() {
-      return serverAliases;
+      return serverAliases != null ? serverAliases : List.of("joinqueue", "queue", "server");
     }
 
     private Map<String, String> getServers() {
+      Map<String, String> serverAddresses = new HashMap<>();
+      servers.forEach((k, v) -> serverAddresses.put(k, v.address()));
+      return serverAddresses;
+    }
+
+    private Map<String, BackendServerConfig> getBackendServers() {
       return servers;
     }
 
-    public void setServers(final Map<String, String> servers) {
+    public void setServers(final Map<String, BackendServerConfig> servers) {
       this.servers = servers;
     }
 
@@ -1617,15 +1703,14 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     public void setAttemptConnectionOrder(final List<String> attemptConnectionOrder) {
       this.attemptConnectionOrder = attemptConnectionOrder;
-      this.serverForwardingModes = ImmutableMap.copyOf(serverForwardingModes);
     }
 
-    public Map<String, PlayerInfoForwarding> getServerForwardingModes() {
-      return serverForwardingModes;
+    public Map<String, String> getServerMinimumVersions() {
+      return serverMinimumVersions;
     }
 
-    public void setServerForwardingModes(final Map<String, PlayerInfoForwarding> serverForwardingModes) {
-      this.serverForwardingModes = serverForwardingModes;
+    public void setServerMinimumVersions(final Map<String, String> serverMinimumVersions) {
+      this.serverMinimumVersions = serverMinimumVersions;
     }
 
     /**
@@ -1645,7 +1730,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       return "Servers{"
           + "servers=" + servers
           + ", attemptConnectionOrder=" + attemptConnectionOrder
-          + ", serverForwardingModes=" + serverForwardingModes
+          + ", serverMinimumVersions=" + serverMinimumVersions
           + '}';
     }
   }
@@ -1686,7 +1771,51 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "CommandAliases{" + "aliases=" + aliases + '}';
+      return "CommandAliases{"
+          + "aliases=" + aliases
+          + '}';
+    }
+  }
+
+  private static final class ProxyCommandAliases {
+
+    /**
+     * A map of proxy command aliases defined in the configuration.
+     *
+     * <p>Each key is a new command name (e.g., "help"), and the value is a list of
+     * commands to execute when this command is invoked (e.g., ["velocity info"]).</p>
+     *
+     * <p>This allows creating new commands that execute other commands, similar to Bukkit's commands.yml.</p>
+     */
+    private final Map<String, List<String>> aliases;
+
+    private ProxyCommandAliases(final CommentedConfig config) {
+      Map<String, List<String>> parsed = new HashMap<>();
+      if (config != null) {
+        for (UnmodifiableConfig.Entry entry : config.entrySet()) {
+          Object value = entry.getValue();
+          if (value instanceof List<?> list) {
+            parsed.put(entry.getKey(), list.stream().map(Object::toString).toList());
+          } else if (value instanceof String str) {
+            parsed.put(entry.getKey(), List.of(str));
+          } else {
+            logger.warn("Invalid value in [proxy-command-aliases] for '{}': {}", entry.getKey(), value);
+          }
+        }
+      }
+
+      this.aliases = ImmutableMap.copyOf(parsed);
+    }
+
+    public Map<String, List<String>> getAliases() {
+      return aliases;
+    }
+
+    @Override
+    public String toString() {
+      return "ProxyCommandAliases{"
+          + "aliases=" + aliases
+          + '}';
     }
   }
 
@@ -2565,8 +2694,8 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", port=" + port
           + ", username=" + username
           // password excluded for security
-          + ", useSsl" + useSsl
-          + ", maxConcurrentConnections" + maxConcurrentConnections
+          + ", useSsl=" + useSsl
+          + ", maxConcurrentConnections=" + maxConcurrentConnections
           + '}';
     }
   }

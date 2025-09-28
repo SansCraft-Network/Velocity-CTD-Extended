@@ -196,8 +196,10 @@ public class MultiProxyHandler {
     for (Player player : this.server.getAllPlayers()) {
       if (!this.server.getRedisManager().containsPlayer(player.getUniqueId())) {
         try {
-          handleJoin(createPlayerInfo((ConnectedPlayer) player, ((ConnectedPlayer) player).getConnectedServer()
-              .getServer().getServerInfo().getName()));
+          if (((ConnectedPlayer) player).getConnectedServer() != null) {
+            handleJoin(createPlayerInfo((ConnectedPlayer) player, ((ConnectedPlayer) player).getConnectedServer()
+                .getServer().getServerInfo().getName()));
+          }
         } catch (NullPointerException ex) {
           handleJoin(createPlayerInfo((ConnectedPlayer) player));
         }

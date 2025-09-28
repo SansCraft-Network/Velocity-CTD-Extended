@@ -57,6 +57,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -65,8 +66,6 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * and arguments command nodes, which is contained in this class.
  */
 public final class VelocityCommands {
-
-  // Wrapping
 
   /**
    * Walks the command node tree and wraps all {@link Command} instances in a {@link VelocityBrigadierCommandWrapper},
@@ -78,7 +77,7 @@ public final class VelocityCommands {
    * @return the wrapped command node
    */
   public static CommandNode<CommandSource> wrap(final CommandNode<CommandSource> delegate,
-                                                final @Nullable Object registrant) {
+                                                @Nullable final Object registrant) {
     Preconditions.checkNotNull(delegate, "delegate");
     if (registrant == null) {
       // the registrant is null if the `plugin` was absent when we try to register the command
@@ -90,38 +89,35 @@ public final class VelocityCommands {
       maybeCommand = VelocityBrigadierCommandWrapper.wrap(delegate.getCommand(), registrant);
     }
 
-    if (delegate instanceof LiteralCommandNode<CommandSource> lcn) {
-      var literalBuilder = shallowCopyAsBuilder(lcn, delegate.getName(), true);
-      literalBuilder.executes(maybeCommand);
-      // we also need to wrap any children
-      for (final CommandNode<CommandSource> child : delegate.getChildren()) {
-        literalBuilder.then(wrap(child, registrant));
+    return switch (delegate) {
+      case LiteralCommandNode<CommandSource> lcn -> {
+        var literalBuilder = shallowCopyAsBuilder(lcn, delegate.getName(), true);
+        literalBuilder.executes(maybeCommand);
+        // we also need to wrap any children
+        for (final CommandNode<CommandSource> child : delegate.getChildren()) {
+          literalBuilder.then(wrap(child, registrant));
+        }
+        if (delegate.getRedirect() != null) {
+          literalBuilder.redirect(wrap(delegate.getRedirect(), registrant));
+        }
+        yield literalBuilder.build();
       }
-      if (delegate.getRedirect() != null) {
-        literalBuilder.redirect(wrap(delegate.getRedirect(), registrant));
+      case VelocityArgumentCommandNode<CommandSource, ?> vacn -> vacn.withCommand(maybeCommand)
+              .withRedirect(delegate.getRedirect() != null ? wrap(delegate.getRedirect(), registrant) : null);
+      case ArgumentCommandNode<CommandSource, ?> node -> {
+        var argBuilder = node.createBuilder().executes(maybeCommand);
+        // we also need to wrap any children
+        for (final CommandNode<CommandSource> child : delegate.getChildren()) {
+          argBuilder.then(wrap(child, registrant));
+        }
+        if (delegate.getRedirect() != null) {
+          argBuilder.redirect(wrap(delegate.getRedirect(), registrant));
+        }
+        yield argBuilder.build();
       }
-
-      return literalBuilder.build();
-    } else if (delegate instanceof VelocityArgumentCommandNode<CommandSource, ?> vacn) {
-      return vacn.withCommand(maybeCommand)
-          .withRedirect(delegate.getRedirect() != null ? wrap(delegate.getRedirect(), registrant) : null);
-    } else if (delegate instanceof ArgumentCommandNode) {
-      var argBuilder = delegate.createBuilder().executes(maybeCommand);
-      // we also need to wrap any children
-      for (final CommandNode<CommandSource> child : delegate.getChildren()) {
-        argBuilder.then(wrap(child, registrant));
-      }
-      if (delegate.getRedirect() != null) {
-        argBuilder.redirect(wrap(delegate.getRedirect(), registrant));
-      }
-
-      return argBuilder.build();
-    } else {
-      throw new IllegalArgumentException("Unsupported node type: " + delegate.getClass());
-    }
+      default -> throw new IllegalArgumentException("Unsupported node type: " + delegate.getClass());
+    };
   }
-
-  // Normalization
 
   /**
    * Normalizes the given command input.
@@ -142,8 +138,6 @@ public final class VelocityCommands {
     }
   }
 
-  // Parsing
-
   /**
    * Returns the parsed alias, used to execute the command.
    *
@@ -155,7 +149,8 @@ public final class VelocityCommands {
     if (nodes.isEmpty()) {
       throw new IllegalArgumentException("Cannot read alias from empty node list");
     }
-    return nodes.get(0).getNode().getName();
+
+    return nodes.getFirst().getNode().getName();
   }
 
   /**
@@ -313,7 +308,7 @@ public final class VelocityCommands {
 
     if (playerOptional.isEmpty()) {
       ctx.getSource().sendMessage(CommandMessages.PLAYER_NOT_FOUND
-          .arguments(Component.text(playerName)));
+          .arguments(Argument.string("player", playerName)));
       return null;
     }
 
@@ -375,7 +370,7 @@ public final class VelocityCommands {
 
     if (serverOptional.isEmpty()) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
-          .arguments(Component.text(serverName)));
+          .arguments(Argument.string("server", serverName)));
       return null;
     }
 
@@ -383,13 +378,13 @@ public final class VelocityCommands {
 
     if (!checkServerPermissions(registeredServer, ctx.getSource())) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
-          .arguments(Component.text(serverName)));
+          .arguments(Argument.string("server", serverName)));
       return null;
     }
 
     if (!allowNonQueueable && !registeredServer.getQueueStatus().hasQueue()) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.server-has-no-queue")
-          .arguments(Component.text(serverName)));
+          .arguments(Argument.string("server", serverName)));
       return null;
     }
 
@@ -417,7 +412,7 @@ public final class VelocityCommands {
    */
   public static int emitUsage(final CommandContext<CommandSource> ctx, final String commandName) {
     String usedName = commandName;
-    ParsedCommandNode<?> node = ctx.getNodes().get(0);
+    ParsedCommandNode<?> node = ctx.getNodes().getFirst();
 
     if (node != null) {
       usedName = node.getNode().getName();
@@ -425,7 +420,7 @@ public final class VelocityCommands {
 
     ctx.getSource().sendMessage(
         Component.translatable("velocity.command." + commandName + ".usage", NamedTextColor.YELLOW)
-            .arguments(Component.text(usedName)));
+            .arguments(Argument.string("command", usedName)));
     return com.mojang.brigadier.Command.SINGLE_SUCCESS;
   }
 

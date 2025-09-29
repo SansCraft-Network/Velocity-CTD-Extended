@@ -398,7 +398,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to write to
    * @param key the key to write
    */
-  public static void writeMinimalKey(ByteBuf buf, Key key) {
+  public static void writeMinimalKey(final ByteBuf buf, final Key key) {
     writeString(buf, key.asMinimalString());
   }
 
@@ -926,7 +926,7 @@ public enum ProtocolUtils {
    * @param version the protocol version
    * @return the sound source
    */
-  public static Sound.Source readSoundSource(ByteBuf buf, ProtocolVersion version) {
+  public static Sound.Source readSoundSource(final ByteBuf buf, final ProtocolVersion version) {
     int ordinal = readVarInt(buf);
 
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)
@@ -944,7 +944,7 @@ public enum ProtocolUtils {
    * @param version the protocol version
    * @param source the sound source to write
    */
-  public static void writeSoundSource(ByteBuf buf, ProtocolVersion version, Sound.Source source) {
+  public static void writeSoundSource(final ByteBuf buf, final ProtocolVersion version, final Sound.Source source) {
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)
         && source == Sound.Source.UI) {
       throw new UnsupportedOperationException("UI sound-source is only supported in 1.21.5+");

@@ -74,6 +74,8 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.packet.BundleDelimiterPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientboundCookieRequestPacket;
+import com.velocitypowered.proxy.protocol.packet.ClientboundSoundEntityPacket;
+import com.velocitypowered.proxy.protocol.packet.ClientboundStopSoundPacket;
 import com.velocitypowered.proxy.protocol.packet.ClientboundStoreCookiePacket;
 import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
 import com.velocitypowered.proxy.protocol.packet.HeaderAndFooterPacket;
@@ -129,6 +131,8 @@ import net.kyori.adventure.pointer.PointersSupplier;
 import net.kyori.adventure.resource.ResourcePackInfoLike;
 import net.kyori.adventure.resource.ResourcePackRequest;
 import net.kyori.adventure.resource.ResourcePackRequestLike;
+import net.kyori.adventure.sound.Sound;
+import net.kyori.adventure.sound.SoundStop;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TextReplacementConfig;
@@ -1658,6 +1662,64 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   void setClientBrand(final @Nullable String clientBrand) {
     this.clientBrand = clientBrand;
+  }
+
+  /**
+   * Plays a sound for the player, routed through the current backend when supported.
+   *
+   * <p>No-op for unsupported protocol states/versions or mismatched emitters.</p>
+   *
+   * @param sound the sound to play
+   * @param emitter the sound emitter (self or another player on the same server)
+   */
+  @Override
+  public void playSound(@NotNull final Sound sound, @NotNull final Sound.Emitter emitter) {
+    Preconditions.checkNotNull(sound, "sound");
+    Preconditions.checkNotNull(emitter, "emitter");
+    VelocityServerConnection soundTargetServerConn = getConnectedServer();
+    if (getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_19_3)
+        || connection.getState() != StateRegistry.PLAY
+        || soundTargetServerConn == null
+        || (sound.source() == Sound.Source.UI && getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_21_5))) {
+      return;
+    }
+
+    VelocityServerConnection soundEmitterServerConn;
+    if (emitter == Sound.Emitter.self()) {
+      soundEmitterServerConn = soundTargetServerConn;
+    } else if (emitter instanceof ConnectedPlayer player) {
+      if ((soundEmitterServerConn = player.getConnectedServer()) == null) {
+        return;
+      }
+
+      if (!soundEmitterServerConn.getServer().equals(soundTargetServerConn.getServer())) {
+        return;
+      }
+    } else {
+      return;
+    }
+
+    connection.write(new ClientboundSoundEntityPacket(sound, null, soundEmitterServerConn.getEntityId()));
+  }
+
+  /**
+   * Stops a sound on the client when supported.
+   *
+   * <p>No-op for unsupported protocol states/versions.</p>
+   *
+   * @param stop the stop instruction
+   */
+  @Override
+  public void stopSound(@NotNull final SoundStop stop) {
+    Preconditions.checkNotNull(stop, "stop");
+    if (getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_19_3)
+        || connection.getState() != StateRegistry.PLAY
+        || (stop.source() == Sound.Source.UI
+            && getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_21_5))) {
+      return;
+    }
+
+    connection.write(new ClientboundStopSoundPacket(stop));
   }
 
   /**

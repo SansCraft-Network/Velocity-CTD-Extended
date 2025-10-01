@@ -259,10 +259,10 @@ public interface MinecraftSessionHandler {
   /**
    * Handles {@link HeaderAndFooterPacket}.
    *
-   * @param ignoredPacket the header and footer packet
+   * @param packet the header and footer packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final HeaderAndFooterPacket ignoredPacket) {
+  default boolean handle(final HeaderAndFooterPacket packet) {
     return false;
   }
 
@@ -339,10 +339,10 @@ public interface MinecraftSessionHandler {
   /**
    * Handles {@link RespawnPacket}.
    *
-   * @param ignoredPacket the respawn packet
+   * @param packet the respawn packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final RespawnPacket ignoredPacket) {
+  default boolean handle(final RespawnPacket packet) {
     return false;
   }
 
@@ -429,60 +429,60 @@ public interface MinecraftSessionHandler {
   /**
    * Handles {@link LegacyTitlePacket}.
    *
-   * @param ignoredPacket the legacy title packet
+   * @param packet the legacy title packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final LegacyTitlePacket ignoredPacket) {
+  default boolean handle(final LegacyTitlePacket packet) {
     return false;
   }
 
   /**
    * Handles {@link TitleTextPacket}.
    *
-   * @param ignoredPacket the title text packet
+   * @param packet the title text packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final TitleTextPacket ignoredPacket) {
+  default boolean handle(final TitleTextPacket packet) {
     return false;
   }
 
   /**
    * Handles {@link TitleSubtitlePacket}.
    *
-   * @param ignoredPacket the title subtitle packet
+   * @param packet the title subtitle packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final TitleSubtitlePacket ignoredPacket) {
+  default boolean handle(final TitleSubtitlePacket packet) {
     return false;
   }
 
   /**
    * Handles {@link TitleActionbarPacket}.
    *
-   * @param ignoredPacket the title actionbar packet
+   * @param packet the title actionbar packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final TitleActionbarPacket ignoredPacket) {
+  default boolean handle(final TitleActionbarPacket packet) {
     return false;
   }
 
   /**
    * Handles {@link TitleTimesPacket}.
    *
-   * @param ignoredPacket the title times packet
+   * @param packet the title times packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final TitleTimesPacket ignoredPacket) {
+  default boolean handle(final TitleTimesPacket packet) {
     return false;
   }
 
   /**
    * Handles {@link TitleClearPacket}.
    *
-   * @param ignoredPacket the title clear packet
+   * @param packet the title clear packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final TitleClearPacket ignoredPacket) {
+  default boolean handle(final TitleClearPacket packet) {
     return false;
   }
 
@@ -549,10 +549,10 @@ public interface MinecraftSessionHandler {
   /**
    * Handles {@link SystemChatPacket}.
    *
-   * @param ignoredPacket the system chat packet
+   * @param packet the system chat packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final SystemChatPacket ignoredPacket) {
+  default boolean handle(final SystemChatPacket packet) {
     return false;
   }
 
@@ -579,10 +579,10 @@ public interface MinecraftSessionHandler {
   /**
    * Handles {@link PlayerChatCompletionPacket}.
    *
-   * @param ignoredPacket the player chat completion packet
+   * @param packet the player chat completion packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final PlayerChatCompletionPacket ignoredPacket) {
+  default boolean handle(final PlayerChatCompletionPacket packet) {
     return false;
   }
 
@@ -629,10 +629,10 @@ public interface MinecraftSessionHandler {
   /**
    * Handles {@link ActiveFeaturesPacket}.
    *
-   * @param ignoredPacket the active features packet
+   * @param packet the active features packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final ActiveFeaturesPacket ignoredPacket) {
+  default boolean handle(final ActiveFeaturesPacket packet) {
     return false;
   }
 
@@ -779,30 +779,30 @@ public interface MinecraftSessionHandler {
   /**
    * Handles {@link DialogClearPacket}.
    *
-   * @param ignoredPacket the dialog clear packet
+   * @param packet the dialog clear packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final DialogClearPacket ignoredPacket) {
+  default boolean handle(final DialogClearPacket packet) {
     return false;
   }
 
   /**
    * Handles {@link DialogShowPacket}.
    *
-   * @param ignoredPacket the dialog show packet
+   * @param packet the dialog show packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final DialogShowPacket ignoredPacket) {
+  default boolean handle(final DialogShowPacket packet) {
     return false;
   }
 
   /**
    * Handles {@link ServerboundCustomClickActionPacket}.
    *
-   * @param ignoredPacket the custom click action packet
+   * @param packet the custom click action packet
    * @return {@code true} if the packet was handled, {@code false} otherwise
    */
-  default boolean handle(final ServerboundCustomClickActionPacket ignoredPacket) {
+  default boolean handle(final ServerboundCustomClickActionPacket packet) {
     return false;
   }
 

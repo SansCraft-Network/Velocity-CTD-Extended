@@ -98,6 +98,7 @@ public class BossBarManager {
     for (VelocityBossBarImplementation bossBar : bossBars) {
       bossBar.createDirect(player);
     }
+
     this.dropPackets = false;
   }
 

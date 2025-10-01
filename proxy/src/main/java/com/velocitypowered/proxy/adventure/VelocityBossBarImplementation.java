@@ -103,8 +103,7 @@ public final class VelocityBossBarImplementation implements BossBar.Listener,
   public void createDirect(final ConnectedPlayer viewer) {
     final ComponentHolder name = new ComponentHolder(
         viewer.getProtocolVersion(),
-        viewer.translateMessage(this.bar.name())
-    );
+        viewer.translateMessage(this.bar.name()));
     viewer.getConnection().write(BossBarPacket.createAddPacket(this.id, this.bar, name));
   }
 

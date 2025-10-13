@@ -311,7 +311,7 @@ public class SuggestionsProviderTests extends CommandTestSuite {
     assertSuggestions("offset bu", "bump");
     for (int i = 10; i < 20; i++) {
       final Suggestions suggestions = manager.offerBrigadierSuggestions(source, "offset " + "bump ".repeat(i)).join();
-      assertEquals(7 + 5 * i, suggestions.getList().get(0).getRange().getStart());
+      assertEquals(7 + 5 * i, suggestions.getList().getFirst().getRange().getStart());
     }
   }
 }

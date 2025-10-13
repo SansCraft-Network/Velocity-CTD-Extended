@@ -946,7 +946,7 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
             TabCompleteResponsePacket resp = new TabCompleteResponsePacket();
             resp.setTransactionId(packet.getTransactionId());
             resp.setStart(startPos + 1);
-            resp.setLength(packet.getCommand().length() - startPos);
+            resp.setLength(packet.getCommand().length() - startPos - 1);
             resp.getOffers().addAll(offers);
             player.getConnection().write(resp);
           }

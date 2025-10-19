@@ -170,8 +170,23 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     return handler.handle(this);
   }
 
+  /**
+   * Provides an estimated number of bytes required to encode this login plugin response.
+   *
+   * <p>This implementation returns the number of readable bytes in the internal payload buffer,
+   * representing the size of the data portion of the packet. The final encoded size will also
+   * include the VarInt-encoded plugin message ID and the single-byte success flag written by
+   * {@link #encode(ByteBuf, Direction, ProtocolVersion)}.</p>
+   *
+   * <p>This size hint helps the encoder allocate an appropriately sized buffer to minimize
+   * reallocation and improve encoding performance.</p>
+   *
+   * @param direction the packet direction (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @return the estimated size of this packet’s encoded payload in bytes
+   */
   @Override
-  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
     return content().readableBytes();
   }
 }

@@ -125,8 +125,23 @@ public class StatusResponsePacket implements MinecraftPacket {
     return handler.handle(this);
   }
 
+  /**
+   * Provides an estimated number of bytes required to encode this status response packet.
+   *
+   * <p>The encoded size corresponds to the UTF-8 encoded length of the status message,
+   * typically containing the JSON-formatted server status data. This estimate is obtained
+   * by calling {@link ProtocolUtils#stringSizeHint(CharSequence)}, which accounts for
+   * the VarInt string length prefix and the UTF-8 byte count of the message itself.</p>
+   *
+   * <p>This hint allows the encoder to preallocate a buffer large enough to contain
+   * the entire encoded message, minimizing reallocation during write operations.</p>
+   *
+   * @param direction the packet direction (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @return the estimated encoded size of this packet in bytes
+   */
   @Override
-  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
     return ProtocolUtils.stringSizeHint(this.status);
   }
 }

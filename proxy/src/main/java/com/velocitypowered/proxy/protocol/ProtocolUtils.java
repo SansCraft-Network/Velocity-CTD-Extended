@@ -373,7 +373,7 @@ public enum ProtocolUtils {
    * @param str the string to write
    * @return the encoded size
    */
-  public static int stringSizeHint(CharSequence str) {
+  public static int stringSizeHint(final CharSequence str) {
     int size = ByteBufUtil.utf8Bytes(str);
     return varIntBytes(size) + size;
   }

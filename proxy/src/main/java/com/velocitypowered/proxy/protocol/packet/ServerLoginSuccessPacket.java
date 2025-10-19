@@ -226,8 +226,23 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     return handler.handle(this);
   }
 
+  /**
+   * Provides an estimated number of bytes required to encode this login success packet.
+   *
+   * <p>The encoded size varies depending on protocol version and included data — such as
+   * the UUID format, username, and optional game profile properties. Since these elements
+   * can differ in size (e.g., long usernames, multiple skin properties, or signature data),
+   * this method returns a conservative fixed estimate of {@code 4 KiB} to ensure the encoder
+   * pre-allocates enough buffer space.</p>
+   *
+   * <p>This avoids unnecessary buffer resizing and improves I/O performance during encoding.</p>
+   *
+   * @param direction the packet direction (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @return the estimated encoded size in bytes (always {@code 4096})
+   */
   @Override
-  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
     // We could compute an exact size, but 4KiB ought to be enough to encode all reasonable
     // sizes of this packet.
     return 4 * 1024;

@@ -25,6 +25,7 @@ import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import io.netty.buffer.ByteBuf;
 import java.util.Map;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * The {@code TagsUpdatePacket} class represents a packet sent to update the tags
@@ -75,13 +76,13 @@ public class TagsUpdatePacket implements MinecraftPacket {
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
                      final ProtocolVersion protocolVersion) {
-    ImmutableMap.Builder<String, Map<String, int[]>> builder = ImmutableMap.builder();
+    ImmutableMap.Builder<@NotNull String, @NotNull Map<String, int[]>> builder = ImmutableMap.builder();
     int size = ProtocolUtils.readVarInt(buf);
     for (int i = 0; i < size; i++) {
       String key = ProtocolUtils.readString(buf);
 
       int innerSize = ProtocolUtils.readVarInt(buf);
-      ImmutableMap.Builder<String, int[]> innerBuilder = ImmutableMap.builder();
+      ImmutableMap.Builder<@NotNull String, int @NotNull []> innerBuilder = ImmutableMap.builder();
       for (int j = 0; j < innerSize; j++) {
         String innerKey = ProtocolUtils.readString(buf);
         int[] innerValue = ProtocolUtils.readVarIntArray(buf);
@@ -134,8 +135,20 @@ public class TagsUpdatePacket implements MinecraftPacket {
     return handler.handle(this);
   }
 
+  /**
+   * Provides an estimated number of bytes required to encode this tags update packet.
+   *
+   * <p>This calculation iterates through all registries and their associated tags,
+   * summing the expected sizes of encoded strings, VarInt counts, and integer arrays.
+   * The result approximates the total serialized size of the packet for efficient
+   * buffer preallocation during encoding.</p>
+   *
+   * @param direction the packet direction (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @return the estimated encoded size of this packet in bytes
+   */
   @Override
-  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
     int size = ProtocolUtils.varIntBytes(tags.size());
     for (Map.Entry<String, Map<String, int[]>> entry : tags.entrySet()) {
       size += ProtocolUtils.stringSizeHint(entry.getKey());

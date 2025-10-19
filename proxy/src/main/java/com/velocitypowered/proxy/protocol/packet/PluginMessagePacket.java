@@ -267,8 +267,23 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
     return (PluginMessagePacket) super.touch(hint);
   }
 
+  /**
+   * Provides an estimated number of bytes required to encode this plugin message packet.
+   *
+   * <p>This implementation returns the number of readable bytes in the underlying payload buffer,
+   * representing the size of the actual plugin message data. The full encoded packet will also
+   * include the UTF-8 encoded channel name and its length prefix written by
+   * {@link #encode(ByteBuf, Direction, ProtocolVersion)}.</p>
+   *
+   * <p>This estimate is primarily used by the encoder to preallocate sufficient buffer space,
+   * minimizing reallocation and improving performance during network writes.</p>
+   *
+   * @param direction the packet direction (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @return the estimated payload size in bytes, equal to the readable byte count of the content
+   */
   @Override
-  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
     return content().readableBytes();
   }
 }

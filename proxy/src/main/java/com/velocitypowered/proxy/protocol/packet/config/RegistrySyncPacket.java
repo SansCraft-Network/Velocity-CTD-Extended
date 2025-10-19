@@ -95,8 +95,20 @@ public class RegistrySyncPacket extends DeferredByteBufHolder implements Minecra
     return handler.handle(this);
   }
 
+  /**
+   * Provides an estimated number of bytes required to encode this registry sync packet.
+   *
+   * <p>Because this packet consists entirely of pre-serialized registry data stored in its
+   * internal buffer, the encoded size is exactly equal to the number of readable bytes in
+   * that buffer. This estimate allows the encoder to preallocate an appropriately sized
+   * output buffer to avoid resizing during transmission.</p>
+   *
+   * @param direction the packet direction (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @return the exact number of readable bytes in the content buffer
+   */
   @Override
-  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
+  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
     return content().readableBytes();
   }
 }

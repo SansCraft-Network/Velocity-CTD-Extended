@@ -45,6 +45,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -2945,7 +2946,7 @@ public final class VelocityConfiguration implements ProxyConfig {
      * @return a list of server names
      */
     public List<String> getNoQueueServers() {
-      return noQueueServers == null ? java.util.Collections.emptyList() : noQueueServers;
+      return noQueueServers == null ? Collections.emptyList() : noQueueServers;
     }
 
     /**

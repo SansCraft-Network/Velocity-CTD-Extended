@@ -1240,6 +1240,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         } else {
           Files.createFile(secretPath);
           Files.writeString(secretPath, forwardingSecretString = generateRandomString(12), StandardCharsets.UTF_8);
+          logger.info("The forwarding-secret-file does not exist. A new file has been created at {}", forwardSecretFile);
         }
       }
 

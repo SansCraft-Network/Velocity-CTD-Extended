@@ -34,6 +34,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
+
+import com.velocitypowered.proxy.xcd_queue.model.ServerStatus;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -42,7 +44,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 /**
  * Holds queue state for a single backend server.
  */
-public class ServerQueueStatus {
+public class ServerQueueStatus { //todo Queue
 
   /**
    * The backend server this queue is associated with.
@@ -202,7 +204,7 @@ public class ServerQueueStatus {
    * @param queueBypass {@code true} if the player should bypass the queue entirely
    */
   public void queue(final UUID playerUuid, final int priority, final boolean fullBypass, final boolean queueBypass) {
-    if (!config.isEnabled()) {
+    if (!config.isEnabled()) { // todo dit is bullshit, niet hier checken. eerder checken, en dan normaal senden
       Player player = server.getPlayer(playerUuid);
       if (player != null) {
         player.createConnectionRequest(server).connect();

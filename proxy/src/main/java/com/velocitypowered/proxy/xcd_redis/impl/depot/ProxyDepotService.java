@@ -23,7 +23,20 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
    */
   public ProxyDepotService(@NotNull VelocityRedis redis) {
     super(ProxyEntry.class, redis.getProvider());
+
     this.redis = redis;
+
+    // Create or update this proxy's entry in the depot
+    this.depot.upsert(new ProxyEntry(redis.getServer()));
+  }
+
+  @Override
+  public void teardown() {
+    // Remove this proxy's entry from the depot
+    final ProxyEntry proxyEntry = this.get(this.redis.getServer().getProxyId());
+    if (proxyEntry != null) {
+      proxyEntry.remove();
+    }
   }
 
   /**
@@ -33,5 +46,14 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
    */
   public List<String> getAllProxyIds() {
     return this.depot.keys().stream().sorted().toList();
+  }
+
+  /**
+   * Get a list of all the {@link ProxyEntry proxy} IDs currently present in the depot, in lower case
+   *
+   * @return the list of all proxy IDs in lower case, sorted alphabetically
+   */
+  public List<String> getAllProxyIdsLowerCase() {
+    return this.depot.keys().stream().map(String::toLowerCase).sorted().toList();
   }
 }

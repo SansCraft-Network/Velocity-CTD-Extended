@@ -32,12 +32,14 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.redis.multiproxy.RedisSwitchServerRequest;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
+import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.xcd_redis.impl.packet.VelocitySwitchServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
@@ -50,6 +52,11 @@ public class SendCommand {
    * The Velocity server instance used to retrieve player and server data.
    */
   private final VelocityServer server;
+
+  /**
+   * The Velocity Redis instance used for multi-proxy operations.
+   */
+  private final VelocityRedis redis;
 
   /**
    * The argument key for specifying the target server.
@@ -68,6 +75,7 @@ public class SendCommand {
    */
   public SendCommand(final VelocityServer server) {
     this.server = server;
+    this.redis = server.getRedis();
   }
 
   /**
@@ -81,7 +89,7 @@ public class SendCommand {
       return null;
     }
 
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
+    if (server.isRedis()) {
       registerMultiProxy(true);
       return null;
     }
@@ -173,8 +181,8 @@ public class SendCommand {
               ? context.getArgument(PLAYER_ARG, String.class)
               : "";
 
-          for (RemotePlayerInfo info : server.getMultiProxyHandler().getAllPlayers()) {
-            final String playerName = info.getName();
+          for (PlayerEntry playerEntry : redis.getPlayerService().getAll()) {
+            final String playerName = playerEntry.getUsername();
             if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
               builder.suggest(playerName);
             }
@@ -233,7 +241,7 @@ public class SendCommand {
   }
 
   private int send(final CommandContext<CommandSource> context) {
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
+    if (server.isRedis()) {
       return sendMultiProxy(context);
     }
 
@@ -399,7 +407,7 @@ public class SendCommand {
 
     final RegisteredServer targetServer = maybeServer.get();
 
-    if (this.server.getMultiProxyHandler().isPlayerOnline(player)
+    if (this.redis.getPlayerService().isPlayerOnline(player)
         && !Objects.equals(player, "all")
         && !Objects.equals(player, "current")
         && !player.startsWith("+")) {
@@ -411,9 +419,10 @@ public class SendCommand {
     }
 
     if (Objects.equals(player, "all")) {
-      List<RemotePlayerInfo> list = this.server.getMultiProxyHandler().getAllPlayers();
-      for (final RemotePlayerInfo p : list) {
-        this.server.getRedisManager().send(new RedisSwitchServerRequest(p.getName(), targetServer.getServerInfo().getName()));
+      List<PlayerEntry> list = this.redis.getPlayerService().getAll();
+      for (final PlayerEntry playerEntry : list) {
+        new VelocitySwitchServer(playerEntry.getUsername(), targetServer.getServerInfo().getName())
+                .publish();
       }
 
       final int globalCount = list.size();
@@ -438,10 +447,12 @@ public class SendCommand {
           return -1;
         }
         int amountDone = 0;
-        List<RemotePlayerInfo> list = this.server.getMultiProxyHandler().getAllPlayers();
-        for (final RemotePlayerInfo p : list) {
-          if (p.getServerName().equalsIgnoreCase(connectedServer.get().getServerInfo().getName())) {
-            this.server.getRedisManager().send(new RedisSwitchServerRequest(p.getName(), connectedServer.get().getServerInfo().getName()));
+        List<PlayerEntry> list = this.redis.getPlayerService().getAll();
+        for (final PlayerEntry playerEntry : list) {
+          if (playerEntry.getServerName().equalsIgnoreCase(connectedServer.get().getServerInfo().getName())) {
+            new VelocitySwitchServer(playerEntry.getUsername(),
+                    connectedServer.get().getServerInfo().getName())
+                    .publish();
             amountDone++;
           }
         }
@@ -485,10 +496,10 @@ public class SendCommand {
   private void sendPlayerMultiProxy(final CommandContext<CommandSource> context, final String playerInput,
                                     final RegisteredServer targetServer) {
 
-    RemotePlayerInfo playerInfo = server.getMultiProxyHandler().getPlayerInfo(playerInput);
+    PlayerEntry playerEntry = redis.getPlayerService().getPlayerEntry(playerInput);
 
-    String correctName = playerInfo.getName();
-    boolean alreadyConnected = playerInfo.getServerName().equalsIgnoreCase(targetServer.getServerInfo().getName());
+    String correctName = Objects.requireNonNull(playerEntry).getUsername();
+    boolean alreadyConnected = playerEntry.getServerName().equalsIgnoreCase(targetServer.getServerInfo().getName());
 
     if (alreadyConnected) {
       context.getSource().sendMessage(Component.translatable("velocity.command.send-player-none")
@@ -496,8 +507,8 @@ public class SendCommand {
               Argument.string("player", correctName),
               Argument.string("server", targetServer.getServerInfo().getName())));
     } else {
-      this.server.getRedisManager().send(new RedisSwitchServerRequest(correctName,
-              targetServer.getServerInfo().getName()));
+      new VelocitySwitchServer(correctName, targetServer.getServerInfo().getName())
+              .publish();
       context.getSource().sendMessage(Component.translatable("velocity.command.send-player")
           .arguments(
               Argument.string("player", correctName),
@@ -515,10 +526,11 @@ public class SendCommand {
     }
 
     int amountDone = 0;
-    List<RemotePlayerInfo> list = this.server.getMultiProxyHandler().getAllPlayers();
-    for (final RemotePlayerInfo p : list) {
-      if (p.getServerName().equalsIgnoreCase(name)) {
-        this.server.getRedisManager().send(new RedisSwitchServerRequest(p.getName(), targetServer.getServerInfo().getName()));
+    List<PlayerEntry> list = this.redis.getPlayerService().getAll();
+    for (final PlayerEntry playerEntry : list) {
+      if (playerEntry.getServerName().equalsIgnoreCase(name)) {
+        new VelocitySwitchServer(playerEntry.getUsername(), targetServer.getServerInfo().getName())
+                .publish();
         amountDone++;
       }
     }

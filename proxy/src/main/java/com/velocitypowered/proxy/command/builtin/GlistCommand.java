@@ -32,11 +32,12 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.redis.multiproxy.MultiProxyHandler;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -143,14 +144,7 @@ public class GlistCommand {
   }
 
   private void sendTotalProxyCount(final CommandSource target) {
-    final int online;
-
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
-      online = server.getMultiProxyHandler().getTotalPlayerCount();
-    } else {
-      online = server.getPlayerCount();
-    }
-
+    final int online = server.getPlayerCount();
     final TranslatableComponent.Builder msg = Component.translatable()
         .key(online == 1
             ? "velocity.command.glist-player-singular"
@@ -165,19 +159,19 @@ public class GlistCommand {
                                  final boolean fromAll, final RegisteredServer server) {
     int totalPlayers = 0;
     List<Component> players = new ArrayList<>();
-    MultiProxyHandler multiProxyHandler = this.server.getMultiProxyHandler();
+    final VelocityRedis redis = this.server.getRedis();
 
-    if (multiProxyHandler.isRedisEnabled()) {
-      for (String proxyId : multiProxyHandler.getAllProxyIds()) {
-        for (RemotePlayerInfo player : multiProxyHandler.getPlayers(proxyId)) {
-          if (player.getServerName() == null || !player.getServerName().equals(server.getServerInfo().getName())) {
+    if (this.server.isRedis() && redis != null) {
+      for (String proxyId : redis.getProxyService().getAllProxyIds()) {
+        for (PlayerEntry playerEntry : redis.getPlayerService().getPlayerEntriesOnProxy(proxyId)) {
+          if (playerEntry.getServerName() == null || !playerEntry.getServerName().equals(server.getServerInfo().getName())) {
             continue;
           }
 
           String key = "velocity.command.glist.proxy-"
-              + (proxyId.equals(multiProxyHandler.getOwnProxyId()) ? "self" : "other");
+              + (proxyId.equals(this.server.getProxyId()) ? "self" : "other");
           Component hover = Component.translatable(key).arguments(Argument.string("proxy", proxyId));
-          players.add(Component.text(player.getName()).hoverEvent(HoverEvent.showText(hover)));
+          players.add(Component.text(playerEntry.getUsername()).hoverEvent(HoverEvent.showText(hover)));
           totalPlayers += 1;
         }
       }

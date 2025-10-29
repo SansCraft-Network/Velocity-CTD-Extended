@@ -34,7 +34,6 @@ import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataInput;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
@@ -173,26 +172,15 @@ public class BungeeCordMessageResponder {
       if (target.equals("ALL")) {
         out.writeUTF("PlayerCount");
         out.writeUTF("ALL");
-
-        int amount;
-        if (proxy.getMultiProxyHandler().isRedisEnabled()) {
-          amount = proxy.getMultiProxyHandler().getTotalPlayerCount();
-        } else {
-          amount = proxy.getPlayerCount();
-        }
-        out.writeInt(amount);
+        out.writeInt(proxy.getPlayerCount());
       } else {
         proxy.getServer(target).ifPresent(rs -> {
           out.writeUTF("PlayerCount");
           out.writeUTF(rs.getServerInfo().getName());
 
-          int amount = 0;
-          if (proxy.getMultiProxyHandler().isRedisEnabled()) {
-            for (RemotePlayerInfo info : proxy.getMultiProxyHandler().getAllPlayers()) {
-              if (info.getServerName() != null && info.getServerName().equalsIgnoreCase(rs.getServerInfo().getName())) {
-                amount++;
-              }
-            }
+          int amount;
+          if (proxy.isRedis()) {
+            amount = proxy.getRedis().getPlayerService().getPlayerEntriesInServer(rs.getServerInfo().getName()).size();
           } else {
             amount = rs.getPlayersConnected().size();
           }

@@ -4,15 +4,13 @@ import com.google.common.base.Preconditions;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.xcd_redis.impl.RouteRegistry;
-import com.velocitypowered.proxy.xcd_redis.impl.TransactionRegistry;
+import com.velocitypowered.proxy.xcd_redis.impl.TransactionHandlerRegistry;
 import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerDepotService;
 import com.velocitypowered.proxy.xcd_redis.impl.depot.ProxyDepotService;
 import com.velocitypowered.proxy.xcd_redis.provider.LettuceProvider;
 import com.velocitypowered.proxy.xcd_redis.provider.RedisProvider;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.EnumSet;
 
 /**
  * Represents the main class of the Redis module within CTD
@@ -31,6 +29,8 @@ public final class VelocityRedis {
 
   private final String proxyId;
 
+  private boolean shutdown = false;
+
   public VelocityRedis(@NotNull VelocityServer server) {
     Preconditions.checkState(INSTANCE == null, "VelocityRedis is already initialized");
     INSTANCE = this;
@@ -46,8 +46,18 @@ public final class VelocityRedis {
     this.proxyService = new ProxyDepotService(this);
 
     this.registerRoutes();
-    this.registerTransactions();
+    this.registerTransactionHandlers();
+  }
 
+  public void shutdown() {
+    if (shutdown) {
+      return;
+    }
+    shutdown = true;
+
+    this.playerService.teardown();
+    this.proxyService.teardown();
+    this.provider.disconnect();
   }
 
   private void registerRoutes() {
@@ -56,13 +66,17 @@ public final class VelocityRedis {
     }
   }
 
-  private void registerTransactions() {
-    for (TransactionRegistry registry : TransactionRegistry.values()) {
+  private void registerTransactionHandlers() {
+    for (TransactionHandlerRegistry registry : TransactionHandlerRegistry.values()) {
       this.provider.registerTransaction(registry.getTransactionHandler());
     }
   }
 
   public VelocityServer getServer() {
+    if (server == null) {
+      throw new IllegalStateException("You're trying to access the server of redis before it was initialized!");
+    }
+
     return server;
   }
 
@@ -80,5 +94,9 @@ public final class VelocityRedis {
 
   public String getProxyId() {
     return proxyId;
+  }
+
+  public boolean isShutdown() {
+    return shutdown;
   }
 }

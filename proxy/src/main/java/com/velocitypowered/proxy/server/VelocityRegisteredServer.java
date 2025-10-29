@@ -50,6 +50,7 @@ import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.queue.QueueManagerRedisImpl;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
 import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -65,6 +66,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -158,16 +161,8 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    */
   @Override
   public long getTotalPlayerCount() {
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-      int amount = 0;
-
-      for (RemotePlayerInfo info : this.server.getMultiProxyHandler().getAllPlayers()) {
-        if (info.getServerName() != null && info.getServerName().equalsIgnoreCase(getServerInfo().getName())) {
-          amount++;
-        }
-      }
-
-      return amount;
+    if (this.server != null && this.server.isRedis()) {
+      return this.server.getRedis().getPlayerService().getPlayerEntriesInServer(getServerInfo().getName()).size();
     } else {
       return getPlayersConnected().size();
     }
@@ -184,20 +179,15 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    */
   @Override
   public List<PlayerInfo> getPlayerInfo() {
-    if (this.server == null || !this.server.getMultiProxyHandler().isRedisEnabled()) {
+    if (this.server == null || !this.server.isRedis()) {
       List<PlayerInfo> info = new ArrayList<>();
       players.forEach((uuid, player) -> info.add(new PlayerInfo(player.getUsername(), player.getUniqueId())));
       return info;
     }
 
-    List<PlayerInfo> info = new ArrayList<>();
-    for (RemotePlayerInfo i : this.server.getMultiProxyHandler().getAllPlayers()) {
-      if (i.getServerName() != null && i.getServerName().equalsIgnoreCase(getServerInfo().getName())) {
-        info.add(new PlayerInfo(i.getName(), i.getUuid()));
-      }
-    }
-
-    return info;
+    return this.server.getRedis().getPlayerService().getPlayerEntriesInServer(getServerInfo().getName()).stream()
+            .map(entry -> new PlayerInfo(entry.getUsername(), entry.getUniqueId()))
+            .toList();
   }
 
   /**

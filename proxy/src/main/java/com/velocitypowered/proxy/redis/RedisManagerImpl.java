@@ -220,7 +220,7 @@ public class RedisManagerImpl {
                             player.createConnectionRequest(server).connectWithIndication())));
 
     listen(RedisKickPlayerRequest.ID, RedisKickPlayerRequest.class, it -> {
-      if (proxy.getMultiProxyHandler().getOwnProxyId().equalsIgnoreCase(it.proxyId())) {
+      if (proxy.getProxyId().equalsIgnoreCase(it.proxyId())) {
         return;
       }
 
@@ -412,27 +412,6 @@ public class RedisManagerImpl {
         logger.error("Failed to remove player: {}", info.getUuid(), e);
       }
     });
-  }
-
-  /**
-   * Checks if a player exists in the Redis cache.
-   *
-   * @param uniqueId the players UUID.
-   *
-   * @return whether the player exists or not.
-   */
-  public boolean containsPlayer(final UUID uniqueId) {
-    if (connection == null) {
-      return false;
-    }
-
-    try {
-      RedisCommands<String, String> commands = connection.sync();
-      return commands.hexists(CACHE_KEY, uniqueId.toString());
-    } catch (Exception e) {
-      logger.error("Failed to check if player exists: {}", uniqueId, e);
-      return false;
-    }
   }
 
   /**

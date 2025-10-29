@@ -30,10 +30,11 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -75,7 +76,7 @@ public class PlistCommand {
    * @return the command instance or {@code null} if disabled
    */
   public BrigadierCommand register(final boolean isPlistEnabled) {
-    if (!isPlistEnabled || !server.getMultiProxyHandler().isRedisEnabled()) {
+    if (!isPlistEnabled || !server.isRedis()) {
       return null;
     }
 
@@ -119,7 +120,7 @@ public class PlistCommand {
 
   private int totalCount(final CommandContext<CommandSource> context) {
     final CommandSource source = context.getSource();
-    sendTotalProxyCount(source, this.server.getMultiProxyHandler().getOwnProxyId(), this.server.getPlayerCount());
+    sendTotalProxyCount(source, this.server.getProxyId(), this.server.getPlayerCount());
     source.sendMessage(
         Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW)
             .arguments(Argument.string("alias", VelocityCommands.readAlias(context.getNodes()))));
@@ -127,7 +128,7 @@ public class PlistCommand {
   }
 
   private Optional<String> validateProxy(final String proxyName, final CommandSource source) {
-    return server.getMultiProxyHandler().getAllProxyIds().stream()
+    return server.getRedis().getProxyService().getAllProxyIds().stream()
         .filter(proxyId -> proxyId.equalsIgnoreCase(proxyName))
         .findFirst()
         .or(() -> {
@@ -147,10 +148,10 @@ public class PlistCommand {
     }
 
     if ("all".equalsIgnoreCase(serverName)) {
-      List<RemotePlayerInfo> allPlayers = new ArrayList<>();
+      List<PlayerEntry> allPlayers = new ArrayList<>();
       for (RegisteredServer registeredServer : server.getAllServers()) {
-        List<RemotePlayerInfo> serverPlayers =
-            new ArrayList<>(this.server.getMultiProxyHandler().getPlayers(validatedProxy.get()));
+        List<PlayerEntry> serverPlayers =
+            new ArrayList<>(this.server.getRedis().getPlayerService().getPlayerEntriesOnProxy(validatedProxy.get()));
         serverPlayers.removeIf(player -> !player.getServerName().equalsIgnoreCase(registeredServer.getServerInfo().getName()));
         allPlayers.addAll(serverPlayers);
         sendServerPlayers(context.getSource(), validatedProxy.get(), registeredServer, true);
@@ -177,7 +178,7 @@ public class PlistCommand {
       return Command.SINGLE_SUCCESS;
     }
 
-    final List<RemotePlayerInfo> proxyPlayers = server.getMultiProxyHandler().getPlayers(validatedProxy.get());
+    final List<PlayerEntry> proxyPlayers = server.getRedis().getPlayerService().getPlayerEntriesOnProxy(validatedProxy.get());
     sendTotalProxyCount(context.getSource(), validatedProxy.get(), proxyPlayers.size());
     return Command.SINGLE_SUCCESS;
   }
@@ -209,13 +210,12 @@ public class PlistCommand {
                                  final String proxyId,
                                  final RegisteredServer server,
                                  final boolean fromAll) {
-    final List<RemotePlayerInfo> proxyPlayers = this.server.getMultiProxyHandler().getPlayers(proxyId);
     List<Component> players = new ArrayList<>();
     int totalPlayers = 0;
 
-    for (RemotePlayerInfo player : proxyPlayers) {
-      if (server.getServerInfo().getName().equalsIgnoreCase(player.getServerName())) {
-        players.add(Component.text(player.getName()));
+    for (PlayerEntry playerEntry : this.server.getRedis().getPlayerService().getPlayerEntriesOnProxy(proxyId)) {
+      if (server.getServerInfo().getName().equalsIgnoreCase(playerEntry.getServerName())) {
+        players.add(Component.text(playerEntry.getUsername()));
         totalPlayers++;
       }
     }

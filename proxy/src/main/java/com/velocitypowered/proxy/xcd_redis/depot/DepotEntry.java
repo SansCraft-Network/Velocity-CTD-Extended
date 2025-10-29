@@ -11,13 +11,11 @@ import java.util.Objects;
 public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
 
   private final K uniqueId;
-  private final String key;
 
   private transient @MonotonicNonNull Depot<K, T> depot;
 
   public DepotEntry(K key) {
     this.uniqueId = key;
-    this.key = String.valueOf(key);
   }
 
   @SuppressWarnings("unchecked")
@@ -33,10 +31,6 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
     return uniqueId;
   }
 
-  public String getKey() {
-    return key;
-  }
-
   @ApiStatus.Internal
   public void setDepot(Depot<K, T> depot) {
     if (depot == null) return;
@@ -47,11 +41,11 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
   public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) return false;
     DepotEntry<?, ?> that = (DepotEntry<?, ?>) o;
-    return Objects.equals(key, that.key);
+    return Objects.equals(uniqueId, that.uniqueId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(key);
+    return Objects.hashCode(uniqueId);
   }
 }

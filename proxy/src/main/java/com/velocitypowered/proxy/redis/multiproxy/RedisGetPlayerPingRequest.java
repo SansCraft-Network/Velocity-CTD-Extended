@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.redis.multiproxy;
 
 import com.velocitypowered.proxy.redis.RedisPacket;
+import com.velocitypowered.proxy.xcd_redis.impl.model.EncodedCommandSource;
 
 /**
  * This packet is used to indicate a request that a player wants to view someone's ping.

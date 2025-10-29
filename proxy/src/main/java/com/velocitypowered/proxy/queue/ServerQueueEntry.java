@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Stores the status of a single server queue entry for a specific player.
  */
-public class ServerQueueEntry {
+public class ServerQueueEntry { //TODO QueuePlayer
 
   /**
    * The UUID of the player associated with this queue entry.

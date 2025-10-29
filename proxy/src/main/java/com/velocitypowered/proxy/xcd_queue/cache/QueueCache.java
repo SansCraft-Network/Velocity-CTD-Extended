@@ -1,6 +1,7 @@
 package com.velocitypowered.proxy.xcd_queue.cache;
 
-import com.velocitypowered.proxy.xcd_queue.model.Queue;
+import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.proxy.xcd_queue.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -15,7 +16,9 @@ public sealed interface QueueCache permits MemoryQueueCache, RedisQueueCache {
 
   Queue getQueue(@NotNull String serverName);
 
-  Queue getQueue(@NotNull UUID playerUniqueId);
+  Queue getQueue(@NotNull Player player);
 
   Collection<Queue> getQueues();
+
+  void updateQueue(@NotNull Queue queue);
 }

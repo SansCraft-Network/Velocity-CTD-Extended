@@ -11,18 +11,7 @@ import java.util.Objects;
  */
 public final class ProxyEntry extends DepotEntry<String, ProxyEntry> {
 
-  private int playerCount;
-
   public ProxyEntry(@NotNull VelocityServer server) {
-    super(Objects.requireNonNull(server.getRedis()).getProxyId());
-    this.playerCount = server.getPlayerCount();
-  }
-
-  public int getPlayerCount() {
-    return playerCount;
-  }
-
-  public void setPlayerCount(int playerCount) {
-    this.playerCount = playerCount;
+    super(server.getProxyId());
   }
 }

@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.redis.multiproxy;
 
 import com.velocitypowered.proxy.redis.RedisPacket;
+import com.velocitypowered.proxy.xcd_redis.impl.model.EncodedCommandSource;
 
 /**
  * Used for no-arg packets that do something that solicits a reply.

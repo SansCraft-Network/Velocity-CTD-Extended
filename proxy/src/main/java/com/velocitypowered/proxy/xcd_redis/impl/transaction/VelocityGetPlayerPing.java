@@ -15,17 +15,12 @@ import java.util.function.Consumer;
 /**
  * @author Elmar Blume - 14/05/2025
  */
-public final class VelocityGetPlayerPing extends Transaction<StringPacket, ComponentPacket> {
+public final class VelocityGetPlayerPing extends VelocityTransaction<StringPacket, ComponentPacket> {
 
   public VelocityGetPlayerPing(@NotNull CommandSource source, @NotNull String username) {
-    super(new StringPacket(username));
+    super(new StringPacket(username), source, "xcd_redis.command.ping.timeout");
 
-    this.onComplete(packet -> PacketBehaviour.SEND_COMPONENT.behave(packet, source));
-
-    this.onTimeout(packet -> {
-      final TextComponent component = Component.text("Unable to get ping for player " + username,
-              NamedTextColor.RED);
-      source.sendMessage(component);
-    });
+    // Send the ping result to the command source
+    this.onComplete(packet -> PacketBehaviour.SEND_COMPONENT.behave(source, packet));
   }
 }

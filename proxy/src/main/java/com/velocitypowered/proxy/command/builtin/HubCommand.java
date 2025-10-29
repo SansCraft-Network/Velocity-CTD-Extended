@@ -70,6 +70,7 @@ public class HubCommand {
         .executes(this::lobby).build());
   }
 
+  //todo refactor to use new queue system
   private int lobby(final CommandContext<CommandSource> context) {
     if (!(context.getSource() instanceof Player player)) {
       context.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);
@@ -110,7 +111,7 @@ public class HubCommand {
       }
 
       if (this.server.getConfiguration().getQueue().getNoQueueServers().contains(serverToTry.getServerInfo().getName())
-              || !server.getMultiProxyHandler().isRedisEnabled()
+              || !server.isRedis()
               || (server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.bypass"))) {
         player.createConnectionRequest(serverToTry).connectWithIndication();
         return Command.SINGLE_SUCCESS;

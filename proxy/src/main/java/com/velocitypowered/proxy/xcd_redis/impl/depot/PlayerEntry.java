@@ -1,9 +1,7 @@
 package com.velocitypowered.proxy.xcd_redis.impl.depot;
 
 import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.xcd_redis.depot.DepotEntry;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -18,16 +16,16 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
 
   private final String username;
   private final String proxyId;
+
   private final Map<String, Integer> queuePriority;
   private final boolean fullQueueBypass;
   private final boolean queueBypass;
 
-  private String serverName = "";
-
+  private String serverName = null;
 
   public PlayerEntry(UUID uniqueId, String username, String proxyId, Map<String, Integer> queuePriority, boolean fullQueueBypass, boolean queueBypass) {
     super(uniqueId);
-    this.manual = true;
+    this.manual = true;//todo check if this is needed
 
     this.username = username;
     this.proxyId = proxyId;
@@ -75,9 +73,6 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
   }
 
   public String getServerName() {
-    if (serverName == null) {
-      return "";
-    }
     return serverName;
   }
 

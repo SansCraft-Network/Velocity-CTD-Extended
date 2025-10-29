@@ -27,7 +27,9 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.util.ComponentUtils;
+import com.velocitypowered.proxy.xcd_redis.impl.packet.VelocityAlert;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
@@ -82,12 +84,13 @@ public class AlertRawCommand {
       return 0;
     }
 
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
-      server.getMultiProxyHandler().alert(Component.translatable("velocity.command.alertraw.message", NamedTextColor.WHITE,
-          ComponentUtils.colorify(message)));
+    final TranslatableComponent alertRawComponent = Component.translatable("velocity.command.alertraw.message", NamedTextColor.WHITE,
+            ComponentUtils.colorify(message));
+
+    if (server.isRedis()) {
+      new VelocityAlert(alertRawComponent).publish();
     } else {
-      server.sendMessage(Component.translatable("velocity.command.alertraw.message", NamedTextColor.WHITE,
-          ComponentUtils.colorify(message)));
+      server.sendMessage(alertRawComponent);
     }
 
     return Command.SINGLE_SUCCESS;

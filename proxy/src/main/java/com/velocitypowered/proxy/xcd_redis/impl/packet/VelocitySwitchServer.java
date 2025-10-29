@@ -14,6 +14,16 @@ public final class VelocitySwitchServer extends StringPacket {
 
   public VelocitySwitchServer(String username, String serverName) {
     super(username);
+
+    this.username = username;
     this.serverName = serverName;
+  }
+
+  public String getUsername() {
+    return username;
+  }
+
+  public String getServerName() {
+    return serverName;
   }
 }

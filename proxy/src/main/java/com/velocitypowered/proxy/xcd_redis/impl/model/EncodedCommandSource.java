@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocitypowered.proxy.redis.multiproxy;
+package com.velocitypowered.proxy.xcd_redis.impl.model;
 
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
@@ -101,7 +101,7 @@ public final class EncodedCommandSource {
    * @param component the component to send
    */
   public void sendMessage(final VelocityServer server, final Component component) {
-    if (!Objects.equals(server.getMultiProxyHandler().getOwnProxyId(), this.targetProxy)) {
+    if (!Objects.equals(server.getProxyId(), this.targetProxy)) {
       return;
     }
 

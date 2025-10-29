@@ -1,5 +1,7 @@
 package com.velocitypowered.proxy.xcd_redis.packet;
 
+import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
 import com.velocitypowered.proxy.xcd_redis.packet.annotation.OneWayPacket;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +78,16 @@ public sealed abstract class AbstractRedisPacket implements RedisPacket permits 
   @Override
   public void setTransactionType(@NotNull String transactionType) {
     this.transactionType = transactionType;
+  }
+
+  @Override
+  public void publish() {
+    // Ensure Redis is initialized
+    final VelocityRedis redis = VelocityRedis.INSTANCE;
+    if (redis == null) throw new IllegalStateException("Tried to publish packet without Redis being initialized.");
+
+    // Publish packet
+    redis.getProvider().publish(this);
   }
 
   @Override

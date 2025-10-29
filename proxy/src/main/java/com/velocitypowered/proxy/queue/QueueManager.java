@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+
+import com.velocitypowered.proxy.xcd_queue.model.ServerStatus;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
@@ -189,14 +191,14 @@ public abstract class QueueManager {
    *
    * @param player The player that left.
    */
-  public void onPlayerLeave(final ConnectedPlayer player) {
+  public void onPlayerDisconnect(final ConnectedPlayer player) {
     long timeout = getTimeoutInSeconds(player);
 
     if (timeout == -1) {
-      removeFromAll(player);
+      removePlayerEntirely(player);
     } else {
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () ->
-              removeFromAll(player)).delay(getTimeoutInSeconds(player), TimeUnit.SECONDS).schedule();
+              removePlayerEntirely(player)).delay(getTimeoutInSeconds(player), TimeUnit.SECONDS).schedule();
     }
   }
 
@@ -449,7 +451,7 @@ public abstract class QueueManager {
    *
    * @param player The player to remove.
    */
-  public void removeFromAll(final ConnectedPlayer player) {
+  public void removePlayerEntirely(final ConnectedPlayer player) {
     for (ServerQueueStatus status : this.cache.getAll()) {
       if (status.isQueued(player.getUniqueId())) {
         status.dequeue(player.getUniqueId(), false);

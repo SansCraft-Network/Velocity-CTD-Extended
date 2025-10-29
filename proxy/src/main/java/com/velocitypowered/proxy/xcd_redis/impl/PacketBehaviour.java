@@ -4,22 +4,23 @@ import com.velocitypowered.proxy.xcd_redis.packet.RedisPacket;
 import com.velocitypowered.proxy.xcd_redis.packet.typed.ComponentPacket;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
+import org.checkerframework.checker.units.qual.C;
 
 /**
- * Represents a behaviour for a packet, which is used to define how the packet should behave,
+ * Represents a set of default behaviours for a specific packet, which is used to define how the packet should behave,
  * for example, when an {@link com.velocitypowered.proxy.xcd_redis.transaction.Transaction} is about to be
- * completed, or when a {@link com.velocitypowered.proxy.xcd_redis.packet.annotation.OneWayPacket} is received
+ * completed, or when a {@link com.velocitypowered.proxy.xcd_redis.packet.annotation.OneWayPacket} is received.
  *
- * @param <T> the type of packet
  * @param <C> the type of carrier
+ * @param <T> the type of packet
  * @author Elmar Blume - 18/05/2025
  */
-public interface PacketBehaviour<T extends RedisPacket, C> {
+public interface PacketBehaviour<C, T extends RedisPacket> {
 
   /**
    * Used whenever the Component payload is sent to any audience
    */
-  PacketBehaviour<ComponentPacket, Audience> SEND_COMPONENT = (packet, carrier) -> {
+  PacketBehaviour<Audience, ComponentPacket> SEND_COMPONENT = (carrier, packet) -> {
     final Component component = packet.deserialize();
     if (component != null) {
       carrier.sendMessage(component);
@@ -29,9 +30,9 @@ public interface PacketBehaviour<T extends RedisPacket, C> {
   /**
    * Method used to let the desired packet 'behave', with a given carrier
    *
-   * @param packet  the packet to have a behaviour
    * @param carrier the carrier used to support this behaviour
+   * @param packet  the packet to have a behaviour
    */
-  void behave(T packet, C carrier);
+  void behave(C carrier, T packet);
 
 }

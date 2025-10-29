@@ -27,9 +27,9 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.util.ComponentUtils;
-import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
 import com.velocitypowered.proxy.xcd_redis.impl.packet.VelocityAlert;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
@@ -84,18 +84,13 @@ public class AlertCommand {
       return 0;
     }
 
-    if (true) {
-      VelocityRedis.INSTANCE.getProvider().publish(new VelocityAlert(Component.translatable("velocity.command.alert.message", NamedTextColor.WHITE,
-              ComponentUtils.colorify(message))));
-      return 0;
-    }
+    final TranslatableComponent alertComponent = Component.translatable("velocity.command.alert.message",
+            NamedTextColor.WHITE, ComponentUtils.colorify(message));
 
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
-      server.getMultiProxyHandler().alert(Component.translatable("velocity.command.alert.message", NamedTextColor.WHITE,
-          ComponentUtils.colorify(message)));
+    if (server.isRedis()) {
+      new VelocityAlert(alertComponent).publish();
     } else {
-      server.sendMessage(Component.translatable("velocity.command.alert.message", NamedTextColor.WHITE,
-          ComponentUtils.colorify(message)));
+      server.sendMessage(alertComponent);
     }
 
     return Command.SINGLE_SUCCESS;

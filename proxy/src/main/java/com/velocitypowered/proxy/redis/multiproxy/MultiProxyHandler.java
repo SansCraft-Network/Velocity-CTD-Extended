@@ -34,6 +34,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+
+import com.velocitypowered.proxy.xcd_redis.impl.model.EncodedCommandSource;
 import net.kyori.adventure.text.Component;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.slf4j.Logger;
@@ -104,116 +106,59 @@ public class MultiProxyHandler {
     RedisManagerImpl redisManager = this.server.getRedisManager();
 
     //todo : replace with ProxyEntry#getPlayerCount().sum() ->> ProxyDepotService#init()
-    Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() ->
-            totalPlayerCount = redisManager.getCache().size(), 100, 100, TimeUnit.MILLISECONDS);
+//    Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() ->
+//            totalPlayerCount = redisManager.getCache().size(), 100, 100, TimeUnit.MILLISECONDS);
 
     //todo : replace with PlayerEntry, but maybe with listeners?
-    Executors.newScheduledThreadPool(1).scheduleAtFixedRate(this::resyncPlayers, 1, 1, TimeUnit.MINUTES);
+//    Executors.newScheduledThreadPool(1).scheduleAtFixedRate(this::resyncPlayers, 1, 1, TimeUnit.MINUTES);
 
-    redisManager.listen(RedisShuttingDownAnnouncement.ID, RedisShuttingDownAnnouncement.class, it -> {
-      handleShutdown(it.proxyId());
+//    redisManager.listen(RedisShuttingDownAnnouncement.ID, RedisShuttingDownAnnouncement.class, it -> {
+//      handleShutdown(it.proxyId());
+//
+//      if (this.server.getQueueManager().isMasterProxy()) {
+//        this.server.getQueueManager().schedulePingingBackend();
+//        this.server.getQueueManager().scheduleTickMessage();
+//        this.server.getQueueManager().rescheduleTimerTask();
+//      }
+//    });
 
-      if (this.server.getQueueManager().isMasterProxy()) {
-        this.server.getQueueManager().schedulePingingBackend();
-        this.server.getQueueManager().scheduleTickMessage();
-        this.server.getQueueManager().rescheduleTimerTask();
-      }
-    });
+//    redisManager.listen(RedisStartupRequest.ID, RedisStartupRequest.class, it -> {
+//      if (it.proxyId().equalsIgnoreCase(getOwnProxyId())) {
+//        return;
+//      }
+//
+//      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
+//        if (!this.server.getQueueManager().isMasterProxy()) {
+//          this.server.getQueueManager().clearQueue();
+//        }
+//      }).delay(3, TimeUnit.SECONDS).schedule();
+//    });
 
-    redisManager.listen(RedisStartupRequest.ID, RedisStartupRequest.class, it -> {
-      if (it.proxyId().equalsIgnoreCase(getOwnProxyId())) {
-        return;
-      }
-
-      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        if (!this.server.getQueueManager().isMasterProxy()) {
-          this.server.getQueueManager().clearQueue();
-        }
-      }).delay(3, TimeUnit.SECONDS).schedule();
-    });
-
-    redisManager.listen(RedisGenericReplyRequest.ID, RedisGenericReplyRequest.class, it -> {
-      if (!it.targetProxy().equalsIgnoreCase(this.getOwnProxyId())) {
-        return;
-      }
-
-      switch (it.type()) {
-        case RELOAD -> {
-          logger.info("Reloading Velocity configuration on remote request from {}...", it.source().proxy());
-
-          try {
-            if (this.server.reloadConfiguration()) {
-              sendMessage(it.source(), Component.translatable("velocity.command.reload-success"));
-              logger.info("Reloaded Velocity configuration on remote request from {}.", it.source().proxy());
-            } else {
-              sendMessage(it.source(), Component.translatable("velocity.command.reload-failure"));
-              logger.error("Failed to reload Velocity configuration on remote request from {}!", it.source().proxy());
-            }
-          } catch (Exception e) {
-            sendMessage(it.source(), Component.translatable("velocity.command.reload-failure"));
-            logger.error("Failed to reload Velocity configuration on remote request from {}!", it.source().proxy(), e);
-          }
-        }
-
-        case UPTIME -> sendMessage(it.source(), VelocityCommand.getUptimeComponent(server));
-        default -> throw new IllegalStateException("invalid `RedisGenericReplyRequest` variant");
-      }
-    });
-
-    redisManager.listen(RedisSendMessage.ID, RedisSendMessage.class, it -> {
-      Component component = it.component();
-
-      if (component != null) {
-        it.target().sendMessage(server, component);
-      }
-    });
-
-    redisManager.listen(RedisSudo.ID, RedisSudo.class, it -> {
-      if (!it.targetProxy().equals(getOwnProxyId())) {
-        return;
-      }
-
-      server.getPlayer(it.playerUuid()).ifPresent(player -> {
-        if (it.message().startsWith("/")) {
-          String[] split = it.message().split(" ");
-          String command = split[0].substring(1);
-          if (this.server.getCommandManager().hasCommand(command)) {
-            this.server.getCommandManager().executeAsync(player, it.message().substring(1));
-          } else {
-            player.spoofChatInput(it.message());
-          }
-        } else {
-          player.spoofChatInput(it.message());
-        }
-      }
-      );
-    });
-
-    redisManager.send(new RedisStartupRequest(config.getProxyId()));
+//    redisManager.send(new RedisStartupRequest(config.getProxyId()));//todo kijk hiernaar
   }
 
-  private void resyncPlayers() {
-    for (Player player : this.server.getAllPlayers()) {
-      if (!this.server.getRedisManager().containsPlayer(player.getUniqueId())) {
-        try {
-          if (((ConnectedPlayer) player).getConnectedServer() != null) {
-            handleJoin(createPlayerInfo((ConnectedPlayer) player, ((ConnectedPlayer) player).getConnectedServer()
-                .getServer().getServerInfo().getName()));
-          }
-        } catch (NullPointerException ex) {
-          handleJoin(createPlayerInfo((ConnectedPlayer) player));
-        }
-      }
-    }
-
-    for (RemotePlayerInfo info : this.server.getRedisManager().getCache()) {
-      if (info.getProxyId().equalsIgnoreCase(getOwnProxyId())) {
-        if (this.server.getPlayer(info.getUuid()).isEmpty()) {
-          this.server.getRedisManager().removePlayer(info);
-        }
-      }
-    }
-  }
+//  private void resyncPlayers() {
+//    for (Player player : this.server.getAllPlayers()) {
+//      if (!this.server.getRedisManager().containsPlayer(player.getUniqueId())) {
+//        try {
+//          if (((ConnectedPlayer) player).getConnectedServer() != null) {
+//            handleJoin(createPlayerInfo((ConnectedPlayer) player, ((ConnectedPlayer) player).getConnectedServer()
+//                .getServer().getServerInfo().getName()));
+//          }
+//        } catch (NullPointerException ex) {
+//          handleJoin(createPlayerInfo((ConnectedPlayer) player));
+//        }
+//      }
+//    }
+//
+//    for (RemotePlayerInfo info : this.server.getRedisManager().getCache()) {
+//      if (info.getProxyId().equalsIgnoreCase(getOwnProxyId())) {
+//        if (this.server.getPlayer(info.getUuid()).isEmpty()) {
+//          this.server.getRedisManager().removePlayer(info);
+//        }
+//      }
+//    }
+//  }
 
   /**
    * Gets the map of players who are currently in the process of being transferred between servers.
@@ -221,7 +166,7 @@ public class MultiProxyHandler {
    * @return a map containing player UUIDs and their target server names
    */
   public Map<UUID, String> getTransferringServers() {
-    return transferringServers;
+    return new HashMap<>();
   }
 
   private void handleShutdown(final String proxyId) {
@@ -268,28 +213,6 @@ public class MultiProxyHandler {
   }
 
   /**
-   * Handles the event when a player leaves the proxy.
-   *
-   * @param player the {@link ConnectedPlayer} that left
-   */
-  public void onPlayerLeave(final ConnectedPlayer player) {
-    if (shuttingDown) {
-      return;
-    }
-
-    if (player.isDontRemoveFromRedis()) {
-      return;
-    }
-
-    RemotePlayerInfo info = getPlayerInfo(player.getUniqueId());
-    if (info != null && info.isBeingTransferred()) {
-      return;
-    }
-
-    this.server.getMultiProxyHandler().handleLeave(player.getUniqueId());
-  }
-
-  /**
    * Handles server switching, updating the stored server connection.
    *
    * @param player The UUID of the player.
@@ -320,7 +243,11 @@ public class MultiProxyHandler {
     for (RemotePlayerInfo info : allPlayers) {
       if (info.getUuid().equals(player.getUniqueId()) || info.getUsername().equalsIgnoreCase(player.getUsername())) {
         if (this.server.getConfiguration().isOnlineModeKickExistingPlayers()) {
-          server.getRedisManager().send(new RedisKickPlayerRequest(player.getUniqueId(), server.getMultiProxyHandler().getOwnProxyId()));
+          //player is this proxy
+//          server.getRedisManager().send(new RedisKickPlayerRequest(player.getUniqueId(), server.getMultiProxyHandler().getOwnProxyId()));
+          player.setDontRemoveFromRedis(true);
+          player.disconnect0(Component.translatable("velocity.error.already-connected-proxy.remote"), true);
+
         } else {
           player.setDontRemoveFromRedis(true);
           player.disconnect0(Component.translatable("velocity.error.already-connected-proxy.remote"), true);
@@ -329,7 +256,7 @@ public class MultiProxyHandler {
       }
     }
 
-    this.server.getMultiProxyHandler().handleJoin(createPlayerInfo(player));
+    this.handleJoin(createPlayerInfo(player));
     return true;
   }
 
@@ -377,7 +304,7 @@ public class MultiProxyHandler {
   public void shutdown() {
     shuttingDown = true;
 
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
+    if (this.isRedisEnabled()) {
       this.server.getRedisManager().removeProxyId(this.config.getProxyId());
       this.server.getRedisManager().send(new RedisShuttingDownAnnouncement(this.config.getProxyId()));
     }

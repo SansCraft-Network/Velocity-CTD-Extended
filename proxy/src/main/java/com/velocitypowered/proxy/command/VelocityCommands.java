@@ -55,6 +55,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -437,7 +439,7 @@ public final class VelocityCommands {
     final String argument = context.getArguments().containsKey("proxy")
         ? context.getArgument("proxy", String.class)
         : "";
-    for (String proxyId : server.getMultiProxyHandler().getAllProxyIds()) {
+    for (String proxyId : server.getRedis().getProxyService().getAllProxyIds()) {
       if (proxyId.toLowerCase().regionMatches(true, 0, argument.toLowerCase(), 0, argument.length())) {
         builder.suggest(proxyId);
       }
@@ -460,10 +462,10 @@ public final class VelocityCommands {
     final String argument = ctx.getArguments().containsKey("player")
         ? ctx.getArgument("player", String.class)
         : "";
-    if (includeRemote && server.getMultiProxyHandler().isRedisEnabled()) {
-      for (RemotePlayerInfo info : server.getMultiProxyHandler().getAllPlayers()) {
-        if (info.getName().regionMatches(true, 0, argument, 0, argument.length())) {
-          builder.suggest(info.getName());
+    if (includeRemote && server.isRedis()) {
+      for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
+        if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
+          builder.suggest(playerEntry.getUsername());
         }
       }
 

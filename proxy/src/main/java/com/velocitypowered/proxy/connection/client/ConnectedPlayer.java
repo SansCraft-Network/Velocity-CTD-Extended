@@ -384,12 +384,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       bar.viewerDisconnected(this);
     }
 
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-      this.server.getMultiProxyHandler().onPlayerLeave(this);
+    if (this.server.isRedis()) {
+      this.server.getRedis().getPlayerService().onPlayerDisconnect(this);
     }
 
-    if (this.server.getQueueManager().isQueueEnabled()) {
-      this.server.getQueueManager().onPlayerLeave(this);
+    if (this.server.isQueue()) {
+      this.server.getQueueManager().onPlayerDisconnect(this);
     }
   }
 
@@ -1391,10 +1391,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    * @return the next server to try
    */
   public Optional<RegisteredServer> getNextServerToTry() {
-    if (this.server.getMultiProxyHandler().getTransferringServers().containsKey(getUniqueId())) {
-      return this.server.getServer(this.server.getMultiProxyHandler().getTransferringServers().get(getUniqueId()));
-    }
-
     return this.getNextServerToTry(null);
   }
 
@@ -2261,7 +2257,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           }
         } else if (status != null && status.isSuccessful() && status.isSafe()) {
           if (server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
-            server.getQueueManager().removeFromAll(get());
+            server.getQueueManager().removePlayerEntirely(get());
           }
         }
 
@@ -2272,7 +2268,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         if (server.getQueueManager().isQueueEnabled()) {
           for (String r : server.getConfiguration().getQueue().getBannedReason()) {
             if (reason.contains(Component.text(r))) {
-              server.getQueueManager().removeFromAll(get());
+              server.getQueueManager().removePlayerEntirely(get());
             }
           }
         }
@@ -2310,7 +2306,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             if (server.getQueueManager().isQueueEnabled()) {
               for (String r : server.getConfiguration().getQueue().getBannedReason()) {
                 if (containsString(textComponent, r)) {
-                  server.getQueueManager().removeFromAll(get());
+                  server.getQueueManager().removePlayerEntirely(get());
                 }
               }
             }
@@ -2318,7 +2314,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           default -> {
             // In this case, the default handler removes the user on server switch.
             if (server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
-              server.getQueueManager().removeFromAll(get());
+              server.getQueueManager().removePlayerEntirely(get());
             }
           }
         }

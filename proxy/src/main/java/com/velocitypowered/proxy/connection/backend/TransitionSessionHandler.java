@@ -191,12 +191,12 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
             serverConn.ensureConnected().write(player.getClientSettingsPacket());
           }
 
-          if (server.getMultiProxyHandler().isRedisEnabled()) {
-            server.getMultiProxyHandler().handleServerSwitch(player,
+          if (server.isRedis()) {
+            server.getRedis().getPlayerService().onPlayerSwitchServer(player,
                 serverConn.getServerInfo().getName());
           }
 
-          if (this.server.getQueueManager().isQueueEnabled()) {
+          if (this.server.getQueueManager().isQueueEnabled()) {//todo
             ServerQueueStatus status = this.server.getQueueManager().getQueue(serverConn.getServer()
                 .getServerInfo().getName());
             status.dequeue(player.getUniqueId(), false);

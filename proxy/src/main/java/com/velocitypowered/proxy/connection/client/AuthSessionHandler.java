@@ -350,11 +350,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           return;
         }
 
-        if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-          boolean success = this.server.getMultiProxyHandler().onPlayerJoin(player);
-          if (!success) {
-            return;
-          }
+        if (this.server.isRedis() && !this.server.getRedis().getPlayerService().onPlayerConnect(player)) {
+          return;
         }
 
         ServerLoginSuccessPacket success = new ServerLoginSuccessPacket();
@@ -395,7 +392,6 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
         return;
       }
       player.createConnectionRequest(toTry.get()).fireAndForget();
-      this.server.getRedisManager().send(new RedisPlayerSetTransferringRequest(player.getUniqueId(), false, null));
     }, mcConnection.eventLoop());
   }
 

@@ -33,14 +33,14 @@ import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.config.ProxyAddress;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.redis.multiproxy.RedisPlayerSetTransferringRequest;
-import com.velocitypowered.proxy.redis.multiproxy.RedisTransferCommandRequest;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
+
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.xcd_redis.impl.transaction.VelocityTransferRemote;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -107,10 +107,10 @@ public class TransferCommand {
             }
           }
 
-          if (server.getMultiProxyHandler().isRedisEnabled()) {
-            for (RemotePlayerInfo info : server.getMultiProxyHandler().getAllPlayers()) {
-              if (info.getName().regionMatches(true, 0, argument, 0, argument.length())) {
-                builder.suggest(info.getName());
+          if (server.isRedis()) {
+            for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
+              if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
+                builder.suggest(playerEntry.getUsername());
               }
             }
 
@@ -155,8 +155,8 @@ public class TransferCommand {
         .findFirst()
         .orElse(null);
 
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-      if (this.server.getMultiProxyHandler().isPlayerOnline(player) && !player.equalsIgnoreCase("all")
+    if (this.server.isRedis()) {
+      if (!this.server.getRedis().getPlayerService().isPlayerOnline(player) && !player.equalsIgnoreCase("all")
           && !player.equalsIgnoreCase("current") && !player.startsWith("+")) {
         context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
             .arguments(Argument.string("player", player)));
@@ -181,18 +181,18 @@ public class TransferCommand {
       context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.all")
           .arguments(Argument.string("proxy", normalizedProxyId)));
 
-      if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-        for (Player p : this.server.getAllPlayers()) {
-          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
-
-          if (p.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            String connectedServer = connectedPlayer.getConnectedServer() != null
-                ? connectedPlayer.getConnectedServer().getServerInfo().getName() : null;
-            this.server.getRedisManager().send(new RedisPlayerSetTransferringRequest(connectedPlayer.getUniqueId(), true,
-                connectedServer));
-          }
-        }
-      }
+//      if (this.server.isRedis()) {
+//        for (Player p : this.server.getAllPlayers()) {
+//          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
+//
+//          if (p.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
+//            String connectedServer = connectedPlayer.getConnectedServer() != null
+//                ? connectedPlayer.getConnectedServer().getServerInfo().getName() : null;
+//            new VelocityTransferRemote(connectedPlayer.getUniqueId(), true, connectedServer)
+//                    .publish();
+//          }
+//        }
+//      }//todo Check if this is needed?
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
         for (Player p : this.server.getAllPlayers()) {
@@ -215,18 +215,18 @@ public class TransferCommand {
               Argument.string("server", foundServer.getServerInfo().getName()),
               Argument.string("proxy",  normalizedProxyId)));
 
-      if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-        for (Player p : foundServer.getPlayersConnected()) {
-          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
-
-          if (p.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            String connectedServer = connectedPlayer.getConnectedServer() != null
-                ? connectedPlayer.getConnectedServer().getServerInfo().getName() : null;
-            this.server.getRedisManager().send(new RedisPlayerSetTransferringRequest(connectedPlayer.getUniqueId(), true,
-                connectedServer));
-          }
-        }
-      }
+//      if (this.server.isRedis()) {
+//        for (Player p : foundServer.getPlayersConnected()) {
+//          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
+//
+//          if (p.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
+//            String connectedServer = connectedPlayer.getConnectedServer() != null
+//                ? connectedPlayer.getConnectedServer().getServerInfo().getName() : null;
+//            new VelocityTransferRemote(connectedPlayer.getUniqueId(), true, connectedServer)
+//                    .publish();
+//          }
+//        }
+//      }//todo Check if this is needed?
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
         for (Player p : foundServer.getPlayersConnected()) {
@@ -255,18 +255,18 @@ public class TransferCommand {
           .arguments(Argument.string("server", foundServer.getServerInfo().getName()),
               Argument.string("proxy",  normalizedProxyId)));
 
-      if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-        for (Player p : foundServer.getPlayersConnected()) {
-          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
-
-          if (p.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            String connectedServer = connectedPlayer.getConnectedServer() != null
-                ? connectedPlayer.getConnectedServer().getServerInfo().getName() : null;
-            this.server.getRedisManager().send(new RedisPlayerSetTransferringRequest(connectedPlayer.getUniqueId(), true,
-                connectedServer));
-          }
-        }
-      }
+//      if (this.server.isRedis()) {
+//        for (Player p : foundServer.getPlayersConnected()) {
+//          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
+//
+//          if (p.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
+//            String connectedServer = connectedPlayer.getConnectedServer() != null
+//                ? connectedPlayer.getConnectedServer().getServerInfo().getName() : null;
+//            new VelocityTransferRemote(connectedPlayer.getUniqueId(), true, connectedServer)
+//                    .publish();
+//          }
+//        }
+//      }//todo Check if this is needed?
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
         for (Player p : foundServer.getPlayersConnected()) {
@@ -277,27 +277,21 @@ public class TransferCommand {
         }
       }).delay(1, TimeUnit.SECONDS).schedule();
     } else {
-      if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-        UUID sender = null;
-        if (context.getSource() instanceof Player p) {
-          sender = p.getUniqueId();
-        }
+      if (this.server.isRedis()) {
+        final PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(player);
 
-        RemotePlayerInfo playerInfo = this.server.getMultiProxyHandler().getPlayerInfo(player);
-
-        if (playerInfo == null || playerInfo.getName() == null || playerInfo.getProxyId() == null) {
+        if (playerEntry == null || playerEntry.getUsername() == null || playerEntry.getProxyId() == null) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
               .arguments(Argument.string("player", player)));
           return -1;
         }
 
         context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
-            .arguments(Argument.string("player", playerInfo.getName()),
+            .arguments(Argument.string("player", playerEntry.getUsername()),
                 Argument.string("proxy",  normalizedProxyId)));
 
-        this.server.getRedisManager().send(new RedisTransferCommandRequest(
-            sender, playerInfo.getName(), proxyId, address.ip(), address.port()
-        ));
+        new VelocityTransferRemote(context.getSource(), playerEntry.getUniqueId(), proxyId, address.ip(), address.port())
+                .publish();
       } else {
         Optional<Player> maybePlayer = this.server.getPlayer(player);
         if (maybePlayer.isEmpty()) {

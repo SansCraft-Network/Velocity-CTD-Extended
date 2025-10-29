@@ -20,7 +20,7 @@ package com.velocitypowered.proxy.queue.cache;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.queue.ServerQueueEntry;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
-import com.velocitypowered.proxy.queue.ServerStatus;
+import com.velocitypowered.proxy.xcd_queue.model.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;

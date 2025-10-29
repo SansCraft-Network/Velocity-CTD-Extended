@@ -16,12 +16,17 @@ import java.util.concurrent.TimeUnit;
  */
 public sealed interface RedisProvider permits AbstractRedisProvider {
 
-  String CHANNEL = "velocityredis";
+  String CHANNEL = "velocityredis.xcd";
 
   /**
    * Restart the redis provider
    */
   void restart();
+
+  /**
+   * Disconnect the redis provider
+   */
+  void disconnect();
 
   /**
    * Publish a {@link RedisPacket} to the channel on the redis

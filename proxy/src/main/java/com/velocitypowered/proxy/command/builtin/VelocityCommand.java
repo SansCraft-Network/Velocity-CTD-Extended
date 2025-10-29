@@ -43,9 +43,24 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.config.ConfigDetector;
 import com.velocitypowered.proxy.config.ConfigDetector.ConfigAnalysis;
-import com.velocitypowered.proxy.redis.multiproxy.RedisSudo;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.util.InformationUtils;
+import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.xcd_redis.impl.packet.VelocitySudo;
+import com.velocitypowered.proxy.xcd_redis.impl.transaction.VelocityReload;
+import com.velocitypowered.proxy.xcd_redis.impl.transaction.VelocityUptime;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.TranslatableComponent;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.translation.Argument;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -71,17 +86,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.TranslatableComponent;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.text.minimessage.translation.Argument;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Implements the {@code /velocity} command and friends.
@@ -143,10 +147,10 @@ public final class VelocityCommand {
 
           return Command.SINGLE_SUCCESS;
         })
-        .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
+        .then(BrigadierCommand.requiredArgumentBuilder("target", StringArgumentType.word())
         .suggests((ctx, builder) -> {
-          final String argument = ctx.getArguments().containsKey("player")
-              ? ctx.getArgument("player", String.class)
+          final String argument = ctx.getArguments().containsKey("target")
+              ? ctx.getArgument("target", String.class)
               : "";
 
           if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
@@ -163,18 +167,18 @@ public final class VelocityCommand {
             }
           }
 
-          if ((argument.isEmpty() || argument.startsWith("-")) && server.getMultiProxyHandler().isRedisEnabled()) {
-            for (String id : server.getMultiProxyHandler().getAllProxyIds()) {
+          if ((argument.isEmpty() || argument.startsWith("-")) && server.isRedis()) {
+            for (String id : server.getRedis().getProxyService().getAllProxyIds()) {
               if (id.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
                 builder.suggest("-" + id);
               }
             }
           }
 
-          if (server.getMultiProxyHandler().isRedisEnabled()) {
-            for (RemotePlayerInfo i : server.getMultiProxyHandler().getAllPlayers()) {
-              if (i.getName().regionMatches(true, 0, argument, 0, argument.length())) {
-                builder.suggest(i.getName());
+          if (server.isRedis()) {
+            for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
+              if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
+                builder.suggest(playerEntry.getUsername());
               }
             }
 
@@ -206,7 +210,7 @@ public final class VelocityCommand {
         .requires(source -> source.getPermissionValue("velocity.command.uptime") == Tristate.TRUE)
         .executes(new Uptime(server));
 
-    if (server.getConfiguration().getRedis().isEnabled()) {
+    if (server.isRedis()) {
       reload = reload.then(
           BrigadierCommand.requiredArgumentBuilder("proxy", StringArgumentType.string())
               .suggests((ctx, builder) -> VelocityCommands.suggestProxy(server, ctx, builder))
@@ -291,22 +295,23 @@ public final class VelocityCommand {
       final String proxyId = StringArgumentType.getString(context, "proxy");
 
       String realId = null;
-      for (String s : server.getMultiProxyHandler().getAllProxyIds()) {
+      for (String s : server.getRedis().getProxyService().getAllProxyIds()) {
         if (s.equalsIgnoreCase(proxyId)) {
           realId = s;
         }
       }
 
-      if (!server.getMultiProxyHandler().getAllProxyIdsLowerCase().contains(proxyId.toLowerCase())) {
+      if (realId == null) {
         source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist")
-            .arguments(Argument.string("proxy", realId)));
+            .arguments(Argument.string("proxy", proxyId)));
         return -1;
       }
 
       source.sendMessage(Component.translatable("velocity.command.uptime-remote")
           .arguments(Argument.string("proxy", realId)));
 
-      server.getMultiProxyHandler().requestUptime(realId, source);
+      new VelocityUptime(source, realId)
+              .publish();
       return Command.SINGLE_SUCCESS;
     }
   }
@@ -315,16 +320,17 @@ public final class VelocityCommand {
 
     @Override
     public int run(final CommandContext<CommandSource> context) {
+      final VelocityRedis redis = this.server.getRedis();
       final CommandSource source = context.getSource();
-      final String playerName = context.getArgument("player", String.class);
+      final String sudoTarget = context.getArgument("target", String.class);
       final String messageOrCommand = context.getArgument("message/command", String.class);
 
-      if (playerName.equalsIgnoreCase("all")) {
+      if (sudoTarget.equalsIgnoreCase("all")) {
         boolean doneOne = false;
-        if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-          for (RemotePlayerInfo info : this.server.getMultiProxyHandler().getAllPlayers()) {
-            this.server.getRedisManager().send(new RedisSudo(info.getProxyId(), info.getUuid(),
-                messageOrCommand));
+        if (this.server.isRedis()) {
+          for (PlayerEntry playerEntry : redis.getPlayerService().getAll()) {
+            new VelocitySudo(playerEntry.getUniqueId(), messageOrCommand)
+                    .publish();
             doneOne = true;
           }
 
@@ -353,20 +359,21 @@ public final class VelocityCommand {
                     Argument.string("message", messageOrCommand)));
           }
         }
-      } else if (playerName.length() > 1 && playerName.startsWith("-")
-          && server.getMultiProxyHandler().getAllProxyIdsLowerCase().contains(playerName.substring(1).toLowerCase())) {
+      } else if (sudoTarget.length() > 1 && sudoTarget.startsWith("-")
+          && redis.getProxyService().getAllProxyIdsLowerCase().contains(sudoTarget.substring(1).toLowerCase())) {
         boolean doneOne = false;
-        for (RemotePlayerInfo info : this.server.getMultiProxyHandler().getAllPlayers()) {
-          if (info.getProxyId().equalsIgnoreCase(playerName.substring(1))) {
-            this.server.getRedisManager().send(new RedisSudo(info.getProxyId(), info.getUuid(), messageOrCommand));
+        for (PlayerEntry playerEntry : redis.getPlayerService().getAll()) {
+          if (playerEntry.getProxyId().equalsIgnoreCase(sudoTarget.substring(1))) {
+            new VelocitySudo(playerEntry.getUniqueId(), messageOrCommand)
+                    .publish();
             doneOne = true;
           }
         }
 
         String realId = null;
-        for (String s : this.server.getMultiProxyHandler().getAllProxyIds()) {
-          if (s.equalsIgnoreCase(playerName.substring(1))) {
-            realId = s;
+        for (String proxyId : redis.getProxyService().getAllProxyIds()) {
+          if (proxyId.equalsIgnoreCase(sudoTarget.substring(1))) {
+            realId = proxyId;
           }
         }
 
@@ -378,24 +385,25 @@ public final class VelocityCommand {
                   Argument.string("message", messageOrCommand)));
         }
         return Command.SINGLE_SUCCESS;
-      } else if (playerName.startsWith("+")) {
-        if (playerName.length() == 1) {
+      } else if (sudoTarget.startsWith("+")) {
+        if (sudoTarget.length() == 1) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-server")
-              .arguments(Argument.string("server", playerName)));
+              .arguments(Argument.string("server", sudoTarget)));
           return Command.SINGLE_SUCCESS;
         }
-        RegisteredServer registeredServer = this.server.getServer(playerName.substring(1)).orElse(null);
+        RegisteredServer registeredServer = this.server.getServer(sudoTarget.substring(1)).orElse(null);
         if (registeredServer == null) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-server")
-              .arguments(Argument.string("server", playerName.substring(1))));
+              .arguments(Argument.string("server", sudoTarget.substring(1))));
           return Command.SINGLE_SUCCESS;
         }
 
         boolean doneOne = false;
-        if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-          for (RemotePlayerInfo info : this.server.getMultiProxyHandler().getAllPlayers()) {
-            if (info.getServerName().equalsIgnoreCase(playerName.substring(1))) {
-              this.server.getRedisManager().send(new RedisSudo(info.getProxyId(), info.getUuid(), messageOrCommand));
+        if (this.server.isRedis()) {
+          for (PlayerEntry playerEntry : redis.getPlayerService().getAll()) {
+            if (playerEntry.getServerName().equalsIgnoreCase(sudoTarget.substring(1))) {
+              new VelocitySudo(playerEntry.getUniqueId(), messageOrCommand)
+                      .publish();
               doneOne = true;
             }
           }
@@ -426,30 +434,31 @@ public final class VelocityCommand {
           }
         }
       } else {
-        if (playerName.startsWith("-") && playerName.length() > 1) {
+        if (sudoTarget.startsWith("-") && sudoTarget.length() > 1) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-proxy")
-              .arguments(Argument.string("proxy", playerName.substring(1))));
+              .arguments(Argument.string("proxy", sudoTarget.substring(1))));
           return Command.SINGLE_SUCCESS;
         }
-        if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-          RemotePlayerInfo info = this.server.getMultiProxyHandler().getPlayerInfo(playerName);
-          if (info == null) {
+        if (this.server.isRedis()) {
+          PlayerEntry playerEntry = redis.getPlayerService().getPlayerEntry(sudoTarget);
+          if (playerEntry == null) {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.invalid-player")
-                .arguments(Argument.string("player", playerName)));
+                .arguments(Argument.string("player", sudoTarget)));
             return Command.SINGLE_SUCCESS;
           }
 
-          this.server.getRedisManager().send(new RedisSudo(info.getProxyId(), info.getUuid(), messageOrCommand));
+          new VelocitySudo(playerEntry.getUniqueId(), messageOrCommand)
+                  .publish();
           context.getSource().sendMessage(Component.translatable("velocity.command.sudo.success")
-                  .arguments(Argument.string("target", info.getUsername()),
+                  .arguments(Argument.string("target", playerEntry.getUsername()),
                           Argument.string("message", messageOrCommand)));
           return Command.SINGLE_SUCCESS;
         } else {
-          Player player = this.server.getPlayer(playerName).orElse(null);
+          Player player = this.server.getPlayer(sudoTarget).orElse(null);
 
           if (player == null) {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.invalid-player")
-                .arguments(Argument.string("player", playerName)));
+                .arguments(Argument.string("player", sudoTarget)));
             return Command.SINGLE_SUCCESS;
           }
 
@@ -503,13 +512,13 @@ public final class VelocityCommand {
       final String proxyId = StringArgumentType.getString(context, "proxy");
 
       String realId = null;
-      for (String s : server.getMultiProxyHandler().getAllProxyIds()) {
+      for (String s : server.getRedis().getProxyService().getAllProxyIds()) {
         if (s.equalsIgnoreCase(proxyId)) {
           realId = s;
         }
       }
 
-      if (realId == null || !server.getMultiProxyHandler().getAllProxyIdsLowerCase().contains(proxyId.toLowerCase())) {
+      if (realId == null) {
         source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist")
             .arguments(Argument.string("proxy", proxyId)));
         return -1;
@@ -518,7 +527,8 @@ public final class VelocityCommand {
       source.sendMessage(Component.translatable("velocity.command.reload-remote")
           .arguments(Argument.string("proxy", realId)));
 
-      server.getMultiProxyHandler().requestReload(realId, source);
+      new VelocityReload(source, realId)
+              .publish();
       return Command.SINGLE_SUCCESS;
     }
   }
@@ -782,21 +792,18 @@ public final class VelocityCommand {
      * Logger instance for logging errors during heap dump generation.
      */
     private static final Logger logger = LogManager.getLogger(Heap.class);
-
-    /**
-     * Method handle to the platform-specific heap dump method.
-     */
-    private MethodHandle heapGenerator;
-
-    /**
-     * Consumer that triggers heap dump generation and sends output to the command source.
-     */
-    private Consumer<CommandSource> heapConsumer;
-
     /**
      * Directory path where heap dumps will be saved.
      */
     private final Path dir = Path.of("./dumps");
+    /**
+     * Method handle to the platform-specific heap dump method.
+     */
+    private MethodHandle heapGenerator;
+    /**
+     * Consumer that triggers heap dump generation and sends output to the command source.
+     */
+    private Consumer<CommandSource> heapConsumer;
 
     @Override
     public int run(final CommandContext<CommandSource> context) throws CommandSyntaxException {

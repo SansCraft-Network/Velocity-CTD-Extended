@@ -60,7 +60,8 @@ public class RedisRetriever implements QueueCacheRetriever {
    */
   @Override
   public ServerQueueStatus get(final String serverName) {
-    VelocityRegisteredServer server = (VelocityRegisteredServer) proxy.getServer(serverName).orElse(null);
+    VelocityRegisteredServer server = (VelocityRegisteredServer) proxy.getServer(serverName)
+            .orElse(null);
     if (server == null) {
       return null;
     }

@@ -78,4 +78,9 @@ public sealed interface RedisPacket permits AbstractRedisPacket {
    */
   void setTransactionType(@NotNull String transactionType);
 
+  /**
+   * Publish the packet to redis
+   */
+  void publish();
+
 }

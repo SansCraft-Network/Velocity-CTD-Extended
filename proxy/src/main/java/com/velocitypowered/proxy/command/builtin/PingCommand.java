@@ -27,7 +27,6 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.redis.multiproxy.EncodedCommandSource;
 import com.velocitypowered.proxy.xcd_redis.impl.transaction.VelocityGetPlayerPing;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -71,10 +70,7 @@ public class PingCommand {
                 .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
                 .executes(context -> {
                   String player = context.getArgument("player", String.class);
-                  new VelocityGetPlayerPing(context.getSource(), player)
-                          .publish(); // todo test dit is
-                  return Command.SINGLE_SUCCESS;
-//                  return this.getPing(context, player);
+                  return this.getPing(context, player);
                 })
         )
         .executes(context -> {
@@ -114,15 +110,15 @@ public class PingCommand {
               .arguments(Argument.numeric("ping", ping))
       );
     } else {
-      if (server.getMultiProxyHandler().isRedisEnabled()) {
-        if (this.server.getMultiProxyHandler().isPlayerOnline(username)) {
+      if (server.isRedis()) {
+        if (!this.server.getRedis().getPlayerService().isPlayerOnline(username)) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
               .arguments(Argument.string("player", username)));
           return -1;
         }
-        new VelocityGetPlayerPing(context.getSource(), username)
-                .publish(); // todo test dit is
 
+        new VelocityGetPlayerPing(context.getSource(), username)
+                .publish();
       } else {
         if (player == null) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")

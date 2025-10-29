@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocitypowered.proxy.queue;
+package com.velocitypowered.proxy.xcd_queue.model;
 
 /**
  * Enumerates the status the backend server may be in for queuing.

@@ -17,8 +17,10 @@
 
 package com.velocitypowered.proxy.xcd_queue.model;
 
+import com.velocitypowered.proxy.xcd_queue.AbstractQueue;
+
 /**
- * Represents the state of a {@link Queue}
+ * Represents the state of a {@link AbstractQueue}
  *
  * @author Elmar Blume - 03/04/2025
  */

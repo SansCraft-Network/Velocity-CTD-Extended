@@ -98,8 +98,6 @@ public final class LettuceProvider extends AbstractRedisProvider {
           // Check if the packet is part of a transaction
           final Transaction<?, ?> transaction = PENDING_TRANSACTIONS.remove(transactionId);
           if (transaction == null) {
-            LOGGER.warn("Received a packet with transactionId '{}' but no transaction was found, ignoring",
-                    transactionId);
             return;
           }
 
@@ -113,6 +111,20 @@ public final class LettuceProvider extends AbstractRedisProvider {
     this.publisher.subscribe(CHANNEL);
 
     LOGGER.info("Connected to Lettuce Redis Server on channel '{}'", CHANNEL);
+  }
+
+  @Override
+  public void disconnect() {
+    if (!this.isConnected()) {
+      LOGGER.warn("Attempted to disconnect from Redis, but no connection was established");
+      return;
+    }
+
+    this.publisher.getStatefulConnection().close();
+    this.publisher = null;
+    this.client.shutdown();
+
+    LOGGER.info("Disconnected from Lettuce Redis Server on channel '{}'", CHANNEL);
   }
 
   @Override
@@ -187,7 +199,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
 
     @Override
     public void upsert(@NotNull V value) {
-      this.connection.hset(this.name, value.getKey(), serialize(value));
+      this.connection.hset(this.name, parseKey(value.getUniqueId()), serialize(value));
       value.setDepot(this);
     }
 

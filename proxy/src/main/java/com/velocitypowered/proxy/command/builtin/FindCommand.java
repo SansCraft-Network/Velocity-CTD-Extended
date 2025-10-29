@@ -30,8 +30,10 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import java.util.Optional;
+
+import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -82,8 +84,8 @@ public class FindCommand {
   }
 
   private int find(final CommandContext<CommandSource> context) {
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
-      return findMultiProxy(context);
+    if (server.isRedis()) {
+      return findRedis(context);
     }
 
     final String player = context.getArgument("player", String.class);
@@ -125,9 +127,10 @@ public class FindCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private int findMultiProxy(final CommandContext<CommandSource> context) {
+  private int findRedis(final CommandContext<CommandSource> context) {
+    final VelocityRedis redis = server.getRedis();
     final String player = context.getArgument("player", String.class);
-    if (server.getMultiProxyHandler().isPlayerOnline(player)) {
+    if (!redis.getPlayerService().isPlayerOnline(player)) {
       context.getSource().sendMessage(
           CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
@@ -135,9 +138,9 @@ public class FindCommand {
       return 0;
     }
 
-    RemotePlayerInfo info = server.getMultiProxyHandler().getPlayerInfo(player);
+    final PlayerEntry playerEntry = redis.getPlayerService().getPlayerEntry(player);
 
-    if (info.getServerName() == null) {
+    if (playerEntry == null || playerEntry.getServerName() == null) {
       context.getSource().sendMessage(
           Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
       );
@@ -145,7 +148,7 @@ public class FindCommand {
       return 0;
     }
 
-    RegisteredServer server = this.server.getServer(info.getServerName()).orElse(null);
+    RegisteredServer server = this.server.getServer(playerEntry.getServerName()).orElse(null);
     if (server == null) {
       context.getSource().sendMessage(
           Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
@@ -157,8 +160,8 @@ public class FindCommand {
     context.getSource().sendMessage(
         Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
             .arguments(
-                Argument.string("player", info.getName()),
-                Argument.string("server", server.getServerInfo().getName() + " (" + info.getProxyId() + ")")));
+                Argument.string("player", playerEntry.getUsername()),
+                Argument.string("server", server.getServerInfo().getName() + " (" + playerEntry.getProxyId() + ")")));
 
     return Command.SINGLE_SUCCESS;
   }

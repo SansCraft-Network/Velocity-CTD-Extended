@@ -88,9 +88,9 @@ public class ServerListPingHandler {
     List<ServerPing.SamplePlayer> samplePlayers;
     if (configuration.getSamplePlayersInPing()) {
       List<ServerPing.SamplePlayer> unshuffledPlayers;
-      if (server.getMultiProxyHandler().isRedisEnabled()) {
-        unshuffledPlayers = server.getMultiProxyHandler().getAllPlayers().stream()
-            .map(player -> new ServerPing.SamplePlayer(player.getUsername(), player.getUuid()))
+      if (server.isRedis()) {
+        unshuffledPlayers = server.getRedis().getPlayerService().getAll().stream()
+            .map(entry -> new ServerPing.SamplePlayer(entry.getUsername(), entry.getUniqueId()))
             .collect(Collectors.toList());
       } else {
         unshuffledPlayers = server.getAllPlayers().stream()
@@ -113,20 +113,13 @@ public class ServerListPingHandler {
 
     String serverPingVersion = configuration.getFallbackVersionPing();
 
-    final int online;
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
-      online = server.getMultiProxyHandler().getTotalPlayerCount();
-    } else {
-      online = server.getPlayerCount();
-    }
-
     for (Component s : server.getConfiguration().getMotdHover()) {
       samplePlayers.add(new ServerPing.SamplePlayer(s, UUID.randomUUID()));
     }
 
     return new ServerPing(
         new ServerPing.Version(version.getProtocol(), formatVersionString(serverPingVersion, version)),
-        new ServerPing.Players(online, configuration.getShowMaxPlayers(), samplePlayers),
+        new ServerPing.Players(server.getPlayerCount(), configuration.getShowMaxPlayers(), samplePlayers),
         configuration.getMotd(),
         configuration.getFavicon().orElse(null),
         configuration.isAnnounceForge() ? ModInfo.DEFAULT : null
@@ -144,9 +137,7 @@ public class ServerListPingHandler {
         .replaceAll("\\{proxy-brand-custom}", this.server.getConfiguration().getProxyBrandCustom())
         .replaceAll("\\{proxy-version}", this.server.getVersion().getVersion())
         .replaceAll("\\{proxy-vendor}", this.server.getVersion().getVendor())
-        .replaceAll("\\{player-count}", this.server.getMultiProxyHandler().isRedisEnabled()
-            ? String.valueOf(this.server.getMultiProxyHandler().getTotalPlayerCount())
-            : String.valueOf(this.server.getPlayerCount()))
+        .replaceAll("\\{player-count}", String.valueOf(this.server.getPlayerCount()))
         .replaceAll("\\{max-players}", String.valueOf(this.server.getConfiguration().getShowMaxPlayers()));
   }
 

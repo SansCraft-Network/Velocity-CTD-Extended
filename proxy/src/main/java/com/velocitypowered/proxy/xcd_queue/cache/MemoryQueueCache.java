@@ -1,9 +1,12 @@
 package com.velocitypowered.proxy.xcd_queue.cache;
 
+import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import com.velocitypowered.proxy.xcd_queue.AbstractQueue;
+import com.velocitypowered.proxy.xcd_queue.MemoryQueue;
+import com.velocitypowered.proxy.xcd_queue.Queue;
 import com.velocitypowered.proxy.xcd_queue.exception.QueueCacheException;
-import com.velocitypowered.proxy.xcd_queue.model.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -13,34 +16,45 @@ import java.util.*;
  */
 public final class MemoryQueueCache implements QueueCache {
 
-  private final VelocityServer proxy;
+  private final VelocityServer server;
   private final Map<String, Queue> queues;
 
   /**
    * Constructs a new {@link MemoryQueueCache}
    *
-   * @param proxy the proxy instance
+   * @param server the proxy instance
    */
-  public MemoryQueueCache(VelocityServer proxy) {
-    this.proxy = proxy;
+  public MemoryQueueCache(VelocityServer server) {
+    this.server = server;
     this.queues = new HashMap<>();
   }
 
   @Override
   public Queue getQueue(@NotNull String serverName) {
-//    final VelocityRegisteredServer server = (VelocityRegisteredServer) this.proxy.getServer(serverName)
-//            .orElseThrow(() -> new QueueCacheException(serverName));
-    return this.queues.get(serverName);
+    final VelocityRegisteredServer backendInstance = (VelocityRegisteredServer) this.server.getServer(serverName)
+            .orElseThrow(() -> new QueueCacheException(serverName));
+    return this.queues.computeIfAbsent(serverName, $ -> new MemoryQueue(server, backendInstance));
   }
 
   @Override
-  public Queue getQueue(@NotNull UUID playerUniqueId) {
-    return null;//todo
+  public Queue getQueue(@NotNull Player player) {
+    for (Queue queue : getQueues()) {
+      if (queue.contains(player)) {
+        return queue;
+      }
+    }
+
+    return null;
   }
 
   @Override
   public Collection<Queue> getQueues() {
     return List.copyOf(this.queues.values());
+  }
+
+  @Override
+  public void updateQueue(@NotNull Queue queue) {
+    this.queues.put(queue.getName(), queue);
   }
 }
 

@@ -452,7 +452,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     for (String s : servers.getAttemptConnectionOrder()) {
-      if (!servers.getServers().containsKey(s)) {
+      if (!servers.getBackendServers().containsKey(s)) {
         logger.error("Fallback server {} is not registered in your configuration!", s);
         valid = false;
       }
@@ -468,7 +468,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
 
         for (String server : entry.getValue()) {
-          if (!servers.getServers().containsKey(server)) {
+          if (!servers.getBackendServers().containsKey(server)) {
             logger.error("Server '{}' for forced host '{}' does not exist", server, entry.getKey());
             valid = false;
           }
@@ -483,7 +483,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         continue;
       }
 
-      if (!servers.getServers().containsKey(entry.getKey())) {
+      if (!servers.getBackendServers().containsKey(entry.getKey())) {
         logger.error("Server '{}' does not exist in slash server aliases", entry.getKey());
         valid = false;
       }
@@ -642,7 +642,9 @@ public final class VelocityConfiguration implements ProxyConfig {
 
   @Override
   public Map<String, String> getServers() {
-    return servers.getServers();
+    Map<String, String> serverAddresses = new HashMap<>();
+    getBackendServers().forEach((k, v) -> serverAddresses.put(k, v.address()));
+    return serverAddresses;
   }
 
   @Override
@@ -1630,7 +1632,7 @@ public final class VelocityConfiguration implements ProxyConfig {
 
           if (entry.getValue() instanceof CommentedConfig c) {
             String address = null;
-            ServerInfoForwardingMode forwardingMode = ServerInfoForwardingMode.FOLLOWUP;
+            ServerInfoForwardingMode forwardingMode = null;
             for (UnmodifiableConfig.Entry entry2 : c.entrySet()) {
               if (entry2.getKey().equalsIgnoreCase("address")) {
                 address = entry2.getValue();
@@ -1650,7 +1652,7 @@ public final class VelocityConfiguration implements ProxyConfig {
             }
 
             servers.put(cleanServerName(entry.getKey()), new BackendServerConfig(address, forwardingMode));
-            // Support for old server config system (forwarding mode will be followup)
+            // Support for old server config system (forwarding mode will be null)
           } else if (entry.getValue() instanceof String v) {
             servers.put(cleanServerName(entry.getKey()), new BackendServerConfig(v));
           } else {
@@ -1680,12 +1682,6 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     public List<String> getServerAliases() {
       return serverAliases != null ? serverAliases : List.of("joinqueue", "queue", "server");
-    }
-
-    private Map<String, String> getServers() {
-      Map<String, String> serverAddresses = new HashMap<>();
-      servers.forEach((k, v) -> serverAddresses.put(k, v.address()));
-      return serverAddresses;
     }
 
     private Map<String, BackendServerConfig> getBackendServers() {

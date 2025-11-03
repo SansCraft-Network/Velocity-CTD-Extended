@@ -89,7 +89,7 @@ public class SendCommand {
       return null;
     }
 
-    if (server.isRedis()) {
+    if (server.isRedisEnabled()) {
       registerMultiProxy(true);
       return null;
     }
@@ -241,7 +241,7 @@ public class SendCommand {
   }
 
   private int send(final CommandContext<CommandSource> context) {
-    if (server.isRedis()) {
+    if (server.isRedisEnabled()) {
       return sendMultiProxy(context);
     }
 

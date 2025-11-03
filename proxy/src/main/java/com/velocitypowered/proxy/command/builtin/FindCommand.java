@@ -84,7 +84,7 @@ public class FindCommand {
   }
 
   private int find(final CommandContext<CommandSource> context) {
-    if (server.isRedis()) {
+    if (server.isRedisEnabled()) {
       return findRedis(context);
     }
 

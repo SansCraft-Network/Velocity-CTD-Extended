@@ -161,7 +161,7 @@ public class GlistCommand {
     List<Component> players = new ArrayList<>();
     final VelocityRedis redis = this.server.getRedis();
 
-    if (this.server.isRedis() && redis != null) {
+    if (this.server.isRedisEnabled() && redis != null) {
       for (String proxyId : redis.getProxyService().getAllProxyIds()) {
         for (PlayerEntry playerEntry : redis.getPlayerService().getPlayerEntriesOnProxy(proxyId)) {
           if (playerEntry.getServerName() == null || !playerEntry.getServerName().equals(server.getServerInfo().getName())) {

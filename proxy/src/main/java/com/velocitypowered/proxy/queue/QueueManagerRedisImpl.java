@@ -47,38 +47,38 @@ public class QueueManagerRedisImpl extends QueueManager {
   }
 
   private void registerRedisListeners() {
-    RedisManagerImpl redisManager = this.server.getRedisManager();
-
-    redisManager.listen(RedisQueueSendRequest.ID, RedisQueueSendRequest.class, it ->
-            server.getPlayer(it.playerUuid()).ifPresent(player -> {
-              RegisteredServer foundServer = server.getServer(it.serverName()).orElse(null);
-              if (foundServer == null) {
-                throw new IllegalArgumentException("Server not found while attempting to send player in queue. '" + it.serverName() + "'");
-              }
-
-              ServerQueueEntry entry = getQueue(foundServer.getServerInfo().getName()).getEntry(it.playerUuid()).orElse(null);
-              if (entry == null) {
-                return;
-              }
-
-              entry.handleSending();
-            }));
-
-    redisManager.listen(RedisSendActionBarRequest.ID, RedisSendActionBarRequest.class, it -> {
-      Component component = it.component();
-
-      if (component != null) {
-        server.getPlayer(it.playerUuid()).ifPresent(player -> player.sendActionBar(component));
-      }
-    });
-
-    redisManager.listen(RedisSendMessageToUuidRequest.ID, RedisSendMessageToUuidRequest.class, it -> {
-      Component component = it.component();
-
-      if (component != null) {
-        server.getPlayer(it.player()).ifPresent(player -> player.sendMessage(component));
-      }
-    });
+//    RedisManagerImpl redisManager = this.server.getRedisManager();
+//
+//    redisManager.listen(RedisQueueSendRequest.ID, RedisQueueSendRequest.class, it ->
+//            server.getPlayer(it.playerUuid()).ifPresent(player -> {
+//              RegisteredServer foundServer = server.getServer(it.serverName()).orElse(null);
+//              if (foundServer == null) {
+//                throw new IllegalArgumentException("Server not found while attempting to send player in queue. '" + it.serverName() + "'");
+//              }
+//
+//              ServerQueueEntry entry = getQueue(foundServer.getServerInfo().getName()).getEntry(it.playerUuid()).orElse(null);
+//              if (entry == null) {
+//                return;
+//              }
+//
+//              entry.handleSending();
+//            }));
+//
+//    redisManager.listen(RedisSendActionBarRequest.ID, RedisSendActionBarRequest.class, it -> {
+//      Component component = it.component();
+//
+//      if (component != null) {
+//        server.getPlayer(it.playerUuid()).ifPresent(player -> player.sendActionBar(component));
+//      }
+//    });
+//
+//    redisManager.listen(RedisSendMessageToUuidRequest.ID, RedisSendMessageToUuidRequest.class, it -> {
+//      Component component = it.component();
+//
+//      if (component != null) {
+//        server.getPlayer(it.player()).ifPresent(player -> player.sendMessage(component));
+//      }
+//    });
   }
 
   /**
@@ -88,41 +88,41 @@ public class QueueManagerRedisImpl extends QueueManager {
    */
   @Override
   public boolean isMasterProxy() {
-    List<String> masterProxies = this.server.getConfiguration().getQueue().getMasterProxyIds();
-    List<String> activeProxies = new ArrayList<>(this.server.getMultiProxyHandler()
-            .getAllProxyIds().stream().toList());
-    Collections.sort(activeProxies);
-
-    String ownProxy = this.server.getMultiProxyHandler().getOwnProxyId();
-
-    // If no master proxies are configured but there's only one active proxy, use it as master
-    if (masterProxies.isEmpty() || (masterProxies.size() == 1 && masterProxies.getFirst().isEmpty())) {
-      if (activeProxies.size() == 1 && activeProxies.getFirst().equalsIgnoreCase(ownProxy)) {
-        return true;
-      }
-      // If there's only one active proxy, use it as master regardless of configuration
-      if (activeProxies.size() == 1) {
-        return activeProxies.getFirst().equalsIgnoreCase(ownProxy);
-      }
-    }
-
-    activeProxies.retainAll(masterProxies);
-
-    String firstMasterProxy = null;
-
-    for (String activeProxy : activeProxies) {
-      if (masterProxies.contains(activeProxy)) {
-        firstMasterProxy = activeProxy;
-        break;
-      }
-    }
-
-    if (firstMasterProxy != null && firstMasterProxy.equalsIgnoreCase(ownProxy)) {
-      int ownIndex = masterProxies.indexOf(ownProxy);
-      int firstIndex = masterProxies.indexOf(firstMasterProxy);
-
-      return ownIndex != -1 && ownIndex == firstIndex;
-    }
+//    List<String> masterProxies = this.server.getConfiguration().getQueue().getMasterProxyIds();
+//    List<String> activeProxies = new ArrayList<>(this.server.getMultiProxyHandler()
+//            .getAllProxyIds().stream().toList());
+//    Collections.sort(activeProxies);
+//
+//    String ownProxy = this.server.getMultiProxyHandler().getOwnProxyId();
+//
+//    // If no master proxies are configured but there's only one active proxy, use it as master
+//    if (masterProxies.isEmpty() || (masterProxies.size() == 1 && masterProxies.getFirst().isEmpty())) {
+//      if (activeProxies.size() == 1 && activeProxies.getFirst().equalsIgnoreCase(ownProxy)) {
+//        return true;
+//      }
+//      // If there's only one active proxy, use it as master regardless of configuration
+//      if (activeProxies.size() == 1) {
+//        return activeProxies.getFirst().equalsIgnoreCase(ownProxy);
+//      }
+//    }
+//
+//    activeProxies.retainAll(masterProxies);
+//
+//    String firstMasterProxy = null;
+//
+//    for (String activeProxy : activeProxies) {
+//      if (masterProxies.contains(activeProxy)) {
+//        firstMasterProxy = activeProxy;
+//        break;
+//      }
+//    }
+//
+//    if (firstMasterProxy != null && firstMasterProxy.equalsIgnoreCase(ownProxy)) {
+//      int ownIndex = masterProxies.indexOf(ownProxy);
+//      int firstIndex = masterProxies.indexOf(firstMasterProxy);
+//
+//      return ownIndex != -1 && ownIndex == firstIndex;
+//    }
 
     return false;
   }
@@ -132,9 +132,9 @@ public class QueueManagerRedisImpl extends QueueManager {
    */
   @Override
   public void tickMessageForAllPlayers() {
-    for (ServerQueueStatus status : this.cache.getAll()) {
-      status.getActivePlayers().forEach((entry, player) ->
-          this.server.getRedisManager().send(new RedisSendActionBarRequest(player, status.getActionBarComponent(entry))));
-    }
+//    for (ServerQueueStatus status : this.cache.getAll()) {
+//      status.getActivePlayers().forEach((entry, player) ->
+//          this.server.getRedisManager().send(new RedisSendActionBarRequest(player, status.getActionBarComponent(entry))));
+//    }
   }
 }

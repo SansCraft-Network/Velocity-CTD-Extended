@@ -19,6 +19,7 @@ public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCa
 
 	public MemoryQueueManager(VelocityServer server) {
 		super(server);
+
     this.queueCache = new MemoryQueueCache(server);
 	}
 

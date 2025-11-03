@@ -5,7 +5,6 @@ import com.velocitypowered.proxy.xcd_queue.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.UUID;
 
 /**
  * Represents a cache that stores the queue data

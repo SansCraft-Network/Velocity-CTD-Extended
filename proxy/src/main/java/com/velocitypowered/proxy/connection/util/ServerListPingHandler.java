@@ -88,7 +88,7 @@ public class ServerListPingHandler {
     List<ServerPing.SamplePlayer> samplePlayers;
     if (configuration.getSamplePlayersInPing()) {
       List<ServerPing.SamplePlayer> unshuffledPlayers;
-      if (server.isRedis()) {
+      if (server.isRedisEnabled()) {
         unshuffledPlayers = server.getRedis().getPlayerService().getAll().stream()
             .map(entry -> new ServerPing.SamplePlayer(entry.getUsername(), entry.getUniqueId()))
             .collect(Collectors.toList());

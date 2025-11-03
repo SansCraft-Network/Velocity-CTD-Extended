@@ -87,7 +87,7 @@ public class AlertRawCommand {
     final TranslatableComponent alertRawComponent = Component.translatable("velocity.command.alertraw.message", NamedTextColor.WHITE,
             ComponentUtils.colorify(message));
 
-    if (server.isRedis()) {
+    if (server.isRedisEnabled()) {
       new VelocityAlert(alertRawComponent).publish();
     } else {
       server.sendMessage(alertRawComponent);

@@ -33,21 +33,21 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.queue.ServerQueueEntry;
-import com.velocitypowered.proxy.queue.ServerQueueStatus;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import com.velocitypowered.proxy.xcd_queue.AbstractQueue;
+import com.velocitypowered.proxy.xcd_queue.Queue;
+import com.velocitypowered.proxy.xcd_queue.manager.AbstractQueueManager;
+import com.velocitypowered.proxy.xcd_queue.model.QueuePlayer;
+import com.velocitypowered.proxy.xcd_queue.model.QueueState;
+import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+
+import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Implements the {@code /queueadmin} command.
@@ -73,121 +73,121 @@ public record QueueAdminCommand(VelocityServer server) {
     }
 
     final LiteralCommandNode<CommandSource> listQueues = BrigadierCommand.literalArgumentBuilder("listqueues")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.listqueues") == Tristate.TRUE)
-        .executes(this::listQueues)
-        .build();
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.listqueues") == Tristate.TRUE)
+            .executes(this::listQueues)
+            .build();
     final LiteralCommandNode<CommandSource> list = BrigadierCommand.literalArgumentBuilder("list")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.list") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.list"))
-        .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
-            .suggests((ctx, builder) -> {
-              final String argument = ctx.getArguments().containsKey("server")
-                  ? ctx.getArgument("server", String.class)
-                  : "";
-
-              if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
-                builder.suggest("all");
-              }
-
-              if ("current".regionMatches(true, 0, argument, 0, argument.length())) {
-                builder.suggest("current");
-              }
-
-              for (RegisteredServer s : server.getAllServers()) {
-                if (this.server.getConfiguration().getQueue().getNoQueueServers()
-                    .contains(s.getServerInfo().getName())) {
-                  continue;
-                }
-
-                if (s.getServerInfo().getName().regionMatches(true, 0, argument, 0, argument.length())) {
-                  builder.suggest(s.getServerInfo().getName());
-                }
-              }
-
-              return builder.buildFuture();
-            })
-            .executes(this::list))
-        .build();
-    final LiteralCommandNode<CommandSource> pause = BrigadierCommand.literalArgumentBuilder("pause")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.pause") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.pause"))
-        .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
-            .suggests(VelocityCommands.suggestServer(server, "server", false))
-            .executes(this::pause))
-        .build();
-    final LiteralCommandNode<CommandSource> unpause = BrigadierCommand.literalArgumentBuilder("unpause")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.unpause") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.unpause"))
-        .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
-            .suggests(VelocityCommands.suggestServer(server, "server", false))
-            .executes(this::unpause))
-        .build();
-    final LiteralCommandNode<CommandSource> add = BrigadierCommand.literalArgumentBuilder("add")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.add") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.add"))
-        .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-            .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
-            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.add"))
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.list") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.list"))
             .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
-                .suggests(VelocityCommands.suggestServer(server, "server", false))
-                .executes(this::add)))
-        .build();
-    final LiteralCommandNode<CommandSource> addall = BrigadierCommand.literalArgumentBuilder("addall")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.addall") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.addall"))
-        .then(BrigadierCommand.requiredArgumentBuilder("from", StringArgumentType.word())
-            .suggests(VelocityCommands.suggestServer(server, "from", true))
-            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.addall"))
-            .then(BrigadierCommand.requiredArgumentBuilder("to", StringArgumentType.word())
-                .suggests(VelocityCommands.suggestServer(server, "to", false))
-                .executes(this::addAll)))
-        .build();
-    final LiteralCommandNode<CommandSource> remove = BrigadierCommand.literalArgumentBuilder("remove")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.remove") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.remove"))
-        .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-            .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
-            .executes(this::remove)
-            .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
-                .suggests(VelocityCommands.suggestServer(server, "server", false))
-                .executes(this::remove)))
-        .build();
-    final LiteralCommandNode<CommandSource> removeall = BrigadierCommand.literalArgumentBuilder("removeall")
-        .requires(source -> source.getPermissionValue("velocity.queue.admin.removeall") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.removeall"))
-        .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
-            .suggests(VelocityCommands.suggestServer(server, "server", false))
-            .executes(this::removeAll))
-        .build();
-    final List<LiteralCommandNode<CommandSource>> commands = List
-        .of(listQueues, list, pause, unpause, add, addall, remove, removeall);
-    BrigadierCommand command = new BrigadierCommand(
-        commands.stream()
-            .reduce(
-                BrigadierCommand.literalArgumentBuilder("queueadmin")
-                    .executes(ctx -> {
-                      final CommandSource source = ctx.getSource();
-                      final String availableCommands = commands.stream()
-                          .filter(e -> e.getRequirement().test(source))
-                          .map(LiteralCommandNode::getName)
-                          .collect(Collectors.joining("|"));
-                      final String commandText = "/queueadmin <%s>".formatted(availableCommands);
-                      source.sendMessage(Component.text(commandText, NamedTextColor.RED));
-                      return Command.SINGLE_SUCCESS;
+                    .suggests((ctx, builder) -> {
+                      final String argument = ctx.getArguments().containsKey("server")
+                              ? ctx.getArgument("server", String.class)
+                              : "";
+
+                      if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
+                        builder.suggest("all");
+                      }
+
+                      if ("current".regionMatches(true, 0, argument, 0, argument.length())) {
+                        builder.suggest("current");
+                      }
+
+                      for (RegisteredServer s : server.getAllServers()) {
+                        if (this.server.getConfiguration().getQueue().getNoQueueServers()
+                                .contains(s.getServerInfo().getName())) {
+                          continue;
+                        }
+
+                        if (s.getServerInfo().getName().regionMatches(true, 0, argument, 0, argument.length())) {
+                          builder.suggest(s.getServerInfo().getName());
+                        }
+                      }
+
+                      return builder.buildFuture();
                     })
-                    .requires(commands.stream()
-                        .map(CommandNode::getRequirement)
-                        .reduce(Predicate::or)
-                        .orElseThrow()),
-                ArgumentBuilder::then,
-                ArgumentBuilder::then));
+                    .executes(this::list))
+            .build();
+    final LiteralCommandNode<CommandSource> pause = BrigadierCommand.literalArgumentBuilder("pause")
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.pause") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.pause"))
+            .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
+                    .suggests(VelocityCommands.suggestServer(server, "server", false))
+                    .executes(this::pause))
+            .build();
+    final LiteralCommandNode<CommandSource> unpause = BrigadierCommand.literalArgumentBuilder("unpause")
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.unpause") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.unpause"))
+            .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
+                    .suggests(VelocityCommands.suggestServer(server, "server", false))
+                    .executes(this::unpause))
+            .build();
+    final LiteralCommandNode<CommandSource> add = BrigadierCommand.literalArgumentBuilder("add")
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.add") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.add"))
+            .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
+                    .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.add"))
+                    .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
+                            .suggests(VelocityCommands.suggestServer(server, "server", false))
+                            .executes(this::add)))
+            .build();
+    final LiteralCommandNode<CommandSource> addall = BrigadierCommand.literalArgumentBuilder("addall")
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.addall") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.addall"))
+            .then(BrigadierCommand.requiredArgumentBuilder("from", StringArgumentType.word())
+                    .suggests(VelocityCommands.suggestServer(server, "from", true))
+                    .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.addall"))
+                    .then(BrigadierCommand.requiredArgumentBuilder("to", StringArgumentType.word())
+                            .suggests(VelocityCommands.suggestServer(server, "to", false))
+                            .executes(this::addAll)))
+            .build();
+    final LiteralCommandNode<CommandSource> remove = BrigadierCommand.literalArgumentBuilder("remove")
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.remove") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.remove"))
+            .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
+                    .executes(this::remove)
+                    .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
+                            .suggests(VelocityCommands.suggestServer(server, "server", false))
+                            .executes(this::remove)))
+            .build();
+    final LiteralCommandNode<CommandSource> removeall = BrigadierCommand.literalArgumentBuilder("removeall")
+            .requires(source -> source.getPermissionValue("velocity.queue.admin.removeall") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, "queueadmin.removeall"))
+            .then(BrigadierCommand.requiredArgumentBuilder("server", StringArgumentType.word())
+                    .suggests(VelocityCommands.suggestServer(server, "server", false))
+                    .executes(this::removeAll))
+            .build();
+    final List<LiteralCommandNode<CommandSource>> commands = List
+            .of(listQueues, list, pause, unpause, add, addall, remove, removeall);
+    BrigadierCommand command = new BrigadierCommand(
+            commands.stream()
+                    .reduce(
+                            BrigadierCommand.literalArgumentBuilder("queueadmin")
+                                    .executes(ctx -> {
+                                      final CommandSource source = ctx.getSource();
+                                      final String availableCommands = commands.stream()
+                                              .filter(e -> e.getRequirement().test(source))
+                                              .map(LiteralCommandNode::getName)
+                                              .collect(Collectors.joining("|"));
+                                      final String commandText = "/queueadmin <%s>".formatted(availableCommands);
+                                      source.sendMessage(Component.text(commandText, NamedTextColor.RED));
+                                      return Command.SINGLE_SUCCESS;
+                                    })
+                                    .requires(commands.stream()
+                                            .map(CommandNode::getRequirement)
+                                            .reduce(Predicate::or)
+                                            .orElseThrow()),
+                            ArgumentBuilder::then,
+                            ArgumentBuilder::then));
 
     server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .aliases(aliases.toArray(new String[0]))
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
+            server.getCommandManager().metaBuilder(command)
+                    .aliases(aliases.toArray(new String[0]))
+                    .plugin(VelocityVirtualPlugin.INSTANCE)
+                    .build(),
+            command
     );
   }
 
@@ -201,10 +201,10 @@ public record QueueAdminCommand(VelocityServer server) {
       }
 
       VelocityRegisteredServer registeredServer = (VelocityRegisteredServer) server;
-      ServerQueueStatus queueStatus = this.server.getQueueManager()
-          .getQueue(registeredServer.getServerInfo().getName());
+      Queue queue = this.server.getQueueManager()
+              .getQueueCache().getQueue(registeredServer.getServerInfo().getName());
 
-      source.sendMessage(queueStatus.createListComponent());
+      source.sendMessage(((AbstractQueue) queue).createListComponent());
     }
 
     return Command.SINGLE_SUCCESS;
@@ -213,7 +213,7 @@ public record QueueAdminCommand(VelocityServer server) {
   private int list(final CommandContext<CommandSource> ctx) {
     String serverName = ctx.getArgument("server", String.class);
     VelocityRegisteredServer server = (VelocityRegisteredServer) this.server.getServer(ctx
-        .getArgument("server", String.class)).orElse(null);
+            .getArgument("server", String.class)).orElse(null);
 
     if (serverName.equalsIgnoreCase("current")) {
       if (!(ctx.getSource() instanceof Player p)) {
@@ -233,9 +233,9 @@ public record QueueAdminCommand(VelocityServer server) {
     if (serverName.equalsIgnoreCase("all")) {
       Set<UUID> uniquePlayers = new HashSet<>();
 
-      for (ServerQueueStatus status : this.server.getQueueManager().getAll()) {
-        for (ServerQueueEntry entry : status.getAllEntries()) {
-          uniquePlayers.add(entry.getPlayer());
+      for (Queue queue : this.server.getQueueManager().getQueueCache().getQueues()) {
+        for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
+          uniquePlayers.add(queuePlayer.getUniqueId());
         }
       }
 
@@ -243,10 +243,10 @@ public record QueueAdminCommand(VelocityServer server) {
 
       if (uniquePlayerCount == 1) {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.global-singular")
-            .arguments(Argument.numeric("count", uniquePlayerCount)));
+                .arguments(Argument.numeric("count", uniquePlayerCount)));
       } else {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.global-plural")
-            .arguments(Argument.numeric("count", uniquePlayerCount)));
+                .arguments(Argument.numeric("count", uniquePlayerCount)));
       }
 
       for (RegisteredServer s : this.server.getAllServers()) {
@@ -257,26 +257,26 @@ public record QueueAdminCommand(VelocityServer server) {
         VelocityRegisteredServer velocityRegisteredServer = (VelocityRegisteredServer) s;
         List<Component> players = new ArrayList<>();
 
-        for (ServerQueueEntry entry : velocityRegisteredServer.getQueueStatus().getAllEntries()) {
-          players.add(Component.text(entry.getUsername()));
+        for (QueuePlayer queuePlayer : velocityRegisteredServer.getQueue().getQueuePlayers()) {
+          players.add(Component.text(queuePlayer.getUsername()));
         }
 
         players.stream()
-            .reduce((a, b) -> a.append(Component.text(", ")).append(b))
-            .ifPresent(playerList -> {
-              final TranslatableComponent.Builder builder = Component.translatable()
-                  .key("velocity.queue.command.list.server")
-                  .arguments(
-                      Argument.string("server", s.getServerInfo().getName()),
-                      Argument.numeric("count", players.size()),
-                      Argument.component("players", playerList));
-              ctx.getSource().sendMessage(builder.build());
-            });
+                .reduce((a, b) -> a.append(Component.text(", ")).append(b))
+                .ifPresent(playerList -> {
+                  final TranslatableComponent.Builder builder = Component.translatable()
+                          .key("velocity.queue.command.list.server")
+                          .arguments(
+                                  Argument.string("server", s.getServerInfo().getName()),
+                                  Argument.numeric("count", players.size()),
+                                  Argument.component("players", playerList));
+                  ctx.getSource().sendMessage(builder.build());
+                });
       }
       return -1;
     } else if (server == null) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-          .arguments(Argument.string("server", serverName)));
+              .arguments(Argument.string("server", serverName)));
       return -1;
     }
 
@@ -292,31 +292,31 @@ public record QueueAdminCommand(VelocityServer server) {
       }
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.disabled-queue")
-          .arguments(Argument.string("server", newName)));
+              .arguments(Argument.string("server", newName)));
       return -1;
     }
 
-    for (ServerQueueEntry entry : server.getQueueStatus().getAllEntries()) {
-      players.add(Component.text(entry.getUsername()));
+    for (QueuePlayer queuePlayer : server.getQueue().getQueuePlayers()) {
+      players.add(Component.text(queuePlayer.getUsername()));
     }
 
     VelocityRegisteredServer finalServer = server;
     players.stream()
-        .reduce((a, b) -> a.append(Component.text(", ")).append(b))
-        .ifPresentOrElse(playerList -> {
-          final TranslatableComponent.Builder builder = Component.translatable()
-              .key("velocity.queue.command.list.server")
-              .arguments(
-                  Argument.string("server", finalServer.getServerInfo().getName()),
-                  Argument.numeric("count", players.size()),
-                  Argument.component("players", playerList));
-          ctx.getSource().sendMessage(builder.build());
-        }, () -> {
-          if (players.isEmpty()) {
-            ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.empty")
-                .arguments(Argument.string("server", finalServer.getServerInfo().getName())));
-          }
-        });
+            .reduce((a, b) -> a.append(Component.text(", ")).append(b))
+            .ifPresentOrElse(playerList -> {
+              final TranslatableComponent.Builder builder = Component.translatable()
+                      .key("velocity.queue.command.list.server")
+                      .arguments(
+                              Argument.string("server", finalServer.getServerInfo().getName()),
+                              Argument.numeric("count", players.size()),
+                              Argument.component("players", playerList));
+              ctx.getSource().sendMessage(builder.build());
+            }, () -> {
+              if (players.isEmpty()) {
+                ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.empty")
+                        .arguments(Argument.string("server", finalServer.getServerInfo().getName())));
+              }
+            });
 
     return Command.SINGLE_SUCCESS;
   }
@@ -327,65 +327,69 @@ public record QueueAdminCommand(VelocityServer server) {
       return -1;
     }
 
-    if (server.getQueueStatus().isPaused()) {
-      if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-        this.server.getRedisManager().removePausedQueue(server.getServerInfo().getName());
-      } else {
-        server.getQueueStatus().setPaused(false);
-      }
+    final Queue queue = server.getQueue();
+    if (queue.isPaused()) {
+//      if (this.server.isRedisEnabled()) {
+//        this.server.getRedisManager().removePausedQueue(server.getServerInfo().getName());
+//      } else {
+        queue.setState(QueueState.ACTIVE);//todo dit wel effe testen, geen idee of multi proxy hiermee werkt.. wss wel, redis cache doet neemt over toch?
+//      }
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
-          .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Argument.string("server", server.getServerInfo().getName())));
 
-      server.getQueueStatus().broadcast(Component.translatable("velocity.queue.command.unpaused")
-          .arguments(Argument.string("server", server.getServerInfo().getName())));
+      this.server.getQueueManager().broadcastMessage(queue,
+              $ -> Component.translatable("velocity.queue.command.unpaused")
+                      .arguments(Argument.string("server", server.getServerInfo().getName())));
       return Command.SINGLE_SUCCESS;
     } else {
-      if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-        this.server.getRedisManager().addPausedQueue(server.getServerInfo().getName());
-      } else {
-        server.getQueueStatus().setPaused(true);
-      }
+//      if (this.server.isRedisEnabled()) {
+//        this.server.getRedisManager().addPausedQueue(server.getServerInfo().getName());
+//      } else {
+        queue.setState(QueueState.PAUSED);//todo zelfde als lijn 335
+//      }
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.pause")
-          .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Argument.string("server", server.getServerInfo().getName())));
 
-      server.getQueueStatus().broadcast(Component.translatable("velocity.queue.command.paused")
-          .arguments(Argument.string("server", server.getServerInfo().getName())));
+      this.server.getQueueManager().broadcastMessage(queue,
+              $ -> Component.translatable("velocity.queue.command.pause")
+                      .arguments(Argument.string("server", server.getServerInfo().getName())));
     }
 
     return Command.SINGLE_SUCCESS;
   }
 
   private int unpause(final CommandContext<CommandSource> ctx) {
-    VelocityRegisteredServer server = VelocityCommands.getServer(this.server, ctx, "server", false);
+    final VelocityRegisteredServer server = VelocityCommands.getServer(this.server, ctx, "server", false);
     if (server == null) {
       return -1;
     }
 
-    if (!server.getQueueStatus().isPaused()) {
+    final Queue queue = server.getQueue();
+    if (!queue.isPaused()) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-paused")
-          .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Argument.string("server", server.getServerInfo().getName())));
       return -1;
     }
 
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-      this.server.getRedisManager().removePausedQueue(server.getServerInfo().getName());
-    } else {
-      server.getQueueStatus().setPaused(false);
-    }
+//    if (this.server.isRedisEnabled()) {
+//      this.server.getRedisManager().removePausedQueue(server.getServerInfo().getName());
+//    } else {
+      queue.setState(QueueState.ACTIVE);
+//    }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
-        .arguments(Argument.string("server", server.getServerInfo().getName())));
+            .arguments(Argument.string("server", server.getServerInfo().getName())));
 
-    server.getQueueStatus().broadcast(Component.translatable("velocity.queue.command.unpaused")
-        .arguments(Argument.string("server", server.getServerInfo().getName())));
-
+    this.server.getQueueManager().broadcastMessage(queue,
+            $ -> Component.translatable("velocity.queue.command.unpaused")
+                    .arguments(Argument.string("server", server.getServerInfo().getName())));
     return Command.SINGLE_SUCCESS;
   }
 
   private int add(final CommandContext<CommandSource> ctx) {
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
+    if (this.server.isRedisEnabled()) {
       return addRedis(ctx);
     }
 
@@ -399,17 +403,17 @@ public record QueueAdminCommand(VelocityServer server) {
     Player player = this.server.getPlayer(playerName).orElse(null);
     if (player == null) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-          .arguments(Argument.string("player", playerName)));
+              .arguments(Argument.string("player", playerName)));
       return -1;
     }
 
     if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-      for (ServerQueueStatus status : this.server.getQueueManager().getAll()) {
-        if (status.isQueued(player.getUniqueId())) {
+      for (Queue queue : this.server.getQueueManager().getQueueCache().getQueues()) {
+        if (queue.contains(player.getUniqueId())) {
           ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
-              .arguments(
-                  Argument.string("player", player.getUsername()),
-                  Argument.string("server", status.getServerName())));
+                  .arguments(
+                          Argument.string("player", player.getUsername()),
+                          Argument.string("server", queue.getName())));
           return -1;
         }
       }
@@ -418,34 +422,32 @@ public record QueueAdminCommand(VelocityServer server) {
     ServerConnection conn = player.getCurrentServer().orElse(null);
     if (conn != null && conn.getServerInfo().getName().equalsIgnoreCase(server.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-connected")
-          .arguments(Argument.string("player", player.getUsername())));
+              .arguments(Argument.string("player", player.getUsername())));
       return -1;
     }
 
-    if (server.getQueueStatus().isQueued(player.getUniqueId())) {
+    if (server.getQueue().contains(player.getUniqueId())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
-          .arguments(
-              Argument.string("player", player.getUsername()),
-              Argument.string("server", server.getServerInfo().getName())));
+              .arguments(
+                      Argument.string("player", player.getUsername()),
+                      Argument.string("server", server.getServerInfo().getName())));
       return -1;
     }
 
     if (player instanceof ConnectedPlayer connectedPlayer && connectedPlayer.checkVersionCompatibility(server)) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.version-incompatible")
-          .arguments(
-              Argument.string("player", player.getUsername()),
-              Argument.string("server", server.getServerInfo().getName())));
+              .arguments(
+                      Argument.string("player", player.getUsername()),
+                      Argument.string("server", server.getServerInfo().getName())));
       return -1;
     }
 
-    server.getQueueStatus().queue(player.getUniqueId(), player.getQueuePriority(server.getServerInfo().getName()),
-        player.hasPermission("velocity.queue.full.bypass"),
-        player.hasPermission("velocity.queue.bypass"));
+    server.getQueue().enqueue(player);
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.added")
-        .arguments(
-            Argument.string("player", player.getUsername()),
-            Argument.string("server", server.getServerInfo().getName())));
+            .arguments(
+                    Argument.string("player", player.getUsername()),
+                    Argument.string("server", server.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
   }
@@ -458,54 +460,52 @@ public record QueueAdminCommand(VelocityServer server) {
       return -1;
     }
 
-    RemotePlayerInfo player = this.server.getMultiProxyHandler().getPlayerInfo(playerName);
-    if (player == null) {
+    PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(playerName);
+    if (playerEntry == null) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-          .arguments(Argument.string("player", playerName)));
+              .arguments(Argument.string("player", playerName)));
       return -1;
     }
 
     if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-      for (ServerQueueStatus status : this.server.getQueueManager().getAll()) {
-        if (status.isQueued(player.getUuid())) {
+      for (Queue queue : this.server.getQueueManager().getQueueCache().getQueues()) {
+        if (queue.contains(playerEntry.getUniqueId())) {
           ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
-              .arguments(
-                  Argument.string("player", player.getUsername()),
-                  Argument.string("server", status.getServerName())));
+                  .arguments(
+                          Argument.string("player", playerEntry.getUsername()),
+                          Argument.string("server", queue.getName())));
           return -1;
         }
       }
     }
 
-    String conn = player.getServerName();
+    String conn = playerEntry.getServerName();
     if (conn != null && conn.equalsIgnoreCase(server.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-connected")
-          .arguments(Argument.string("player", player.getUsername())));
+              .arguments(Argument.string("player", playerEntry.getUsername())));
       return -1;
     }
 
-    if (server.getQueueStatus().isQueued(player.getUuid())) {
+    if (server.getQueue().contains(playerEntry.getUniqueId())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
-          .arguments(
-              Argument.string("player", player.getUsername()),
-              Argument.string("server", server.getServerInfo().getName())));
+              .arguments(
+                      Argument.string("player", playerEntry.getUsername()),
+                      Argument.string("server", server.getServerInfo().getName())));
       return -1;
     }
 
-    server.getQueueStatus().queue(player.getUuid(), player.getQueuePriority().get(server.getServerInfo().getName()),
-        player.isFullQueueBypass(),
-        player.isQueueBypass());
+    server.getQueue().enqueue(playerEntry);
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.added")
-        .arguments(
-            Argument.string("player", player.getUsername()),
-            Argument.string("server", server.getServerInfo().getName())));
+            .arguments(
+                    Argument.string("player", playerEntry.getUsername()),
+                    Argument.string("server", server.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
   }
 
   private int addAll(final CommandContext<CommandSource> ctx) {
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
+    if (this.server.isRedisEnabled()) {
       return addAllRedis(ctx);
     }
 
@@ -529,13 +529,13 @@ public record QueueAdminCommand(VelocityServer server) {
       ServerConnection conn = player.getCurrentServer().orElse(null);
       if (conn != null && conn.getServerInfo().getName().equalsIgnoreCase(from.getServerInfo().getName())) {
         if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-          boolean alreadyQueued = this.server.getQueueManager().getAll().stream()
-              .anyMatch(status -> status.isQueued(player.getUniqueId()));
+          boolean alreadyQueued = this.server.getQueueManager().getQueueCache().getQueues().stream()
+                  .anyMatch(queue -> queue.contains(player.getUniqueId()));
           if (alreadyQueued) {
             continue;
           }
         }
-        if (!to.getQueueStatus().isQueued(player.getUniqueId())) {
+        if (!to.getQueue().contains(player.getUniqueId())) {
           connected.add(player);
         }
       }
@@ -543,22 +543,19 @@ public record QueueAdminCommand(VelocityServer server) {
 
     if (connected.isEmpty()) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.addall-no-players-queued", NamedTextColor.RED)
-          .arguments(
-              Argument.string("from", from.getServerInfo().getName()),
-              Argument.string("to", to.getServerInfo().getName())));
+              .arguments(
+                      Argument.string("from", from.getServerInfo().getName()),
+                      Argument.string("to", to.getServerInfo().getName())));
       return -1;
     }
     for (Player player : connected) {
-      to.getQueueStatus().queue(player.getUniqueId(), player.getQueuePriority(to.getServerInfo().getName()),
-          player.hasPermission("velocity.queue.full.bypass"),
-          player.hasPermission("velocity.queue.bypass")
-      );
+      to.getQueue().enqueue(player);
     }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.addedall-player" + (connected.size() == 1 ? "" : "s"))
-        .arguments(
-            Argument.numeric("count", connected.size()),
-            Argument.string("server", to.getServerInfo().getName())));
+            .arguments(
+                    Argument.numeric("count", connected.size()),
+                    Argument.string("server", to.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
   }
@@ -579,61 +576,59 @@ public record QueueAdminCommand(VelocityServer server) {
       return -1;
     }
 
-    List<RemotePlayerInfo> connected = new ArrayList<>();
-    for (RemotePlayerInfo player : this.server.getMultiProxyHandler().getAllPlayers()) {
-      String conn = player.getServerName();
+    List<PlayerEntry> connected = new ArrayList<>();
+    for (PlayerEntry playerEntry : this.server.getRedis().getPlayerService().getAll()) {
+      String conn = playerEntry.getServerName();
       if (conn != null && conn.equalsIgnoreCase(from.getServerInfo().getName())) {
         if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-          boolean alreadyQueued = this.server.getQueueManager().getAll().stream()
-              .anyMatch(status -> status.isQueued(player.getUuid()));
+          boolean alreadyQueued = this.server.getQueueManager().getQueueCache().getQueues().stream()
+                  .anyMatch(status -> status.contains(playerEntry));
           if (alreadyQueued) {
             continue;
           }
         }
-        if (!to.getQueueStatus().isQueued(player.getUuid())) {
-          connected.add(player);
+        if (!to.getQueue().contains(playerEntry.getUniqueId())) {
+          connected.add(playerEntry);
         }
       }
     }
 
     if (connected.isEmpty()) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.addall-no-players-queued", NamedTextColor.RED)
-          .arguments(
-              Argument.string("from", from.getServerInfo().getName()),
-              Argument.string("to", to.getServerInfo().getName())));
+              .arguments(
+                      Argument.string("from", from.getServerInfo().getName()),
+                      Argument.string("to", to.getServerInfo().getName())));
       return -1;
     }
-    for (RemotePlayerInfo player : connected) {
-      to.getQueueStatus().queue(player.getUuid(), player.getQueuePriority().get(to.getServerInfo().getName()),
-          player.isFullQueueBypass(),
-          player.isQueueBypass());
+    for (PlayerEntry playerEntry : connected) {
+      to.getQueue().enqueue(playerEntry);
     }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.addedall-player" + (connected.size() == 1 ? "" : "s"))
-        .arguments(
-            Argument.numeric("count", connected.size()),
-            Argument.string("server", to.getServerInfo().getName())));
+            .arguments(
+                    Argument.numeric("count", connected.size()),
+                    Argument.string("server", to.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
   }
 
   private int remove(final CommandContext<CommandSource> ctx) {
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
+    if (this.server.isRedisEnabled()) {
       return removeRedis(ctx);
     }
 
     String playerName = ctx.getArgument("player", String.class);
 
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-      if (this.server.getMultiProxyHandler().isPlayerOnline(playerName)) {
+    if (this.server.isRedisEnabled()) {
+      if (this.server.getRedis().getPlayerService().isPlayerOnline(playerName)) {
         ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-            .arguments(Argument.string("player", playerName)));
+                .arguments(Argument.string("player", playerName)));
         return -1;
       }
     } else {
       if (this.server.getPlayer(playerName).isEmpty()) {
         ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-            .arguments(Argument.string("player", playerName)));
+                .arguments(Argument.string("player", playerName)));
         return -1;
       }
     }
@@ -659,33 +654,33 @@ public record QueueAdminCommand(VelocityServer server) {
 
     for (RegisteredServer s : servers) {
       VelocityRegisteredServer velocityRegisteredServer = (VelocityRegisteredServer) s;
-      if (servers.size() == 1 && velocityRegisteredServer.getQueueStatus().isQueued(player.getUniqueId())) {
+      if (servers.size() == 1 && velocityRegisteredServer.getQueue().contains(player.getUniqueId())) {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.remove-success")
-            .arguments(Argument.string("player", player.getUsername()),
-                Argument.string("server", velocityRegisteredServer.getServerInfo().getName())));
+                .arguments(Argument.string("player", player.getUsername()),
+                        Argument.string("server", velocityRegisteredServer.getServerInfo().getName())));
         handledSpecific = true;
       } else if (servers.size() == 1) {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-in-queue.other.specific")
-            .arguments(Argument.string("player", player.getUsername()),
-                Argument.string("server", s.getServerInfo().getName())));
+                .arguments(Argument.string("player", player.getUsername()),
+                        Argument.string("server", s.getServerInfo().getName())));
         handledSpecific = true;
       }
 
-      if (velocityRegisteredServer.getQueueStatus().isQueued(player.getUniqueId())) {
+      if (velocityRegisteredServer.getQueue().contains(player.getUniqueId())) {
         amountDone++;
-        velocityRegisteredServer.getQueueStatus().dequeue(player.getUniqueId(), false);
+        velocityRegisteredServer.getQueue().dequeue(player.getUniqueId(), false);
       }
     }
 
     if (!handledSpecific && amountDone == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-in-queue.other")
-          .arguments(Argument.string("player", player.getUsername())));
+              .arguments(Argument.string("player", player.getUsername())));
       return Command.SINGLE_SUCCESS;
     }
 
     if (servers.size() > 1) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.remove-all-success")
-          .arguments(Argument.string("player", player.getUsername())));
+              .arguments(Argument.string("player", player.getUsername())));
     }
 
     return Command.SINGLE_SUCCESS;
@@ -694,16 +689,16 @@ public record QueueAdminCommand(VelocityServer server) {
   private int removeRedis(final CommandContext<CommandSource> ctx) {
     String playerName = ctx.getArgument("player", String.class);
 
-    if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-      if (this.server.getMultiProxyHandler().isPlayerOnline(playerName)) {
+    if (this.server.isRedisEnabled()) {
+      if (this.server.getRedis().getPlayerService().isPlayerOnline(playerName)) {
         ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-            .arguments(Argument.string("player", playerName)));
+                .arguments(Argument.string("player", playerName)));
         return -1;
       }
     } else {
       if (this.server.getPlayer(playerName).isEmpty()) {
         ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-            .arguments(Argument.string("player", playerName)));
+                .arguments(Argument.string("player", playerName)));
         return -1;
       }
     }
@@ -720,8 +715,8 @@ public record QueueAdminCommand(VelocityServer server) {
       servers = new ArrayList<>(this.server.getAllServers());
     }
 
-    RemotePlayerInfo player = this.server.getMultiProxyHandler().getPlayerInfo(playerName);
-    if (player == null) {
+    PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(playerName);
+    if (playerEntry == null) {
       return -1;
     }
 
@@ -730,40 +725,40 @@ public record QueueAdminCommand(VelocityServer server) {
 
     for (RegisteredServer s : servers) {
       VelocityRegisteredServer velocityRegisteredServer = (VelocityRegisteredServer) s;
-      if (servers.size() == 1 && velocityRegisteredServer.getQueueStatus().isQueued(player.getUuid())) {
+      if (servers.size() == 1 && velocityRegisteredServer.getQueue().contains(playerEntry.getUniqueId())) {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.remove-success")
-            .arguments(Argument.string("player", player.getUsername()),
-                Argument.string("server", velocityRegisteredServer.getServerInfo().getName())));
+                .arguments(Argument.string("player", playerEntry.getUsername()),
+                        Argument.string("server", velocityRegisteredServer.getServerInfo().getName())));
         handledSpecific = true;
       } else if (servers.size() == 1) {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-in-queue.other.specific")
-            .arguments(Argument.string("player", player.getUsername()),
-                Argument.string("server", s.getServerInfo().getName())));
+                .arguments(Argument.string("player", playerEntry.getUsername()),
+                        Argument.string("server", s.getServerInfo().getName())));
         handledSpecific = true;
       }
 
-      if (velocityRegisteredServer.getQueueStatus().isQueued(player.getUuid())) {
+      if (velocityRegisteredServer.getQueue().contains(playerEntry.getUniqueId())) {
         amountDone++;
-        velocityRegisteredServer.getQueueStatus().dequeue(player.getUuid(), false);
+        velocityRegisteredServer.getQueue().dequeue(playerEntry.getUniqueId(), false);
       }
     }
 
     if (!handledSpecific && amountDone == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-in-queue.other")
-          .arguments(Argument.string("player", player.getUsername())));
+              .arguments(Argument.string("player", playerEntry.getUsername())));
       return Command.SINGLE_SUCCESS;
     }
 
     if (servers.size() > 1) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.remove-all-success")
-          .arguments(Argument.string("player", player.getUsername())));
+              .arguments(Argument.string("player", playerEntry.getUsername())));
     }
 
     return Command.SINGLE_SUCCESS;
   }
 
   private int removeAll(final CommandContext<CommandSource> ctx) {
-    if (this.server.getRedisManager().isEnabled()) {
+    if (this.server.isRedisEnabled()) {
       return this.removeAllRedis(ctx);
     }
 
@@ -775,22 +770,22 @@ public record QueueAdminCommand(VelocityServer server) {
     int amount = 0;
 
     for (Player player : this.server.getAllPlayers()) {
-      if (server.getQueueStatus().isQueued(player.getUniqueId())) {
+      if (server.getQueue().contains(player.getUniqueId())) {
         amount++;
-        server.getQueueStatus().dequeue(player.getUniqueId(), false);
+        server.getQueue().dequeue(player.getUniqueId(), false);
       }
     }
 
     if (amount == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.removeall-no-players-queued")
-          .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Argument.string("server", server.getServerInfo().getName())));
       return -1;
     }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.removedall-player" + (amount == 1 ? "" : "s"))
-        .arguments(
-            Argument.numeric("count", amount),
-            Argument.string("server", server.getServerInfo().getName())));
+            .arguments(
+                    Argument.numeric("count", amount),
+                    Argument.string("server", server.getServerInfo().getName())));
     return Command.SINGLE_SUCCESS;
   }
 
@@ -802,24 +797,34 @@ public record QueueAdminCommand(VelocityServer server) {
 
     int amount = 0;
 
-    for (RemotePlayerInfo player : this.server.getMultiProxyHandler().getAllPlayers()) {
-      if (server.getQueueStatus().isQueued(player.getUuid())) {
+    for (PlayerEntry playerEntry : this.server.getRedis().getPlayerService().getAll()) {
+      if (server.getQueue().contains(playerEntry)) {
         amount++;
-        server.getQueueStatus().dequeue(player.getUuid(), false);
+        server.getQueue().dequeue(playerEntry, false);
       }
     }
 
     if (amount == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.removeall-no-players-queued")
-          .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Argument.string("server", server.getServerInfo().getName())));
       return -1;
     }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.removedall-player" + (amount == 1 ? "" : "s"))
-        .arguments(
-            Argument.numeric("count", amount),
-            Argument.string("server", server.getServerInfo().getName())));
+            .arguments(
+                    Argument.numeric("count", amount),
+                    Argument.string("server", server.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
+  }
+
+  /**
+   * Gets the {@link AbstractQueueManager} instance instead of the interface. This is needed for some
+   * advanced operations, and/or internal uses.
+   *
+   * @return the abstract queue manager instance
+   */
+  private AbstractQueueManager<?> getQueueManager() {
+    return (AbstractQueueManager<?>) this.server.getQueueManager();
   }
 }

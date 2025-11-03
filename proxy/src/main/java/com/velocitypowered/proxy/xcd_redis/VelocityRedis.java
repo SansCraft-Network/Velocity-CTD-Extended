@@ -3,6 +3,7 @@ package com.velocitypowered.proxy.xcd_redis;
 import com.google.common.base.Preconditions;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
+import com.velocitypowered.proxy.xcd_queue.depot.QueueDepotService;
 import com.velocitypowered.proxy.xcd_redis.impl.RouteRegistry;
 import com.velocitypowered.proxy.xcd_redis.impl.TransactionHandlerRegistry;
 import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerDepotService;
@@ -26,6 +27,7 @@ public final class VelocityRedis {
 
   private final PlayerDepotService playerService;
   private final ProxyDepotService proxyService;
+  private final QueueDepotService queueService;
 
   private final String proxyId;
 
@@ -44,6 +46,7 @@ public final class VelocityRedis {
 
     this.playerService = new PlayerDepotService(this);
     this.proxyService = new ProxyDepotService(this);
+    this.queueService = new QueueDepotService(this);
 
     this.registerRoutes();
     this.registerTransactionHandlers();
@@ -57,6 +60,7 @@ public final class VelocityRedis {
 
     this.playerService.teardown();
     this.proxyService.teardown();
+    this.queueService.teardown();
     this.provider.disconnect();
   }
 
@@ -90,6 +94,10 @@ public final class VelocityRedis {
 
   public ProxyDepotService getProxyService() {
     return proxyService;
+  }
+
+  public QueueDepotService getQueueService() {
+    return queueService;
   }
 
   public String getProxyId() {

@@ -45,7 +45,6 @@ import com.velocitypowered.proxy.command.brigadier.VelocityArgumentCommandNode;
 import com.velocitypowered.proxy.command.brigadier.VelocityBrigadierCommandWrapper;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +55,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
+import com.velocitypowered.proxy.xcd_queue.model.QueueState;
 import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -384,7 +384,7 @@ public final class VelocityCommands {
       return null;
     }
 
-    if (!allowNonQueueable && !registeredServer.getQueueStatus().hasQueue()) {
+    if (!allowNonQueueable && registeredServer.getQueue().getState() == QueueState.INACTIVE) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.server-has-no-queue")
           .arguments(Argument.string("server", serverName)));
       return null;
@@ -462,7 +462,7 @@ public final class VelocityCommands {
     final String argument = ctx.getArguments().containsKey("player")
         ? ctx.getArgument("player", String.class)
         : "";
-    if (includeRemote && server.isRedis()) {
+    if (includeRemote && server.isRedisEnabled()) {
       for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
         if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
           builder.suggest(playerEntry.getUsername());

@@ -8,6 +8,7 @@ import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import com.velocitypowered.proxy.xcd_queue.AbstractQueue;
 import com.velocitypowered.proxy.xcd_queue.Queue;
 import com.velocitypowered.proxy.xcd_queue.cache.QueueCache;
 import com.velocitypowered.proxy.xcd_queue.model.QueuePlayer;
@@ -50,6 +51,12 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
     this.server = server;
 
     // Schedule the tasks
+    this.rescheduleTasks();
+  }
+
+  @Override
+  public void reload() {
+    // Reschedule tasks
     this.rescheduleTasks();
   }
 
@@ -104,6 +111,7 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
    *
    * @param player The player that left.
    */
+  @Override
   public final void onPlayerDisconnect(final Player player) {
     final long timeout = getTimeoutInSeconds(player);
 
@@ -115,6 +123,7 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
     }
   }
 
+  @Override
   public void removePlayerEntirely(final Player player) {
     for (Queue queue : this.getQueueCache().getQueues()) {
       if (queue.contains(player)) {
@@ -169,7 +178,7 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
     this.actionBarTask = this.server.getScheduler()
             .buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
               for (Queue queue : this.getQueueCache().getQueues()) {
-                this.broadcastActionBar(queue::getActionBarComponent);
+                this.broadcastActionBar(player -> ((AbstractQueue) queue).createActionbarComponent(player));
               }
             })
             .delay((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)

@@ -20,6 +20,8 @@ import java.util.function.Function;
  */
 public sealed interface QueueManager<C extends QueueCache> permits AbstractQueueManager {
 
+  void reload();
+
   boolean isMasterProxy();
 
   void pollFirst(final Queue queue, final QueuePlayer queuePlayer);
@@ -29,6 +31,8 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
   C getQueueCache();
 
   void onPlayerDisconnect(final Player player);
+
+  void removePlayerEntirely(final Player player);
 
   void broadcastMessage(final Queue queue, final Function<QueuePlayer, Component> component);
 

@@ -94,7 +94,6 @@ import com.velocitypowered.proxy.protocol.packet.config.ClientboundServerLinksPa
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
-import com.velocitypowered.proxy.queue.ServerQueueStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.tablist.InternalTabList;
 import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
@@ -104,6 +103,7 @@ import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
 import com.velocitypowered.proxy.util.DurationUtils;
 import com.velocitypowered.proxy.util.TranslatableMapper;
 import com.velocitypowered.proxy.util.collect.CappedSet;
+import com.velocitypowered.proxy.xcd_queue.Queue;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
@@ -388,11 +388,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       bar.viewerDisconnected(this);
     }
 
-    if (this.server.isRedis()) {
+    if (this.server.isRedisEnabled()) {
       this.server.getRedis().getPlayerService().onPlayerDisconnect(this);
     }
 
-    if (this.server.isQueue()) {
+    if (this.server.isQueueEnabled()) {
       this.server.getQueueManager().onPlayerDisconnect(this);
     }
   }
@@ -1351,7 +1351,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
                     if (!this.server.getConfiguration().getQueue().getNoQueueServers().contains(targetServerName)) {
                       TextComponent kickMsg = (TextComponent) originalEvent.getServerKickReason().orElse(Component.empty());
-                      ServerQueueStatus s = this.server.getQueueManager().getQueue(targetServerName);
+                      final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(targetServerName);
 
                       // Checks if the kick reason is valid for a re-queue
                       // This is done to make sure players don't get constantly sent over and over again in a kick loop
@@ -1359,12 +1359,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                           .stream()
                           .noneMatch(text -> containsString(kickMsg, text));
 
-                      if (isValidReason && (!s.isPaused() || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
-                        s.queue(getUniqueId(),
-                            getQueuePriority(targetServerName),
-                            server.getQueueManager().isQueueEnabled() && hasPermission("velocity.queue.full.bypass"),
-                            server.getQueueManager().isQueueEnabled() && hasPermission("velocity.queue.bypass")
-                        );
+                      if (isValidReason && (!queue.isPaused() || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
+                        queue.enqueue(get());
                       }
                     }
                   }
@@ -1833,7 +1829,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   @Override
   public int getQueuePriority(final String serverName) {
-    if (!server.getQueueManager().isQueueEnabled()) {
+    if (!server.isQueueEnabled()) {
       return 0;
     }
 
@@ -2327,7 +2323,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         final Component reason = requireNonNull(status).getReasonComponent()
             .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
 
-        if (server.getQueueManager().isQueueEnabled()) {
+        if (server.isQueueEnabled()) {
           for (String r : server.getConfiguration().getQueue().getBannedReason()) {
             if (reason.contains(Component.text(r))) {
               server.getQueueManager().removePlayerEntirely(get());
@@ -2365,7 +2361,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             }
 
             TextComponent textComponent = (TextComponent) reason;
-            if (server.getQueueManager().isQueueEnabled()) {
+            if (server.isQueueEnabled()) {
               for (String r : server.getConfiguration().getQueue().getBannedReason()) {
                 if (containsString(textComponent, r)) {
                   server.getQueueManager().removePlayerEntirely(get());

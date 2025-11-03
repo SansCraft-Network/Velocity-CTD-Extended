@@ -35,6 +35,7 @@ import com.velocitypowered.proxy.protocol.util.ByteBufDataInput;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.queue.ServerQueueStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import com.velocitypowered.proxy.xcd_queue.Queue;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -106,7 +107,7 @@ public class BungeeCordMessageResponder {
     }
 
     proxy.getServer(serverName).ifPresent(server -> {
-      if (queue && proxy.getQueueManager().isQueueEnabled()) {
+      if (queue && proxy.isQueueEnabled()) {
         if (this.proxy.getConfiguration().getQueue().getNoQueueServers().contains(server.getServerInfo().getName())) {
           player.createConnectionRequest(server).connectWithIndication();
           return;
@@ -136,7 +137,7 @@ public class BungeeCordMessageResponder {
         return;
       }
 
-      if (queue && proxy.getQueueManager().isQueueEnabled()) {
+      if (queue && proxy.isQueueEnabled()) {
         if (this.proxy.getConfiguration().getQueue().getNoQueueServers().contains(referencedServer.get().getServerInfo().getName())) {
           player.createConnectionRequest(referencedServer.get()).connectWithIndication();
           return;
@@ -179,7 +180,7 @@ public class BungeeCordMessageResponder {
           out.writeUTF(rs.getServerInfo().getName());
 
           int amount;
-          if (proxy.isRedis()) {
+          if (proxy.isRedisEnabled()) {
             amount = proxy.getRedis().getPlayerService().getPlayerEntriesInServer(rs.getServerInfo().getName()).size();
           } else {
             amount = rs.getPlayersConnected().size();
@@ -227,9 +228,9 @@ public class BungeeCordMessageResponder {
 
     String queuedServer = null;
 
-    for (ServerQueueStatus status : proxy.getQueueManager().getAll()) {
-      if (status.isQueued(playerUuid)) {
-        queuedServer = status.getServerName();
+    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
+      if (queue.contains(playerUuid)) {
+        queuedServer = queue.getName();
         break;
       }
     }
@@ -254,9 +255,9 @@ public class BungeeCordMessageResponder {
 
     int position = -1;
 
-    for (ServerQueueStatus status : proxy.getQueueManager().getAll()) {
-      if (status.isQueued(playerUuid)) {
-        position = status.getQueuePosition(playerUuid);
+    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
+      if (queue.contains(playerUuid)) {
+        position = queue.getPosition(playerUuid);
         break;
       }
     }
@@ -281,9 +282,9 @@ public class BungeeCordMessageResponder {
 
     int position = -1;
 
-    for (ServerQueueStatus status : proxy.getQueueManager().getAll()) {
-      if (status.isQueued(playerUuid)) {
-        position = status.getSize();
+    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
+      if (queue.contains(playerUuid)) {
+        position = queue.size();
         break;
       }
     }
@@ -308,8 +309,8 @@ public class BungeeCordMessageResponder {
 
     boolean paused = false;
 
-    for (ServerQueueStatus status : proxy.getQueueManager().getAll()) {
-      if (status.isQueued(playerUuid)) {
+    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
+      if (queue.contains(playerUuid)) {
         paused = true;
         break;
       }

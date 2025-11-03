@@ -130,7 +130,7 @@ public class ServerQueueStatus { //todo Queue
    */
   public void stop() {
     queue.clear();
-    this.velocityServer.getRedisManager().addOrUpdateQueue(this);
+//    this.velocityServer.getRedisManager().addOrUpdateQueue(this);
   }
 
   /**
@@ -182,17 +182,17 @@ public class ServerQueueStatus { //todo Queue
    * @param paused whether this queue is paused
    */
   public void setPaused(final boolean paused) {
-    if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
-      if (paused) {
-        this.velocityServer.getRedisManager().addPausedQueue(getServerName());
-      } else {
-        this.velocityServer.getRedisManager().removePausedQueue(getServerName());
-      }
-    } else {
-      this.paused = paused;
-    }
+//    if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
+//      if (paused) {
+//        this.velocityServer.getRedisManager().addPausedQueue(getServerName());
+//      } else {
+//        this.velocityServer.getRedisManager().removePausedQueue(getServerName());
+//      }
+//    } else {
+//      this.paused = paused;
+//    }
 
-    this.velocityServer.getRedisManager().addOrUpdateQueue(this);
+//    this.velocityServer.getRedisManager().addOrUpdateQueue(this);
   }
 
   /**
@@ -209,9 +209,9 @@ public class ServerQueueStatus { //todo Queue
       if (player != null) {
         player.createConnectionRequest(server).connect();
       } else {
-        if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
-          this.velocityServer.getRedisManager().send(new RedisQueueSendRequest(playerUuid, server.getServerInfo().getName()));
-        }
+//        if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
+//          this.velocityServer.getRedisManager().send(new RedisQueueSendRequest(playerUuid, server.getServerInfo().getName()));
+//        }
       }
 
       return;
@@ -244,7 +244,7 @@ public class ServerQueueStatus { //todo Queue
     }
 
     // Redis update outside synchronized block to prevent blocking
-    CompletableFuture.runAsync(() -> this.velocityServer.getRedisManager().addOrUpdateQueue(this));
+//    CompletableFuture.runAsync(() -> this.velocityServer.getRedisManager().addOrUpdateQueue(this));
   }
 
   private void insertAtPosition(final ServerQueueEntry newEntry, final int position) {
@@ -282,17 +282,17 @@ public class ServerQueueStatus { //todo Queue
   public void dequeue(final UUID player, final boolean maxRetriesReached) {
     this.velocityServer.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
       if (maxRetriesReached) {
-        if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
-          this.velocityServer.getRedisManager().send(new RedisSendMessageToUuidRequest(player,
-              Component.translatable("velocity.queue.error.max-send-retries-reached")
-                    .arguments(Argument.string("server", getServerName()),
-                          Argument.numeric("retries", this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
-        } else {
-          this.velocityServer.getPlayer(player).ifPresent(p ->
-              p.sendMessage(Component.translatable("velocity.queue.error.max-send-retries-reached")
-                    .arguments(Argument.string("server", getServerName()),
-                          Argument.numeric("retries", this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
-        }
+//        if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
+//          this.velocityServer.getRedisManager().send(new RedisSendMessageToUuidRequest(player,
+//              Component.translatable("velocity.queue.error.max-send-retries-reached")
+//                    .arguments(Argument.string("server", getServerName()),
+//                          Argument.numeric("retries", this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
+//        } else {
+//          this.velocityServer.getPlayer(player).ifPresent(p ->
+//              p.sendMessage(Component.translatable("velocity.queue.error.max-send-retries-reached")
+//                    .arguments(Argument.string("server", getServerName()),
+//                          Argument.numeric("retries", this.velocityServer.getConfiguration().getQueue().getMaxSendRetries()))));
+//        }
       }
     }).delay(1, TimeUnit.SECONDS).schedule();
 
@@ -300,7 +300,7 @@ public class ServerQueueStatus { //todo Queue
     this.queue.removeIf(entry -> entry.getPlayer().equals(player));
 
     // Redis update outside to prevent blocking
-    CompletableFuture.runAsync(() -> this.velocityServer.getRedisManager().addOrUpdateQueue(this));
+//    CompletableFuture.runAsync(() -> this.velocityServer.getRedisManager().addOrUpdateQueue(this));
   }
 
   /**
@@ -348,11 +348,7 @@ public class ServerQueueStatus { //todo Queue
    * @return Whether the queue is paused or not.
    */
   public boolean isPaused() {
-    if (this.velocityServer.getMultiProxyHandler().isRedisEnabled()) {
-      return this.velocityServer.getRedisManager().getPausedQueues().contains(getServerName());
-    } else {
       return this.paused;
-    }
   }
 
   /**
@@ -522,7 +518,7 @@ public class ServerQueueStatus { //todo Queue
   public void setStatus(final ServerStatus serverStatus) {
     if (this.online != serverStatus) {
       this.online = serverStatus;
-      this.velocityServer.getRedisManager().addOrUpdateQueue(this);
+      //this.velocityServer.getRedisManager().addOrUpdateQueue(this);
     }
   }
 
@@ -534,7 +530,7 @@ public class ServerQueueStatus { //todo Queue
   public void setFull(final boolean newFull) {
     if (this.full != newFull) {
       this.full = newFull;
-      this.velocityServer.getRedisManager().addOrUpdateQueue(this);
+//      this.velocityServer.getRedisManager().addOrUpdateQueue(this);
     }
   }
 }

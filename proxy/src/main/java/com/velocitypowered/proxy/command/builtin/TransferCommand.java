@@ -107,7 +107,7 @@ public class TransferCommand {
             }
           }
 
-          if (server.isRedis()) {
+          if (server.isRedisEnabled()) {
             for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
               if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
                 builder.suggest(playerEntry.getUsername());
@@ -155,7 +155,7 @@ public class TransferCommand {
         .findFirst()
         .orElse(null);
 
-    if (this.server.isRedis()) {
+    if (this.server.isRedisEnabled()) {
       if (!this.server.getRedis().getPlayerService().isPlayerOnline(player) && !player.equalsIgnoreCase("all")
           && !player.equalsIgnoreCase("current") && !player.startsWith("+")) {
         context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
@@ -277,7 +277,7 @@ public class TransferCommand {
         }
       }).delay(1, TimeUnit.SECONDS).schedule();
     } else {
-      if (this.server.isRedis()) {
+      if (this.server.isRedisEnabled()) {
         final PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(player);
 
         if (playerEntry == null || playerEntry.getUsername() == null || playerEntry.getProxyId() == null) {

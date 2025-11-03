@@ -234,21 +234,21 @@ public abstract class QueueManager {
             return;
           }
 
-          if (this.server.getMultiProxyHandler().isRedisEnabled()) {
-            if (this.server.getMultiProxyHandler().isPlayerOnline(entry.getPlayer())) {
-              queue.sendFirstInQueue(entry);
-            } else {
-              queue.getQueue().pollFirst();
-              // Async Redis update
-              CompletableFuture.runAsync(() -> this.server.getRedisManager().addOrUpdateQueue(queue));
-            }
-          } else {
-            if (this.server.getPlayer(entry.getPlayer()).orElse(null) != null) {
-              queue.sendFirstInQueue(entry);
-            } else {
-              queue.getQueue().pollFirst();
-            }
-          }
+//          if (this.server.getMultiProxyHandler().isRedisEnabled()) {
+//            if (this.server.getMultiProxyHandler().isPlayerOnline(entry.getPlayer())) {
+//              queue.sendFirstInQueue(entry);
+//            } else {
+//              queue.getQueue().pollFirst();
+//              // Async Redis update
+//              CompletableFuture.runAsync(() -> this.server.getRedisManager().addOrUpdateQueue(queue));
+//            }
+//          } else {
+//            if (this.server.getPlayer(entry.getPlayer()).orElse(null) != null) {
+//              queue.sendFirstInQueue(entry);
+//            } else {
+//              queue.getQueue().pollFirst();
+//            }
+//          }
         });
   }
 

@@ -167,7 +167,7 @@ public final class VelocityCommand {
             }
           }
 
-          if ((argument.isEmpty() || argument.startsWith("-")) && server.isRedis()) {
+          if ((argument.isEmpty() || argument.startsWith("-")) && server.isRedisEnabled()) {
             for (String id : server.getRedis().getProxyService().getAllProxyIds()) {
               if (id.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
                 builder.suggest("-" + id);
@@ -175,7 +175,7 @@ public final class VelocityCommand {
             }
           }
 
-          if (server.isRedis()) {
+          if (server.isRedisEnabled()) {
             for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
               if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
                 builder.suggest(playerEntry.getUsername());
@@ -210,7 +210,7 @@ public final class VelocityCommand {
         .requires(source -> source.getPermissionValue("velocity.command.uptime") == Tristate.TRUE)
         .executes(new Uptime(server));
 
-    if (server.isRedis()) {
+    if (server.isRedisEnabled()) {
       reload = reload.then(
           BrigadierCommand.requiredArgumentBuilder("proxy", StringArgumentType.string())
               .suggests((ctx, builder) -> VelocityCommands.suggestProxy(server, ctx, builder))
@@ -327,7 +327,7 @@ public final class VelocityCommand {
 
       if (sudoTarget.equalsIgnoreCase("all")) {
         boolean doneOne = false;
-        if (this.server.isRedis()) {
+        if (this.server.isRedisEnabled()) {
           for (PlayerEntry playerEntry : redis.getPlayerService().getAll()) {
             new VelocitySudo(playerEntry.getUniqueId(), messageOrCommand)
                     .publish();
@@ -399,7 +399,7 @@ public final class VelocityCommand {
         }
 
         boolean doneOne = false;
-        if (this.server.isRedis()) {
+        if (this.server.isRedisEnabled()) {
           for (PlayerEntry playerEntry : redis.getPlayerService().getAll()) {
             if (playerEntry.getServerName().equalsIgnoreCase(sudoTarget.substring(1))) {
               new VelocitySudo(playerEntry.getUniqueId(), messageOrCommand)
@@ -439,7 +439,7 @@ public final class VelocityCommand {
               .arguments(Argument.string("proxy", sudoTarget.substring(1))));
           return Command.SINGLE_SUCCESS;
         }
-        if (this.server.isRedis()) {
+        if (this.server.isRedisEnabled()) {
           PlayerEntry playerEntry = redis.getPlayerService().getPlayerEntry(sudoTarget);
           if (playerEntry == null) {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.invalid-player")

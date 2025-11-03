@@ -5,12 +5,15 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.queue.QueueTimeFormatter;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import com.velocitypowered.proxy.xcd_queue.depot.QueueEntry;
 import com.velocitypowered.proxy.xcd_queue.manager.QueueManager;
 import com.velocitypowered.proxy.xcd_queue.model.QueuePlayer;
 import com.velocitypowered.proxy.xcd_queue.model.QueueState;
 import com.velocitypowered.proxy.xcd_queue.model.ServerStatus;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -51,11 +54,30 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
 
     // Initialize the queue status and state
     this.status = ServerStatus.OFFLINE;
-    this.state = QueueState.INACTIVE;
+    this.state = server.getConfiguration().getQueue().getNoQueueServers()
+            .contains(this.backendInstance.getServerInfo().getName()) ? QueueState.INACTIVE : QueueState.ACTIVE;
+  }
+
+  /**
+   * Constructs a new {@link java.util.AbstractQueue}
+   *
+   * @param server          the proxy server instance
+   * @param backendInstance the backend instance server
+   */
+  public AbstractQueue(final VelocityServer server, final VelocityRegisteredServer backendInstance,
+                       final @NotNull QueueEntry queueEntry) {
+    this(server, backendInstance);
+
+    // Copy from the queue entry
+    this.status = queueEntry.getStatus();
+    this.state = queueEntry.getState();
+    this.internalQueue.clear();
+    this.internalQueue.addAll(queueEntry.getDeque());
   }
 
   @Override
-  public final void enqueue(final Player player) {
+  public final void enqueue(final UUID uniqueId) {
+    final Player player = this.server.getPlayer(uniqueId).orElseThrow();
     final QueuePlayer queuePlayer = new QueuePlayer(this.server, player, this);
 
     synchronized (internalQueue) {
@@ -112,7 +134,9 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
   }
 
   @Override
-  public void dequeue(final Player player, boolean maxRetriesReached) {
+  public void dequeue(final UUID uniqueId, boolean maxRetriesReached) {
+    final Player player = this.server.getPlayer(uniqueId).orElseThrow();
+
     // Notify the player if max retries have been reached
     if (maxRetriesReached) {
       server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> notifyMaxRetriesReached(player))
@@ -127,9 +151,9 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
   }
 
   @Override
-  public boolean contains(Player player) {
+  public boolean contains(UUID uniqueId) {
     for (QueuePlayer queuePlayer : internalQueue) {
-      if (queuePlayer.getUniqueId().equals(player.getUniqueId())) {
+      if (queuePlayer.getUniqueId().equals(uniqueId)) {
         return true;
       }
     }
@@ -157,11 +181,11 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
   }
 
   @Override
-  public int getPosition(Player player) {
+  public int getPosition(final UUID uniqueId) {
     int position = 1;
 
     for (QueuePlayer queuePlayer : internalQueue) {
-      if (queuePlayer.getUniqueId().equals(player.getUniqueId())) {
+      if (queuePlayer.getUniqueId().equals(uniqueId)) {
         return position;
       }
       position++;
@@ -218,20 +242,82 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
   }
 
   @Override
+  public QueueState getState() {
+    return state;
+  }
+
+  @Override
+  public void setState(QueueState state) {
+    if (this.state != state) {
+      this.state = state;
+      this.queueManager.getQueueCache().updateQueue(this);
+    }
+  }
+
+  @Override
   public void stop() {
     internalQueue.clear();
     CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
   }
 
-  @Override
+  @ApiStatus.Internal
   public Component calculateEta(long position) {
     long delayInSeconds = (long) server.getConfiguration().getQueue().getSendDelay() * position;
     return QueueTimeFormatter.format(Math.max(delayInSeconds, 0));
   }
 
-  @Override
-  public Component getActionBarComponent(QueuePlayer queuePlayer) {
-    return null;//todo
+  @ApiStatus.Internal
+  public Component createActionbarComponent(@NotNull QueuePlayer queuePlayer) {
+    int position = getPosition(queuePlayer.getUniqueId());
+    if (queuePlayer.isQueueBypass()) {
+      return Component.translatable("velocity.queue.player-status.bypass", NamedTextColor.YELLOW);
+    } else if (this.isFull() && !queuePlayer.isFullBypass()) {
+      return Component.translatable("velocity.queue.player-status.full", NamedTextColor.YELLOW)
+              .arguments(
+                      Argument.numeric("position", position),
+                      Argument.numeric("size", this.size()),
+                      Argument.string("server", this.getName()),
+                      Argument.component("eta", calculateEta(position))
+              );
+    } else if (queuePlayer.isWaitingForConnection()) {
+      return Component.translatable("velocity.queue.player-status.connecting", NamedTextColor.YELLOW)
+              .arguments(Argument.string("server", this.getName()));
+    } else if (isPaused()) {
+      return Component.translatable("velocity.queue.player-status.paused", NamedTextColor.YELLOW);
+    } else if (isOnline()) {
+      return Component.translatable("velocity.queue.player-status.online", NamedTextColor.YELLOW)
+              .arguments(
+                      Argument.numeric("position", position),
+                      Argument.numeric("size", this.size()),
+                      Argument.string("server", this.getName()),
+                      Argument.component("eta", calculateEta(position))
+              );
+    } else {
+      return Component.translatable("velocity.queue.player-status.offline", NamedTextColor.YELLOW)
+              .arguments(
+                      Argument.numeric("position", position),
+                      Argument.numeric("size", this.size()),
+                      Argument.string("server", this.getName())
+              );
+    }
+  }
+
+  @ApiStatus.Internal
+  public Component createListComponent() {
+    return Component.translatable("velocity.queue.command.listqueues.item")
+            .arguments(
+                    Argument.component("server",
+                            Component.text(backendInstance.getServerInfo().getName())
+                                    .hoverEvent(
+                                            Component.translatable("velocity.queue.command.listqueues.hover")
+                                                    .arguments(
+                                                            Argument.numeric("size", size()),
+                                                            Argument.string("paused", isPaused() ? "True" : "False"),
+                                                            Argument.string("online", isOnline() ? "True" : "False")
+                                                    ).asHoverEvent()
+                                    )
+                    )
+            );
   }
 
   /**
@@ -243,10 +329,6 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
    */
   protected void notifyMaxRetriesReached(final Player player) {
     // empty implementation, should be overridden by subclasses - memory, redis
-  }
-
-  public QueueState getState() {
-    return state;
   }
 
   public Deque<QueuePlayer> getQueue() {

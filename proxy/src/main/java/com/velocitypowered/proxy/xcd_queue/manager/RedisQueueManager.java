@@ -25,7 +25,8 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
 
   public RedisQueueManager(@NotNull VelocityServer server) {
     super(server);
-    this.queueCache = new RedisQueueCache();
+
+    this.queueCache = new RedisQueueCache(server);
     this.playerService = server.getRedis().getPlayerService();
   }
 

@@ -76,7 +76,7 @@ public class PlistCommand {
    * @return the command instance or {@code null} if disabled
    */
   public BrigadierCommand register(final boolean isPlistEnabled) {
-    if (!isPlistEnabled || !server.isRedis()) {
+    if (!isPlistEnabled || !server.isRedisEnabled()) {
       return null;
     }
 

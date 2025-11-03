@@ -111,16 +111,13 @@ public class HubCommand {
       }
 
       if (this.server.getConfiguration().getQueue().getNoQueueServers().contains(serverToTry.getServerInfo().getName())
-              || !server.isRedis()
-              || (server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.bypass"))) {
+              || !server.isRedisEnabled()
+              || (server.isQueueEnabled() && player.hasPermission("velocity.queue.bypass"))) {
         player.createConnectionRequest(serverToTry).connectWithIndication();
         return Command.SINGLE_SUCCESS;
       }
 
-      ((VelocityRegisteredServer) serverToTry).getQueueStatus().queue(player.getUniqueId(),
-          player.getQueuePriority(serverToTry.getServerInfo().getName()),
-          server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.full.bypass"),
-          server.getQueueManager().isQueueEnabled() && player.hasPermission("velocity.queue.bypass"));
+      ((VelocityRegisteredServer) serverToTry).getQueue().enqueue(player);
 
       return Command.SINGLE_SUCCESS;
     }

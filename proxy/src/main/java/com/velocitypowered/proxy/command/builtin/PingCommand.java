@@ -110,7 +110,7 @@ public class PingCommand {
               .arguments(Argument.numeric("ping", ping))
       );
     } else {
-      if (server.isRedis()) {
+      if (server.isRedisEnabled()) {
         if (!this.server.getRedis().getPlayerService().isPlayerOnline(username)) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
               .arguments(Argument.string("player", username)));

@@ -48,9 +48,8 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftVarintFrameDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.queue.QueueManagerRedisImpl;
-import com.velocitypowered.proxy.queue.ServerQueueStatus;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
-import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.xcd_queue.Queue;
+import com.velocitypowered.proxy.xcd_queue.manager.QueueManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -66,7 +65,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
@@ -161,7 +159,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    */
   @Override
   public long getTotalPlayerCount() {
-    if (this.server != null && this.server.isRedis()) {
+    if (this.server != null && this.server.isRedisEnabled()) {
       return this.server.getRedis().getPlayerService().getPlayerEntriesInServer(getServerInfo().getName()).size();
     } else {
       return getPlayersConnected().size();
@@ -179,7 +177,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    */
   @Override
   public List<PlayerInfo> getPlayerInfo() {
-    if (this.server == null || !this.server.isRedis()) {
+    if (this.server == null || !this.server.isRedisEnabled()) {
       List<PlayerInfo> info = new ArrayList<>();
       players.forEach((uuid, player) -> info.add(new PlayerInfo(player.getUsername(), player.getUniqueId())));
       return info;
@@ -390,7 +388,12 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    *
    * @return The queue status of the server
    */
-  public ServerQueueStatus getQueueStatus() {
-    return this.server.getQueueManager().getQueue(serverInfo.getName());
+  public Queue getQueue() {
+    final QueueManager<?> queueManager = requireNonNull(this.server).getQueueManager();
+    if (queueManager == null) {
+      throw new IllegalStateException("No QueueManager available on the server");
+    }
+
+    return queueManager.getQueueCache().getQueue(serverInfo.getName());
   }
 }

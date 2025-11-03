@@ -78,9 +78,7 @@ import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.util.FaviconSerializer;
 import com.velocitypowered.proxy.protocol.util.GameProfileSerializer;
-import com.velocitypowered.proxy.queue.QueueManagerNoRedisImpl;
 import com.velocitypowered.proxy.redis.RedisManagerImpl;
-import com.velocitypowered.proxy.redis.multiproxy.MultiProxyHandler;
 import com.velocitypowered.proxy.scheduler.VelocityScheduler;
 import com.velocitypowered.proxy.server.ServerMap;
 import com.velocitypowered.proxy.util.AddressUtil;
@@ -89,7 +87,6 @@ import com.velocitypowered.proxy.util.ResourceUtils;
 import com.velocitypowered.proxy.util.VelocityChannelRegistrar;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiter;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiters;
-import com.velocitypowered.proxy.xcd_queue.RedisQueue;
 import com.velocitypowered.proxy.xcd_queue.manager.MemoryQueueManager;
 import com.velocitypowered.proxy.xcd_queue.manager.QueueManager;
 import com.velocitypowered.proxy.xcd_queue.manager.RedisQueueManager;
@@ -329,16 +326,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private final Key translationRegistryKey = Key.key("velocity", "translations");
 
   /**
-   * Manages Redis pub/sub channels and state sharing across multiple proxy instances.
-   */
-  private RedisManagerImpl redisManager;
-
-  /**
-   * Tracks cross-proxy player state and facilitates proxy-to-proxy player movement.
-   */
-  private MultiProxyHandler multiProxyHandler;
-
-  /**
    * Coordinates server queues and handles queue assignment logic.
    */
   private com.velocitypowered.proxy.xcd_queue.manager.QueueManager<?> queueManager;
@@ -365,25 +352,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   public KeyPair getServerKeyPair() {
     return serverKeyPair;
-  }
-
-  /**
-   * Returns the Redis manager for this proxy, used for multiproxy communication.
-   *
-   * @return the {@link RedisManagerImpl}, or {@code null} if not initialized
-   */
-  public RedisManagerImpl getRedisManager() {
-    return redisManager;
-  }
-
-  /**
-   * Returns the multiproxy handler managing Redis-based cross-proxy state.
-   *
-   * @return the multiproxy handler, or {@code null} if not initialized
-   */
-  @Deprecated
-  public MultiProxyHandler getMultiProxyHandler() {
-    return multiProxyHandler;
   }
 
   /**
@@ -906,7 +874,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     ipAttemptLimiter = Ratelimiters.createWithMilliseconds(newConfiguration.getLoginRatelimit());
     this.configuration = newConfiguration;
     eventManager.fireAndForget(new ProxyReloadEvent());
-    queueManager.reloadConfig();
+    queueManager.reload();
 
     if (!this.getConfiguration().getServerLinks().isEmpty()) {
       for (Player player : this.getAllPlayers()) {
@@ -964,7 +932,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void registerCommands() {
-
     if (configuration.isAlertEnabled() && !commandManager.hasCommand("alert")) {
       List<String> aliases = configuration.getCommandAliases().getOrDefault("alert", List.of());
       Command command = new AlertCommand(this).register(true);
@@ -1224,10 +1191,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       // done first to refuse new connections
       cm.shutdown();
 
-//      if (multiProxyHandler != null) {
-//        multiProxyHandler.shutdown();
-//      }
-
       try {
         eventManager.fire(new ProxyPreShutdownEvent())
             .toCompletableFuture()
@@ -1243,7 +1206,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
       ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
 
-      if (this.getQueueManager().isQueueEnabled()) {
+      if (this.isQueueEnabled()) {
         players.forEach(p -> this.getQueueManager().removePlayerEntirely(p));
       }
 
@@ -1376,10 +1339,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private ProxyAddress getProxyAddressToUse() {
+    if (!this.isRedisEnabled()) return null;
+
     final String filter = getConfiguration().getDynamicProxyFilter();
     List<ProxyAddress> addresses = new ArrayList<>(getConfiguration().getProxyAddresses().stream().toList());
 
-    if (isRedis()) {
+    if (isRedisEnabled()) {
       addresses.removeIf(address -> getProxyId().equalsIgnoreCase(address.proxyId()));
     }
 
@@ -1672,7 +1637,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   @Override
   public int getPlayerCount() {
-    if (this.isRedis()) {
+    if (this.isRedisEnabled()) {
       return this.redis.getPlayerService().getTotalPlayerCount();
     } else {
       return connectionsByUuid.size();
@@ -1858,11 +1823,11 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return logger;
   }
 
-  public boolean isQueue() {
+  public boolean isQueueEnabled() {
     return this.configuration.getQueue().isEnabled();
   }
 
-  public boolean isRedis() {
+  public boolean isRedisEnabled() {
     return this.configuration.getRedis().isEnabled();
   }
 

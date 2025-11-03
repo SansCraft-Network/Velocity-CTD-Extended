@@ -18,12 +18,10 @@
 package com.velocitypowered.proxy.queue;
 
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.redis.multiproxy.RedisQueueSendRequest;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -75,11 +73,11 @@ public class ServerQueueEntry { //TODO QueuePlayer
   /**
    * Constructs a new {@link ServerQueueEntry} instance.
    *
-   * @param player the UUID of the player in the queue
-   * @param target the target server the player is queueing for
-   * @param proxy the proxy instance
-   * @param priority the queue priority for the player
-   * @param fullBypass whether the player bypasses full server limits
+   * @param player      the UUID of the player in the queue
+   * @param target      the target server the player is queueing for
+   * @param proxy       the proxy instance
+   * @param priority    the queue priority for the player
+   * @param fullBypass  whether the player bypasses full server limits
    * @param queueBypass whether the player bypasses the queue entirely
    */
   public ServerQueueEntry(final UUID player, final VelocityRegisteredServer target,
@@ -144,11 +142,11 @@ public class ServerQueueEntry { //TODO QueuePlayer
   public void send() {
     setWaitingForConnection(true);
 
-    if (proxy.getMultiProxyHandler().isRedisEnabled()) {
-      proxy.getRedisManager().send(new RedisQueueSendRequest(player, target.getServerInfo().getName()));
-    } else {
-      handleSending();
-    }
+//    if (proxy.getMultiProxyHandler().isRedisEnabled()) {
+//      proxy.getRedisManager().send(new RedisQueueSendRequest(player, target.getServerInfo().getName()));
+//    } else {
+//      handleSending();
+//    }
   }
 
   /**
@@ -159,7 +157,7 @@ public class ServerQueueEntry { //TODO QueuePlayer
       RegisteredServer foundServer = this.proxy.getServer(target.getServerInfo().getName()).orElse(null);
 
       if (foundServer == null) {
-        this.proxy.getQueueManager().getQueue(getTarget().getServerInfo().getName()).dequeue(p.getUniqueId(), false);
+//        this.proxy.getQueueManager().getQueue(getTarget().getServerInfo().getName()).dequeue(p.getUniqueId(), false);
         return;
       }
 
@@ -179,19 +177,19 @@ public class ServerQueueEntry { //TODO QueuePlayer
         }
 
         if (success) {
-          proxy.getQueueManager().getQueue(target.getServerInfo().getName()).dequeue(player, false);
+//          proxy.getQueueManager().getQueue(target.getServerInfo().getName()).dequeue(player, false);
         } else {
           updateStatus();
 
           if (getConnectionAttempts() == this.proxy.getConfiguration().getQueue().getMaxSendRetries()) {
-            proxy.getQueueManager().getQueue(target.getServerInfo().getName()).dequeue(player, true);
+//            proxy.getQueueManager().getQueue(target.getServerInfo().getName()).dequeue(player, true);
           }
         }
       }).exceptionally(ex -> {
         updateStatus();
 
         if (getConnectionAttempts() == this.proxy.getConfiguration().getQueue().getMaxSendRetries()) {
-          proxy.getQueueManager().getQueue(target.getServerInfo().getName()).dequeue(player, true);
+//          proxy.getQueueManager().getQueue(target.getServerInfo().getName()).dequeue(player, true);
         }
 
         return null;
@@ -259,7 +257,7 @@ public class ServerQueueEntry { //TODO QueuePlayer
   public void updateStatus() {
     this.waitingForConnection = false;
     this.connectionAttempts++;
-    this.proxy.getRedisManager().addOrUpdateEntry(this);
+//    this.proxy.getRedisManager().addOrUpdateEntry(this);
   }
 
   /**
@@ -295,22 +293,22 @@ public class ServerQueueEntry { //TODO QueuePlayer
    * @return The username of the player, or null if player not found
    */
   public String getUsername() {
-    if (this.proxy.getMultiProxyHandler().isRedisEnabled()) {
-      RemotePlayerInfo info = this.proxy.getMultiProxyHandler().getPlayerInfo(player);
-      if (info == null) {
-        this.proxy.getQueueManager().getQueue(this.target.getServerInfo().getName()).dequeue(player, false);
-        return null;
-      }
-
-      return info.getUsername();
-    } else {
-      Player p = this.proxy.getPlayer(player).orElse(null);
-      if (p == null) {
-        this.proxy.getQueueManager().getQueue(this.target.getServerInfo().getName()).dequeue(player, false);
-        return null;
-      }
-
-      return p.getUsername();
-    }
+//    if (this.proxy.getMultiProxyHandler().isRedisEnabled()) {
+//      RemotePlayerInfo info = this.proxy.getMultiProxyHandler().getPlayerInfo(player);
+//      if (info == null) {
+//        this.proxy.getQueueManager().getQueue(this.target.getServerInfo().getName()).dequeue(player, false);
+//        return null;
+//      }
+//
+//      return info.getUsername();
+//    } else {
+//      Player p = this.proxy.getPlayer(player).orElse(null);
+//      if (p == null) {
+//        this.proxy.getQueueManager().getQueue(this.target.getServerInfo().getName()).dequeue(player, false);
+//        return null;
+//      }
+//
+//      return p.getUsername();
+    return "";
   }
 }

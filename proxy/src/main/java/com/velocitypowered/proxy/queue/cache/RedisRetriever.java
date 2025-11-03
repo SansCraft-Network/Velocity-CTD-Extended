@@ -49,7 +49,7 @@ public class RedisRetriever implements QueueCacheRetriever {
    */
   public RedisRetriever(final VelocityServer proxy) {
     this.proxy = proxy;
-    this.redisManager = proxy.getRedisManager();
+    this.redisManager = new RedisManagerImpl(proxy);
   }
 
   /**

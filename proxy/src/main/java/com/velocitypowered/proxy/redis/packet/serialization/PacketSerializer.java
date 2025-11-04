@@ -22,10 +22,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
+import java.lang.reflect.Modifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.lang.reflect.Modifier;
 
 /**
  * Represents a utility class for serializing {@link RedisPacket} objects to JSON strings using {@link Gson}

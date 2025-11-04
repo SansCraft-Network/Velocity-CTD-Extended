@@ -19,22 +19,37 @@ package com.velocitypowered.proxy.queue;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.queue.redis.depot.QueueEntry;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityMessage;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
+ * Represents the redis implementation of {@link Queue}
+ *
  * @author Elmar Blume - 29/10/2025
  */
 public final class RedisQueue extends AbstractQueue {
 
+  /**
+   * Constructs a new {@link RedisQueue}
+   *
+   * @param server the proxy instance
+   * @param backendInstance the backend instance server
+   */
   public RedisQueue(VelocityServer server, VelocityRegisteredServer backendInstance) {
     super(server, backendInstance);
   }
 
+  /**
+   * Constructs a new {@link RedisQueue}
+   *
+   * @param server the proxy instance
+   * @param backendInstance the backend instance server
+   * @param queueEntry the queue entry
+   */
   public RedisQueue(VelocityServer server, VelocityRegisteredServer backendInstance, QueueEntry queueEntry) {
     super(server, backendInstance, queueEntry);
   }

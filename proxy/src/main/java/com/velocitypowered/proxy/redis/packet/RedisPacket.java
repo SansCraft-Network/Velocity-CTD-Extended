@@ -18,10 +18,9 @@
 package com.velocitypowered.proxy.redis.packet;
 
 
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
 
 /**
  * Represents a packet that can be sent over redis

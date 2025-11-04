@@ -19,12 +19,11 @@ package com.velocitypowered.proxy.redis.packet;
 
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
+import java.util.Objects;
+import java.util.UUID;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Abstraction of {@link RedisPacket}

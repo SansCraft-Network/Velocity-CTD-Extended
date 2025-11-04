@@ -20,21 +20,22 @@ package com.velocitypowered.proxy.queue.cache;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.RedisQueue;
+import com.velocitypowered.proxy.queue.exception.QueueCacheException;
 import com.velocitypowered.proxy.queue.redis.depot.QueueDepotService;
 import com.velocitypowered.proxy.queue.redis.depot.QueueEntry;
-import com.velocitypowered.proxy.queue.exception.QueueCacheException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents the redis cache implementation of {@link QueueCache} for a {@link Queue}
+ *
  * @author Elmar Blume - 03/04/2025
  */
 public final class RedisQueueCache implements QueueCache {
@@ -42,13 +43,18 @@ public final class RedisQueueCache implements QueueCache {
   private final VelocityServer server;
   private final QueueDepotService service;
 
+  /**
+   * Constructs a new {@link RedisQueueCache}
+   *
+   * @param server the proxy instance
+   */
   public RedisQueueCache(final @NotNull VelocityServer server) {
     this.server = server;
     this.service = server.getRedis().getQueueService();
   }
 
   @Override
-  public Queue getQueue(@NotNull String serverName) {
+  public @NotNull Queue getQueue(@NotNull String serverName) {
     final VelocityRegisteredServer backendInstance = (VelocityRegisteredServer) this.server.getServer(serverName)
             .orElseThrow(() -> new QueueCacheException(serverName));
 

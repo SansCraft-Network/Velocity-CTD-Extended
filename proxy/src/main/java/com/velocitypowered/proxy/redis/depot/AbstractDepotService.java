@@ -18,21 +18,27 @@
 package com.velocitypowered.proxy.redis.depot;
 
 import com.velocitypowered.proxy.redis.provider.RedisProvider;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Predicate;
-
 /**
  * @author Elmar Blume - 18/05/2025
  */
-public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K, V>> implements DepotService<K, V> {
+public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K, V>>
+        implements DepotService<K, V> {
 
   protected final Depot<K, V> depot;
 
+  /**
+   * Constructs a new {@link AbstractDepotService}
+   *
+   * @param valueClass the class type of the value in the depot
+   * @param provider the redis provider implementation instance
+   */
   public AbstractDepotService(Class<V> valueClass, @NotNull RedisProvider provider) {
     this.depot = provider.createDepot(valueClass);
   }

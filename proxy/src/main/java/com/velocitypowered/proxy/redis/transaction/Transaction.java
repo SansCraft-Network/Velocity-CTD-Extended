@@ -20,15 +20,17 @@ package com.velocitypowered.proxy.redis.transaction;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
 import com.velocitypowered.proxy.redis.provider.RedisProvider;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-
 /**
+ * Represents a transaction process that has a {@link T sent-packet} and a {@link R reply-packet}. The transaction's
+ * behaviour can be configured using the {@link Transaction#onTimeout(Consumer)} and {@link Transaction#onComplete(Consumer)}
+ *
  * @author Elmar Blume - 12/05/2025
  */
 public class Transaction<T extends RedisPacket, R extends RedisPacket> {

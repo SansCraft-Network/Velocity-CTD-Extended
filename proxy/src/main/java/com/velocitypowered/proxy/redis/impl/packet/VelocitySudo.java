@@ -19,7 +19,6 @@ package com.velocitypowered.proxy.redis.impl.packet;
 
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
 import com.velocitypowered.proxy.redis.packet.typed.UUIDPacket;
-
 import java.util.UUID;
 
 /**

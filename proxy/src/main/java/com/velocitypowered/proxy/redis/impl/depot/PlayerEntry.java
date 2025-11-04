@@ -20,10 +20,9 @@ package com.velocitypowered.proxy.redis.impl.depot;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.proxy.redis.depot.DepotEntry;
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.UUID;
 
 /**
  * @author Elmar Blume - 18/05/2025

@@ -24,15 +24,15 @@ import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerDepotService;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityActionBar;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityMessage;
-import net.kyori.adventure.text.Component;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import net.kyori.adventure.text.Component;
+import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents the redis implementation of {@link QueueManager} which uses a {@link RedisQueueCache}
  *
  * @author Elmar Blume - 02/04/2025
  */
@@ -41,6 +41,11 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   private final RedisQueueCache queueCache;
   private final PlayerDepotService playerService;
 
+  /**
+   * Constructs a new {@link RedisQueueManager}
+   *
+   * @param server the proxy instance
+   */
   public RedisQueueManager(@NotNull VelocityServer server) {
     super(server);
 

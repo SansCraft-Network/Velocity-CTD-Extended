@@ -24,9 +24,8 @@ import com.velocitypowered.proxy.redis.packet.RedisPacket;
 import com.velocitypowered.proxy.redis.registration.RouteRegistration;
 import com.velocitypowered.proxy.redis.transaction.Transaction;
 import com.velocitypowered.proxy.redis.transaction.TransactionHandler;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.concurrent.TimeUnit;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Elmar Blume - 08/05/2025

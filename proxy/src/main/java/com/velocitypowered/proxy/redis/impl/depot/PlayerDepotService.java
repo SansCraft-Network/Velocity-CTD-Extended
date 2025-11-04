@@ -24,14 +24,13 @@ import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.depot.AbstractDepotService;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityKick;
+import java.time.Duration;
+import java.util.List;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-
-import java.time.Duration;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Represents an extension of the {@link AbstractDepotService} for the player depot, including

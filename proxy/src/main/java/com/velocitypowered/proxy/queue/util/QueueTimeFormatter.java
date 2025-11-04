@@ -26,6 +26,13 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
  */
 public class QueueTimeFormatter {
 
+  /**
+   * Formats a time value as a component.
+   *
+   * @param name the name of the time unit
+   * @param value the value of the time unit
+   * @return the time formatted as a component
+   */
   private static Component formatComponent(final String name, final long value) {
     String key = "velocity.queue.time." + name + (value == 1 ? "" : "s");
     return Component.translatable(key).arguments(Argument.numeric("value", value));

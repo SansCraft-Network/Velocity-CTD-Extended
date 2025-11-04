@@ -18,12 +18,11 @@
 package com.velocitypowered.proxy.redis.packet.typed;
 
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Elmar Blume - 12/05/2025

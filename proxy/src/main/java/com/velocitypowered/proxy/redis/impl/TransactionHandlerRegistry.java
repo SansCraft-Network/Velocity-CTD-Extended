@@ -32,12 +32,11 @@ import com.velocitypowered.proxy.redis.packet.RedisPacket;
 import com.velocitypowered.proxy.redis.packet.typed.ComponentPacket;
 import com.velocitypowered.proxy.redis.transaction.Transaction;
 import com.velocitypowered.proxy.redis.transaction.TransactionHandler;
+import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
-
-import java.net.InetSocketAddress;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Represents a registry that holds all {@link TransactionHandler} for the VelocityRedis module. An

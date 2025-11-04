@@ -24,20 +24,19 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.cache.QueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.queue.model.ServerStatus;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.translation.Argument;
-import org.jetbrains.annotations.NotNull;
-
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.translation.Argument;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an abstraction of {@link QueueManager} which is used in
@@ -81,9 +80,6 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
   public void queue(final Player player, final VelocityRegisteredServer targetBackend) {
     final String targetBackendName = targetBackend.getServerInfo().getName();
     final Queue queue = this.getQueueCache().getQueue(targetBackendName);
-    if (queue == null) {
-      throw new IllegalArgumentException("No queue found for target backend: " + targetBackendName);
-    }
 
     final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
     if (!config.isEnabled() || player.hasPermission("velocity.queue.bypass")) {
@@ -149,6 +145,19 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
     }
   }
 
+  /**
+   * Reschedules various tasks related to the queue system, ensuring they run
+   * only if the current proxy is designated as the master proxy.
+   *
+   * <ul>
+   *   <li>Schedules the task responsible for transferring players.</li>
+   *   <li>Schedules the task handling backend server handshakes.</li>
+   *   <li>Schedules the task for broadcasting action bar messages to players in queues.</li>
+   * </ul>
+   *
+   * If the current proxy is not the master proxy, the method returns without performing
+   * any action.
+   */
   private void rescheduleTasks() {
     // Only schedule tasks on the master proxy
     if (!this.isMasterProxy()) {
@@ -160,6 +169,9 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
     this.scheduleActionBarTask();
   }
 
+  /**
+   * Schedules the task responsible for transferring players.
+   */
   private void scheduleTransferTask() {
     if (this.transferTask != null) {
       this.transferTask.cancel();
@@ -173,6 +185,9 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
 
   }
 
+  /**
+   * Schedules the task responsible for handling backend server handshakes.
+   */
   private void scheduleBackendHandshakeTask() {
     if (this.backendHandshakeTask != null) {
       this.backendHandshakeTask.cancel();
@@ -186,6 +201,9 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
             .schedule();
   }
 
+  /**
+   * Schedules the task responsible for broadcasting action bar messages to players in queues.
+   */
   private void scheduleActionBarTask() {
     if (this.actionBarTask != null) {
       this.actionBarTask.cancel();
@@ -203,6 +221,24 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
             .schedule();
   }
 
+  /**
+   * Handles the logic for transferring players from active queues if the current proxy
+   * is designated as the master proxy. The method processes up to a maximum of 10 queues
+   * at a time to avoid overwhelming the system.
+   * <p>
+   * The transfer process adheres to the following conditions:
+   * <p>
+   * - Only queues in the {@link QueueState#ACTIVE} state are considered.
+   * - Only queues where the backend server status is {@link ServerStatus#ONLINE} are processed.
+   * - Queues with a size greater than 0 are eligible for processing.
+   * <p>
+   * For each eligible queue:
+   * - The first {@link QueuePlayer} in the queue is retrieved.
+   * - The player will not be transferred if the queue is full, unless the player has a full bypass flag.
+   * - If the conditions are met, the player is transferred using the {@code pollFirst} method.
+   * <p>
+   * If the current proxy is not a master proxy, the method exits without performing any operation.
+   */
   private void transfer() {
     if (!this.isMasterProxy()) {
       return;
@@ -225,6 +261,29 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
             });
   }
 
+  /**
+   * Pings backend servers to determine their availability and updates the status of
+   * associated queues accordingly. This method processes only a limited number of servers
+   * to avoid overwhelming the system.
+   * <p>
+   * The method performs the following operations:
+   * <p>
+   * - Retrieves the list of queues from the queue cache and processes up to 5 of them.
+   * - For each queue, attempts to retrieve the associated registered server.
+   * - Uses asynchronous ping for each server with a timeout of 3 seconds.
+   * - Updates the queue status based on the ping result:
+   *   - If the server is unreachable (i.e., throws an exception), the queue status is set to {@code OFFLINE}.
+   *   - If the server becomes reachable after being offline, the queue status is set to {@code WAITING}
+   *     and the last online time is recorded.
+   *   - If the server remains reachable and contains queue players with a bypass flag, the status is set
+   *     to {@code ONLINE}.
+   *   - If the {@code WAITING} status persists and the configured delay threshold is exceeded, the queue
+   *     status changes to {@code ONLINE}.
+   * - For queues that are not {@code ONLINE} but have players configured as online, those players with bypass
+   *   flags are transferred out of the queue.
+   * <p>
+   * The method leverages the asynchronous ping mechanism and timeout handling to avoid blocking operations.
+   */
   private void pingBackends() {
     // Process the first 5 servers to avoid overwhelming the system
     this.getQueueCache().getQueues().stream()

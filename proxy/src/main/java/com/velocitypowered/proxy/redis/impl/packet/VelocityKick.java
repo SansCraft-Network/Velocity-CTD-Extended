@@ -19,9 +19,8 @@ package com.velocitypowered.proxy.redis.impl.packet;
 
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
 import com.velocitypowered.proxy.redis.packet.typed.ComponentPacket;
-import net.kyori.adventure.text.Component;
-
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
 
 /**
  * @author Elmar Blume - 06/10/2025

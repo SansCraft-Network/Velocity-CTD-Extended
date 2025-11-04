@@ -19,22 +19,48 @@ package com.velocitypowered.proxy.queue.cache;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.queue.Queue;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.Collection;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a cache that stores the queue data
+ * Represents a cache that stores the queue data, either in memory or in a Redis database.
  *
  * @author Elmar Blume - 03/04/2025
+ * @see MemoryQueueCache
+ * @see RedisQueueCache
  */
 public sealed interface QueueCache permits MemoryQueueCache, RedisQueueCache {
 
+  /**
+   * Retrieves the queue for the given server name. This will create a new queue if it doesn't exist.
+   *
+   * @param serverName the server name to retrieve the queue for
+   * @return the queue for the given server name, or a new queue if it doesn't exist
+   */
+  @NotNull
   Queue getQueue(@NotNull String serverName);
 
+  /**
+   * Retrieves the queue for the given player.
+   *
+   * @param player the player to retrieve the queue for
+   * @return the queue for the given player, or {@code null} if the player is not queued
+   */
+  @Nullable
   Queue getQueue(@NotNull Player player);
 
+  /**
+   * Retrieves all queues stored in the cache.
+   *
+   * @return a collection of all queues in the cache
+   */
   Collection<Queue> getQueues();
 
+  /**
+   * Updates the queue in the cache.
+   *
+   * @param queue the queue to update
+   */
   void updateQueue(@NotNull Queue queue);
 }

@@ -24,16 +24,20 @@ import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
-import com.velocitypowered.proxy.redis.impl.packet.*;
+import com.velocitypowered.proxy.redis.impl.packet.VelocityActionBar;
+import com.velocitypowered.proxy.redis.impl.packet.VelocityAlert;
+import com.velocitypowered.proxy.redis.impl.packet.VelocityKick;
+import com.velocitypowered.proxy.redis.impl.packet.VelocityMessage;
+import com.velocitypowered.proxy.redis.impl.packet.VelocitySudo;
+import com.velocitypowered.proxy.redis.impl.packet.VelocitySwitchServer;
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
 import com.velocitypowered.proxy.redis.registration.ConsumerRouteRegistration;
 import com.velocitypowered.proxy.redis.registration.RouteRegistration;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 /**
  * Represents a registry that holds all {@link RouteRegistration} for the VelocityRedis module. An
@@ -130,10 +134,6 @@ public enum RouteRegistry {
     }
 
     final Queue queue = server.getQueueManager().getQueueCache().getQueue(packet.getQueueName());
-    if (queue == null) {
-      throw new IllegalArgumentException("Queue not found while attempting to queue player. '" + packet.getQueueName() + "'");
-    }
-
     final QueuePlayer queuePlayer = queue.getQueuePlayer(packet.getPayload());
     if (queuePlayer == null) {
       return;

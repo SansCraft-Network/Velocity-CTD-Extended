@@ -22,9 +22,8 @@ import com.velocitypowered.proxy.redis.impl.PacketBehaviour;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityRemote;
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
 import com.velocitypowered.proxy.redis.packet.typed.ComponentPacket;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.UUID;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Elmar Blume - 09/05/2025

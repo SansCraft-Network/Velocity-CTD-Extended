@@ -20,10 +20,9 @@ package com.velocitypowered.proxy.redis.impl.packet;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
 import com.velocitypowered.proxy.redis.packet.typed.ComponentPacket;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.UUID;
 
 /**
  * @author Elmar Blume - 09/05/2025

@@ -19,9 +19,8 @@ package com.velocitypowered.proxy.redis.impl.depot;
 
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.depot.AbstractDepotService;
-import org.jetbrains.annotations.NotNull;
-
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an extension of the {@link AbstractDepotService} for the proxy depot, including

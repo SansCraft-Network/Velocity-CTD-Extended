@@ -19,22 +19,24 @@ package com.velocitypowered.proxy.queue.cache;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.queue.MemoryQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.exception.QueueCacheException;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 /**
+ * Represents the in-memory cache implementation of {@link QueueCache} for a {@link Queue}
+ *
  * @author Elmar Blume - 03/04/2025
  */
 public final class MemoryQueueCache implements QueueCache {
 
   private final VelocityServer server;
-  private final Map<String, Queue> queues;
+  private final ConcurrentHashMap<String, Queue> queues;
 
   /**
    * Constructs a new {@link MemoryQueueCache}
@@ -47,7 +49,7 @@ public final class MemoryQueueCache implements QueueCache {
   }
 
   @Override
-  public Queue getQueue(@NotNull String serverName) {
+  public @NotNull Queue getQueue(@NotNull String serverName) {
     final VelocityRegisteredServer backendInstance = (VelocityRegisteredServer) this.server.getServer(serverName)
             .orElseThrow(() -> new QueueCacheException(serverName));
     return this.queues.computeIfAbsent(serverName, $ -> new MemoryQueue(server, backendInstance));

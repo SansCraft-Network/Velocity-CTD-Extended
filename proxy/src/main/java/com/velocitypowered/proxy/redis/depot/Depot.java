@@ -17,10 +17,9 @@
 
 package com.velocitypowered.proxy.redis.depot;
 
+import java.util.Collection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * A depot represents a map-like structure that stores a certain type of {@link V values}, indexed by a {@link String key} within

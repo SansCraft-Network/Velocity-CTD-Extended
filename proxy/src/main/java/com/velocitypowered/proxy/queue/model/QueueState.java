@@ -26,9 +26,27 @@ import com.velocitypowered.proxy.queue.AbstractQueue;
  */
 public enum QueueState {
 
+  /**
+   * Represents a state in which the queue is not active and does not process elements.
+   */
   INACTIVE,
+
+  /**
+   * Represents the operational state of the queue indicating it is currently active
+   * and processing tasks or requests.
+   */
   ACTIVE,
+
+  /**
+   * Indicates that the queue is in a full state, meaning it cannot accept any additional elements.
+   */
   FULL,
+
+  /**
+   * Indicates that the queue is in a paused state.
+   * In this state, the queue temporarily halts its operations
+   * and does not process new elements until it is resumed.
+   */
   PAUSED
 
 }

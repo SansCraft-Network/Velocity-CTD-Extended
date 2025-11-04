@@ -17,15 +17,15 @@
 
 package com.velocitypowered.proxy.redis.depot;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.function.Predicate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.function.Predicate;
-
 /**
+ * Represents a service
  * @author Elmar Blume - 18/05/2025
  */
 public sealed interface DepotService<K, V extends DepotEntry<K, V>> permits AbstractDepotService {

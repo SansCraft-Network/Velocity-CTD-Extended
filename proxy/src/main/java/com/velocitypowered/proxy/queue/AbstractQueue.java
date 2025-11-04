@@ -20,13 +20,23 @@ package com.velocitypowered.proxy.queue;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.queue.util.QueueTimeFormatter;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
-import com.velocitypowered.proxy.queue.redis.depot.QueueEntry;
 import com.velocitypowered.proxy.queue.manager.QueueManager;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.queue.model.ServerStatus;
+import com.velocitypowered.proxy.queue.redis.depot.QueueEntry;
+import com.velocitypowered.proxy.queue.util.QueueTimeFormatter;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Deque;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -35,18 +45,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
-
 /**
- * Represents a queue of a {@link VelocityRegisteredServer}
+ * Represents a abstract queue of a {@link VelocityRegisteredServer}
  *
  * @author Elmar Blume - 03/04/2025
  */
-public sealed abstract class AbstractQueue implements Queue permits MemoryQueue, RedisQueue {
+public sealed abstract class AbstractQueue implements Queue
+    permits MemoryQueue, RedisQueue {
 
   protected final VelocityServer server;
   private final QueueManager<?> queueManager;
@@ -126,6 +131,12 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
     }
   }
 
+  /**
+   * Inserts a {@link QueuePlayer} at the specified position in the queue.
+   *
+   * @param queuePlayer the queue player to insert
+   * @param position the position to insert the queue player at
+   */
   private void insertAt(final QueuePlayer queuePlayer, final int position) {
     // For small queues, use the existing approach
     if (internalQueue.size() < 100) {
@@ -285,7 +296,7 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
   }
 
   @Override
-  public void stop() {
+  public void clear() {
     internalQueue.clear();
     CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
   }
@@ -359,9 +370,5 @@ public sealed abstract class AbstractQueue implements Queue permits MemoryQueue,
    */
   protected void notifyMaxRetriesReached(final Player player) {
     // empty implementation, should be overridden by subclasses - memory, redis
-  }
-
-  public Deque<QueuePlayer> getQueue() {
-    return internalQueue;
   }
 }

@@ -18,10 +18,9 @@
 package com.velocitypowered.proxy.redis.registration;
 
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
+import java.util.function.Consumer;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Consumer;
 
 /**
  * Represents a route registration for a {@link RedisPacket}, implemented through

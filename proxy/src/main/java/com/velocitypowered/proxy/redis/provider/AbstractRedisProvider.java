@@ -25,14 +25,13 @@ import com.velocitypowered.proxy.redis.registration.RouteRegistration;
 import com.velocitypowered.proxy.redis.transaction.Transaction;
 import com.velocitypowered.proxy.redis.transaction.TransactionHandler;
 import com.velocitypowered.proxy.redis.transaction.cache.TransactionCache;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Represents an abstract {@link RedisProvider} used to provide a common interface for all redis providers

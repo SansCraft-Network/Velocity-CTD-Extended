@@ -17,10 +17,9 @@
 
 package com.velocitypowered.proxy.redis.depot;
 
+import java.util.Objects;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.ApiStatus;
-
-import java.util.Objects;
 
 /**
  * @author Elmar Blume - 18/05/2025

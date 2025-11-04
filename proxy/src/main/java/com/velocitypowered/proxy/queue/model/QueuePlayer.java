@@ -21,15 +21,14 @@ import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player in a {@link AbstractQueue}
@@ -49,6 +48,13 @@ public final class QueuePlayer {
 
   private transient Player player;
 
+  /**
+   * Creates a new {@link QueuePlayer}
+   *
+   * @param server the proxy instance
+   * @param player the player instance
+   * @param queue  the queue instance
+   */
   public QueuePlayer(final VelocityServer server, final Player player, final Queue queue) {
     this.server = server;
     this.player = player;
@@ -62,6 +68,16 @@ public final class QueuePlayer {
     this.queueBypass = player.hasPermission("velocity.queue.bypass");
   }
 
+  /**
+   * Initiates the transfer process for the player represented by this {@code QueuePlayer} instance.
+   * <p>
+   * If Redis support is enabled in the server configuration, the transfer is handled by publishing
+   * a {@code VelocityQueueTransfer} packet. Otherwise, a direct transfer process is
+   * initiated by calling {@code handleTransfer}.
+   * <p>
+   * During the transfer process, the player's state is marked as {@code waitingForConnection},
+   * preventing potential conflicts from multiple transfer attempts.
+   */
   public void transfer() {
     this.waitingForConnection = true;
 
@@ -73,6 +89,9 @@ public final class QueuePlayer {
     }
   }
 
+  /**
+   * Handles the transfer process for a {@link QueuePlayer} to the target server.
+   */
   @ApiStatus.Internal
   public void handleTransfer() {
     this.server.getPlayer(this.getUniqueId()).ifPresent(player -> {
@@ -124,6 +143,11 @@ public final class QueuePlayer {
     });
   }
 
+  /**
+   * Copies the state and properties from the provided {@code QueuePlayer} instance to this instance.
+   *
+   * @param other the {@code QueuePlayer} instance from which to copy the properties; must not be null
+   */
   public void copyFrom(@NotNull QueuePlayer other) {
     this.priority = other.priority;
     this.connectionAttempts = other.connectionAttempts;
@@ -132,6 +156,9 @@ public final class QueuePlayer {
     this.queueBypass = other.queueBypass;
   }
 
+  /**
+   * Updates the properties of this {@code QueuePlayer} instance based on the current state.
+   */
   private void updateProperties() {
     this.waitingForConnection = false;
     this.connectionAttempts++;
@@ -151,38 +178,83 @@ public final class QueuePlayer {
     }
   }
 
+  /**
+   * Retrieves the name of the queue associated with this {@code QueuePlayer} instance.
+   *
+   * @return the name of the queue
+   */
   public String getQueueName() {
     return this.queue.getName();
   }
 
+  /**
+   * Retrieves the username of the player represented by this {@code QueuePlayer} instance.
+   *
+   * @return the username of the player
+   */
   public String getUsername() {
     return username;
   }
 
+  /**
+   * Retrieves the player object associated with this {@code QueuePlayer} instance.
+   *
+   * @return the player object
+   */
   public Player getPlayer() {
     return player;
   }
 
+  /**
+   * Retrieves the unique identifier of the player represented by this {@code QueuePlayer} instance.
+   *
+   * @return the unique identifier of the player
+   */
   public UUID getUniqueId() {
     return this.player.getUniqueId();
   }
 
+  /**
+   * Retrieves the priority of the player represented by this {@code QueuePlayer} instance.
+   *
+   * @return the priority of the player
+   */
   public int getPriority() {
     return priority;
   }
 
+  /**
+   * Checks if the player has bypassed the queue.
+   *
+   * @return true if the player has bypassed the queue, false otherwise
+   */
   public boolean isQueueBypass() {
     return queueBypass;
   }
 
+  /**
+   * Checks if the player has bypassed the server's full capacity.
+   *
+   * @return true if the player has bypassed the server's full capacity, false otherwise
+   */
   public boolean isFullBypass() {
     return fullBypass;
   }
 
+  /**
+   * Checks if the player is currently waiting for a connection.
+   *
+   * @return true if the player is waiting for a connection, false otherwise
+   */
   public boolean isWaitingForConnection() {
     return waitingForConnection;
   }
 
+  /**
+   * Retrieves the number of connection attempts made by the player.
+   *
+   * @return the number of connection attempts
+   */
   public int getConnectionAttempts() {
     return connectionAttempts;
   }

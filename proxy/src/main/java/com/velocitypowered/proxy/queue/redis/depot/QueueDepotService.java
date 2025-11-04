@@ -21,14 +21,22 @@ import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.depot.AbstractDepotService;
+import java.util.Optional;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a depot service for managing queue entries.
+ *
  * @author Elmar Blume - 10/10/2025
  */
 public final class QueueDepotService extends AbstractDepotService<String, QueueEntry> {
 
+  /**
+   * Constructs a new {@link QueueDepotService}
+   *
+   * @param redis the redis provider implementation instance
+   */
   public QueueDepotService(@NotNull VelocityRedis redis) {
     super(QueueEntry.class, redis.getProvider());
   }
@@ -38,14 +46,30 @@ public final class QueueDepotService extends AbstractDepotService<String, QueueE
     super.teardown();
   }
 
+  /**
+   * Inserts a new queue entry into the depot.
+   *
+   * @param queue the queue to insert
+   */
   public void insertQueueEntry(@NotNull Queue queue) {
     this.depot.upsert(new QueueEntry(queue));
   }
 
+  /**
+   * Retrieves a queue entry from the depot.
+   *
+   * @param queueName the name of the queue to retrieve
+   * @return the queue entry, or {@code null} if the queue does not exist
+   */
   public @Nullable QueueEntry getQueueEntry(@NotNull String queueName) {
     return this.depot.get(queueName);
   }
 
+  /**
+   * Updates a queue player in the depot.
+   *
+   * @param queuePlayer the queue player to update
+   */
   public void upsertQueuePlayer(@NotNull QueuePlayer queuePlayer) {
     final QueueEntry queueEntry = this.getQueueEntry(queuePlayer.getQueueName());
     if (queueEntry == null) {

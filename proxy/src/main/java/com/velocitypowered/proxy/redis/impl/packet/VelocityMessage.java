@@ -21,9 +21,8 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.redis.impl.model.EncodedCommandSource;
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
 import com.velocitypowered.proxy.redis.packet.typed.ComponentPacket;
-import net.kyori.adventure.text.Component;
-
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
 
 /**
  * @author Elmar Blume - 09/05/2025

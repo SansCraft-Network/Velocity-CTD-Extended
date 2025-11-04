@@ -18,7 +18,6 @@
 package com.velocitypowered.proxy.redis.registration;
 
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
-
 import java.util.function.Consumer;
 
 /**

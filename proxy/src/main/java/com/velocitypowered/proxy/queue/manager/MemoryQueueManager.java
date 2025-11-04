@@ -21,17 +21,23 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.cache.MemoryQueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
+import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 
-import java.util.function.Function;
-
 /**
+ * Represents the in-memory implementation of {@link QueueManager} which uses a {@link MemoryQueueCache}
+ *
  * @author Elmar Blume - 02/04/2025
  */
 public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCache> {
 
   private final MemoryQueueCache queueCache;
 
+	/**
+	 * Constructs a new {@link MemoryQueueManager}
+	 *
+	 * @param server the proxy instance
+	 */
 	public MemoryQueueManager(VelocityServer server) {
 		super(server);
 

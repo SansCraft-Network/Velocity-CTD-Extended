@@ -2672,6 +2672,7 @@ public final class VelocityConfiguration implements ProxyConfig {
      *
      * @return the maximum number of connections
      */
+    @Deprecated(forRemoval = true)
     public int getMaxConcurrentConnections() {
       return maxConcurrentConnections;
     }

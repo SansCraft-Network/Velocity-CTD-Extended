@@ -47,9 +47,8 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintFrameDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
-import com.velocitypowered.proxy.queue.QueueManagerRedisImpl;
-import com.velocitypowered.proxy.xcd_queue.Queue;
-import com.velocitypowered.proxy.xcd_queue.manager.QueueManager;
+import com.velocitypowered.proxy.queue.Queue;
+import com.velocitypowered.proxy.queue.manager.QueueManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -383,10 +382,9 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
   }
 
   /**
-   * Gets the queue status from the {@link QueueManagerRedisImpl}
-   * directly, to make it work with the old system automatically.
+   * Gets the queue from the cache
    *
-   * @return The queue status of the server
+   * @return The queue of the server
    */
   public Queue getQueue() {
     final QueueManager<?> queueManager = requireNonNull(this.server).getQueueManager();

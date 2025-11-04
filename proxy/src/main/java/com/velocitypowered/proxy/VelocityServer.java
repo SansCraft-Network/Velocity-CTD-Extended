@@ -78,7 +78,6 @@ import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.util.FaviconSerializer;
 import com.velocitypowered.proxy.protocol.util.GameProfileSerializer;
-import com.velocitypowered.proxy.redis.RedisManagerImpl;
 import com.velocitypowered.proxy.scheduler.VelocityScheduler;
 import com.velocitypowered.proxy.server.ServerMap;
 import com.velocitypowered.proxy.util.AddressUtil;
@@ -87,10 +86,10 @@ import com.velocitypowered.proxy.util.ResourceUtils;
 import com.velocitypowered.proxy.util.VelocityChannelRegistrar;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiter;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiters;
-import com.velocitypowered.proxy.xcd_queue.manager.MemoryQueueManager;
-import com.velocitypowered.proxy.xcd_queue.manager.QueueManager;
-import com.velocitypowered.proxy.xcd_queue.manager.RedisQueueManager;
-import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
+import com.velocitypowered.proxy.queue.manager.MemoryQueueManager;
+import com.velocitypowered.proxy.queue.manager.QueueManager;
+import com.velocitypowered.proxy.queue.manager.RedisQueueManager;
+import com.velocitypowered.proxy.redis.VelocityRedis;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -153,7 +152,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Shared logger used throughout proxy lifecycle events.
    */
-  private static final Logger logger = LogManager.getLogger(VelocityServer.class);
+  private static final Logger LOGGER = LogManager.getLogger(VelocityServer.class);
 
   /**
    * Timeout in seconds for {@link ProxyPreShutdownEvent} listeners
@@ -328,7 +327,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Coordinates server queues and handles queue assignment logic.
    */
-  private com.velocitypowered.proxy.xcd_queue.manager.QueueManager<?> queueManager;
+  private com.velocitypowered.proxy.queue.manager.QueueManager<?> queueManager;
 
   private @MonotonicNonNull VelocityRedis redis;
 
@@ -470,7 +469,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   @EnsuresNonNull({"serverKeyPair", "servers", "pluginManager", "eventManager", "scheduler",
       "console", "cm", "configuration"})
   void start() {
-    logger.info("Booting up {} {}...", getVersion().getName(), getVersion().getVersion());
+    LOGGER.info("Booting up {} {}...", getVersion().getName(), getVersion().getVersion());
     console.setupStreams();
     pluginManager.registerPlugin(this.createVirtualPlugin());
 
@@ -562,7 +561,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     final Integer port = this.options.getPort();
     if (port != null) {
-      logger.debug("Overriding bind port to {} from command line option", port);
+      LOGGER.debug("Overriding bind port to {} from command line option", port);
       this.cm.bind(new InetSocketAddress(configuration.getBind().getHostString(), port));
     } else {
       this.cm.bind(configuration.getBind());
@@ -570,7 +569,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     final Boolean haproxy = this.options.isHaproxy();
     if (haproxy != null) {
-      logger.debug("Overriding HAProxy protocol to {} from command line option", haproxy);
+      LOGGER.debug("Overriding HAProxy protocol to {} from command line option", haproxy);
       configuration.setProxyProtocol(haproxy);
     }
 
@@ -582,7 +581,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     if (!MetricsBase.class.getPackage().getName().startsWith(defaultPackage)) {
       Metrics.VelocityMetrics.startMetrics(this, configuration.getMetrics());
     } else {
-      logger.warn("debug environment, metrics is disabled!");
+      LOGGER.warn("debug environment, metrics is disabled!");
     }
   }
 
@@ -602,7 +601,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
         if (log) {
-          logger.info("Loading localizations...");
+          LOGGER.info("Loading localizations...");
         }
 
         final Path langPath = Path.of("lang");
@@ -619,10 +618,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
                 try (InputStream is = Files.newInputStream(src)) {
                   Files.copy(is, target);
                   if (log) {
-                    logger.info("Restored missing translation file {}", target.getFileName());
+                    LOGGER.info("Restored missing translation file {}", target.getFileName());
                   }
                 } catch (IOException e) {
-                  logger.error("Failed copying translation file {}", target.getFileName(), e);
+                  LOGGER.error("Failed copying translation file {}", target.getFileName(), e);
                 }
               }
             });
@@ -648,16 +647,16 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
                 translationRegistry.registerAll(locale, file, false);
                 ClosestLocaleMatcher.INSTANCE.registerKnown(locale);
               } catch (Exception e) {
-                logger.error("Failed registering translations from {}", file, e);
+                LOGGER.error("Failed registering translations from {}", file, e);
               }
             });
           }
         } catch (Exception e) {
-          logger.error("Encountered an error whilst loading translations", e);
+          LOGGER.error("Encountered an error whilst loading translations", e);
         }
       }, "com", "velocitypowered", "proxy", "l10n");
     } catch (IOException e) {
-      logger.error("Encountered an I/O error whilst loading translations", e);
+      LOGGER.error("Encountered an I/O error whilst loading translations", e);
       return;
     }
 
@@ -671,7 +670,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       configuration = VelocityConfiguration.read(configPath);
 
       if (!configuration.validate()) {
-        logger.error("Your configuration is invalid. Velocity will not start up until the errors "
+        LOGGER.error("Your configuration is invalid. Velocity will not start up until the errors "
             + "are resolved.");
         LogManager.shutdown();
         System.exit(1);
@@ -679,14 +678,14 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
       commandManager.setAnnounceProxyCommands(configuration.isAnnounceProxyCommands());
     } catch (Exception e) {
-      logger.error("Unable to read/load/save your velocity.toml. The server will shut down.", e);
+      LOGGER.error("Unable to read/load/save your velocity.toml. The server will shut down.", e);
       LogManager.shutdown();
       System.exit(1);
     }
   }
 
   private void loadPlugins() {
-    logger.info("Loading plugins...");
+    LOGGER.info("Loading plugins...");
 
     try {
       Path pluginPath = Path.of("plugins");
@@ -696,7 +695,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         Files.createDirectory(pluginPath);
       } else {
         if (!pluginPath.toFile().isDirectory()) {
-          logger.warn("Plugin location {} is not a directory, continuing without loading plugins",
+          LOGGER.warn("Plugin location {} is not a directory, continuing without loading plugins",
               pluginPath);
           return;
         }
@@ -705,12 +704,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       for (String additionalPluginPath : options.getAdditionalPlugins()) {
         Path path = Path.of(additionalPluginPath);
         if (!Files.exists(path)) {
-          logger.warn("Unable to find plugin file by path {}", additionalPluginPath);
+          LOGGER.warn("Unable to find plugin file by path {}", additionalPluginPath);
           continue;
         }
 
         if (!path.toFile().isFile()) {
-          logger.warn("Plugin {} is not a file", additionalPluginPath);
+          LOGGER.warn("Plugin {} is not a file", additionalPluginPath);
           continue;
         }
 
@@ -719,7 +718,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
       pluginManager.loadPlugins(pluginPath, additionalPlugins);
     } catch (Exception e) {
-      logger.error("Couldn't load plugins", e);
+      LOGGER.error("Couldn't load plugins", e);
     }
 
     // Register the plugin main classes so that we can fire the proxy initialize event
@@ -729,13 +728,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         try {
           eventManager.registerInternally(plugin, instance.get());
         } catch (Exception e) {
-          logger.error("Unable to register plugin listener for {}",
+          LOGGER.error("Unable to register plugin listener for {}",
               plugin.getDescription().getName().orElse(plugin.getDescription().getId()), e);
         }
       }
     }
 
-    logger.info("Loaded {} plugins", pluginManager.getPlugins().size());
+    LOGGER.info("Loaded {} plugins", pluginManager.getPlugins().size());
   }
 
   /**
@@ -847,7 +846,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       try {
         latch.await();
       } catch (InterruptedException e) {
-        logger.error("Interrupted whilst moving players", e);
+        LOGGER.error("Interrupted whilst moving players", e);
         Thread.currentThread().interrupt();
       }
     }
@@ -1113,7 +1112,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       List<String> commands = entry.getValue();
 
       if (commandManager.hasCommand(alias)) {
-        logger.warn("Proxy command alias '{}' conflicts with existing command, skipping", alias);
+        LOGGER.warn("Proxy command alias '{}' conflicts with existing command, skipping", alias);
         continue;
       }
 
@@ -1185,7 +1184,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     Runnable shutdownProcess = () -> {
       startedShutdown = true;
-      logger.info("Shutting down the proxy...");
+      LOGGER.info("Shutting down the proxy...");
 
       // Shutdown the connection manager, this should be
       // done first to refuse new connections
@@ -1196,12 +1195,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
             .toCompletableFuture()
             .get(PRE_SHUTDOWN_TIMEOUT, TimeUnit.SECONDS);
       } catch (TimeoutException ignored) {
-        logger.warn("Your plugins took over {} seconds during pre shutdown.", PRE_SHUTDOWN_TIMEOUT);
+        LOGGER.warn("Your plugins took over {} seconds during pre shutdown.", PRE_SHUTDOWN_TIMEOUT);
       } catch (ExecutionException ee) {
-        logger.error("Exception in ProxyPreShutdownEvent handler; continuing shutdown.", ee);
+        LOGGER.error("Exception in ProxyPreShutdownEvent handler; continuing shutdown.", ee);
       } catch (InterruptedException ignored) {
         Thread.currentThread().interrupt();
-        logger.warn("Interrupted while waiting for ProxyPreShutdownEvent; continuing shutdown.");
+        LOGGER.warn("Interrupted while waiting for ProxyPreShutdownEvent; continuing shutdown.");
       }
 
       ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
@@ -1224,19 +1223,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
           return;
         }
 
-//        for (ConnectedPlayer player : players) {
-//          if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-//            String connectedServer = player.getConnectedServer() != null ? player.getConnectedServer().getServerInfo().getName() : null;
-//
-//            if (this.getMultiProxyHandler().isRedisEnabled()) {
-//              getRedisManager().send(new RedisPlayerSetTransferringRequest(player.getUniqueId(), true,
-//                  connectedServer));
-//            }
-//          }
-//        }//todo check if this was doing anything
-
         try {
-          logger.log(Level.INFO, "Transferring all players to new proxy...");
+          LOGGER.log(Level.INFO, "Transferring all players to new proxy...");
           Thread.sleep(1000);
         } catch (InterruptedException e) {
           throw new RuntimeException(e);
@@ -1272,7 +1260,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
           timedOut = true;
         } catch (ExecutionException e) {
           timedOut = true;
-          logger.error("Exception while tearing down player connections", e);
+          LOGGER.error("Exception while tearing down player connections", e);
         }
 
         eventManager.fire(new ProxyShutdownEvent()).join();
@@ -1280,7 +1268,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         timedOut = !scheduler.shutdown() || timedOut;
 
         if (timedOut) {
-          logger.error("Your plugins took over 10 seconds to shut down.");
+          LOGGER.error("Your plugins took over 10 seconds to shut down.");
         }
       } catch (InterruptedException e) {
         // Not much we can do about this...
@@ -1820,17 +1808,32 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   public Logger getLogger() {
-    return logger;
+    return LOGGER;
   }
 
+  /**
+   * Check whether the queue system is enabled for the proxy.
+   *
+   * @return true if the queue system is enabled, otherwise false
+   */
   public boolean isQueueEnabled() {
     return this.configuration.getQueue().isEnabled();
   }
 
+  /**
+   * Check whether the redis system is enabled for the proxy.
+   *
+   * @return true if the redis system is enabled, otherwise false
+   */
   public boolean isRedisEnabled() {
     return this.configuration.getRedis().isEnabled();
   }
 
+  /**
+   * Returns the proxy id for the current proxy from the proxy configuration.
+   *
+   * @return the proxy id for the current proxy
+   */
   public String getProxyId() {
     if (this.configuration.getRedis().isEnabled()) {
        return this.configuration.getRedis().getProxyId();

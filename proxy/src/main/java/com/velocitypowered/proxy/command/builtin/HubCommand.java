@@ -70,7 +70,6 @@ public class HubCommand {
         .executes(this::lobby).build());
   }
 
-  //todo refactor to use new queue system
   private int lobby(final CommandContext<CommandSource> context) {
     if (!(context.getSource() instanceof Player player)) {
       context.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);

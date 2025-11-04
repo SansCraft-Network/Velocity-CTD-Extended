@@ -37,9 +37,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
-import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
-import com.velocitypowered.proxy.xcd_redis.impl.packet.VelocitySwitchServer;
+import com.velocitypowered.proxy.redis.VelocityRedis;
+import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.redis.impl.packet.VelocitySwitchServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 

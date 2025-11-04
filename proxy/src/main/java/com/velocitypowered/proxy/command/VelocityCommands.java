@@ -55,8 +55,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import com.velocitypowered.proxy.xcd_queue.model.QueueState;
-import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.queue.model.QueueState;
+import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;

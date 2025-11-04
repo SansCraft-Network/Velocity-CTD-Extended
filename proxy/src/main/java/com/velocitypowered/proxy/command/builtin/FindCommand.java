@@ -32,8 +32,8 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import java.util.Optional;
 
-import com.velocitypowered.proxy.xcd_redis.VelocityRedis;
-import com.velocitypowered.proxy.xcd_redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.redis.VelocityRedis;
+import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;

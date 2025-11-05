@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public sealed interface RouteRegistration<T extends RedisPacket> permits AbstractRouteRegistration {
 
   /**
-   * Creates a new {@link ConsumerRouteRegistration} for the given {@link RedisPacket} class and consumer
+   * Creates a new {@link ConsumerRouteRegistration} for the given {@link RedisPacket} class and consumer.
    *
    * @param packetClass the class type of the packet
    * @param consumer    the consumer to handle the packet
@@ -44,7 +44,7 @@ public sealed interface RouteRegistration<T extends RedisPacket> permits Abstrac
   }
 
   /**
-   * Get the class type of the {@link RedisPacket}
+   * Get the class type of the {@link RedisPacket}.
    *
    * @return the class type of the packet
    */

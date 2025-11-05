@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
- * Represents a queue of a {@link VelocityRegisteredServer}
+ * Represents a queue of a {@link VelocityRegisteredServer}.
  *
  * @author Elmar Blume - 10/10/2025
  */
@@ -238,7 +238,7 @@ public sealed interface Queue permits AbstractQueue {
   void setState(final QueueState state);
 
   /**
-   * Clears the queue
+   * Clears the queue.
    */
   void clear();
 }

@@ -23,6 +23,8 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 
 /**
+ * Represents a packet that kicks a player from any proxy.
+ *
  * @author Elmar Blume - 06/10/2025
  */
 @OneWayPacket
@@ -30,12 +32,23 @@ public final class VelocityKick extends ComponentPacket {
 
   private final UUID uniqueId;
 
+  /**
+   * Constructs a new {@link VelocityKick} packet.
+   *
+   * @param uniqueId the player's unique ID
+   * @param component the message to send
+   */
   public VelocityKick(UUID uniqueId, Component component) {
     super(component);
 
     this.uniqueId = uniqueId;
   }
 
+  /**
+   * Gets the player's unique ID.
+   *
+   * @return the player's unique ID
+   */
   public UUID getUniqueId() {
     return uniqueId;
   }

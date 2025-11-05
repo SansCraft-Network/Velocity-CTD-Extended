@@ -18,12 +18,14 @@
 package com.velocitypowered.proxy.queue.exception;
 
 /**
+ * Represents an exception thrown when a queue caching operation fails.
+ *
  * @author Elmar Blume - 03/04/2025
  */
 public final class QueueCacheException extends RuntimeException {
 
   /**
-   * Constructs a new {@link QueueCacheException}
+   * Constructs a new {@link QueueCacheException}.
    *
    * @param serverName the server name
    */

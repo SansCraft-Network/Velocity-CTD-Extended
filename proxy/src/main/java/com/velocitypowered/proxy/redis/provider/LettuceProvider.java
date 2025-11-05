@@ -44,6 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Represents the Lettuce implementation of the {@link RedisProvider} interface.
+ *
  * @author Elmar Blume - 08/05/2025
  */
 public final class LettuceProvider extends AbstractRedisProvider {
@@ -53,7 +55,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
   private RedisPubSubAsyncCommands<String, String> publisher;
 
   /**
-   * Constructs a new {@link LettuceProvider}
+   * Constructs a new {@link LettuceProvider}.
    *
    * @param config the {@link VelocityConfiguration.Redis} instance to use for connection credentials
    */
@@ -64,14 +66,16 @@ public final class LettuceProvider extends AbstractRedisProvider {
     this.client = RedisClient.create(RedisURI.Builder.redis(config.getHost(), config.getPort())
             .withAuthentication(Objects.requireNonNullElse(config.getUsername(), ""),
                     Objects.requireNonNullElse(config.getPassword(), ""))
-            .withSsl(config.isUseSsl()) 
+            .withSsl(config.isUseSsl())
             .build());
   }
 
   @Override
   public void restart() {
     // Close previous publisher connections
-    if (this.publisher != null) this.publisher.getStatefulConnection().close();
+    if (this.publisher != null) {
+      this.publisher.getStatefulConnection().close();
+    }
 
     // Reconnect and initialize the publisher
     final StatefulRedisPubSubConnection<String, String> connection = this.client.connectPubSub();
@@ -80,7 +84,9 @@ public final class LettuceProvider extends AbstractRedisProvider {
     connection.addListener(new RedisPubSubAdapter<>() {
       @Override
       public void message(String channel, String message) {
-        if (!channel.equals(CHANNEL)) return;
+        if (!channel.equals(CHANNEL)) {
+          return;
+        }
 
         // Read the incoming packet from the message
         final RedisPacket redisPacket = PacketSerializer.deserialize(message);
@@ -99,11 +105,15 @@ public final class LettuceProvider extends AbstractRedisProvider {
           // Check if the packet could be part of a transaction
           final TransactionHandler<?, ?> transactionHandler = transactionHandlers.get(Preconditions.checkNotNull(
                   redisPacket.getTransactionType(), "transactionType is null"));
-          if (transactionHandler == null) return;
+          if (transactionHandler == null) {
+            return;
+          }
 
           // Handle the transaction
           final RedisPacket replyPacket = transactionHandler.getReplyPacket(redisPacket);
-          if (replyPacket == null) return;
+          if (replyPacket == null) {
+            return;
+          }
 
           // Publish the reply packet if required (non-null)
           LettuceProvider.this.publish(replyPacket);
@@ -180,14 +190,20 @@ public final class LettuceProvider extends AbstractRedisProvider {
     }
 
     try {
-      if (routeRegistration instanceof ConsumerRouteRegistration<T> cRegistration) {
-        cRegistration.getConsumer().accept(redisPacket);
+      if (routeRegistration instanceof ConsumerRouteRegistration<T> consumerRegistration) {
+        consumerRegistration.getConsumer().accept(redisPacket);
       }
     } catch (Throwable ignored) {
       LOGGER.warn("Failed to handle one way packet of type '{}', ignoring", redisPacket.getType());
     }
   }
 
+  /**
+   * Represents the Lettuce-provided implementation of the {@link Depot} interface.
+   *
+   * @param <K> the type of the key in the depot
+   * @param <V> the type of the object value in the depot
+   */
   public final class LettuceDepot<K, V extends DepotEntry<K, V>> implements Depot<K, V> {
     private static final Gson GSON = PacketSerializer.GSON;
 
@@ -195,6 +211,11 @@ public final class LettuceProvider extends AbstractRedisProvider {
     private final Class<V> valueClass;
     private final RedisPubSubCommands<String, String> connection;
 
+    /**
+     * Constructs a new {@link LettuceDepot} instance.
+     *
+     * @param valueClass the class of the depot value
+     */
     public LettuceDepot(@NotNull Class<V> valueClass) {
       this.name = valueClass.getSimpleName().toLowerCase();
       this.valueClass = valueClass;
@@ -240,10 +261,22 @@ public final class LettuceProvider extends AbstractRedisProvider {
       return this.connection.hkeys(this.name);
     }
 
+    /**
+     * Serializes the specified entry into a JSON string.
+     *
+     * @param entry the entry to serialize
+     * @return the JSON string representation of the entry
+     */
     private @NotNull String serialize(@NotNull V entry) {
       return GSON.toJson(entry, this.valueClass);
     }
 
+    /**
+     * Deserializes the specified JSON string into an entry.
+     *
+     * @param data the JSON string to deserialize
+     * @return the deserialized entry
+     */
     private @NotNull V deserialize(@NotNull String data) {
       final V entry = GSON.fromJson(data, this.valueClass);
       entry.setDepot(this);
@@ -251,6 +284,12 @@ public final class LettuceProvider extends AbstractRedisProvider {
       return entry;
     }
 
+    /**
+     * Parses the specified key into a string.
+     *
+     * @param key the key to parse
+     * @return the parsed key
+     */
     private @NotNull String parseKey(K key) {
       return String.valueOf(key);
     }

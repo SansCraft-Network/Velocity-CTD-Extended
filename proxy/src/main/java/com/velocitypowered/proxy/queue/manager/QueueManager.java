@@ -26,7 +26,7 @@ import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 
 /**
- * Represents the manager of the {@link Queue}-system
+ * Represents the manager of the {@link Queue}-system.
  *
  * @author Elmar Blume - 02/04/2025
  * @see AbstractQueueManager

@@ -20,9 +20,17 @@ package com.velocitypowered.proxy.redis.packet.typed;
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
 
 /**
+ * Represents a {@link Boolean} packet.
+ *
  * @author Elmar Blume - 12/05/2025
  */
-public class BooleanPacket extends GenericPacket<Boolean>{
+public class BooleanPacket extends GenericPacket<Boolean> {
+
+  /**
+   * Constructs a new {@link BooleanPacket}.
+   *
+   * @param payload the payload of the packet
+   */
   public BooleanPacket(Boolean payload) {
     super(payload);
   }

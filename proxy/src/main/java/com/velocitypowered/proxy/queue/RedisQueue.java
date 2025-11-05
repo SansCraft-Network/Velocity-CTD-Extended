@@ -27,14 +27,14 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Represents the redis implementation of {@link Queue}
+ * Represents the redis implementation of {@link Queue}.
  *
  * @author Elmar Blume - 29/10/2025
  */
 public final class RedisQueue extends AbstractQueue {
 
   /**
-   * Constructs a new {@link RedisQueue}
+   * Constructs a new {@link RedisQueue}.
    *
    * @param server the proxy instance
    * @param backendInstance the backend instance server
@@ -44,7 +44,7 @@ public final class RedisQueue extends AbstractQueue {
   }
 
   /**
-   * Constructs a new {@link RedisQueue}
+   * Constructs a new {@link RedisQueue}.
    *
    * @param server the proxy instance
    * @param backendInstance the backend instance server

@@ -20,7 +20,7 @@ package com.velocitypowered.proxy.queue.model;
 import com.velocitypowered.proxy.queue.AbstractQueue;
 
 /**
- * Represents the state of a {@link AbstractQueue}
+ * Represents the state of a {@link AbstractQueue}.
  *
  * @author Elmar Blume - 03/04/2025
  */

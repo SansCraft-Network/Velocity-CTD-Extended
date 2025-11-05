@@ -25,14 +25,14 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Represents the in-memory implementation of {@link Queue}
+ * Represents the in-memory implementation of {@link Queue}.
  *
  * @author Elmar Blume - 29/10/2025
  */
 public final class MemoryQueue extends AbstractQueue {
 
   /**
-   * Constructs a new {@link MemoryQueue}
+   * Constructs a new {@link MemoryQueue}.
    *
    * @param server the proxy instance
    * @param backendInstance the backend instance server

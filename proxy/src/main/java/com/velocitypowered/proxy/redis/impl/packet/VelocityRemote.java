@@ -17,34 +17,59 @@
 
 package com.velocitypowered.proxy.redis.impl.packet;
 
-import com.velocitypowered.proxy.redis.packet.typed.UUIDPacket;
+import com.velocitypowered.proxy.redis.packet.typed.UuidPacket;
 import java.util.UUID;
 
 /**
+ * Represents a packet that sends a player to a remote address.
+ *
  * @author Elmar Blume - 06/10/2025
  */
-public final class VelocityRemote extends UUIDPacket {
+public final class VelocityRemote extends UuidPacket {
 
   private final String proxyId;
   private final String ip;
   private final int port;
 
-  public VelocityRemote(UUID payload, String proxyId, String ip, int port) {
-    super(payload);
+  /**
+   * Constructs a new {@link VelocityRemote} packet.
+   *
+   * @param uniqueId the player's unique ID
+   * @param proxyId the ID of the proxy the player is on
+   * @param ip the IP address of the remote server
+   * @param port the port of the remote server
+   */
+  public VelocityRemote(UUID uniqueId, String proxyId, String ip, int port) {
+    super(uniqueId);
 
     this.proxyId = proxyId;
     this.ip = ip;
     this.port = port;
   }
 
+  /**
+   * Gets the ID of the proxy the player is on.
+   *
+   * @return the ID of the proxy the player is on
+   */
   public String getProxyId() {
     return proxyId;
   }
 
+  /**
+   * Gets the IP address of the remote server.
+   *
+   * @return the IP address of the remote server
+   */
   public String getIp() {
     return ip;
   }
 
+  /**
+   * Gets the port of the remote server.
+   *
+   * @return the port of the remote server
+   */
   public int getPort() {
     return port;
   }

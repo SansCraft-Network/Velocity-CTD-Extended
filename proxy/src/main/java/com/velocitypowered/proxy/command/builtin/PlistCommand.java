@@ -30,11 +30,10 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
-import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;

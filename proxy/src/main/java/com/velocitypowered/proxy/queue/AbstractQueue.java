@@ -46,11 +46,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
- * Represents a abstract queue of a {@link VelocityRegisteredServer}
+ * Represents an abstract queue of a {@link VelocityRegisteredServer}.
  *
  * @author Elmar Blume - 03/04/2025
  */
-public sealed abstract class AbstractQueue implements Queue
+public abstract sealed class AbstractQueue implements Queue
     permits MemoryQueue, RedisQueue {
 
   protected final VelocityServer server;
@@ -64,7 +64,7 @@ public sealed abstract class AbstractQueue implements Queue
   private transient String name;
 
   /**
-   * Constructs a new {@link java.util.AbstractQueue}
+   * Constructs a new {@link java.util.AbstractQueue}.
    *
    * @param server          the proxy server instance
    * @param backendInstance the backend instance server
@@ -82,7 +82,7 @@ public sealed abstract class AbstractQueue implements Queue
   }
 
   /**
-   * Constructs a new {@link java.util.AbstractQueue}
+   * Constructs a new {@link java.util.AbstractQueue}.
    *
    * @param server          the proxy server instance
    * @param backendInstance the backend instance server
@@ -301,12 +301,29 @@ public sealed abstract class AbstractQueue implements Queue
     CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
   }
 
+  /**
+   * Calculates the estimated time remaining (ETA) for a player at a specific position in the queue.
+   * The ETA is based on the server queue configurations send-delay multiplied by the position,
+   * with a minimum value of 0 seconds.
+   *
+   * @param position the position of the player in the queue
+   * @return a {@link Component} representing the formatted ETA
+   */
   @ApiStatus.Internal
   public Component calculateEta(long position) {
     long delayInSeconds = (long) server.getConfiguration().getQueue().getSendDelay() * position;
     return QueueTimeFormatter.format(Math.max(delayInSeconds, 0));
   }
 
+  /**
+   * Creates an action bar {@link Component} for the given {@link QueuePlayer} based on their
+   * current queue status and position. The component contains relevant information such as
+   * the player's position, queue size, server name, and estimated time remaining (ETA), depending
+   * on the specific state of the player and the queue.
+   *
+   * @param queuePlayer the {@link QueuePlayer} for whom the action bar component will be created, must not be null
+   * @return a {@link Component} representing the player's current queue status in the action bar
+   */
   @ApiStatus.Internal
   public Component createActionbarComponent(@NotNull QueuePlayer queuePlayer) {
     int position = getPosition(queuePlayer.getUniqueId());
@@ -343,6 +360,14 @@ public sealed abstract class AbstractQueue implements Queue
     }
   }
 
+  /**
+   * Creates a {@link Component} representing an entry in the list of queues.
+   * The component includes the server name and additional metadata such as
+   * the queue size, pause state, and online state, which are displayed as
+   * hoverable details.
+   *
+   * @return a {@link Component} representing a formatted list entry for queues
+   */
   @ApiStatus.Internal
   public Component createListComponent() {
     return Component.translatable("velocity.queue.command.listqueues.item")

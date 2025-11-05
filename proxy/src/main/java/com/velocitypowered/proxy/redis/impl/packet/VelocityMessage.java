@@ -25,6 +25,8 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 
 /**
+ * Represents a packet that sends a message to a player or a command source.
+ *
  * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
@@ -33,16 +35,33 @@ public final class VelocityMessage extends ComponentPacket {
   private EncodedCommandSource commandSource = null;
   private UUID playerUniqueId = null;
 
+  /**
+   * Constructs a new {@link VelocityMessage} packet.
+   *
+   * @param commandSource the command source to send the message to
+   * @param component the message to send
+   */
   public VelocityMessage(EncodedCommandSource commandSource, Component component) {
     super(component);
     this.commandSource = commandSource;
   }
 
+  /**
+   * Constructs a new {@link VelocityMessage} packet.
+   *
+   * @param playerUniqueId the player's unique ID to send the message to
+   * @param component the message to send
+   */
   public VelocityMessage(UUID playerUniqueId, Component component) {
     super(component);
     this.playerUniqueId = playerUniqueId;
   }
 
+  /**
+   * Sends the message to the specified server.
+   *
+   * @param server the server to send the message to
+   */
   public void sendMessage(final VelocityServer server) {
     final Component component = this.deserialize();
     if (component == null) {

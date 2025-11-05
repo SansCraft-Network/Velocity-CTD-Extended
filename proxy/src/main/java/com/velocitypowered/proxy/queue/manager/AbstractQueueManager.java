@@ -40,13 +40,13 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an abstraction of {@link QueueManager} which is used in
- * the {@link MemoryQueueManager Memory} or {@link RedisQueueManager Redis} implementations
+ * the {@link MemoryQueueManager Memory} or {@link RedisQueueManager Redis} implementations.
  *
  * @author Elmar Blume - 02/04/2025
  * @see MemoryQueueManager
  * @see RedisQueueManager
  */
-public sealed abstract class AbstractQueueManager<C extends QueueCache> implements QueueManager<C>
+public abstract sealed class AbstractQueueManager<C extends QueueCache> implements QueueManager<C>
         permits MemoryQueueManager, RedisQueueManager {
 
   /**
@@ -56,10 +56,13 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
   protected static final Map<String, Long> LAST_TURNED_ONLINE_TIME = new ConcurrentHashMap<>();
 
   protected final VelocityServer server;
-  private ScheduledTask transferTask, actionBarTask, backendHandshakeTask;
+
+  private ScheduledTask transferTask;
+  private ScheduledTask actionBarTask;
+  private ScheduledTask backendHandshakeTask;
 
   /**
-   * Constructs a new {@link AbstractQueueManager}
+   * Constructs a new {@link AbstractQueueManager}.
    *
    * @param server the proxy instance
    */
@@ -155,6 +158,7 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
    *   <li>Schedules the task for broadcasting action bar messages to players in queues.</li>
    * </ul>
    *
+   * <p>
    * If the current proxy is not the master proxy, the method returns without performing
    * any action.
    */
@@ -225,17 +229,21 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
    * Handles the logic for transferring players from active queues if the current proxy
    * is designated as the master proxy. The method processes up to a maximum of 10 queues
    * at a time to avoid overwhelming the system.
+   *
    * <p>
    * The transfer process adheres to the following conditions:
+   *
    * <p>
    * - Only queues in the {@link QueueState#ACTIVE} state are considered.
    * - Only queues where the backend server status is {@link ServerStatus#ONLINE} are processed.
    * - Queues with a size greater than 0 are eligible for processing.
+   *
    * <p>
    * For each eligible queue:
    * - The first {@link QueuePlayer} in the queue is retrieved.
    * - The player will not be transferred if the queue is full, unless the player has a full bypass flag.
    * - If the conditions are met, the player is transferred using the {@code pollFirst} method.
+   *
    * <p>
    * If the current proxy is not a master proxy, the method exits without performing any operation.
    */
@@ -265,8 +273,10 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
    * Pings backend servers to determine their availability and updates the status of
    * associated queues accordingly. This method processes only a limited number of servers
    * to avoid overwhelming the system.
+   *
    * <p>
    * The method performs the following operations:
+   *
    * <p>
    * - Retrieves the list of queues from the queue cache and processes up to 5 of them.
    * - For each queue, attempts to retrieve the associated registered server.
@@ -281,6 +291,7 @@ public sealed abstract class AbstractQueueManager<C extends QueueCache> implemen
    *     status changes to {@code ONLINE}.
    * - For queues that are not {@code ONLINE} but have players configured as online, those players with bypass
    *   flags are transferred out of the queue.
+   *
    * <p>
    * The method leverages the asynchronous ping mechanism and timeout handling to avoid blocking operations.
    */

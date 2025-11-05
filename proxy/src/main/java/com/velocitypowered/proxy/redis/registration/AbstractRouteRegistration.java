@@ -20,6 +20,8 @@ package com.velocitypowered.proxy.redis.registration;
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
 
 /**
+ * Represents an abstract route registration for a {@link RedisPacket}.
+ *
  * @author Elmar Blume - 08/05/2025
  */
 public abstract sealed class AbstractRouteRegistration<T extends RedisPacket> implements RouteRegistration<T>
@@ -28,7 +30,7 @@ public abstract sealed class AbstractRouteRegistration<T extends RedisPacket> im
   private final Class<T> packetClass;
 
   /**
-   * Constructs a new {@link AbstractRouteRegistration}
+   * Constructs a new {@link AbstractRouteRegistration}.
    *
    * @param packetClass the class type of the {@link RedisPacket}
    */

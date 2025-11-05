@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
+ * Represents an abstract implementation of the {@link DepotService} interface.
+ *
  * @author Elmar Blume - 18/05/2025
  */
 public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K, V>>
@@ -34,7 +36,7 @@ public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K,
   protected final Depot<K, V> depot;
 
   /**
-   * Constructs a new {@link AbstractDepotService}
+   * Constructs a new {@link AbstractDepotService}.
    *
    * @param valueClass the class type of the value in the depot
    * @param provider the redis provider implementation instance

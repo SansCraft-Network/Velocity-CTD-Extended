@@ -34,7 +34,7 @@ import net.kyori.adventure.text.Component;
 public interface PacketBehaviour<C, T extends RedisPacket> {
 
   /**
-   * Used whenever the Component payload is sent to any audience
+   * Used whenever the Component payload is sent to any audience.
    */
   PacketBehaviour<Audience, ComponentPacket> SEND_COMPONENT = (carrier, packet) -> {
     final Component component = packet.deserialize();
@@ -44,7 +44,7 @@ public interface PacketBehaviour<C, T extends RedisPacket> {
   };
 
   /**
-   * Method used to let the desired packet 'behave', with a given carrier
+   * Method used to let the desired packet 'behave', with a given carrier.
    *
    * @param carrier the carrier used to support this behaviour
    * @param packet  the packet to have a behaviour

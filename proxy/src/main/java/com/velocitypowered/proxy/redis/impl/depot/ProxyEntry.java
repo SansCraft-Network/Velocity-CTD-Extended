@@ -22,10 +22,17 @@ import com.velocitypowered.proxy.redis.depot.DepotEntry;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a proxy entry in the depot.
+ *
  * @author Elmar Blume - 18/05/2025
  */
 public final class ProxyEntry extends DepotEntry<String, ProxyEntry> {
 
+  /**
+   * Constructs a new {@link ProxyEntry}.
+   *
+   * @param server the proxy instance
+   */
   public ProxyEntry(@NotNull VelocityServer server) {
     super(server.getProxyId());
   }

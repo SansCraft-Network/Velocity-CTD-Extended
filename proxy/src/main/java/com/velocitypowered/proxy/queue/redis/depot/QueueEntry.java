@@ -41,7 +41,7 @@ public final class QueueEntry extends DepotEntry<String, QueueEntry> {
   private final QueueState state;
 
   /**
-   * Constructs a new {@link QueueEntry}
+   * Constructs a new {@link QueueEntry}.
    *
    * @param queue the queue instance
    */

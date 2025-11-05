@@ -31,7 +31,7 @@ public non-sealed class ConsumerRouteRegistration<T extends RedisPacket> extends
   private final Consumer<T> consumer;
 
   /**
-   * Constructs a new {@link ConsumerRouteRegistration}
+   * Constructs a new {@link ConsumerRouteRegistration}.
    *
    * @param packetClass the class type of the packet
    * @param consumer   the consumer to handle the packet
@@ -43,7 +43,7 @@ public non-sealed class ConsumerRouteRegistration<T extends RedisPacket> extends
   }
 
   /**
-   * Get the consumer of the route registration
+   * Get the consumer of the route registration.
    *
    * @return the consumer of the route registration
    */

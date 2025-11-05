@@ -22,6 +22,8 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
+ * Represents an entry in a {@link Depot}.
+ *
  * @author Elmar Blume - 18/05/2025
  */
 public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
@@ -30,32 +32,61 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
 
   private transient @MonotonicNonNull Depot<K, T> depot;
 
+  /**
+   * Constructs a new {@link DepotEntry}.
+   *
+   * @param key the unique id of the entry
+   */
   public DepotEntry(K key) {
     this.uniqueId = key;
   }
 
+  /**
+   * Updates or inserts the current instance into its associated {@link Depot}.
+   */
   @SuppressWarnings("unchecked")
   public void upsert() {
-    this.depot.upsert((T) this);
+    if (this.depot != null) {
+      this.depot.upsert((T) this);
+    }
   }
 
+  /**
+   * Removes this entry from its associated {@link Depot}, if it is currently present.
+   * This operation is performed using the entry's unique identifier.
+   */
   public void remove() {
-    this.depot.remove(this.uniqueId);
+    if (this.depot != null) {
+      this.depot.remove(this.uniqueId);
+    }
   }
 
+  /**
+   * Gets the unique identifier of this entry.
+   *
+   * @return the unique identifier of this entry
+   */
   public K getUniqueId() {
     return uniqueId;
   }
 
+  /**
+   * Sets the associated {@link Depot}.
+   *
+   * @param depot the depot to set
+   */
   @ApiStatus.Internal
   public void setDepot(Depot<K, T> depot) {
-    if (depot == null) return;
-    this.depot = depot;
+    if (depot != null) {
+      this.depot = depot;
+    }
   }
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     DepotEntry<?, ?> that = (DepotEntry<?, ?>) o;
     return Objects.equals(uniqueId, that.uniqueId);
   }

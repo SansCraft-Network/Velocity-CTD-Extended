@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Represents a transaction process that has a {@link T sent-packet} and a {@link R reply-packet}. The transaction's
- * behaviour can be configured using the {@link Transaction#onTimeout(Consumer)} and {@link Transaction#onComplete(Consumer)}
+ * behaviour can be configured using the {@link Transaction#onTimeout(Consumer)} and {@link Transaction#onComplete(Consumer)}.
  *
  * @author Elmar Blume - 12/05/2025
  */
@@ -49,7 +49,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   private Consumer<R> completeConsumer; // called when the transaction receives a reply
 
   /**
-   * Constructs a new {@link Transaction} given an instance of the required sent-packet
+   * Constructs a new {@link Transaction} given an instance of the required sent-packet.
    *
    * @param sentPacket the sent-packet instance to publish
    */
@@ -61,7 +61,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Publish the {@link Transaction} to all subscribers on the redis
+   * Publish the {@link Transaction} to all subscribers on the redis.
    *
    * @param provider the {@link RedisProvider} to publish the transaction to
    * @return itself for chaining
@@ -74,7 +74,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Publish the {@link Transaction} to all subscribers on the redis
+   * Publish the {@link Transaction} to all subscribers on the redis.
    *
    * @return itself for chaining
    *
@@ -90,7 +90,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Set the timeout for the {@link Transaction}
+   * Set the timeout for the {@link Transaction}.
    *
    * @param timeout  the timeout in the given time unit
    * @param timeUnit the time unit of the timeout argument
@@ -103,7 +103,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Set the timeout consumer for the {@link Transaction}
+   * Set the timeout consumer for the {@link Transaction}.
    *
    * @param timeoutConsumer the consumer to call when the transaction times out
    * @return itself for chaining
@@ -114,7 +114,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Set the reply consumer for the {@link Transaction}
+   * Set the reply consumer for the {@link Transaction}.
    *
    * @param completeConsumer the consumer to call when the transaction receives a reply
    * @return itself for chaining
@@ -125,7 +125,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Complete the {@link Transaction} by accepting the {@link Transaction#onComplete(Consumer)} consumer
+   * Complete the {@link Transaction} by accepting the {@link Transaction#onComplete(Consumer)} consumer.
    *
    * @param replyPacket the reply packet to use as acceptance
    */
@@ -143,10 +143,10 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Timeout the {@link Transaction} by accepting the {@link Transaction#onTimeout(Consumer)}
+   * Timeout the {@link Transaction} by accepting the {@link Transaction#onTimeout(Consumer)}.
    *
-   * @apiNote This method is called automatically when the transaction times out,
-   * which can be configured using {@link Transaction#setTimeout(int, TimeUnit)}
+   * @apiNote This method is called automatically when the transaction times out, which
+   *          can be configured using {@link Transaction#setTimeout(int, TimeUnit)}
    */
   public void timeout() {
     if (this.timeoutConsumer != null) {
@@ -155,7 +155,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Get the unique id of the {@link Transaction}
+   * Get the unique id of the {@link Transaction}.
    *
    * @return the unique id of the transaction
    */
@@ -164,7 +164,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Get the sent-packet of the {@link Transaction}
+   * Get the sent-packet of the {@link Transaction}.
    *
    * @return the sent-packet of the transaction
    */
@@ -173,7 +173,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Get the timeout of the {@link Transaction}
+   * Get the timeout of the {@link Transaction}.
    *
    * @return the timeout of the transaction
    */
@@ -182,7 +182,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
   }
 
   /**
-   * Get the time unit of the {@link Transaction}
+   * Get the time unit of the {@link Transaction}.
    *
    * @return the time unit of the transaction
    */

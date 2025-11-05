@@ -33,14 +33,12 @@ import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.config.ProxyAddress;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-
+import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.redis.impl.transaction.VelocityTransferRemote;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-
-import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
-import com.velocitypowered.proxy.redis.impl.transaction.VelocityTransferRemote;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;

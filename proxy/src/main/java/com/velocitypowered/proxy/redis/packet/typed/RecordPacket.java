@@ -20,10 +20,17 @@ package com.velocitypowered.proxy.redis.packet.typed;
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
 
 /**
+ * Represents a {@link Record} packet.
+ *
  * @author Elmar Blume - 15/05/2025
  */
 public class RecordPacket<T extends Record> extends GenericPacket<T> {
 
+  /**
+   * Constructs a new {@link RecordPacket}.
+   *
+   * @param payload the payload of the packet
+   */
   public RecordPacket(T payload) {
     super(payload);
   }

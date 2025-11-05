@@ -22,11 +22,18 @@ import com.velocitypowered.proxy.redis.packet.typed.ComponentPacket;
 import net.kyori.adventure.text.Component;
 
 /**
+ * Represents a packet that sends an alert message to all proxies.
+ *
  * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
 public final class VelocityAlert extends ComponentPacket {
 
+  /**
+   * Constructs a new {@link VelocityAlert} packet.
+   *
+   * @param component the message to send.
+   */
   public VelocityAlert(Component component) {
     super(component);
   }

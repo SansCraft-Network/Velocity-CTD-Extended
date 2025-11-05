@@ -33,21 +33,24 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.manager.AbstractQueueManager;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
-
-import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Implements the {@code /queueadmin} command.
@@ -329,31 +332,25 @@ public record QueueAdminCommand(VelocityServer server) {
 
     final Queue queue = server.getQueue();
     if (queue.isPaused()) {
-//      if (this.server.isRedisEnabled()) {
-//        this.server.getRedisManager().removePausedQueue(server.getServerInfo().getName());
-//      } else {
-        queue.setState(QueueState.ACTIVE);//todo dit wel effe testen, geen idee of multi proxy hiermee werkt.. wss wel, redis cache doet neemt over toch?
-//      }
+      queue.setState(QueueState.ACTIVE);
+      //todo dit wel effe testen, geen idee of multi proxy hiermee werkt.. wss wel, redis cache doet neemt over toch?
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
               .arguments(Argument.string("server", server.getServerInfo().getName())));
 
       this.server.getQueueManager().broadcastMessage(queue,
-              $ -> Component.translatable("velocity.queue.command.unpaused")
+              q -> Component.translatable("velocity.queue.command.unpaused")
                       .arguments(Argument.string("server", server.getServerInfo().getName())));
       return Command.SINGLE_SUCCESS;
     } else {
-//      if (this.server.isRedisEnabled()) {
-//        this.server.getRedisManager().addPausedQueue(server.getServerInfo().getName());
-//      } else {
-        queue.setState(QueueState.PAUSED);//todo zelfde als lijn 335
-//      }
+      queue.setState(QueueState.PAUSED);
+      //todo zelfde als lijn 335
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.pause")
               .arguments(Argument.string("server", server.getServerInfo().getName())));
 
       this.server.getQueueManager().broadcastMessage(queue,
-              $ -> Component.translatable("velocity.queue.command.pause")
+              q -> Component.translatable("velocity.queue.command.pause")
                       .arguments(Argument.string("server", server.getServerInfo().getName())));
     }
 
@@ -373,17 +370,13 @@ public record QueueAdminCommand(VelocityServer server) {
       return -1;
     }
 
-//    if (this.server.isRedisEnabled()) {
-//      this.server.getRedisManager().removePausedQueue(server.getServerInfo().getName());
-//    } else {
-      queue.setState(QueueState.ACTIVE);
-//    }
+    queue.setState(QueueState.ACTIVE);
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
             .arguments(Argument.string("server", server.getServerInfo().getName())));
 
     this.server.getQueueManager().broadcastMessage(queue,
-            $ -> Component.translatable("velocity.queue.command.unpaused")
+            q -> Component.translatable("velocity.queue.command.unpaused")
                     .arguments(Argument.string("server", server.getServerInfo().getName())));
     return Command.SINGLE_SUCCESS;
   }

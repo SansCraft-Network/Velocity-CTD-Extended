@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a utility class for serializing {@link RedisPacket} objects to JSON strings using {@link Gson}
+ * Represents a utility class for serializing {@link RedisPacket} objects to JSON strings using {@link Gson}.
  *
  * @author Elmar Blume - 09/05/2025
  */
@@ -40,7 +40,7 @@ public final class PacketSerializer {
           .create();
 
   /**
-   * Serializes a {@link RedisPacket} to a JSON string using {@link Gson}
+   * Serializes a {@link RedisPacket} to a JSON string using {@link Gson}.
    *
    * @param packet the packet to serialize as a JSON string
    * @param <T>    the type of the packet
@@ -52,7 +52,7 @@ public final class PacketSerializer {
   }
 
   /**
-   * Deserializes a JSON string to a {@link RedisPacket} object using {@link Gson}
+   * Deserializes a JSON string to a {@link RedisPacket} object using {@link Gson}.
    *
    * @param serializedPacket the JSON string to deserialize
    * @param <T>              the class of the packet
@@ -64,7 +64,7 @@ public final class PacketSerializer {
   }
 
   /**
-   * Deserializes a JSON string to a {@link RedisPacket} object using {@link Gson}
+   * Deserializes a JSON string to a {@link RedisPacket} object using {@link Gson}.
    *
    * @param serializedPacket the JSON string to deserialize
    * @param <T>              the type of the packet
@@ -74,7 +74,9 @@ public final class PacketSerializer {
   @SuppressWarnings("unchecked")
   public static <T extends RedisPacket> T deserialize(@NotNull String serializedPacket) {
     final RedisPacket redisPacket = PacketSerializer.GSON.fromJson(serializedPacket, GenericPacket.class);
-    if (redisPacket == null) return null;
+    if (redisPacket == null) {
+      return null;
+    }
 
     try {
       final Class<T> type = (Class<T>) Class.forName(redisPacket.getType());
@@ -88,7 +90,7 @@ public final class PacketSerializer {
   }
 
   /**
-   * Prepares a JSON string for serialization by checking if the serialized packet contains a type field
+   * Prepares a JSON string for serialization by checking if the serialized packet contains a type field.
    *
    * @param serializedPacket the JSON string to prepare
    * @return the type field of the serialized packet, or null if the type field is not present
@@ -96,7 +98,9 @@ public final class PacketSerializer {
   @Nullable
   public static String prepare(@NotNull String serializedPacket) {
     final JsonObject jsonObject = PacketSerializer.GSON.fromJson(serializedPacket, JsonObject.class);
-    if (jsonObject == null || !jsonObject.has("type")) return null;
+    if (jsonObject == null || !jsonObject.has("type")) {
+      return null;
+    }
 
     return jsonObject.getAsJsonPrimitive("type").getAsString();
   }

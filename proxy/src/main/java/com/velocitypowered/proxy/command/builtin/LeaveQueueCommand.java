@@ -29,10 +29,9 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
+import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.List;
-
-import com.velocitypowered.proxy.queue.Queue;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 

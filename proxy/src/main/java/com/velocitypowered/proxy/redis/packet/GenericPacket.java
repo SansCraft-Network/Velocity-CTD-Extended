@@ -18,6 +18,8 @@
 package com.velocitypowered.proxy.redis.packet;
 
 /**
+ * Represents a packet that does not have a specific type set yet.
+ *
  * @author Elmar Blume - 08/05/2025
  */
 public non-sealed class GenericPacket<T> extends AbstractRedisPacket {
@@ -25,7 +27,7 @@ public non-sealed class GenericPacket<T> extends AbstractRedisPacket {
   protected final T payload;
 
   /**
-   * Constructs a new {@link GenericPacket}
+   * Constructs a new {@link GenericPacket}.
    *
    * @param payload the payload of the packet
    */
@@ -35,7 +37,7 @@ public non-sealed class GenericPacket<T> extends AbstractRedisPacket {
   }
 
   /**
-   * Get the payload of the packet
+   * Get the payload of the packet.
    *
    * @return the payload of the packet
    */

@@ -20,9 +20,17 @@ package com.velocitypowered.proxy.redis.packet.typed;
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
 
 /**
+ * Represents a {@link Long} packet.
+ *
  * @author Elmar Blume - 12/05/2025
  */
 public class LongPacket extends GenericPacket<Long> {
+
+  /**
+   * Constructs a new {@link LongPacket}.
+   *
+   * @param payload the payload of the packet
+   */
   public LongPacket(long payload) {
     super(payload);
   }

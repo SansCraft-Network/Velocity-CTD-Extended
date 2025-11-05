@@ -20,9 +20,17 @@ package com.velocitypowered.proxy.redis.packet.typed;
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
 
 /**
+ * Represents a {@link String} packet.
+ *
  * @author Elmar Blume - 12/05/2025
  */
 public class StringPacket extends GenericPacket<String> {
+
+  /**
+   * Constructs a new {@link StringPacket}.
+   *
+   * @param payload the payload of the packet
+   */
   public StringPacket(String payload) {
     super(payload);
   }

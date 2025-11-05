@@ -26,18 +26,33 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents an extension of the {@link Transaction} for the VelocityRedis module.
+ *
  * @author Elmar Blume - 02/10/2025
  */
 public abstract class VelocityTransaction<T extends RedisPacket, R extends RedisPacket> extends Transaction<T, R> {
 
+  /**
+   * Constructs a new {@link VelocityTransaction}.
+   *
+   * @param sentPacket the packet to send.
+   * @param source the command source to send the timeout message to.
+   * @param timeoutTranslationKey the translation key to use for the timeout message.
+   */
   public VelocityTransaction(@NotNull T sentPacket, @Nullable CommandSource source, @Nullable String timeoutTranslationKey) {
     super(sentPacket);
 
     // Set the default timeout behavior to send a message to the command source
-    if (source != null && timeoutTranslationKey != null)
+    if (source != null && timeoutTranslationKey != null) {
       this.onTimeout(t -> source.sendMessage(Component.text(timeoutTranslationKey, NamedTextColor.RED)));
+    }
   }
 
+  /**
+   * Constructs a new {@link VelocityTransaction} with no command source and translation key.
+   *
+   * @param sentPacket the packet to send.
+   */
   public VelocityTransaction(@NotNull T sentPacket) {
     this(sentPacket, null, null);
   }

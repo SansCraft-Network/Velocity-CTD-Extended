@@ -41,6 +41,7 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Represents a registry that holds all {@link TransactionHandler} for the VelocityRedis module. An
  * internal {@link Delegate} is used to handle the data and create a new reply-packet from the data.
+ *
  * <p>
  * This registry is used to register the 'handle' section of the {@link Transaction} only. It's
  * completing and timeout behaviours are processed in the {@link Transaction} class itself.
@@ -55,7 +56,9 @@ public enum TransactionHandlerRegistry {
   VELOCITY_GET_PLAYER_PING(VelocityGetPlayerPing.class, (server, packet) -> {
     // Ignore if the player is not on the proxy
     final Player player = server.getPlayer(packet.getPayload()).orElse(null);
-    if (player == null) return null;
+    if (player == null) {
+      return null;
+    }
 
     // Create and return the response packet
     return new ComponentPacket(Component.translatable("velocity.command.ping.other", NamedTextColor.GREEN)
@@ -67,7 +70,9 @@ public enum TransactionHandlerRegistry {
    */
   VELOCITY_UPTIME(VelocityUptime.class, (server, packet) -> {
     // Ignore if the packet is not for this proxy
-    if (!packet.getPayload().equalsIgnoreCase(server.getProxyId())) return null;
+    if (!packet.getPayload().equalsIgnoreCase(server.getProxyId())) {
+      return null;
+    }
 
     // Create and return the response packet
     return new ComponentPacket(VelocityCommand.getUptimeComponent(server));
@@ -78,7 +83,9 @@ public enum TransactionHandlerRegistry {
    */
   VELOCITY_RELOAD(VelocityReload.class, (server, packet) -> {
     // Ignore if the packet is not for this proxy
-    if (!packet.getPayload().equalsIgnoreCase(server.getProxyId())) return null;
+    if (!packet.getPayload().equalsIgnoreCase(server.getProxyId())) {
+      return null;
+    }
 
     // Reload the configuration and create the response component
     Component responseComponent;
@@ -100,12 +107,14 @@ public enum TransactionHandlerRegistry {
   }),
 
   /**
-   * Handles the {@link VelocityTransferRemote} packet by transferring a player to another remote/proxy
+   * Handles the {@link VelocityTransferRemote} packet by transferring a player to another remote/proxy.
    */
   VELOCITY_TRANSFER_REMOTE(VelocityTransferRemote.class, (server, packet) -> {
     // Ignore if the player is not on the proxy
     final ConnectedPlayer connectedPlayer = (ConnectedPlayer) server.getPlayer(packet.getPayload()).orElse(null);
-    if (connectedPlayer == null) return null;
+    if (connectedPlayer == null) {
+      return null;
+    }
 
     // Check if the player is on a compatible version
     if (connectedPlayer.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
@@ -126,7 +135,7 @@ public enum TransactionHandlerRegistry {
   private final TransactionHandler<?, ?> transactionHandler;
 
   /**
-   * Create a new {@link Transaction} registry, which holds the {@link TransactionHandler}
+   * Create a new {@link Transaction} registry, which holds the {@link TransactionHandler}.
    *
    * @param transactionClass the class of the {@link Transaction}
    * @param delegate         the delegate to handle the data, which is passed to the {@link TransactionHandler}
@@ -145,7 +154,7 @@ public enum TransactionHandlerRegistry {
   }
 
   /**
-   * Get the {@link TransactionHandler} for this {@link Transaction}
+   * Get the {@link TransactionHandler} for this {@link Transaction}.
    *
    * @return the transaction handler
    */
@@ -155,7 +164,7 @@ public enum TransactionHandlerRegistry {
 
   /**
    * Functional interface for handling data in a transaction, used for
-   * creating a new reply-packet from the data
+   * creating a new reply-packet from the data.
    *
    * @param <T> the type of the data (extends {@link Record})
    * @param <R> the type of the reply-packet (extends {@link RedisPacket})

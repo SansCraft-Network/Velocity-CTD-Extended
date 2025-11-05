@@ -25,21 +25,48 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
- * Represents a service
+ * Represents a service.
+ *
  * @author Elmar Blume - 18/05/2025
  */
 public sealed interface DepotService<K, V extends DepotEntry<K, V>> permits AbstractDepotService {
 
+  /**
+   * Retrieves the value for the given key if it exists.
+   *
+   * @param key the key to retrieve the value for
+   * @return the value for the given key, or {@code null} if it does not exist
+   */
   @Nullable V get(K key);
 
+  /**
+   * Returns a collection of all values in the depot.
+   *
+   * @return a immutable collection of all values in the depot
+   */
   @NotNull
   @Unmodifiable
   List<V> getAll();
 
+  /**
+   * Returns a collection of all values in the depot that match the given predicate.
+   *
+   * @param predicate the predicate to filter the values by
+   * @return a collection of all values in the depot that match the given predicate
+   */
   @NotNull Collection<V> queryAll(Predicate<V> predicate);
 
+  /**
+   * Tears down the depot service.
+   */
   void teardown();
 
+  /**
+   * Returns the first value in the depot that matches the given predicate.
+   *
+   * @param predicate the predicate to filter the values by
+   * @return the first value in the depot that matches the given predicate, or {@code null} if none match
+   */
   default @Nullable V query(Predicate<V> predicate) {
     Collection<V> values = queryAll(predicate);
     if (values.isEmpty()) {

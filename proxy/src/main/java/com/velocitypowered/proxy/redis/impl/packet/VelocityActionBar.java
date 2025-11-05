@@ -25,6 +25,8 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a packet that sends an action bar message to a player.
+ *
  * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
@@ -32,11 +34,22 @@ public final class VelocityActionBar extends ComponentPacket {
 
   private final UUID uniqueId;
 
+  /**
+   * Constructs a new {@link VelocityActionBar} packet.
+   *
+   * @param player the player to send the message to.
+   * @param component the message to send.
+   */
   public VelocityActionBar(final @NotNull Player player, final Component component) {
     super(component);
     this.uniqueId = player.getUniqueId();
   }
 
+  /**
+   * Gets the unique identifier of the player to send the message to.
+   *
+   * @return the unique identifier of the player
+   */
   public UUID getUniqueId() {
     return uniqueId;
   }

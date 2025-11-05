@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Represents an abstract {@link RedisProvider} used to provide a common interface for all redis providers
+ * Represents an abstract {@link RedisProvider} used to provide a common interface for all redis providers.
  *
  * @author Elmar Blume - 08/05/2025
  * @see LettuceProvider
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public abstract sealed class AbstractRedisProvider implements RedisProvider permits LettuceProvider {
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractRedisProvider.class);
 
-  protected static final Cache<RedisPacket, Byte> HANDLED_PACKETS = CacheBuilder.newBuilder() // byte = dummy value
+  protected static final Cache<@NotNull RedisPacket, @NotNull Byte> HANDLED_PACKETS = CacheBuilder.newBuilder() // byte = dummy value
           .expireAfterWrite(10, TimeUnit.SECONDS).build();
   protected static final TransactionCache PENDING_TRANSACTIONS = new TransactionCache(
           (uuid, transaction) -> transaction.timeout());
@@ -52,6 +52,9 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
   @MonotonicNonNull
   protected final Map<String, TransactionHandler<?, ?>> transactionHandlers;
 
+  /**
+   * Constructs a new {@link AbstractRedisProvider}.
+   */
   public AbstractRedisProvider() {
     this.routeRegistrations = new HashMap<>();
     this.transactionHandlers = new HashMap<>();
@@ -108,7 +111,7 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
   }
 
   @Override
-  public <T extends RedisPacket> @NotNull ImmutableList<RouteRegistration<T>> getRouteRegistrations() {
+  public <T extends RedisPacket> @NotNull ImmutableList<@NotNull RouteRegistration<T>> getRouteRegistrations() {
     //noinspection unchecked
     return this.routeRegistrations.values().stream()
             .map(routeRegistration -> (RouteRegistration<T>) routeRegistration)

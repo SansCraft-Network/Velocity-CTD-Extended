@@ -33,7 +33,7 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
   private final VelocityRedis redis;
 
   /**
-   * Constructs a new {@link ProxyDepotService}
+   * Constructs a new {@link ProxyDepotService}.
    *
    * @param redis the {@link VelocityRedis} instance
    */
@@ -58,7 +58,7 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
   }
 
   /**
-   * Get a list of all the {@link ProxyEntry proxy} IDs currently present in the depot
+   * Get a list of all the {@link ProxyEntry proxy} IDs currently present in the depot.
    *
    * @return the list of all proxy IDs, sorted alphabetically
    */
@@ -67,7 +67,7 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
   }
 
   /**
-   * Get a list of all the {@link ProxyEntry proxy} IDs currently present in the depot, in lower case
+   * Get a list of all the {@link ProxyEntry proxy} IDs currently present in the depot, in lower case.
    *
    * @return the list of all proxy IDs in lower case, sorted alphabetically
    */

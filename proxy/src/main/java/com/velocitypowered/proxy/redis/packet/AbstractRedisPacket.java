@@ -26,11 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Abstraction of {@link RedisPacket}
+ * Abstraction of {@link RedisPacket}.
  *
  * @author Elmar Blume - 08/05/2025
  */
-public sealed abstract class AbstractRedisPacket implements RedisPacket permits EmptyPacket, GenericPacket {
+public abstract sealed class AbstractRedisPacket implements RedisPacket permits EmptyPacket, GenericPacket {
 
   private final UUID packetId; // internal id
   private final String type;
@@ -42,7 +42,7 @@ public sealed abstract class AbstractRedisPacket implements RedisPacket permits 
   private @MonotonicNonNull String transactionType;
 
   /**
-   * Constructs a new {@link AbstractRedisPacket}
+   * Constructs a new {@link AbstractRedisPacket}.
    */
   public AbstractRedisPacket() {
     this.packetId = UUID.randomUUID();
@@ -99,7 +99,9 @@ public sealed abstract class AbstractRedisPacket implements RedisPacket permits 
   public void publish() {
     // Ensure Redis is initialized
     final VelocityRedis redis = VelocityRedis.INSTANCE;
-    if (redis == null) throw new IllegalStateException("Tried to publish packet without Redis being initialized.");
+    if (redis == null) {
+      throw new IllegalStateException("Tried to publish packet without Redis being initialized.");
+    }
 
     // Publish packet
     redis.getProvider().publish(this);
@@ -107,7 +109,9 @@ public sealed abstract class AbstractRedisPacket implements RedisPacket permits 
 
   @Override
   public boolean equals(Object o) {
-    if (o == null || getClass() != o.getClass()) return false;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     AbstractRedisPacket that = (AbstractRedisPacket) o;
     return Objects.equals(packetId, that.packetId);
   }

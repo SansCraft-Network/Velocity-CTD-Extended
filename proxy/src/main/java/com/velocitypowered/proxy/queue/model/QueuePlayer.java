@@ -31,25 +31,28 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a player in a {@link AbstractQueue}
+ * Represents a player in a {@link AbstractQueue}.
  *
  * @author Elmar Blume - 03/04/2025
  */
 public final class QueuePlayer {
 
-  private transient final VelocityServer server;
-  private transient final Queue queue;
-  private transient final VelocityRegisteredServer targetInstance;
+  private final transient VelocityServer server;
+  private final transient Queue queue;
+  private final transient VelocityRegisteredServer targetInstance;
 
   private final String username;
 
-  private int priority, connectionAttempts = 0;
-  private boolean waitingForConnection, fullBypass, queueBypass;
+  private int priority;
+  private int connectionAttempts = 0;
+  private boolean waitingForConnection;
+  private boolean fullBypass;
+  private boolean queueBypass;
 
   private transient Player player;
 
   /**
-   * Creates a new {@link QueuePlayer}
+   * Creates a new {@link QueuePlayer}.
    *
    * @param server the proxy instance
    * @param player the player instance
@@ -70,10 +73,12 @@ public final class QueuePlayer {
 
   /**
    * Initiates the transfer process for the player represented by this {@code QueuePlayer} instance.
+   *
    * <p>
    * If Redis support is enabled in the server configuration, the transfer is handled by publishing
    * a {@code VelocityQueueTransfer} packet. Otherwise, a direct transfer process is
    * initiated by calling {@code handleTransfer}.
+   *
    * <p>
    * During the transfer process, the player's state is marked as {@code waitingForConnection},
    * preventing potential conflicts from multiple transfer attempts.
@@ -174,7 +179,8 @@ public final class QueuePlayer {
     }
 
     if (this.server.isRedisEnabled()) {
-      this.server.getRedis().getQueueService().upsertQueuePlayer(this);//todo check if it works
+      this.server.getRedis().getQueueService().upsertQueuePlayer(this);
+      //todo check if it works
     }
   }
 

@@ -32,7 +32,7 @@ import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents the redis implementation of {@link QueueManager} which uses a {@link RedisQueueCache}
+ * Represents the redis implementation of {@link QueueManager} which uses a {@link RedisQueueCache}.
  *
  * @author Elmar Blume - 02/04/2025
  */
@@ -42,7 +42,7 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   private final PlayerDepotService playerService;
 
   /**
-   * Constructs a new {@link RedisQueueManager}
+   * Constructs a new {@link RedisQueueManager}.
    *
    * @param server the proxy instance
    */

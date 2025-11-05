@@ -24,10 +24,18 @@ import com.velocitypowered.proxy.redis.packet.typed.StringPacket;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a transaction that gets the uptime of any proxy.
+ *
  * @author Elmar Blume - 02/10/2025
  */
 public final class VelocityUptime extends VelocityTransaction<StringPacket, ComponentPacket> {
 
+  /**
+   * Constructs a new {@link VelocityUptime} transaction.
+   *
+   * @param source the command source to send the result to
+   * @param proxyId the id of the proxy to get the uptime of
+   */
   public VelocityUptime(@NotNull CommandSource source, @NotNull String proxyId) {
     super(new StringPacket(proxyId), source, "xcd_redis.command.uptime.timeout");
 

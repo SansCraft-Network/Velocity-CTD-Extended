@@ -32,14 +32,13 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
+import com.velocitypowered.proxy.redis.VelocityRedis;
+import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.redis.impl.packet.VelocitySwitchServer;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-
-import com.velocitypowered.proxy.redis.VelocityRedis;
-import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
-import com.velocitypowered.proxy.redis.impl.packet.VelocitySwitchServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 

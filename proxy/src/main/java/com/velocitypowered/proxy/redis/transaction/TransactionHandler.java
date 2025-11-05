@@ -23,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a handler for a {@link Transaction}.
+ *
  * @author Elmar Blume - 12/05/2025
  */
 public abstract class TransactionHandler<T extends RedisPacket, R extends RedisPacket> {
@@ -30,7 +32,7 @@ public abstract class TransactionHandler<T extends RedisPacket, R extends RedisP
   private final Class<? extends Transaction<T, R>> transactionClass;
 
   /**
-   * Create a new transaction handler
+   * Constructs a new {@link TransactionHandler}.
    *
    * @param transactionClass the class of the transaction
    */
@@ -39,7 +41,7 @@ public abstract class TransactionHandler<T extends RedisPacket, R extends RedisP
   }
 
   /**
-   * Handle the redis-packet
+   * Handle the redis-packet.
    *
    * @param packet the packet to handle
    * @return a newly created reply-packet
@@ -47,7 +49,7 @@ public abstract class TransactionHandler<T extends RedisPacket, R extends RedisP
   public abstract R handlePacket(T packet);
 
   /**
-   * Create the reply-packet
+   * Create the reply-packet.
    *
    * @param redisPacket the packet to create the reply-packet from
    * @return {@code null} if the reply-packet is not needed, otherwise the reply-packet
@@ -55,7 +57,9 @@ public abstract class TransactionHandler<T extends RedisPacket, R extends RedisP
   public @Nullable R getReplyPacket(@NotNull RedisPacket redisPacket) {
     //noinspection unchecked - Use the abstract handlePacket method to get a reply-packet
     final R replyPacket = this.handlePacket((T) redisPacket);
-    if (replyPacket == null) return null;
+    if (replyPacket == null) {
+      return null;
+    }
 
 
     // Adjust the transactionId and return the reply-packet
@@ -67,7 +71,7 @@ public abstract class TransactionHandler<T extends RedisPacket, R extends RedisP
   }
 
   /**
-   * Get the class of the {@link Transaction} for this handler
+   * Get the class of the {@link Transaction} for this handler.
    *
    * @return the class of the transaction
    */

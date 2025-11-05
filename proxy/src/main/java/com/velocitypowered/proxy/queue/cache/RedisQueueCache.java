@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents the redis cache implementation of {@link QueueCache} for a {@link Queue}
+ * Represents the redis cache implementation of {@link QueueCache} for a {@link Queue}.
  *
  * @author Elmar Blume - 03/04/2025
  */
@@ -44,7 +44,7 @@ public final class RedisQueueCache implements QueueCache {
   private final QueueDepotService service;
 
   /**
-   * Constructs a new {@link RedisQueueCache}
+   * Constructs a new {@link RedisQueueCache}.
    *
    * @param server the proxy instance
    */

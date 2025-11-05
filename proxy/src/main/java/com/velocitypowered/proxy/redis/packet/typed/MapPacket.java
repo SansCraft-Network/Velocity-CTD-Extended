@@ -25,10 +25,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
+ * Represents a {@link Map} packet.
+ *
  * @author Elmar Blume - 12/05/2025
  */
 public class MapPacket<K, V> extends GenericPacket<Map<K, V>> implements Map<K, V> {
 
+  /**
+   * Constructs a new {@link MapPacket}.
+   *
+   * @param payload the payload of the packet
+   */
   public MapPacket(Map<K, V> payload) {
     super(payload);
   }

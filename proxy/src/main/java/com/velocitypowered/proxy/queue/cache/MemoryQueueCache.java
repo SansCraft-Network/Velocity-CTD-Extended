@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents the in-memory cache implementation of {@link QueueCache} for a {@link Queue}
+ * Represents the in-memory cache implementation of {@link QueueCache} for a {@link Queue}.
  *
  * @author Elmar Blume - 03/04/2025
  */
@@ -39,7 +39,7 @@ public final class MemoryQueueCache implements QueueCache {
   private final ConcurrentHashMap<String, Queue> queues;
 
   /**
-   * Constructs a new {@link MemoryQueueCache}
+   * Constructs a new {@link MemoryQueueCache}.
    *
    * @param server the proxy instance
    */
@@ -52,7 +52,7 @@ public final class MemoryQueueCache implements QueueCache {
   public @NotNull Queue getQueue(@NotNull String serverName) {
     final VelocityRegisteredServer backendInstance = (VelocityRegisteredServer) this.server.getServer(serverName)
             .orElseThrow(() -> new QueueCacheException(serverName));
-    return this.queues.computeIfAbsent(serverName, $ -> new MemoryQueue(server, backendInstance));
+    return this.queues.computeIfAbsent(serverName, s -> new MemoryQueue(server, backendInstance));
   }
 
   @Override

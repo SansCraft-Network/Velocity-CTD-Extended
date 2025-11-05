@@ -21,6 +21,8 @@ import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
 import com.velocitypowered.proxy.redis.packet.typed.StringPacket;
 
 /**
+ * Represents a packet that sends a player to a specific server.
+ *
  * @author Elmar Blume - 20/06/2025
  */
 @OneWayPacket
@@ -29,6 +31,12 @@ public final class VelocitySwitchServer extends StringPacket {
   private final String username;
   private final String serverName;
 
+  /**
+   * Constructs a new {@link VelocitySwitchServer} packet.
+   *
+   * @param username the username of the player to switch to the server of.
+   * @param serverName the name of the server to switch to.
+   */
   public VelocitySwitchServer(String username, String serverName) {
     super(username);
 
@@ -36,10 +44,20 @@ public final class VelocitySwitchServer extends StringPacket {
     this.serverName = serverName;
   }
 
+  /**
+   * Gets the username of the player to switch to the server of.
+   *
+   * @return the username of the player to switch to the server of.
+   */
   public String getUsername() {
     return username;
   }
 
+  /**
+   * Gets the name of the server to switch to.
+   *
+   * @return the name of the server to switch to.
+   */
   public String getServerName() {
     return serverName;
   }

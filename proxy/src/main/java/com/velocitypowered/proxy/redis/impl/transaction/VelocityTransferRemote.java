@@ -26,11 +26,22 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a transaction that transfers a player to a remote server.
+ *
  * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
 public final class VelocityTransferRemote extends VelocityTransaction<VelocityRemote, ComponentPacket> {
 
+  /**
+   * Constructs a new {@link VelocityTransferRemote} transaction.
+   *
+   * @param source the command source to send the result to
+   * @param uniqueId the player's unique ID
+   * @param proxyId the ID of the proxy the player is on
+   * @param ip the IP address of the remote server
+   * @param port the port of the remote server
+   */
   public VelocityTransferRemote(@NotNull CommandSource source, UUID uniqueId, String proxyId, String ip, int port) {
     super(new VelocityRemote(uniqueId, proxyId, ip, port), source, "xcd_redis.command.transfer.timeout");
 

@@ -20,9 +20,17 @@ package com.velocitypowered.proxy.redis.packet.typed;
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
 
 /**
+ * Represents an {@link Integer} packet.
+ *
  * @author Elmar Blume - 12/05/2025
  */
 public class IntegerPacket extends GenericPacket<Integer> {
+
+  /**
+   * Constructs a new {@link IntegerPacket}.
+   *
+   * @param payload the payload of the packet
+   */
   public IntegerPacket(Integer payload) {
     super(payload);
   }

@@ -31,7 +31,6 @@ import com.velocitypowered.proxy.redis.impl.packet.VelocityMessage;
 import com.velocitypowered.proxy.redis.impl.packet.VelocitySudo;
 import com.velocitypowered.proxy.redis.impl.packet.VelocitySwitchServer;
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
-import com.velocitypowered.proxy.redis.registration.ConsumerRouteRegistration;
 import com.velocitypowered.proxy.redis.registration.RouteRegistration;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -58,7 +57,9 @@ public enum RouteRegistry {
   VELOCITY_SWITCH_SERVER(VelocitySwitchServer.class, (server, packet) -> {
     // Ignore if the player is not on the proxy
     final Player player = server.getPlayer(packet.getUsername()).orElse(null);
-    if (player == null) return;
+    if (player == null) {
+      return;
+    }
 
     // Create a connection request to the target server if it exists
     server.getServer(packet.getServerName()).ifPresent(targetServer ->
@@ -78,7 +79,9 @@ public enum RouteRegistry {
    */
   VELOCITY_ACTION_BAR(VelocityActionBar.class, (server, packet) -> {
     final Component component = packet.deserialize();
-    if (component == null) return;
+    if (component == null) {
+      return;
+    }
 
     // Send the message to the target
     server.getPlayer(packet.getUniqueId()).ifPresent(player -> player.sendActionBar(component));
@@ -90,7 +93,9 @@ public enum RouteRegistry {
   VELOCITY_SUDO(VelocitySudo.class, (server, packet) -> {
     // Ignore if the player is not on the proxy
     final Player player = server.getPlayer(packet.getPayload()).orElse(null);
-    if (player == null) return;
+    if (player == null) {
+      return;
+    }
 
     // Execute a command if applicable
     final String message = packet.getMessage();
@@ -112,7 +117,9 @@ public enum RouteRegistry {
   VELOCITY_KICK(VelocityKick.class, (server, packet) -> {
     // Ignore if the player is not on the proxy
     final ConnectedPlayer player = (ConnectedPlayer)  server.getPlayer(packet.getUniqueId()).orElse(null);
-    if (player == null) return;
+    if (player == null) {
+      return;
+    }
 
     Component component = packet.deserialize();
     if (component == null) {
@@ -146,8 +153,7 @@ public enum RouteRegistry {
   private final RouteRegistration<? extends RedisPacket> routeRegistration;
 
   <T extends RedisPacket> RouteRegistry(Class<T> packetClass, @NotNull BiConsumer<VelocityServer, T> route) {
-    this.routeRegistration = new ConsumerRouteRegistration<>(packetClass,
-            packet -> route.accept(VelocityRedis.INSTANCE.getServer(), packet));
+    this.routeRegistration = RouteRegistration.consumer(packetClass, packet -> route.accept(VelocityRedis.INSTANCE.getServer(), packet));
   }
 
   public RouteRegistration<? extends RedisPacket> getRouteRegistration() {

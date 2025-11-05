@@ -46,7 +46,7 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
   private int totalPlayerCount = 0;
 
   /**
-   * Constructs a new {@link PlayerDepotService}
+   * Constructs a new {@link PlayerDepotService}.
    *
    * @param redis the {@link VelocityRedis} instance
    */
@@ -58,11 +58,13 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
 
     // Start a task to update the total player count every 250 milliseconds
     redis.getServer().getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, this::updateTotalPlayerCount)
-            .repeat(Duration.ofMillis(250L)).schedule();//todo stop at teardown
+            .repeat(Duration.ofMillis(250L)).schedule();
+    //todo stop at teardown
 
     // Start a task to update the player entries of this proxy every 1 second
     redis.getServer().getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, this::syncPlayerEntries)
-            .repeat(Duration.ofSeconds(1L)).schedule();//todo stop at teardown
+            .repeat(Duration.ofSeconds(1L)).schedule();
+    //todo stop at teardown
   }
 
   @Override
@@ -73,6 +75,12 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     }
   }
 
+  /**
+   * Called when a {@link ConnectedPlayer} connects to the proxy.
+   *
+   * @param player the player that connected
+   * @return {@code true} if the player was successfully added to the depot, {@code false} otherwise
+   */
   public boolean onPlayerConnect(final ConnectedPlayer player) {
     if (this.redis.isShutdown()) {
       return false;
@@ -95,6 +103,11 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     return true;
   }
 
+  /**
+   * Called when a {@link ConnectedPlayer} disconnects from the proxy.
+   *
+   * @param player the player that disconnected
+   */
   public void onPlayerDisconnect(final ConnectedPlayer player) {
     if (this.redis.isShutdown()) {
       return;
@@ -103,6 +116,12 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     this.depot.remove(player.getUniqueId());
   }
 
+  /**
+   * Called when a {@link ConnectedPlayer} switches servers.
+   *
+   * @param player the player that switched servers
+   * @param serverName the name of the server that the player switched to
+   */
   public void onPlayerSwitchServer(final ConnectedPlayer player, final String serverName) {
     final PlayerEntry playerEntry = this.getPlayerEntry(player.getUniqueId());
     if (playerEntry == null) {
@@ -114,7 +133,7 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
   }
 
   /**
-   * Get the total player count across all proxies, currently present in the depot
+   * Get the total player count across all proxies, currently present in the depot.
    *
    * @return the total player count
    */
@@ -122,10 +141,22 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     return this.totalPlayerCount;
   }
 
+  /**
+   * Get a player entry by their unique ID.
+   *
+   * @param uniqueId the unique ID of the player
+   * @return the player entry, or {@code null} if the player is not present in the depot
+   */
   public @Nullable PlayerEntry getPlayerEntry(UUID uniqueId) {
     return this.depot.get(uniqueId);
   }
 
+  /**
+   * Get a player entry by their username.
+   *
+   * @param username the username of the player
+   * @return the player entry, or {@code null} if the player is not present in the depot
+   */
   public @Nullable PlayerEntry getPlayerEntry(String username) {
     for (PlayerEntry entry : this.depot.values()) {
       if (entry.getUsername().equalsIgnoreCase(username)) {
@@ -135,10 +166,22 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     return null;
   }
 
+  /**
+   * Checks whether a player is online.
+   *
+   * @param uniqueId the unique ID of the player
+   * @return {@code true} if the player is online, {@code false} otherwise
+   */
   public boolean isPlayerOnline(UUID uniqueId) {
     return this.depot.contains(uniqueId);
   }
 
+  /**
+   * Checks whether a player is online.
+   *
+   * @param username the username of the player
+   * @return {@code true} if the player is online, {@code false} otherwise
+   */
   public boolean isPlayerOnline(String username) {
     for (PlayerEntry entry : this.depot.values()) {
       if (entry.getUsername().equalsIgnoreCase(username)) {
@@ -148,14 +191,35 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     return false;
   }
 
+  /**
+   * Retrieves a list of player entries associated with a specific server.
+   *
+   * @param serverName the name of the server whose player entries are to be retrieved; must not be null
+   * @return an unmodifiable list of {@link PlayerEntry} objects representing the players currently on the specified server; never null
+   */
   public @NotNull @Unmodifiable List<PlayerEntry> getPlayerEntriesInServer(@NotNull String serverName) {
     return List.copyOf(this.queryAll(playerEntry -> serverName.equalsIgnoreCase(playerEntry.getServerName())));
   }
 
+  /**
+   * Retrieves a list of player entries associated with a specific proxy.
+   *
+   * @param proxyId the identifier of the proxy whose player entries are to be retrieved;
+   *                must not be null or empty
+   * @return an unmodifiable list of {@link PlayerEntry} objects representing players
+   *         currently associated with the specified proxy; never null
+   */
   public @NotNull @Unmodifiable List<PlayerEntry> getPlayerEntriesOnProxy(String proxyId) {
     return List.copyOf(this.queryAll(playerEntry -> playerEntry.getProxyId().equalsIgnoreCase(proxyId)));
   }
 
+  /**
+   * Upserts a player's entry in the depot. If an entry for the given player already exists,
+   * it is updated with the latest details. If it doesn't exist, a new entry is created.
+   *
+   * @param player the {@link Player} object representing the player for whom the entry is to be upserted; must not be null
+   * @return the {@link PlayerEntry} object representing the player's entry; never null
+   */
   public @NotNull PlayerEntry upsertPlayerEntry(@NotNull Player player) {
     final PlayerEntry playerEntry = new PlayerEntry(player, this.redis.getProxyId());
     playerEntry.setDepot(this.depot);
@@ -164,6 +228,9 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     return playerEntry;
   }
 
+  /**
+   * Updates the total player count by recalculating the number of entries in the depot.
+   */
   private void updateTotalPlayerCount() {
     if (this.redis.isShutdown()) {
       return;
@@ -173,6 +240,11 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     this.totalPlayerCount = this.depot.size();
   }
 
+  /**
+   * Synchronizes the player entries within the depot. This method ensures that the depot's
+   * player entries are kept up to date and consistent with the current state of players on
+   * the server.
+   */
   private void syncPlayerEntries() {
     if (this.redis.isShutdown()) {
       return;
@@ -180,15 +252,21 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
 
     // Sync current players with depot
     for (Player player : this.server.getAllPlayers()) {
-      if (this.depot.contains(player.getUniqueId())) continue;
+      if (this.depot.contains(player.getUniqueId())) {
+        continue;
+      }
 
       this.upsertPlayerEntry(player);
     }
 
     // Cleanup lost players
     for (PlayerEntry playerEntry : this.depot.values()) {
-      if (!playerEntry.getProxyId().equalsIgnoreCase(this.redis.getProxyId())) continue;
-      if (this.server.getPlayer(playerEntry.getUniqueId()).isPresent()) continue;
+      if (!playerEntry.getProxyId().equalsIgnoreCase(this.redis.getProxyId())) {
+        continue;
+      }
+      if (this.server.getPlayer(playerEntry.getUniqueId()).isPresent()) {
+        continue;
+      }
 
       playerEntry.remove();
     }

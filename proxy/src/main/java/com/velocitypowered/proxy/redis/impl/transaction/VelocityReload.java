@@ -24,10 +24,18 @@ import com.velocitypowered.proxy.redis.packet.typed.StringPacket;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a transaction that reloads any proxy.
+ *
  * @author Elmar Blume - 02/10/2025
  */
 public final class VelocityReload extends VelocityTransaction<StringPacket, ComponentPacket> {
 
+  /**
+   * Constructs a new {@link VelocityReload} transaction.
+   *
+   * @param source the command source to send the result to
+   * @param proxyId the id of the proxy to reload
+   */
   public VelocityReload(@NotNull CommandSource source, @NotNull String proxyId) {
     super(new StringPacket(proxyId), source, "xcd_redis.command.reload.timeout");
 

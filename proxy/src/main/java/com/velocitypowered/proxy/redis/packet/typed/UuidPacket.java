@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Velocity Contributors
+ * Copyright (C) 2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,26 +15,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocitypowered.proxy.oldredis.multiproxy;
+package com.velocitypowered.proxy.redis.packet.typed;
 
-import com.velocitypowered.proxy.oldredis.RedisPacket;
+import com.velocitypowered.proxy.redis.packet.GenericPacket;
+import java.util.UUID;
 
 /**
- * Constructs a packet to send to redis to get the corresponding proxy to send the player
- * to a new server.
+ * Represents a {@link UUID} packet.
  *
- * @param username The username of the player.
- * @param server The server to send the player to.
+ * @author Elmar Blume - 12/05/2025
  */
-public record RedisSwitchServerRequest(String username, String server) implements RedisPacket {
+public class UuidPacket extends GenericPacket<UUID> {
 
   /**
-   * The unique Redis packet identifier used to represent a server switch request.
+   * Constructs a new {@link UuidPacket}.
+   *
+   * @param payload the payload of the packet
    */
-  public static final String ID = "switch-server";
-
-  @Override
-  public String getId() {
-    return ID;
+  public UuidPacket(UUID payload) {
+    super(payload);
   }
 }

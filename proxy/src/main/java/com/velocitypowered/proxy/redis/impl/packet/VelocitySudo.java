@@ -18,22 +18,35 @@
 package com.velocitypowered.proxy.redis.impl.packet;
 
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
-import com.velocitypowered.proxy.redis.packet.typed.UUIDPacket;
+import com.velocitypowered.proxy.redis.packet.typed.UuidPacket;
 import java.util.UUID;
 
 /**
+ * Represents a packet that sends a sudo action for a player.
+ *
  * @author Elmar Blume - 04/10/2025
  */
 @OneWayPacket
-public final class VelocitySudo extends UUIDPacket {
+public final class VelocitySudo extends UuidPacket {
 
   private final String message;
 
+  /**
+   * Constructs a new {@link VelocitySudo} packet.
+   *
+   * @param playerUniqueId the player's unique ID
+   * @param message the message/command to send
+   */
   public VelocitySudo(UUID playerUniqueId, String message) {
     super(playerUniqueId);
     this.message = message;
   }
 
+  /**
+   * Gets the message/command to send.
+   *
+   * @return the message/command to send
+   */
   public String getMessage() {
     return message;
   }

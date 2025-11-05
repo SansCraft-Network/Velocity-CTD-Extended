@@ -24,10 +24,18 @@ import com.velocitypowered.proxy.redis.packet.typed.StringPacket;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a transaction that gets the ping of a player.
+ *
  * @author Elmar Blume - 14/05/2025
  */
 public final class VelocityGetPlayerPing extends VelocityTransaction<StringPacket, ComponentPacket> {
 
+  /**
+   * Constructs a new {@link VelocityGetPlayerPing} transaction.
+   *
+   * @param source the command source to send the result to
+   * @param username the username of the player to get the ping of
+   */
   public VelocityGetPlayerPing(@NotNull CommandSource source, @NotNull String username) {
     super(new StringPacket(username), source, "xcd_redis.command.ping.timeout");
 

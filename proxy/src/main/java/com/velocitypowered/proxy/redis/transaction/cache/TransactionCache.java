@@ -29,6 +29,8 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * Represents a map implementation of a transaction cache.
+ *
  * @author Elmar Blume - 13/05/2025
  */
 public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
@@ -40,16 +42,30 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
 
   private BiConsumer<UUID, Transaction<?, ?>> purgeConsumer;
 
+  /**
+   * Constructs a new {@link TransactionCache}.
+   */
   public TransactionCache() {
     this(Transaction.DEFAULT_TIMEOUT, Transaction.DEFAULT_TIME_UNIT);
   }
 
+  /**
+   * Constructs a new {@link TransactionCache}.
+   *
+   * @param delay the delay of the refresh tasks
+   * @param timeUnit the time unit of the delay argument
+   */
   public TransactionCache(double delay, TimeUnit timeUnit) {
     this.refreshTasks = new HashMap<>();
     this.delay = delay;
     this.timeUnit = timeUnit;
   }
 
+  /**
+   * Constructs a new {@link TransactionCache}.
+   *
+   * @param purgeConsumer the purge consumer to call when a transaction is purged
+   */
   public TransactionCache(BiConsumer<UUID, Transaction<?, ?>> purgeConsumer) {
     this();
     this.purgeConsumer = purgeConsumer;
@@ -61,6 +77,17 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
     return super.put(key, value);
   }
 
+  /**
+   * Adds the specified transaction to the cache, associates it with its unique transaction ID,
+   * and schedules it for refresh based on the provided delay and time unit. If a transaction with
+   * the same ID already exists, it will be replaced, and any previous scheduling tasks will
+   * be canceled.
+   *
+   * @param value the transaction to be added to the cache; must not be null
+   * @param delay the delay, in the specified time unit, after which the transaction will be processed
+   * @param timeUnit the time unit of the delay parameter; must not be null
+   * @return the previous transaction associated with the transaction ID, or null if there was no mapping
+   */
   public Transaction<?, ?> put(@NotNull Transaction<?, ?> value, int delay, TimeUnit timeUnit) {
     this.queue(value, delay, timeUnit);
     return super.put(value.getTransactionId(), value);
@@ -78,6 +105,14 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
     return super.remove(key);
   }
 
+  /**
+   * Schedules a task to process the specified transaction after a defined delay. If there is an
+   * existing-scheduled task for the same transaction ID, it will be canceled before scheduling the new task.
+   *
+   * @param transaction the transaction to be processed; must not be null
+   * @param delay the delay, after which the transaction will be processed
+   * @param timeUnit the time unit used for the delay parameter; must not be null
+   */
   private void queue(@NotNull Transaction<?, ?> transaction, double delay, TimeUnit timeUnit) {
     final UUID key = transaction.getTransactionId();
 

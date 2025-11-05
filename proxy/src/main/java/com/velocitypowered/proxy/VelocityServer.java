@@ -78,6 +78,10 @@ import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.util.FaviconSerializer;
 import com.velocitypowered.proxy.protocol.util.GameProfileSerializer;
+import com.velocitypowered.proxy.queue.manager.MemoryQueueManager;
+import com.velocitypowered.proxy.queue.manager.QueueManager;
+import com.velocitypowered.proxy.queue.manager.RedisQueueManager;
+import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.scheduler.VelocityScheduler;
 import com.velocitypowered.proxy.server.ServerMap;
 import com.velocitypowered.proxy.util.AddressUtil;
@@ -86,10 +90,6 @@ import com.velocitypowered.proxy.util.ResourceUtils;
 import com.velocitypowered.proxy.util.VelocityChannelRegistrar;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiter;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiters;
-import com.velocitypowered.proxy.queue.manager.MemoryQueueManager;
-import com.velocitypowered.proxy.queue.manager.QueueManager;
-import com.velocitypowered.proxy.queue.manager.RedisQueueManager;
-import com.velocitypowered.proxy.redis.VelocityRedis;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -1327,7 +1327,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private ProxyAddress getProxyAddressToUse() {
-    if (!this.isRedisEnabled()) return null;
+    if (!this.isRedisEnabled()) {
+      return null;
+    }
 
     final String filter = getConfiguration().getDynamicProxyFilter();
     List<ProxyAddress> addresses = new ArrayList<>(getConfiguration().getProxyAddresses().stream().toList());
@@ -1836,9 +1838,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   public String getProxyId() {
     if (this.configuration.getRedis().isEnabled()) {
-       return this.configuration.getRedis().getProxyId();
+      return this.configuration.getRedis().getProxyId();
     }
 
-     return "single_proxy";
+    return "single_proxy";
   }
 }

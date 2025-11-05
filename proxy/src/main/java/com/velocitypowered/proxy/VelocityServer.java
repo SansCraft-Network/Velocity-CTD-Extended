@@ -1206,7 +1206,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
 
       if (this.isQueueEnabled()) {
-        players.forEach(p -> this.getQueueManager().removePlayerEntirely(p));
+        players.forEach(p -> this.queueManager.removePlayerEntirely(p));
+        this.queueManager.teardown();
       }
 
       if (!getConfiguration().isAcceptTransfers()) {
@@ -1214,27 +1215,25 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
           player.disconnect(reason);
         }
       } else {
-        ProxyAddress chosen = getProxyAddressToUse();
+        final ProxyAddress chosen = getProxyAddressToUse();
         if (chosen == null) {
           for (ConnectedPlayer player : players) {
             player.disconnect(reason);
           }
+        } else {
+          try {
+            LOGGER.log(Level.INFO, "Transferring all players to new proxy...");
+            Thread.sleep(1000);
+          } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+          }
 
-          return;
-        }
-
-        try {
-          LOGGER.log(Level.INFO, "Transferring all players to new proxy...");
-          Thread.sleep(1000);
-        } catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
-
-        for (ConnectedPlayer player : players) {
-          if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            player.transferToHost(new InetSocketAddress(chosen.ip(), chosen.port()));
-          } else {
-            player.disconnect(reason);
+          for (ConnectedPlayer player : players) {
+            if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
+              player.transferToHost(new InetSocketAddress(chosen.ip(), chosen.port()));
+            } else {
+              player.disconnect(reason);
+            }
           }
         }
       }

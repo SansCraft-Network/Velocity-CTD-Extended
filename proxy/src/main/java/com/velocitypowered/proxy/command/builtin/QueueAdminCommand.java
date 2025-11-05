@@ -613,7 +613,7 @@ public record QueueAdminCommand(VelocityServer server) {
     String playerName = ctx.getArgument("player", String.class);
 
     if (this.server.isRedisEnabled()) {
-      if (this.server.getRedis().getPlayerService().isPlayerOnline(playerName)) {
+      if (!this.server.getRedis().getPlayerService().isPlayerOnline(playerName)) {
         ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
                 .arguments(Argument.string("player", playerName)));
         return -1;
@@ -683,7 +683,7 @@ public record QueueAdminCommand(VelocityServer server) {
     String playerName = ctx.getArgument("player", String.class);
 
     if (this.server.isRedisEnabled()) {
-      if (this.server.getRedis().getPlayerService().isPlayerOnline(playerName)) {
+      if (!this.server.getRedis().getPlayerService().isPlayerOnline(playerName)) {
         ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
                 .arguments(Argument.string("player", playerName)));
         return -1;

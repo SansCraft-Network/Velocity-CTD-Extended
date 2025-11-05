@@ -57,7 +57,7 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   public boolean isMasterProxy() {
     final List<String> masterProxies = this.server.getConfiguration().getQueue().getMasterProxyIds();
     final List<String> activeProxies = new ArrayList<>(this.server.getRedis().getProxyService()
-            .getAllProxyIds().stream().toList());
+        .getAllProxyIds().stream().toList());
     Collections.sort(activeProxies);
 
     final String ownProxy = this.server.getProxyId();
@@ -117,15 +117,15 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   public void broadcastMessage(Queue queue, Function<QueuePlayer, Component> component) {
     for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
       new VelocityMessage(queuePlayer.getUniqueId(), component.apply(queuePlayer))
-              .publish();
+          .publish();
     }
   }
 
   @Override
   public void broadcastActionBar(Queue queue, Function<QueuePlayer, Component> component) {
     for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
-      new VelocityActionBar(queuePlayer.getPlayer(), component.apply(queuePlayer))
-              .publish();
+      new VelocityActionBar(queuePlayer.getUniqueId(), component.apply(queuePlayer))
+          .publish();
     }
   }
 }

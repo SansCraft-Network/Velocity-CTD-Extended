@@ -47,7 +47,7 @@ import org.jetbrains.annotations.NotNull;
  * @see RedisQueueManager
  */
 public abstract sealed class AbstractQueueManager<C extends QueueCache> implements QueueManager<C>
-        permits MemoryQueueManager, RedisQueueManager {
+    permits MemoryQueueManager, RedisQueueManager {
 
   /**
    * Tracks the timestamp (in milliseconds) of when each server was last marked as ONLINE.
@@ -80,6 +80,25 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
   }
 
   @Override
+  public void teardown() {
+    // Cancel scheduled tasks
+    if (this.transferTask != null) {
+      this.transferTask.cancel();
+    }
+    if (this.actionBarTask != null) {
+      this.actionBarTask.cancel();
+    }
+    if (this.backendHandshakeTask != null) {
+      this.backendHandshakeTask.cancel();
+    }
+
+    // Teardown all queues
+    for (Queue queue : this.getQueueCache().getQueues()) {
+      queue.teardown();
+    }
+  }
+
+  @Override
   public void queue(final Player player, final VelocityRegisteredServer targetBackend) {
     final String targetBackendName = targetBackend.getServerInfo().getName();
     final Queue queue = this.getQueueCache().getQueue(targetBackendName);
@@ -92,7 +111,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     if (queue.contains(player)) {
       player.sendMessage(Component.translatable("velocity.queue.error.already-queued")
-              .arguments(Argument.string("server", targetBackendName)));
+          .arguments(Argument.string("server", targetBackendName)));
       return;
     }
 
@@ -101,7 +120,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
         if (iqueue.contains(player)) {
           iqueue.dequeue(player, false);
           player.sendMessage(Component.translatable("velocity.queue.error.queued-swap").arguments(
-                  Argument.string("from", iqueue.getName()), Argument.string("to", targetBackendName)));
+              Argument.string("from", iqueue.getName()), Argument.string("to", targetBackendName)));
           break;
         }
       }
@@ -109,7 +128,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     if (queue.isPaused() && !config.isAllowPausedQueueJoining()) {
       player.sendMessage(Component.translatable("velocity.queue.error.paused")
-              .arguments(Argument.string("server", targetBackendName)));
+          .arguments(Argument.string("server", targetBackendName)));
       return;
     }
 
@@ -119,7 +138,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     queue.enqueue(player);
     player.sendMessage(Component.translatable("velocity.queue.command.queued")
-            .arguments(Argument.string("server", targetBackendName)));
+        .arguments(Argument.string("server", targetBackendName)));
   }
 
   /**
@@ -135,7 +154,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
       removePlayerEntirely(player);
     } else {
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () ->
-              removePlayerEntirely(player)).delay(timeout, TimeUnit.SECONDS).schedule();
+          removePlayerEntirely(player)).delay(timeout, TimeUnit.SECONDS).schedule();
     }
   }
 
@@ -183,9 +202,9 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
     this.transferTask = this.server.getScheduler()
-            .buildTask(VelocityVirtualPlugin.INSTANCE, this::transfer)
-            .repeat((long) (config.getSendDelay() * 1000), TimeUnit.MILLISECONDS)
-            .schedule();
+        .buildTask(VelocityVirtualPlugin.INSTANCE, this::transfer)
+        .repeat((long) (config.getSendDelay() * 1000), TimeUnit.MILLISECONDS)
+        .schedule();
 
   }
 
@@ -199,10 +218,10 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
     this.backendHandshakeTask = this.server.getScheduler()
-            .buildTask(VelocityVirtualPlugin.INSTANCE, this::pingBackends)
-            .delay((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
-            .repeat((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
-            .schedule();
+        .buildTask(VelocityVirtualPlugin.INSTANCE, this::pingBackends)
+        .delay((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
+        .repeat((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
+        .schedule();
   }
 
   /**
@@ -215,20 +234,20 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
     this.actionBarTask = this.server.getScheduler()
-            .buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-              for (Queue queue : this.getQueueCache().getQueues()) {
-                this.broadcastActionBar(player -> ((AbstractQueue) queue).createActionbarComponent(player));
-              }
-            })
-            .delay((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
-            .repeat((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
-            .schedule();
+        .buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
+          for (Queue queue : this.getQueueCache().getQueues()) {
+            this.broadcastActionBar(queue, player -> ((AbstractQueue) queue).createActionbarComponent(player));
+          }
+        })
+        .delay((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
+        .repeat((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
+        .schedule();
   }
 
   /**
    * Handles the logic for transferring players from active queues if the current proxy
    * is designated as the master proxy. The method processes up to a maximum of 10 queues
-   * at a time to avoid overwhelming the system.
+   * at a time to avoid overwhelming the s  ystem.
    *
    * <p>
    * The transfer process adheres to the following conditions:
@@ -248,25 +267,25 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
    * If the current proxy is not a master proxy, the method exits without performing any operation.
    */
   private void transfer() {
-    if (!this.isMasterProxy()) {
+    if (!this.isMasterProxy() || this.getQueueCache() == null) {
       return;
     }
 
     // Process the first 10 queues to avoid overwhelming the system
     this.getQueueCache().getQueues().stream()
-            .filter(queue -> queue.getState() == QueueState.ACTIVE)
-            .filter(queue -> queue.getStatus() == ServerStatus.ONLINE)
-            .filter(queue -> queue.size() > 0)
-            .limit(10)
-            .forEach(queue -> {
-              final QueuePlayer queuePlayer = queue.getQueuePlayers().stream().findFirst().orElse(null);
-              if (queuePlayer == null || queue.isFull() && !queuePlayer.isFullBypass()) {
-                return;
-              }
+        .filter(queue -> queue.getState() == QueueState.ACTIVE)
+        .filter(queue -> queue.getStatus() == ServerStatus.ONLINE)
+        .filter(queue -> queue.size() > 0)
+        .limit(10)
+        .forEach(queue -> {
+          final QueuePlayer queuePlayer = queue.getQueuePlayers().stream().findFirst().orElse(null);
+          if (queuePlayer == null || queue.isFull() && !queuePlayer.isFullBypass()) {
+            return;
+          }
 
-              // Transfer the player
-              this.pollFirst(queue, queuePlayer);
-            });
+          // Transfer the player
+          this.pollFirst(queue, queuePlayer);
+        });
   }
 
   /**
@@ -282,66 +301,70 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
    * - For each queue, attempts to retrieve the associated registered server.
    * - Uses asynchronous ping for each server with a timeout of 3 seconds.
    * - Updates the queue status based on the ping result:
-   *   - If the server is unreachable (i.e., throws an exception), the queue status is set to {@code OFFLINE}.
-   *   - If the server becomes reachable after being offline, the queue status is set to {@code WAITING}
-   *     and the last online time is recorded.
-   *   - If the server remains reachable and contains queue players with a bypass flag, the status is set
-   *     to {@code ONLINE}.
-   *   - If the {@code WAITING} status persists and the configured delay threshold is exceeded, the queue
-   *     status changes to {@code ONLINE}.
+   * - If the server is unreachable (i.e., throws an exception), the queue status is set to {@code OFFLINE}.
+   * - If the server becomes reachable after being offline, the queue status is set to {@code WAITING}
+   * and the last online time is recorded.
+   * - If the server remains reachable and contains queue players with a bypass flag, the status is set
+   * to {@code ONLINE}.
+   * - If the {@code WAITING} status persists and the configured delay threshold is exceeded, the queue
+   * status changes to {@code ONLINE}.
    * - For queues that are not {@code ONLINE} but have players configured as online, those players with bypass
-   *   flags are transferred out of the queue.
+   * flags are transferred out of the queue.
    *
    * <p>
    * The method leverages the asynchronous ping mechanism and timeout handling to avoid blocking operations.
    */
   private void pingBackends() {
+    if (this.getQueueCache() == null) {
+      return;
+    }
+
     // Process the first 5 servers to avoid overwhelming the system
     this.getQueueCache().getQueues().stream()
-            .limit(5)
-            .forEach(queue -> {
-              RegisteredServer s = this.server.getServer(queue.getName()).orElse(null);
-              if (s == null) {
-                return;
+        .limit(5)
+        .forEach(queue -> {
+          RegisteredServer s = this.server.getServer(queue.getName()).orElse(null);
+          if (s == null) {
+            return;
+          }
+
+          // Use async ping with timeout
+          s.ping().orTimeout(3, TimeUnit.SECONDS).whenComplete((result, th) -> {
+            if (th != null) {
+              queue.setStatus(ServerStatus.OFFLINE);
+            }
+
+            if (queue.getStatus() == ServerStatus.OFFLINE && th == null) {
+              queue.setStatus(ServerStatus.WAITING);
+              LAST_TURNED_ONLINE_TIME.put(queue.getName(), System.currentTimeMillis());
+            }
+
+            if (th == null && queue.getQueuePlayers().stream().anyMatch(QueuePlayer::isQueueBypass)) {
+              queue.setStatus(ServerStatus.ONLINE);
+            }
+
+            final Long lastOnlineTime = LAST_TURNED_ONLINE_TIME.get(queue.getName());
+
+            if (th == null && lastOnlineTime != null && queue.getStatus() == ServerStatus.WAITING) {
+              double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
+              if (System.currentTimeMillis() >= lastOnlineTime + queueDelay) {
+                queue.setStatus(ServerStatus.ONLINE);
               }
+            }
 
-              // Use async ping with timeout
-              s.ping().orTimeout(3, TimeUnit.SECONDS).whenComplete((result, th) -> {
-                if (th != null) {
-                  queue.setStatus(ServerStatus.OFFLINE);
+            if (queue.getStatus() != ServerStatus.ONLINE && queue.isOnline()) {
+              for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
+                if (queuePlayer.isQueueBypass()) {
+                  queuePlayer.transfer();
+                  queue.dequeue(queuePlayer.getUniqueId(), false);
                 }
-
-                if (queue.getStatus() == ServerStatus.OFFLINE && th == null) {
-                  queue.setStatus(ServerStatus.WAITING);
-                  LAST_TURNED_ONLINE_TIME.put(queue.getName(), System.currentTimeMillis());
-                }
-
-                if (th == null && queue.getQueuePlayers().stream().anyMatch(QueuePlayer::isQueueBypass)) {
-                  queue.setStatus(ServerStatus.ONLINE);
-                }
-
-                final Long lastOnlineTime = LAST_TURNED_ONLINE_TIME.get(queue.getName());
-
-                if (th == null && lastOnlineTime != null && queue.getStatus() == ServerStatus.WAITING) {
-                  double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
-                  if (System.currentTimeMillis() >= lastOnlineTime + queueDelay) {
-                    queue.setStatus(ServerStatus.ONLINE);
-                  }
-                }
-
-                if (queue.getStatus() != ServerStatus.ONLINE && queue.isOnline()) {
-                  for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
-                    if (queuePlayer.isQueueBypass()) {
-                      queuePlayer.transfer();
-                      queue.dequeue(queuePlayer.getPlayer(), false);
-                    }
-                  }
-                }
-              }).exceptionally(throwable -> {
-                queue.setStatus(ServerStatus.OFFLINE);
-                return null;
-              });
-            });
+              }
+            }
+          }).exceptionally(throwable -> {
+            queue.setStatus(ServerStatus.OFFLINE);
+            return null;
+          });
+        });
   }
 
   /**

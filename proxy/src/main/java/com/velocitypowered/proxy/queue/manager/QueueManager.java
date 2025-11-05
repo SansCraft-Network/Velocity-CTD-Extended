@@ -41,6 +41,11 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
   void reload();
 
   /**
+   * Tears down the queue manager, releasing any held resources.
+   */
+  void teardown();
+
+  /**
    * Checks whether the current proxy is a master proxy.
    *
    * @return {@code true} if the current proxy is a master proxy, otherwise {@code false}
@@ -101,19 +106,6 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
   void broadcastMessage(final Queue queue, final Function<QueuePlayer, Component> component);
 
   /**
-   * Broadcasts a generated message to all players in all queues.
-   * The message is dynamically created for each player using the provided {@link Function}.
-   *
-   * @param component a function that generates the {@link Component} message for each {@link QueuePlayer}
-   * @see #broadcastMessage(Queue, Function)
-   */
-  default void broadcastMessage(final Function<QueuePlayer, Component> component) {
-    for (Queue queue : this.getQueueCache().getQueues()) {
-      this.broadcastMessage(queue, component);
-    }
-  }
-
-  /**
    * Broadcasts an action bar message to all players in the specified queue.
    * The message is generated for each player using the provided {@link Function}.
    *
@@ -121,17 +113,4 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    * @param component a function that generates the message {@link Component} for each
    */
   void broadcastActionBar(final Queue queue, final Function<QueuePlayer, Component> component);
-
-  /**
-   * Broadcasts an action bar message to all players in all queues.
-   * The message is dynamically created for each player using the provided {@link Function}.
-   *
-   * @param component a function that generates the {@link Component} message for each {@link QueuePlayer}
-   * @see #broadcastActionBar(Queue, Function)
-   */
-  default void broadcastActionBar(final Function<QueuePlayer, Component> component) {
-    for (Queue queue : this.getQueueCache().getQueues()) {
-      this.broadcastActionBar(queue, component);
-    }
-  }
 }

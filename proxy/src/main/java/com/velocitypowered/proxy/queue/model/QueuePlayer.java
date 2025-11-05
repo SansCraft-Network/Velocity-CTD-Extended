@@ -41,6 +41,7 @@ public final class QueuePlayer {
   private final transient Queue queue;
   private final transient VelocityRegisteredServer targetInstance;
 
+  private final UUID uniqueId;
   private final String username;
 
   private int priority;
@@ -48,8 +49,6 @@ public final class QueuePlayer {
   private boolean waitingForConnection;
   private boolean fullBypass;
   private boolean queueBypass;
-
-  private transient Player player;
 
   /**
    * Creates a new {@link QueuePlayer}.
@@ -60,9 +59,10 @@ public final class QueuePlayer {
    */
   public QueuePlayer(final VelocityServer server, final Player player, final Queue queue) {
     this.server = server;
-    this.player = player;
     this.queue = queue;
     this.targetInstance = queue.getBackendInstance();
+
+    this.uniqueId = player.getUniqueId();
     this.username = player.getUsername();
 
     // Setup configurable properties
@@ -88,7 +88,7 @@ public final class QueuePlayer {
 
     if (this.server.isRedisEnabled()) {
       new VelocityQueueTransfer(this.getUniqueId(), this.targetInstance.getServerInfo().getName())
-              .publish();
+          .publish();
     } else {
       handleTransfer();
     }
@@ -105,7 +105,7 @@ public final class QueuePlayer {
 
       if (foundServer == null) {
         this.server.getQueueManager().getQueueCache().getQueue(targetServerName)
-                .dequeue(player.getUniqueId(), false);
+            .dequeue(player.getUniqueId(), false);
         return;
       }
 
@@ -126,13 +126,13 @@ public final class QueuePlayer {
 
         if (success) {
           server.getQueueManager().getQueueCache().getQueue(targetServerName)
-                  .dequeue(this.player, false);
+              .dequeue(this.uniqueId, false);
         } else {
           updateProperties();
 
           if (getConnectionAttempts() == this.server.getConfiguration().getQueue().getMaxSendRetries()) {
             server.getQueueManager().getQueueCache().getQueue(targetServerName)
-                    .dequeue(this.player, true);
+                .dequeue(this.uniqueId, true);
           }
         }
       }).exceptionally(ex -> {
@@ -140,7 +140,7 @@ public final class QueuePlayer {
 
         if (getConnectionAttempts() == this.server.getConfiguration().getQueue().getMaxSendRetries()) {
           server.getQueueManager().getQueueCache().getQueue(targetServerName)
-                  .dequeue(this.player, true);
+              .dequeue(this.uniqueId, true);
         }
 
         return null;
@@ -168,15 +168,11 @@ public final class QueuePlayer {
     this.waitingForConnection = false;
     this.connectionAttempts++;
 
-    if (this.player == null) {
-      this.player = this.server.getPlayer(this.getUniqueId()).orElse(null);
-    }
-
-    if (this.player != null) {
-      this.fullBypass = this.player.hasPermission("velocity.queue.full.bypass");
-      this.queueBypass = this.player.hasPermission("velocity.queue.bypass");
-      this.priority = this.player.getQueuePriority(this.queue.getName());
-    }
+    this.server.getPlayer(this.uniqueId).ifPresent(player -> {
+      this.fullBypass = player.hasPermission("velocity.queue.full.bypass");
+      this.queueBypass = player.hasPermission("velocity.queue.bypass");
+      this.priority = player.getQueuePriority(this.queue.getName());
+    });
 
     if (this.server.isRedisEnabled()) {
       this.server.getRedis().getQueueService().upsertQueuePlayer(this);
@@ -203,21 +199,12 @@ public final class QueuePlayer {
   }
 
   /**
-   * Retrieves the player object associated with this {@code QueuePlayer} instance.
-   *
-   * @return the player object
-   */
-  public Player getPlayer() {
-    return player;
-  }
-
-  /**
    * Retrieves the unique identifier of the player represented by this {@code QueuePlayer} instance.
    *
    * @return the unique identifier of the player
    */
   public UUID getUniqueId() {
-    return this.player.getUniqueId();
+    return this.uniqueId;
   }
 
   /**

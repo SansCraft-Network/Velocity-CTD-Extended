@@ -17,7 +17,6 @@
 
 package com.velocitypowered.proxy.redis.impl.packet;
 
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.redis.packet.annotation.OneWayPacket;
 import com.velocitypowered.proxy.redis.packet.typed.ComponentPacket;
 import java.util.UUID;
@@ -37,12 +36,12 @@ public final class VelocityActionBar extends ComponentPacket {
   /**
    * Constructs a new {@link VelocityActionBar} packet.
    *
-   * @param player the player to send the message to.
+   * @param uniqueId the uniqueId if the player to send the message to.
    * @param component the message to send.
    */
-  public VelocityActionBar(final @NotNull Player player, final Component component) {
+  public VelocityActionBar(final @NotNull UUID uniqueId, final Component component) {
     super(component);
-    this.uniqueId = player.getUniqueId();
+    this.uniqueId = uniqueId;
   }
 
   /**

@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.redis.impl.depot;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
@@ -43,6 +44,9 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
   private final VelocityRedis redis;
   private final VelocityServer server;
 
+  private final ScheduledTask updateTotalPlayerCountTask;
+  private final ScheduledTask syncPlayerEntriesTask;
+
   private int totalPlayerCount = 0;
 
   /**
@@ -57,14 +61,16 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     this.server = redis.getServer();
 
     // Start a task to update the total player count every 250 milliseconds
-    redis.getServer().getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, this::updateTotalPlayerCount)
-            .repeat(Duration.ofMillis(250L)).schedule();
-    //todo stop at teardown
+    this.updateTotalPlayerCountTask = redis.getServer().getScheduler()
+            .buildTask(VelocityVirtualPlugin.INSTANCE, this::updateTotalPlayerCount)
+            .repeat(Duration.ofMillis(250L))
+            .schedule();
 
     // Start a task to update the player entries of this proxy every 1 second
-    redis.getServer().getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, this::syncPlayerEntries)
-            .repeat(Duration.ofSeconds(1L)).schedule();
-    //todo stop at teardown
+    this.syncPlayerEntriesTask = redis.getServer().getScheduler()
+            .buildTask(VelocityVirtualPlugin.INSTANCE, this::syncPlayerEntries)
+            .repeat(Duration.ofSeconds(1L))
+            .schedule();
   }
 
   @Override
@@ -72,6 +78,15 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     // Remove all players of this proxy from the depot
     for (Player player : this.server.getAllPlayers()) {
       this.depot.remove(player.getUniqueId());
+    }
+
+    // Cancel scheduled tasks
+    if (this.updateTotalPlayerCountTask != null) {
+      this.updateTotalPlayerCountTask.cancel();
+    }
+
+    if (this.syncPlayerEntriesTask != null) {
+      this.syncPlayerEntriesTask.cancel();
     }
   }
 

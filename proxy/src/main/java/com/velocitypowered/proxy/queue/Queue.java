@@ -238,7 +238,7 @@ public sealed interface Queue permits AbstractQueue {
   void setState(final QueueState state);
 
   /**
-   * Clears the queue.
+   * Tear down the queue.
    */
-  void clear();
+  void teardown();
 }

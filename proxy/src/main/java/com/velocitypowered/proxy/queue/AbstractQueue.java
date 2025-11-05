@@ -100,6 +100,7 @@ public abstract sealed class AbstractQueue implements Queue
 
   @Override
   public final void enqueue(final UUID uniqueId) {
+    System.out.println("Enqueuing player with UUID: " + uniqueId + " to queue for server: " + getName());
     final Player player = this.server.getPlayer(uniqueId).orElseThrow();
     final QueuePlayer queuePlayer = new QueuePlayer(this.server, player, this);
 
@@ -296,7 +297,7 @@ public abstract sealed class AbstractQueue implements Queue
   }
 
   @Override
-  public void clear() {
+  public void teardown() {
     internalQueue.clear();
     CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
   }

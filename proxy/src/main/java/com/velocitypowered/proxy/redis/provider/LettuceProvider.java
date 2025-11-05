@@ -164,7 +164,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
       if (throwable != null) {
         LOGGER.warn("Failed to publish packet to '{}' channel", CHANNEL, throwable);
       } else {
-        LOGGER.info("Successfully published packet to '{}' channel, received by {} clients", CHANNEL, received);
+        LOGGER.debug("Successfully published packet to '{}' channel, received by {} clients", CHANNEL, received);
       }
     });
   }

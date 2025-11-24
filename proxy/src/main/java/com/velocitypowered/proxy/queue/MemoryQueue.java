@@ -20,6 +20,7 @@ package com.velocitypowered.proxy.queue;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -37,16 +38,16 @@ public final class MemoryQueue extends AbstractQueue {
    * @param server the proxy instance
    * @param backendInstance the backend instance server
    */
-  public MemoryQueue(VelocityServer server,  VelocityRegisteredServer backendInstance) {
+  public MemoryQueue(VelocityServer server, VelocityRegisteredServer backendInstance) {
     super(server, backendInstance);
   }
 
   @Override
-  protected void notifyMaxRetriesReached(Player player) {
+  protected void notifyMaxRetriesReached(UUID uniqueId) {
     final TranslatableComponent component = Component.translatable("velocity.queue.error.max-send-retries-reached")
-            .arguments(Argument.string("server", this.getName()),
+            .arguments(Component.text(this.getName()),
                     Argument.numeric("retries", this.server.getConfiguration().getQueue().getMaxSendRetries()));
 
-    player.sendMessage(component);
+    this.server.getPlayer(uniqueId).ifPresent(player -> player.sendMessage(component));
   }
 }

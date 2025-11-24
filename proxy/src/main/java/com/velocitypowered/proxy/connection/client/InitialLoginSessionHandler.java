@@ -55,6 +55,7 @@ import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -295,6 +296,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
       String username = login.getUsername();
+      UUID uniqueId = login.getHolderUuid(); // this
       GameProfile cachedProfile = null;
       if (profileResultCache != null) {
         cachedProfile = profileResultCache.getIfPresent(username);

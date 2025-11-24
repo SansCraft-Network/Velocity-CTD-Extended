@@ -80,16 +80,11 @@ public class SendCommand {
   /**
    * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isSendEnabled whether the command is enabled
    * @return the command instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isSendEnabled) {
-    if (!isSendEnabled) {
-      return null;
-    }
-
+  public BrigadierCommand register() {
     if (server.isRedisEnabled()) {
-      registerMultiProxy(true);
+      registerMultiProxy();
       return null;
     }
 
@@ -160,14 +155,8 @@ public class SendCommand {
 
   /**
    * Handles registering the command when Redis is enabled.
-   *
-   * @param isSendEnabled Whether the command is enabled or not.
    */
-  public void registerMultiProxy(final boolean isSendEnabled) {
-    if (!isSendEnabled) {
-      return;
-    }
-
+  public void registerMultiProxy() {
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
         .literalArgumentBuilder("send")
         .requires(source ->
@@ -236,7 +225,7 @@ public class SendCommand {
             .plugin(VelocityVirtualPlugin.INSTANCE)
             .build(),
         command
-    );
+    );//todo kan dit niet gwn return command;?
   }
 
   private int send(final CommandContext<CommandSource> context) {
@@ -251,7 +240,7 @@ public class SendCommand {
 
     if (maybeServer.isEmpty()) {
       context.getSource().sendMessage(
-          CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Argument.string("server", serverName))
+          CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Component.text(serverName))
       );
 
       return 0;
@@ -317,7 +306,7 @@ public class SendCommand {
       final ServerResult result = findServer(player.substring(1));
 
       if (result.bestMatch().isEmpty()) {
-        context.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Argument.string("server", player.substring(1))));
+        context.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Component.text(player.substring(1))));
         return 0;
       }
 
@@ -398,7 +387,7 @@ public class SendCommand {
 
     if (maybeServer.isEmpty()) {
       context.getSource().sendMessage(
-          CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Argument.string("server", serverName))
+          CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Component.text(serverName))
       );
 
       return 0;
@@ -473,7 +462,7 @@ public class SendCommand {
       final ServerResult result = findServer(player.substring(1));
 
       if (result.bestMatch().isEmpty()) {
-        context.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Argument.string("server", player.substring(1))));
+        context.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Component.text(player.substring(1))));
         return 0;
       }
 

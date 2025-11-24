@@ -20,6 +20,8 @@ package com.velocitypowered.proxy.redis.impl.depot;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.proxy.redis.depot.DepotEntry;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,10 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
   private final String username;
   private final String proxyId;
 
+  private final Map<String, Integer> queuePriority;
+
+  private boolean fullQueueBypass = false;
+  private boolean queueBypass = false;
   private String serverName = null;
 
   /**
@@ -48,6 +54,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
 
     this.username = username;
     this.proxyId = proxyId;
+    this.queuePriority = new HashMap<>();
   }
 
   /**
@@ -58,7 +65,11 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    */
   public PlayerEntry(final @NotNull Player player, String proxyId) {
     this(player.getUniqueId(), player.getUsername(), proxyId);
+
     this.setServer(player.getCurrentServer().orElse(null));
+    this.fullQueueBypass = player.hasPermission("velocity.queue.full.bypass");
+    this.queueBypass = player.hasPermission("velocity.queue.bypass");
+    this.queuePriority.putAll(player.getQueuePriorities());
   }
 
   /**
@@ -92,6 +103,33 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
 
   public String getProxyId() {
     return proxyId;
+  }
+
+  /**
+   * Gets the queue priorities.
+   *
+   * @return the queue priorities
+   */
+  public Map<String, Integer> getQueuePriorities() {
+    return queuePriority;
+  }
+
+  /**
+   * Checks whether the player bypasses full queues.
+   *
+   * @return {@code true} if the player bypasses full queues, {@code false} otherwise
+   */
+  public boolean isFullQueueBypass() {
+    return fullQueueBypass;
+  }
+
+  /**
+   * Gets the queue bypass mode.
+   *
+   * @return the queue bypass mode
+   */
+  public boolean isQueueBypass() {
+    return queueBypass;
   }
 
   /**

@@ -302,12 +302,12 @@ public final class VelocityCommand {
 
       if (realId == null) {
         source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist")
-            .arguments(Argument.string("proxy", proxyId)));
+            .arguments(Component.text(proxyId)));
         return -1;
       }
 
       source.sendMessage(Component.translatable("velocity.command.uptime-remote")
-          .arguments(Argument.string("proxy", realId)));
+          .arguments(Component.text(realId)));
 
       new VelocityUptime(source, realId)
               .publish();
@@ -387,13 +387,13 @@ public final class VelocityCommand {
       } else if (sudoTarget.startsWith("+")) {
         if (sudoTarget.length() == 1) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-server")
-              .arguments(Argument.string("server", sudoTarget)));
+              .arguments(Component.text(sudoTarget)));
           return Command.SINGLE_SUCCESS;
         }
         RegisteredServer registeredServer = this.server.getServer(sudoTarget.substring(1)).orElse(null);
         if (registeredServer == null) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-server")
-              .arguments(Argument.string("server", sudoTarget.substring(1))));
+              .arguments(Component.text(sudoTarget.substring(1))));
           return Command.SINGLE_SUCCESS;
         }
 
@@ -435,7 +435,7 @@ public final class VelocityCommand {
       } else {
         if (sudoTarget.startsWith("-") && sudoTarget.length() > 1) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-proxy")
-              .arguments(Argument.string("proxy", sudoTarget.substring(1))));
+              .arguments(Component.text(sudoTarget.substring(1))));
           return Command.SINGLE_SUCCESS;
         }
         if (this.server.isRedisEnabled()) {
@@ -519,12 +519,12 @@ public final class VelocityCommand {
 
       if (realId == null) {
         source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist")
-            .arguments(Argument.string("proxy", proxyId)));
+            .arguments(Component.text(proxyId)));
         return -1;
       }
 
       source.sendMessage(Component.translatable("velocity.command.reload-remote")
-          .arguments(Argument.string("proxy", realId)));
+          .arguments(Component.text(realId)));
 
       new VelocityReload(source, realId)
               .publish();

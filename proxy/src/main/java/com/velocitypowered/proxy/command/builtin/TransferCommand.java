@@ -65,14 +65,9 @@ public class TransferCommand {
   /**
    * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isTransferEnabled whether the command is enabled
    * @return the command instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isTransferEnabled) {
-    if (!isTransferEnabled) {
-      return null;
-    }
-
+  public BrigadierCommand register() {
     if (!this.server.getConfiguration().isAcceptTransfers()) {
       return null;
     }
@@ -171,13 +166,13 @@ public class TransferCommand {
 
     if (address == null) {
       context.getSource().sendMessage(Component.translatable("velocity.command.error.transfer.invalid-proxy")
-          .arguments(Argument.string("proxy", proxyId)));
+          .arguments(Component.text(proxyId)));
       return -1;
     }
 
     if (player.equalsIgnoreCase("all")) {
       context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.all")
-          .arguments(Argument.string("proxy", normalizedProxyId)));
+          .arguments(Component.text(normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
         for (Player p : this.server.getAllPlayers()) {
@@ -191,7 +186,7 @@ public class TransferCommand {
       RegisteredServer foundServer = findServer(player.substring(1)).orElse(null);
       if (foundServer == null) {
         context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-            .arguments(Argument.string("server", player)));
+            .arguments(Component.text(player)));
         return -1;
       }
 
@@ -217,14 +212,14 @@ public class TransferCommand {
       ServerConnection foundServerConn = sender.getCurrentServer().orElse(null);
       if (foundServerConn == null) {
         context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-            .arguments(Argument.string("server", player)));
+            .arguments(Component.text(player)));
         return -1;
       }
 
       RegisteredServer foundServer = this.server.getServer(foundServerConn.getServerInfo().getName()).orElseThrow();
 
       context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.server")
-          .arguments(Argument.string("server", foundServer.getServerInfo().getName()),
+          .arguments(Component.text(foundServer.getServerInfo().getName()),
               Argument.string("proxy",  normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {

@@ -371,7 +371,7 @@ public final class VelocityCommands {
 
     if (serverOptional.isEmpty()) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
-          .arguments(Argument.string("server", serverName)));
+          .arguments(Component.text(serverName)));
       return null;
     }
 
@@ -379,13 +379,13 @@ public final class VelocityCommands {
 
     if (!checkServerPermissions(registeredServer, ctx.getSource())) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
-          .arguments(Argument.string("server", serverName)));
+          .arguments(Component.text(serverName)));
       return null;
     }
 
     if (!allowNonQueueable && registeredServer.getQueue().getState() == QueueState.INACTIVE) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.server-has-no-queue")
-          .arguments(Argument.string("server", serverName)));
+          .arguments(Component.text(serverName)));
       return null;
     }
 

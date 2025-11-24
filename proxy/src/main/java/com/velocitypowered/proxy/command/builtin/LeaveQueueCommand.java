@@ -44,14 +44,8 @@ public record LeaveQueueCommand(VelocityServer server) {
 
   /**
    * Registers or unregisters the command based on the configuration value.
-   *
-   * @param isQueueEnabled whether queueing is enabled in the configuration
    */
-  public void register(final boolean isQueueEnabled) {
-    if (!isQueueEnabled) {
-      return;
-    }
-
+  public void register() {
     final List<String> aliases = server.getConfiguration().getQueue().getLeaveQueueAliases();
 
     if (aliases.isEmpty()) {
@@ -138,11 +132,11 @@ public record LeaveQueueCommand(VelocityServer server) {
         queue.dequeue(player, false);
         player.sendMessage(
             Component.translatable("velocity.queue.command.left-queue")
-                .arguments(Argument.string("server", server.getServerInfo().getName())));
+                .arguments(Component.text(server.getServerInfo().getName())));
       } else {
         player.sendMessage(
             Component.translatable("velocity.queue.error.not-in-queue")
-                .arguments(Argument.string("server", server.getServerInfo().getName())));
+                .arguments(Component.text(server.getServerInfo().getName())));
       }
     } else {
       ctx.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);

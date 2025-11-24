@@ -70,14 +70,9 @@ public class GlistCommand {
   /**
    * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isGlistEnabled whether the command is enabled
    * @return the command instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isGlistEnabled) {
-    if (!isGlistEnabled) {
-      return null;
-    }
-
+  public BrigadierCommand register() {
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
         .literalArgumentBuilder("glist")
         .requires(source ->
@@ -133,7 +128,7 @@ public class GlistCommand {
       if (registeredServer.isEmpty()) {
         source.sendMessage(
             CommandMessages.SERVER_DOES_NOT_EXIST
-                .arguments(Argument.string("server", serverName)));
+                .arguments(Component.text(serverName)));
         return -1;
       }
       sendServerPlayers(source, false, registeredServer.get());
@@ -169,7 +164,7 @@ public class GlistCommand {
 
           String key = "velocity.command.glist.proxy-"
               + (proxyId.equals(this.server.getProxyId()) ? "self" : "other");
-          Component hover = Component.translatable(key).arguments(Argument.string("proxy", proxyId));
+          Component hover = Component.translatable(key).arguments(Component.text(proxyId));
           players.add(Component.text(playerEntry.getUsername()).hoverEvent(HoverEvent.showText(hover)));
           totalPlayers += 1;
         }

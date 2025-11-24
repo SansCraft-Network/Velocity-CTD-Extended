@@ -108,6 +108,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -1848,6 +1849,22 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     }
 
     return 0;
+  }
+
+  @Override
+  public Map<String, Integer> getQueuePriorities() {
+    final Map<String, Integer> priorities = new HashMap<>();
+
+    // Go through all the servers and get the player's priority for each
+    for (RegisteredServer server : server.getAllServers()) {
+      final String serverName = server.getServerInfo().getName();
+      priorities.put(serverName, getQueuePriority(serverName));
+    }
+
+    // Also get the global priority
+    priorities.put("all", getQueuePriority("all"));
+
+    return priorities;
   }
 
   /**

@@ -55,14 +55,9 @@ public class HubCommand {
   /**
    * Registers or unregisters the command based on the configuration value.
    *
-   * @param isHubCommand {@code true} if the command is enabled via configuration
    * @return the {@link BrigadierCommand} instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isHubCommand) {
-    if (!isHubCommand) {
-      return null;
-    }
-
+  public BrigadierCommand register() {
     return new BrigadierCommand(BrigadierCommand
         .literalArgumentBuilder("hub")
         .requires(source ->
@@ -88,7 +83,7 @@ public class HubCommand {
 
     if (server.getConfiguration().getAttemptConnectionOrder().contains(registeredServer.getServerInfo().getName())) {
       player.sendMessage(Component.translatable("velocity.command.hub.fallback-already-connected")
-          .arguments(Argument.string("server", registeredServer.getServerInfo().getName())));
+          .arguments(Component.text(registeredServer.getServerInfo().getName())));
       return 0;
     }
 
@@ -106,7 +101,7 @@ public class HubCommand {
 
       if (translationExists(player)) {
         player.sendMessage(Component.translatable("velocity.command.hub.fallback-connecting")
-            .arguments(Argument.string("server", serverToTry.getServerInfo().getName())));
+            .arguments(Component.text(serverToTry.getServerInfo().getName())));
       }
 
       if (this.server.getConfiguration().getQueue().getNoQueueServers().contains(serverToTry.getServerInfo().getName())

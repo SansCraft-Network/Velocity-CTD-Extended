@@ -73,14 +73,8 @@ public final class ServerCommand {
 
   /**
    * Registers or unregisters the command based on the configuration value.
-   *
-   * @param isServerEnabled whether the server command is enabled in the configuration
    */
-  public void register(final boolean isServerEnabled) {
-    if (!isServerEnabled) {
-      return;
-    }
-
+  public void register() {
     final LiteralCommandNode<CommandSource> node = BrigadierCommand
         .literalArgumentBuilder("server")
         .requires(src -> src instanceof Player && src.getPermissionValue("velocity.command.server") != Tristate.FALSE)
@@ -143,7 +137,7 @@ public final class ServerCommand {
         .orElse("<unknown>");
     executor.sendMessage(Component.translatable(
         "velocity.command.server-current-server", NamedTextColor.YELLOW)
-            .arguments(Argument.string("server", currentServer)));
+            .arguments(Component.text(currentServer)));
 
     final List<RegisteredServer> servers = VelocityCommands.sortedServerList(server);
     if (servers.size() > MAX_SERVERS_TO_LIST) {

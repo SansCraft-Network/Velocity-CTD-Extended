@@ -60,14 +60,9 @@ public class FindCommand {
   /**
    * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isFindEnabled whether the command is enabled
    * @return the command instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isFindEnabled) {
-    if (!isFindEnabled) {
-      return null;
-    }
-
+  public BrigadierCommand register() {
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
         .literalArgumentBuilder("find")
         .requires(source ->

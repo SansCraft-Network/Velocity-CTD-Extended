@@ -71,11 +71,10 @@ public class PlistCommand {
   /**
    * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isPlistEnabled whether the command is enabled
    * @return the command instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isPlistEnabled) {
-    if (!isPlistEnabled || !server.isRedisEnabled()) {
+  public BrigadierCommand register() {
+    if (!server.isRedisEnabled()) {
       return null;
     }
 
@@ -132,7 +131,7 @@ public class PlistCommand {
         .findFirst()
         .or(() -> {
           source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist", NamedTextColor.RED)
-              .arguments(Argument.string("proxy", proxyName)));
+              .arguments(Component.text(proxyName)));
           return Optional.empty();
         });
   }
@@ -188,7 +187,7 @@ public class PlistCommand {
         .findFirst()
         .or(() -> {
           source.sendMessage(Component.translatable("velocity.command.server-does-not-exist", NamedTextColor.RED)
-              .arguments(Argument.string("server", serverName)));
+              .arguments(Component.text(serverName)));
           return Optional.empty();
         });
   }

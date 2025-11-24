@@ -17,11 +17,11 @@
 
 package com.velocitypowered.proxy.queue;
 
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.queue.manager.QueueManager;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
+import com.velocitypowered.proxy.queue.model.QueuePlayerData;
 import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.queue.redis.depot.QueueEntry;
@@ -78,7 +78,7 @@ public abstract sealed class AbstractQueue implements Queue
     // Initialize the queue status and state
     this.status = ServerStatus.OFFLINE;
     this.state = server.getConfiguration().getQueue().getNoQueueServers()
-            .contains(this.backendInstance.getServerInfo().getName()) ? QueueState.INACTIVE : QueueState.ACTIVE;
+        .contains(this.backendInstance.getServerInfo().getName()) ? QueueState.INACTIVE : QueueState.ACTIVE;
   }
 
   /**
@@ -94,15 +94,17 @@ public abstract sealed class AbstractQueue implements Queue
     // Copy from the queue entry
     this.status = queueEntry.getStatus();
     this.state = queueEntry.getState();
+
+    // Populate the internal queue
     this.internalQueue.clear();
     this.internalQueue.addAll(queueEntry.getDeque());
+    this.internalQueue.forEach(queuePlayer -> queuePlayer.setContext(server, this));
   }
 
   @Override
-  public final void enqueue(final UUID uniqueId) {
-    System.out.println("Enqueuing player with UUID: " + uniqueId + " to queue for server: " + getName());
-    final Player player = this.server.getPlayer(uniqueId).orElseThrow();
-    final QueuePlayer queuePlayer = new QueuePlayer(this.server, player, this);
+  public final void enqueue(final QueuePlayerData data) {
+    final QueuePlayer queuePlayer = new QueuePlayer(this.server, this, data);
+    System.out.println("Enqueuing player with UUID: " + queuePlayer.getUniqueId() + " to queue for server: " + getName());
 
     synchronized (internalQueue) {
       final Iterator<QueuePlayer> iterator = internalQueue.iterator();
@@ -136,7 +138,7 @@ public abstract sealed class AbstractQueue implements Queue
    * Inserts a {@link QueuePlayer} at the specified position in the queue.
    *
    * @param queuePlayer the queue player to insert
-   * @param position the position to insert the queue player at
+   * @param position    the position to insert the queue player at
    */
   private void insertAt(final QueuePlayer queuePlayer, final int position) {
     // For small queues, use the existing approach
@@ -165,16 +167,14 @@ public abstract sealed class AbstractQueue implements Queue
 
   @Override
   public void dequeue(final UUID uniqueId, boolean maxRetriesReached) {
-    final Player player = this.server.getPlayer(uniqueId).orElseThrow();
-
     // Notify the player if max retries have been reached
     if (maxRetriesReached) {
-      server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> notifyMaxRetriesReached(player))
-              .delay(1, TimeUnit.SECONDS).schedule();
+      server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> notifyMaxRetriesReached(uniqueId))
+          .delay(1, TimeUnit.SECONDS).schedule();
     }
 
     // Remove the player from the internal queue
-    internalQueue.removeIf(queuePlayer -> queuePlayer.getUniqueId().equals(player.getUniqueId()));
+    internalQueue.removeIf(queuePlayer -> queuePlayer.getUniqueId().equals(uniqueId));
 
     // Update cache asynchronously
     CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
@@ -332,32 +332,32 @@ public abstract sealed class AbstractQueue implements Queue
       return Component.translatable("velocity.queue.player-status.bypass", NamedTextColor.YELLOW);
     } else if (this.isFull() && !queuePlayer.isFullBypass()) {
       return Component.translatable("velocity.queue.player-status.full", NamedTextColor.YELLOW)
-              .arguments(
-                      Argument.numeric("position", position),
-                      Argument.numeric("size", this.size()),
-                      Argument.string("server", this.getName()),
-                      Argument.component("eta", calculateEta(position))
-              );
+          .arguments(
+              Component.text(position),
+              Component.text(this.size()),
+              Component.text(this.getName()),
+              calculateEta(position)
+          );
     } else if (queuePlayer.isWaitingForConnection()) {
       return Component.translatable("velocity.queue.player-status.connecting", NamedTextColor.YELLOW)
-              .arguments(Argument.string("server", this.getName()));
+          .arguments(Component.text(this.getName()));
     } else if (isPaused()) {
       return Component.translatable("velocity.queue.player-status.paused", NamedTextColor.YELLOW);
     } else if (isOnline()) {
       return Component.translatable("velocity.queue.player-status.online", NamedTextColor.YELLOW)
-              .arguments(
-                      Argument.numeric("position", position),
-                      Argument.numeric("size", this.size()),
-                      Argument.string("server", this.getName()),
-                      Argument.component("eta", calculateEta(position))
-              );
+          .arguments(
+              Component.text(position),
+              Component.text(this.size()),
+              Component.text(this.getName()),
+              calculateEta(position)
+          );
     } else {
       return Component.translatable("velocity.queue.player-status.offline", NamedTextColor.YELLOW)
-              .arguments(
-                      Argument.numeric("position", position),
-                      Argument.numeric("size", this.size()),
-                      Argument.string("server", this.getName())
-              );
+          .arguments(
+              Component.text(position),
+              Component.text(this.size()),
+              Component.text(this.getName())
+          );
     }
   }
 
@@ -372,29 +372,29 @@ public abstract sealed class AbstractQueue implements Queue
   @ApiStatus.Internal
   public Component createListComponent() {
     return Component.translatable("velocity.queue.command.listqueues.item")
-            .arguments(
-                    Argument.component("server",
-                            Component.text(backendInstance.getServerInfo().getName())
-                                    .hoverEvent(
-                                            Component.translatable("velocity.queue.command.listqueues.hover")
-                                                    .arguments(
-                                                            Argument.numeric("size", size()),
-                                                            Argument.string("paused", isPaused() ? "True" : "False"),
-                                                            Argument.string("online", isOnline() ? "True" : "False")
-                                                    ).asHoverEvent()
-                                    )
+        .arguments(
+            Argument.component("server",
+                Component.text(backendInstance.getServerInfo().getName())
+                    .hoverEvent(
+                        Component.translatable("velocity.queue.command.listqueues.hover")
+                            .arguments(
+                                Argument.numeric("size", size()),
+                                Argument.string("paused", isPaused() ? "True" : "False"),
+                                Argument.string("online", isOnline() ? "True" : "False")
+                            ).asHoverEvent()
                     )
-            );
+            )
+        );
   }
 
   /**
    * Notifies the player that they have reached the maximum number of connection retries.
    *
-   * @param player the player to notify
-   * @see MemoryQueue#notifyMaxRetriesReached(Player)
-   * @see RedisQueue#notifyMaxRetriesReached(Player)
+   * @param uniqueId the unique id of the player to notify
+   * @see MemoryQueue#notifyMaxRetriesReached(UUID)
+   * @see RedisQueue#notifyMaxRetriesReached(UUID)
    */
-  protected void notifyMaxRetriesReached(final Player player) {
+  protected void notifyMaxRetriesReached(final UUID uniqueId) {
     // empty implementation, should be overridden by subclasses - memory, redis
   }
 }

@@ -26,6 +26,7 @@ import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.UnaryOperator;
@@ -528,4 +529,11 @@ public interface Player extends
    * @return Custom queue priority of player, or 0.
    */
   int getQueuePriority(String server);
+
+  /**
+   * Gets all queue priorities for this player.
+   *
+   * @return A map of server names to their respective queue priorities for this player.
+   */
+  Map<String, Integer> getQueuePriorities();
 }

@@ -17,6 +17,7 @@
 
 package com.velocitypowered.proxy.queue.redis.depot;
 
+import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
@@ -31,6 +32,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class QueueDepotService extends AbstractDepotService<String, QueueEntry> {
 
+  private final VelocityServer server;
+
   /**
    * Constructs a new {@link QueueDepotService}.
    *
@@ -38,6 +41,8 @@ public final class QueueDepotService extends AbstractDepotService<String, QueueE
    */
   public QueueDepotService(@NotNull VelocityRedis redis) {
     super(QueueEntry.class, redis.getProvider());
+
+    this.server = redis.getServer();
   }
 
   @Override

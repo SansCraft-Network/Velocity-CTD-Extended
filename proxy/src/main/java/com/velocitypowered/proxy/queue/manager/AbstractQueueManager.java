@@ -111,7 +111,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     if (queue.contains(player)) {
       player.sendMessage(Component.translatable("velocity.queue.error.already-queued")
-          .arguments(Argument.string("server", targetBackendName)));
+          .arguments(Component.text(targetBackendName)));
       return;
     }
 
@@ -128,7 +128,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     if (queue.isPaused() && !config.isAllowPausedQueueJoining()) {
       player.sendMessage(Component.translatable("velocity.queue.error.paused")
-          .arguments(Argument.string("server", targetBackendName)));
+          .arguments(Component.text(targetBackendName)));
       return;
     }
 
@@ -138,7 +138,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     queue.enqueue(player);
     player.sendMessage(Component.translatable("velocity.queue.command.queued")
-        .arguments(Argument.string("server", targetBackendName)));
+        .arguments(Component.text(targetBackendName)));
   }
 
   /**
@@ -150,7 +150,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
   public final void onPlayerDisconnect(final Player player) {
     final long timeout = getTimeoutInSeconds(player);
 
-    if (timeout == -1) {
+    if (timeout == -1 || this.server.isShuttingDown()) {
       removePlayerEntirely(player);
     } else {
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () ->

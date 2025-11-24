@@ -19,11 +19,13 @@ package com.velocitypowered.proxy.queue;
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
+import com.velocitypowered.proxy.queue.model.QueuePlayerData;
 import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,9 +41,9 @@ public sealed interface Queue permits AbstractQueue {
   /**
    * Adds a player to the queue using their unique identifier.
    *
-   * @param uniqueId the unique identifier of the player to be added to the queue
+   * @param data the data of the player to be added to the queue
    */
-  void enqueue(final UUID uniqueId);
+  void enqueue(final QueuePlayerData data);
 
   /**
    * Adds a player to the queue using their player object.
@@ -49,7 +51,7 @@ public sealed interface Queue permits AbstractQueue {
    * @param player the player to be added to the queue
    */
   default void enqueue(final @NotNull Player player) {
-    enqueue(player.getUniqueId());
+    enqueue(QueuePlayerData.of(this, player));
   }
 
   /**
@@ -58,7 +60,7 @@ public sealed interface Queue permits AbstractQueue {
    * @param playerEntry the player entry to be added to the queue
    */
   default void enqueue(final @NotNull PlayerEntry playerEntry) {
-    enqueue(playerEntry.getUniqueId());
+    enqueue(QueuePlayerData.of(this, playerEntry));
   }
 
   /**

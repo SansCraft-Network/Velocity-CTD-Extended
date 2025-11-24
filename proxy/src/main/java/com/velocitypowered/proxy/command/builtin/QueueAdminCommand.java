@@ -61,14 +61,8 @@ public record QueueAdminCommand(VelocityServer server) {
 
   /**
    * Registers or unregisters the command based on the configuration value.
-   *
-   * @param isQueueEnabled whether queueing is enabled in the configuration
    */
-  public void register(final boolean isQueueEnabled) {
-    if (!isQueueEnabled) {
-      return;
-    }
-
+  public void register() {
     final List<String> aliases = server.getConfiguration().getQueue().getQueueAdminAliases();
 
     if (aliases.isEmpty()) {
@@ -279,7 +273,7 @@ public record QueueAdminCommand(VelocityServer server) {
       return -1;
     } else if (server == null) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-              .arguments(Argument.string("server", serverName)));
+              .arguments(Component.text(serverName)));
       return -1;
     }
 
@@ -295,7 +289,7 @@ public record QueueAdminCommand(VelocityServer server) {
       }
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.disabled-queue")
-              .arguments(Argument.string("server", newName)));
+              .arguments(Component.text(newName)));
       return -1;
     }
 
@@ -317,7 +311,7 @@ public record QueueAdminCommand(VelocityServer server) {
             }, () -> {
               if (players.isEmpty()) {
                 ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.empty")
-                        .arguments(Argument.string("server", finalServer.getServerInfo().getName())));
+                        .arguments(Component.text(finalServer.getServerInfo().getName())));
               }
             });
 
@@ -331,27 +325,28 @@ public record QueueAdminCommand(VelocityServer server) {
     }
 
     final Queue queue = server.getQueue();
+    final String serverName = server.getServerInfo().getName();
     if (queue.isPaused()) {
       queue.setState(QueueState.ACTIVE);
       //todo dit wel effe testen, geen idee of multi proxy hiermee werkt.. wss wel, redis cache doet neemt over toch?
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
-              .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Component.text(serverName)));
 
       this.server.getQueueManager().broadcastMessage(queue,
               q -> Component.translatable("velocity.queue.command.unpaused")
-                      .arguments(Argument.string("server", server.getServerInfo().getName())));
+                      .arguments(Component.text(serverName)));
       return Command.SINGLE_SUCCESS;
     } else {
       queue.setState(QueueState.PAUSED);
       //todo zelfde als lijn 335
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.pause")
-              .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Component.text(serverName)));
 
       this.server.getQueueManager().broadcastMessage(queue,
-              q -> Component.translatable("velocity.queue.command.pause")
-                      .arguments(Argument.string("server", server.getServerInfo().getName())));
+              q -> Component.translatable("velocity.queue.command.paused")
+                      .arguments(Component.text(serverName)));
     }
 
     return Command.SINGLE_SUCCESS;
@@ -366,18 +361,18 @@ public record QueueAdminCommand(VelocityServer server) {
     final Queue queue = server.getQueue();
     if (!queue.isPaused()) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-paused")
-              .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Component.text(server.getServerInfo().getName())));
       return -1;
     }
 
     queue.setState(QueueState.ACTIVE);
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
-            .arguments(Argument.string("server", server.getServerInfo().getName())));
+            .arguments(Component.text(server.getServerInfo().getName())));
 
     this.server.getQueueManager().broadcastMessage(queue,
             q -> Component.translatable("velocity.queue.command.unpaused")
-                    .arguments(Argument.string("server", server.getServerInfo().getName())));
+                    .arguments(Component.text(server.getServerInfo().getName())));
     return Command.SINGLE_SUCCESS;
   }
 
@@ -771,7 +766,7 @@ public record QueueAdminCommand(VelocityServer server) {
 
     if (amount == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.removeall-no-players-queued")
-              .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Component.text(server.getServerInfo().getName())));
       return -1;
     }
 
@@ -799,7 +794,7 @@ public record QueueAdminCommand(VelocityServer server) {
 
     if (amount == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.removeall-no-players-queued")
-              .arguments(Argument.string("server", server.getServerInfo().getName())));
+              .arguments(Component.text(server.getServerInfo().getName())));
       return -1;
     }
 

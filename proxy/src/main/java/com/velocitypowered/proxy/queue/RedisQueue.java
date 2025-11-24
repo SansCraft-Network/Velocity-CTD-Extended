@@ -22,6 +22,7 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.queue.redis.depot.QueueEntry;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityMessage;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -55,12 +56,12 @@ public final class RedisQueue extends AbstractQueue {
   }
 
   @Override
-  protected void notifyMaxRetriesReached(Player player) {
+  protected void notifyMaxRetriesReached(UUID uniqueId) {
     final TranslatableComponent component = Component.translatable("velocity.queue.error.max-send-retries-reached")
-            .arguments(Argument.string("server", this.getName()),
+            .arguments(Component.text(this.getName()),
                     Argument.numeric("retries", this.server.getConfiguration().getQueue().getMaxSendRetries()));
 
-    new VelocityMessage(player.getUniqueId(), component)
+    new VelocityMessage(uniqueId, component)
             .publish();
   }
 }

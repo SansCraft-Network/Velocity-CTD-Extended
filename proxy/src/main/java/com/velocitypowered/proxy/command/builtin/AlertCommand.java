@@ -54,14 +54,9 @@ public class AlertCommand {
   /**
    * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isAlertEnabled whether the command is enabled
    * @return the command instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isAlertEnabled) {
-    if (!isAlertEnabled) {
-      return null;
-    }
-
+  public BrigadierCommand register() {
     final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
         .literalArgumentBuilder("alert")
         .requires(source ->

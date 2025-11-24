@@ -54,14 +54,9 @@ public class PingCommand {
   /**
    * Returns the command instance if enabled, or {@code null} if disabled via configuration.
    *
-   * @param isPingEnabled whether the command is enabled
    * @return the command instance or {@code null} if disabled
    */
-  public BrigadierCommand register(final boolean isPingEnabled) {
-    if (!isPingEnabled) {
-      return null;
-    }
-
+  public BrigadierCommand register() {
     LiteralArgumentBuilder<CommandSource> node = BrigadierCommand.literalArgumentBuilder("ping")
         .requires(source -> source.getPermissionValue("velocity.command.ping") == Tristate.TRUE)
         .then(

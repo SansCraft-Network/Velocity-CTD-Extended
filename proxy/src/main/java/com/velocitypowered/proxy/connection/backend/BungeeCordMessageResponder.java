@@ -101,7 +101,7 @@ public class BungeeCordMessageResponder {
 
     if (player.getPermissionValue("velocity.command.server." + serverName) == Tristate.FALSE) {
       player.sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-          .arguments(Argument.string("server", serverName)));
+          .arguments(Component.text(serverName)));
       return;
     }
 
@@ -132,7 +132,7 @@ public class BungeeCordMessageResponder {
     if (referencedPlayer.isPresent() && referencedServer.isPresent()) {
       if (referencedPlayer.get().getPermissionValue("velocity.command.server." + serverName) == Tristate.FALSE) {
         referencedPlayer.get().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-            .arguments(Argument.string("server", serverName)));
+            .arguments(Component.text(serverName)));
         return;
       }
 

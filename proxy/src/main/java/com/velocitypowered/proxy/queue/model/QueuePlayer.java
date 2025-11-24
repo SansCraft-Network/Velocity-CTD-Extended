@@ -18,9 +18,9 @@
 package com.velocitypowered.proxy.queue.model;
 
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
@@ -37,10 +37,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class QueuePlayer {
 
-  private final transient VelocityServer server;
-  private final transient Queue queue;
-  private final transient VelocityRegisteredServer targetInstance;
-
   private final UUID uniqueId;
   private final String username;
 
@@ -50,25 +46,28 @@ public final class QueuePlayer {
   private boolean fullBypass;
   private boolean queueBypass;
 
+  private transient VelocityServer server;
+  private transient Queue queue;
+  private transient VelocityRegisteredServer targetInstance;
+
   /**
    * Creates a new {@link QueuePlayer}.
    *
    * @param server the proxy instance
-   * @param player the player instance
    * @param queue  the queue instance
    */
-  public QueuePlayer(final VelocityServer server, final Player player, final Queue queue) {
+  public QueuePlayer(final @NotNull VelocityServer server, final @NotNull Queue queue,
+                     final @NotNull QueuePlayerData data) {
     this.server = server;
     this.queue = queue;
     this.targetInstance = queue.getBackendInstance();
 
-    this.uniqueId = player.getUniqueId();
-    this.username = player.getUsername();
+    this.uniqueId = data.uniqueId();
+    this.username = data.username();
 
-    // Setup configurable properties
-    this.priority = player.getQueuePriority(queue.getName());
-    this.fullBypass = player.hasPermission("velocity.queue.full.bypass");
-    this.queueBypass = player.hasPermission("velocity.queue.bypass");
+    this.priority = data.priority();
+    this.fullBypass = data.fullBypass();
+    this.queueBypass = data.queueBypass();
   }
 
   /**
@@ -99,18 +98,23 @@ public final class QueuePlayer {
    */
   @ApiStatus.Internal
   public void handleTransfer() {
-    this.server.getPlayer(this.getUniqueId()).ifPresent(player -> {
-      final String targetServerName = targetInstance.getServerInfo().getName();
-      RegisteredServer foundServer = this.server.getServer(targetServerName).orElse(null);
+    if (this.targetInstance == null) {
+      throw new IllegalStateException("Tried to transfer queue player, while target instance is null");
+    }
 
+    final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
+    this.server.getPlayer(this.getUniqueId()).ifPresent(player -> {
+      final String targetServerName = this.targetInstance.getServerInfo().getName();
+      final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(targetServerName);
+
+      final RegisteredServer foundServer = this.server.getServer(targetServerName).orElse(null);
       if (foundServer == null) {
-        this.server.getQueueManager().getQueueCache().getQueue(targetServerName)
-            .dequeue(player.getUniqueId(), false);
+        queue.dequeue(player.getUniqueId(), false);
         return;
       }
 
       CompletableFuture<?> future;
-      if (this.server.getConfiguration().getQueue().isForwardKickReason()) {
+      if (config.isForwardKickReason()) {
         future = player.createConnectionRequest(foundServer).connectWithIndication();
       } else {
         future = player.createConnectionRequest(foundServer).connect();
@@ -125,22 +129,19 @@ public final class QueuePlayer {
         }
 
         if (success) {
-          server.getQueueManager().getQueueCache().getQueue(targetServerName)
-              .dequeue(this.uniqueId, false);
+          queue.dequeue(this.uniqueId, false);
         } else {
           updateProperties();
 
-          if (getConnectionAttempts() == this.server.getConfiguration().getQueue().getMaxSendRetries()) {
-            server.getQueueManager().getQueueCache().getQueue(targetServerName)
-                .dequeue(this.uniqueId, true);
+          if (this.connectionAttempts == config.getMaxSendRetries()) {
+            queue.dequeue(this.uniqueId, true);
           }
         }
       }).exceptionally(ex -> {
         updateProperties();
 
-        if (getConnectionAttempts() == this.server.getConfiguration().getQueue().getMaxSendRetries()) {
-          server.getQueueManager().getQueueCache().getQueue(targetServerName)
-              .dequeue(this.uniqueId, true);
+        if (this.connectionAttempts == config.getMaxSendRetries()) {
+          queue.dequeue(this.uniqueId, true);
         }
 
         return null;
@@ -159,6 +160,18 @@ public final class QueuePlayer {
     this.waitingForConnection = other.waitingForConnection;
     this.fullBypass = other.fullBypass;
     this.queueBypass = other.queueBypass;
+  }
+
+  /**
+   * Sets the context for this {@code QueuePlayer} instance with the specified server and queue.
+   *
+   * @param server the VelocityServer instance
+   * @param queue  the Queue instance
+   */
+  public void setContext(@NotNull VelocityServer server, @NotNull Queue queue) {
+    this.server = server;
+    this.queue = queue;
+    this.targetInstance = queue.getBackendInstance();
   }
 
   /**

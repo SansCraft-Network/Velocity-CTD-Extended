@@ -119,6 +119,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.kyori.adventure.audience.Audience;
@@ -931,143 +933,28 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void registerCommands() {
-    if (configuration.isAlertEnabled() && !commandManager.hasCommand("alert")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("alert", List.of());
-      Command command = new AlertCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("alert")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
+    registerCommand("alert", configuration.isAlertEnabled(), () -> new AlertCommand(this).register());
+    registerCommand("alertraw", configuration.isAlertRawEnabled(), () -> new AlertRawCommand(this).register());
+    registerCommand("find", configuration.isFindEnabled(), () -> new FindCommand(this).register());
+    registerCommand("transfer", configuration.isTransferEnabled(), () -> new TransferCommand(this).register());
+    registerCommand("glist", configuration.isGlistEnabled(), () -> new GlistCommand(this).register());
+    registerCommand("plist", configuration.isPlistEnabled(), () -> new PlistCommand(this).register());
+    registerCommand("ping", configuration.isPingEnabled(), () -> new PingCommand(this).register());
+    registerCommand("send", configuration.isSendEnabled(), () -> new SendCommand(this).register());
+    registerCommand("hub", configuration.isHubEnabled(), () -> new HubCommand(this).register());
+
+    if (configuration.getQueue().isEnabled()) {
+      if (!commandManager.hasCommand("queueadmin")) {
+        new QueueAdminCommand(this).register();
+      }
+
+      if (!commandManager.hasCommand("leavequeue")) {
+        new LeaveQueueCommand(this).register();
       }
     }
 
-    if (configuration.isAlertRawEnabled() && !commandManager.hasCommand("alertraw")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("alertraw", List.of());
-      Command command = new AlertRawCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("alertraw")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
-      }
-    }
-
-    if (configuration.isFindEnabled() && !commandManager.hasCommand("find")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("find", List.of());
-      Command command = new FindCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("find")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
-      }
-    }
-
-    if (configuration.isTransferEnabled() && !commandManager.hasCommand("transfer")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("transfer", List.of());
-      Command command = new TransferCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("transfer")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
-      }
-    }
-
-    if (configuration.isGlistEnabled() && !commandManager.hasCommand("glist")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("glist", List.of());
-      Command command = new GlistCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("glist")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
-      }
-    }
-
-    if (configuration.isPlistEnabled() && !commandManager.hasCommand("plist")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("plist", List.of());
-      Command command = new PlistCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("plist")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
-      }
-    }
-
-    if (configuration.isPingEnabled() && !commandManager.hasCommand("ping")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("ping", List.of());
-      Command command = new PingCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("ping")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
-      }
-    }
-
-    if (configuration.isSendEnabled() && !commandManager.hasCommand("send")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("send", List.of());
-      Command command = new SendCommand(this).register(true);
-      if (command != null) {
-        commandManager.register(
-            commandManager.metaBuilder("send")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            command
-        );
-      }
-    }
-
-    if (!commandManager.hasCommand("queueadmin")) {
-      new QueueAdminCommand(this).register(configuration.getQueue().isEnabled());
-    }
-
-    if (!commandManager.hasCommand("leavequeue")) {
-      new LeaveQueueCommand(this).register(configuration.getQueue().isEnabled());
-    }
-
-    if (!commandManager.hasCommand("server")) {
-      new ServerCommand(this).register(configuration.isServerEnabled());
-    }
-
-    if (configuration.isHubEnabled() && !commandManager.hasCommand("hub")) {
-      List<String> aliases = configuration.getCommandAliases().getOrDefault("hub", List.of());
-
-      Command hubCommand = new HubCommand(this).register(true);
-      if (hubCommand != null) {
-        commandManager.register(
-            commandManager.metaBuilder("hub")
-                .aliases(aliases.toArray(String[]::new))
-                .plugin(VelocityVirtualPlugin.INSTANCE)
-                .build(),
-            hubCommand
-        );
-      }
+    if (configuration.isServerEnabled() && !commandManager.hasCommand("server")) {
+      new ServerCommand(this).register();
     }
 
     for (Map.Entry<String, List<String>> entry : configuration.getSlashServers().entrySet()) {
@@ -1124,6 +1011,26 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
           proxyAliasCommand
       );
     }
+  }
+
+  private void registerCommand(final @NotNull String label, final boolean condition, Supplier<BrigadierCommand> supplier) {
+    if (!condition || commandManager.hasCommand(label)) {
+      return;
+    }
+
+    final Command command = supplier.get();
+    if (command == null) {
+      return;
+    }
+
+    final List<String> aliases = configuration.getCommandAliases().getOrDefault(label, List.of());
+    commandManager.register(
+        commandManager.metaBuilder(label)
+            .aliases(aliases.toArray(String[]::new))
+            .plugin(VelocityVirtualPlugin.INSTANCE)
+            .build(),
+        command
+    );
   }
 
   /**

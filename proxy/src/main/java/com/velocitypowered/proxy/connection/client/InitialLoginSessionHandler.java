@@ -54,6 +54,7 @@ import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -62,6 +63,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles authenticating the player to Mojang's servers.
@@ -124,7 +126,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   /**
    * Caffeine-backed profile result cache used to avoid excessive Mojang API calls.
    */
-  private final Cache<String, GameProfile> profileResultCache;
+  private final Cache<@NotNull UUID, GameProfile> profileResultCache;
 
   InitialLoginSessionHandler(final VelocityServer server, final MinecraftConnection mcConnection,
                              final LoginInboundConnection inbound) {
@@ -295,11 +297,10 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       byte[] decryptedSharedSecret = decryptRsa(serverKeyPair, packet.getSharedSecret());
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
-      String username = login.getUsername();
-      UUID uniqueId = login.getHolderUuid(); // this
+      UUID holderUuid = Objects.requireNonNull(login.getHolderUuid(), "holderUuid");
       GameProfile cachedProfile = null;
       if (profileResultCache != null) {
-        cachedProfile = profileResultCache.getIfPresent(username);
+        cachedProfile = profileResultCache.getIfPresent(holderUuid);
       }
 
       if (cachedProfile != null) {
@@ -310,7 +311,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       }
 
       String playerIp = ((InetSocketAddress) mcConnection.getRemoteAddress()).getHostString();
-      String url = String.format(MOJANG_HASJOINED_URL, urlFormParameterEscaper().escape(username), serverId);
+      String url = String.format(MOJANG_HASJOINED_URL, urlFormParameterEscaper().escape(login.getUsername()), serverId);
 
       if (server.getConfiguration().shouldPreventClientProxyConnections()) {
         url += "&ip=" + urlFormParameterEscaper().escape(playerIp);
@@ -351,7 +352,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             if (response.statusCode() == 200) {
               final GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
               if (profileResultCache != null) {
-                profileResultCache.put(username, profile);
+                profileResultCache.put(holderUuid, profile);
               }
 
               // Not so fast, now we verify the public key for 1.19.1+

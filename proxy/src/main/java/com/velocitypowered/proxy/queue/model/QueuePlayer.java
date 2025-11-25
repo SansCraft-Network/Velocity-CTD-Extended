@@ -189,7 +189,7 @@ public final class QueuePlayer {
 
     if (this.server.isRedisEnabled()) {
       this.server.getRedis().getQueueService().upsertQueuePlayer(this);
-      //todo check if it works
+      //todo check if it works - thus far it works.
     }
   }
 

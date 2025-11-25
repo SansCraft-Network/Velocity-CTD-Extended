@@ -328,7 +328,6 @@ public record QueueAdminCommand(VelocityServer server) {
     final String serverName = server.getServerInfo().getName();
     if (queue.isPaused()) {
       queue.setState(QueueState.ACTIVE);
-      //todo dit wel effe testen, geen idee of multi proxy hiermee werkt.. wss wel, redis cache doet neemt over toch?
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
               .arguments(Component.text(serverName)));
@@ -339,7 +338,6 @@ public record QueueAdminCommand(VelocityServer server) {
       return Command.SINGLE_SUCCESS;
     } else {
       queue.setState(QueueState.PAUSED);
-      //todo zelfde als lijn 335
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.pause")
               .arguments(Component.text(serverName)));

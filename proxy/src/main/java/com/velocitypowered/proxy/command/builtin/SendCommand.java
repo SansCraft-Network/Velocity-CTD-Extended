@@ -225,7 +225,7 @@ public class SendCommand {
             .plugin(VelocityVirtualPlugin.INSTANCE)
             .build(),
         command
-    );//todo kan dit niet gwn return command;?
+    );
   }
 
   private int send(final CommandContext<CommandSource> context) {

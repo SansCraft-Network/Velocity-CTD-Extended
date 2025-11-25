@@ -44,8 +44,6 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
 
     // Create or update this proxy's entry in the depot
     this.depot.upsert(new ProxyEntry(redis.getServer()));
-
-    //todo RedisStartupRequest??
   }
 
   @Override

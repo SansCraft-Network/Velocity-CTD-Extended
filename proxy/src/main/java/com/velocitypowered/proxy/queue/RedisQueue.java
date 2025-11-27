@@ -57,8 +57,7 @@ public final class RedisQueue extends AbstractQueue {
   @Override
   protected void notifyMaxRetriesReached(UUID uniqueId) {
     final TranslatableComponent component = Component.translatable("velocity.queue.error.max-send-retries-reached")
-            .arguments(Component.text(this.getName()),
-                    Argument.numeric("retries", this.server.getConfiguration().getQueue().getMaxSendRetries()));
+            .arguments(Component.text(this.getName()), Component.text(this.server.getConfiguration().getQueue().getMaxSendRetries()));
 
     new VelocityMessage(uniqueId, component)
             .publish();

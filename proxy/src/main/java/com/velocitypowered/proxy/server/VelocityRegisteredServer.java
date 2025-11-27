@@ -98,7 +98,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @param server the proxy server
    * @param serverInfo info on this server
    */
-  public VelocityRegisteredServer(@Nullable final VelocityServer server, final ServerInfo serverInfo) {
+  public VelocityRegisteredServer(final @Nullable VelocityServer server, final ServerInfo serverInfo) {
     this.server = server;
     this.serverInfo = Preconditions.checkNotNull(serverInfo, "serverInfo");
   }
@@ -122,8 +122,11 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @return player info forwarding
    */
   public PlayerInfoForwarding getConfiguredPlayerInfoForwarding() {
+    if (serverInfo.getServerInfoForwardingMode() == null) {
+      return server.getConfiguration().getPlayerInfoForwardingMode();
+    }
+
     return switch (serverInfo.getServerInfoForwardingMode()) {
-      case FOLLOWUP -> server.getConfiguration().getPlayerInfoForwardingMode();
       case LEGACY -> PlayerInfoForwarding.LEGACY;
       case MODERN -> PlayerInfoForwarding.MODERN;
       case BUNGEEGUARD -> PlayerInfoForwarding.BUNGEEGUARD;
@@ -239,7 +242,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @param pingOptions the options to apply to this ping
    * @return the server list's ping response
    */
-  public CompletableFuture<ServerPing> ping(@Nullable final EventLoop loop, final PingOptions pingOptions) {
+  public CompletableFuture<ServerPing> ping(final @Nullable EventLoop loop, final PingOptions pingOptions) {
     if (server == null) {
       throw new IllegalStateException("No Velocity proxy instance available");
     }
@@ -247,7 +250,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     CompletableFuture<ServerPing> pingFuture = new CompletableFuture<>();
     server.createBootstrap(loop).handler(new ChannelInitializer<>() {
       @Override
-      protected void initChannel(@NotNull final Channel ch) {
+      protected void initChannel(final @NotNull Channel ch) {
         ch.pipeline().addLast(FRAME_DECODER, new MinecraftVarintFrameDecoder(ProtocolUtils.Direction.CLIENTBOUND))
             .addLast(READ_TIMEOUT, new ReadTimeoutHandler(
                 pingOptions.getTimeout() == 0

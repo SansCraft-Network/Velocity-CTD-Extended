@@ -96,7 +96,7 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
    * @throws Exception if an error occurs during decoding
    */
   @Override
-  public void channelRead(@NotNull final ChannelHandlerContext ctx, @NotNull final Object msg) throws Exception {
+  public void channelRead(final @NotNull ChannelHandlerContext ctx, final @NotNull Object msg) throws Exception {
     if (msg instanceof ByteBuf buf) {
       tryDecode(ctx, buf);
     } else {
@@ -138,8 +138,8 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
   }
 
   private void doLengthSanityChecks(final ByteBuf buf, final MinecraftPacket packet) throws Exception {
-    int expectedMinLen = packet.expectedMinLength(buf, direction, registry.version);
-    int expectedMaxLen = packet.expectedMaxLength(buf, direction, registry.version);
+    int expectedMinLen = packet.decodeExpectedMinLength(buf, direction, registry.version);
+    int expectedMaxLen = packet.decodeExpectedMaxLength(buf, direction, registry.version);
     if (expectedMaxLen != -1 && buf.readableBytes() > expectedMaxLen) {
       throw handleOverflow(packet, expectedMaxLen, buf.readableBytes());
     }

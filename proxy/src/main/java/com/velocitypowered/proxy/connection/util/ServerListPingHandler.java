@@ -172,6 +172,12 @@ public class ServerListPingHandler {
             continue;
           }
 
+          if (response.getDescriptionComponent() == null) {
+            return response.asBuilder()
+                .description(Component.empty())
+                .build();
+          }
+
           return response;
         }
 
@@ -230,10 +236,8 @@ public class ServerListPingHandler {
         ? connection.getProtocolVersion() : ProtocolVersion.MAXIMUM_VERSION;
     PingPassthroughMode passthroughMode = configuration.getPingPassthrough();
 
-    CompletableFuture<ServerPing> result;
-
     if (passthroughMode == PingPassthroughMode.DISABLED) {
-      result = CompletableFuture.completedFuture(constructLocalPing(shownVersion));
+      return CompletableFuture.completedFuture(constructLocalPing(shownVersion));
     } else {
       String virtualHostStr = connection.getVirtualHost().map(InetSocketAddress::getHostString)
           .map(str -> str.toLowerCase(Locale.ROOT))
@@ -254,16 +258,7 @@ public class ServerListPingHandler {
         serversToTry = server.getConfiguration().getAttemptConnectionOrder();
       }
 
-      result = attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHostStr);
+      return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHostStr);
     }
-
-    return result.thenApply(ping -> {
-      Component motd = ping.getDescriptionComponent();
-      if (motd == null || motd.equals(Component.empty())) {
-        return ping.asBuilder().description(Component.text("")).build();
-      }
-
-      return ping;
-    });
   }
 }

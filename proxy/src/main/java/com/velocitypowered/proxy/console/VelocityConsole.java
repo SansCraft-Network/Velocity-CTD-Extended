@@ -96,13 +96,13 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
 
   @SuppressWarnings("deprecation")
   @Override
-  public void sendMessage(@NonNull final Identity identity, @NonNull final Component message,
-                          @NonNull final MessageType messageType) {
+  public void sendMessage(final @NonNull Identity identity, final @NonNull Component message,
+                          final @NonNull MessageType messageType) {
     componentLogger.info(message);
   }
 
   @Override
-  public @NonNull Tristate getPermissionValue(@NonNull final String permission) {
+  public @NonNull Tristate getPermissionValue(final @NonNull String permission) {
     return this.permissionFunction.getPermissionValue(permission);
   }
 
@@ -135,6 +135,8 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   protected LineReader buildReader(final LineReaderBuilder builder) {
     return super.buildReader(builder
         .appName("Velocity")
+        // Explicitly disable mouse support on the builder
+        .option(LineReader.Option.MOUSE, false)
         .completer((reader, parsedLine, list) -> {
           try {
             List<String> offers = this.server.getCommandManager()

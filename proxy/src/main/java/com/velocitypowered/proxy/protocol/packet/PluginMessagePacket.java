@@ -23,6 +23,7 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
+import com.velocitypowered.proxy.protocol.ProtocolUtils.Direction;
 import com.velocitypowered.proxy.protocol.util.DeferredByteBufHolder;
 import io.netty.buffer.ByteBuf;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -55,8 +56,8 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
    * @param channel the channel name to send the plugin message to, or {@code null} if unset
    * @param backing the {@link ByteBuf} containing the plugin message payload
    */
-  public PluginMessagePacket(@Nullable final String channel,
-                             @MonotonicNonNull final ByteBuf backing) {
+  public PluginMessagePacket(final @Nullable String channel,
+                             final @MonotonicNonNull ByteBuf backing) {
     super(backing);
     this.channel = channel;
   }
@@ -80,7 +81,7 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
    *
    * @param channel the channel name, or {@code null} to unset
    */
-  public void setChannel(@Nullable final String channel) {
+  public void setChannel(final @Nullable String channel) {
     this.channel = channel;
   }
 
@@ -264,5 +265,25 @@ public class PluginMessagePacket extends DeferredByteBufHolder implements Minecr
   @Override
   public PluginMessagePacket touch(final Object hint) {
     return (PluginMessagePacket) super.touch(hint);
+  }
+
+  /**
+   * Provides an estimated number of bytes required to encode this plugin message packet.
+   *
+   * <p>This implementation returns the number of readable bytes in the underlying payload buffer,
+   * representing the size of the actual plugin message data. The full encoded packet will also
+   * include the UTF-8 encoded channel name and its length prefix written by
+   * {@link #encode(ByteBuf, Direction, ProtocolVersion)}.</p>
+   *
+   * <p>This estimate is primarily used by the encoder to preallocate sufficient buffer space,
+   * minimizing reallocation and improving performance during network writes.</p>
+   *
+   * @param direction the packet direction (clientbound or serverbound)
+   * @param version the Minecraft protocol version
+   * @return the estimated payload size in bytes, equal to the readable byte count of the content
+   */
+  @Override
+  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
+    return content().readableBytes();
   }
 }

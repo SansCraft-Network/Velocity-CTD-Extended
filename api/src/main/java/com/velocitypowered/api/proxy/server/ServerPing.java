@@ -41,7 +41,7 @@ public final class ServerPing {
   /**
    * The MOTD (Message of the Day) component.
    */
-  private final Component description;
+  private final @Nullable Component description;
 
   /**
    * The favicon shown to the client, or {@code null} if not set.
@@ -61,8 +61,8 @@ public final class ServerPing {
    * @param description the MOTD for the server
    * @param favicon the server's favicon, or {@code null} if not set
    */
-  public ServerPing(final Version version, @Nullable final Players players,
-                    final Component description, @Nullable final Favicon favicon) {
+  public ServerPing(final Version version, final @Nullable Players players,
+                    final Component description, final @Nullable Favicon favicon) {
     this(version, players, description, favicon, ModInfo.DEFAULT);
   }
 
@@ -75,9 +75,9 @@ public final class ServerPing {
    * @param favicon the server's favicon, or {@code null} if not set
    * @param modinfo the mod info for the server, or {@code null} if not present
    */
-  public ServerPing(final Version version, @Nullable final Players players,
-                    final Component description, @Nullable final Favicon favicon,
-                    @Nullable final ModInfo modinfo) {
+  public ServerPing(final Version version, final @Nullable Players players,
+                    final Component description, final @Nullable Favicon favicon,
+                    final @Nullable ModInfo modinfo) {
     this.version = Preconditions.checkNotNull(version, "version");
     this.players = players;
     this.description = Preconditions.checkNotNull(description, "description");
@@ -108,6 +108,7 @@ public final class ServerPing {
    *
    * @return the description component
    */
+  @Nullable
   public Component getDescriptionComponent() {
     return description;
   }

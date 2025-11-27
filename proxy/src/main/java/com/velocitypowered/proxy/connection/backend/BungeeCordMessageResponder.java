@@ -43,7 +43,6 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.translation.Argument;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;

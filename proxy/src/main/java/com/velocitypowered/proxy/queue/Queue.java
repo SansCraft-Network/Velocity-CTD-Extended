@@ -25,7 +25,6 @@ import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Collection;
-import java.util.Map;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

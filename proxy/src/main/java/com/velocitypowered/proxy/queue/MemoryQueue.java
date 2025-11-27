@@ -17,7 +17,6 @@
 
 package com.velocitypowered.proxy.queue;
 
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.UUID;

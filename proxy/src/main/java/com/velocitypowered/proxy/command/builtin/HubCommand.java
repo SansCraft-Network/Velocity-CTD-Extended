@@ -30,7 +30,6 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Locale;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.translation.Argument;
 import net.kyori.adventure.translation.GlobalTranslator;
 
 /**

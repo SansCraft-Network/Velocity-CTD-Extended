@@ -33,7 +33,6 @@ import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.List;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
  * Implements the {@code /leavequeue} command.

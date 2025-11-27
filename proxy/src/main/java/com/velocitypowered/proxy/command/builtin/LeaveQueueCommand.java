@@ -123,10 +123,6 @@ public record LeaveQueueCommand(VelocityServer server) {
 
     if (ctx.getSource() instanceof Player player) {
       final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(server.getServerInfo().getName());
-      if (queue == null) {
-        return -1;
-      }
-
       if (queue.contains(player)) {
         queue.dequeue(player, false);
         player.sendMessage(

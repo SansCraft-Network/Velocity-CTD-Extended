@@ -24,7 +24,6 @@ import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
-import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
  * Represents the redis implementation of {@link Queue}.

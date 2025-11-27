@@ -357,7 +357,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Returns the queue manager currently in use.
    *
-   * @return the {@link }, or {@code null} if not initialized
+   * @return the {@link QueueManager}, or {@code null} if not initialized
    */
   public QueueManager<?> getQueueManager() {
     return queueManager;

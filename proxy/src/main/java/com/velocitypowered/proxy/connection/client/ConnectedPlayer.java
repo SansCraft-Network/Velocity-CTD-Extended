@@ -1262,10 +1262,10 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                   Argument.component("reason", disconnectReason)), safe);
     }
 
-    if (this.server.getQueueManager().isQueueEnabled() && disconnectReason instanceof TextComponent text) {
+    if (this.server.isQueueEnabled() && disconnectReason instanceof TextComponent text) {
       for (String reason : this.server.getConfiguration().getQueue().getBannedReason()) {
         if (containsString(text, reason)) {
-          this.server.getQueueManager().removeFromAll(get());
+          this.server.getQueueManager().removePlayerEntirely(get());
           break;
         }
       }
@@ -1500,7 +1500,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     this.tryIndex = 0;
 
     if (serverConnection != null && server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
-      server.getQueueManager().removeFromAll(get());
+      server.getQueueManager().removePlayerEntirely(get());
     }
 
     if (serverConnection == connectionInFlight) {

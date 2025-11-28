@@ -2792,6 +2792,12 @@ public final class VelocityConfiguration implements ProxyConfig {
     private boolean overrideBungeeMessaging;
 
     /**
+     * A list of servers that auto-queue the player on join.
+     */
+    @Expose
+    private List<String> autoQueueServers;
+
+    /**
      * Aliases that can be used by players to leave the queue (e.g., /leavequeue).
      */
     @Expose
@@ -2971,6 +2977,15 @@ public final class VelocityConfiguration implements ProxyConfig {
      */
     public List<String> getLeaveQueueAliases() {
       return leaveQueueAliases;
+    }
+
+    /**
+     * Gets the list of servers that auto-queue players on join.
+     *
+     * @return a list of
+     */
+    public List<String> getAutoQueueServers() {
+      return autoQueueServers;
     }
 
     /**

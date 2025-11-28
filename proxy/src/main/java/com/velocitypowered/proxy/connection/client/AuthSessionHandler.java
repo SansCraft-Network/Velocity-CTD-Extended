@@ -181,6 +181,10 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
         logger.info("{} has connected", player);
       }
 
+      if (this.server.isQueueEnabled()) {
+        this.server.getQueueManager().onPlayerConnect(player);
+      }
+
       return server.getEventManager()
           .fire(new PermissionsSetupEvent(player, ConnectedPlayer.DEFAULT_PERMISSIONS))
           .thenAcceptAsync(event -> {

@@ -78,6 +78,13 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
   C getQueueCache();
 
   /**
+   * Handles the connection event of a player.
+   *
+   * @param player the player who has connected
+   */
+  void onPlayerConnect(final Player player);
+
+  /**
    * Handles the disconnection event of a player. This method is called when a player
    * disconnects from the system, allowing for cleanup or other necessary operations
    * specific to the disconnected player.

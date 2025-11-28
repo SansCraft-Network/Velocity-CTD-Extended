@@ -141,11 +141,17 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
         .arguments(Component.text(targetBackendName)));
   }
 
-  /**
-   * Handles the logic for when a player leaves.
-   *
-   * @param player The player that left.
-   */
+  @Override
+  public void onPlayerConnect(Player player) {
+    final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
+
+    for (Queue queue : this.getQueueCache().getQueues()) {
+      if (config.getAutoQueueServers().stream().anyMatch((serverName) -> queue.getName().equalsIgnoreCase(serverName))) {
+        queue.enqueue(player);
+      }
+    }
+  }
+
   @Override
   public final void onPlayerDisconnect(final Player player) {
     final long timeout = getTimeoutInSeconds(player);

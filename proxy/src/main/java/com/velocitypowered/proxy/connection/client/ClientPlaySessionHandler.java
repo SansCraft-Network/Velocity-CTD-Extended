@@ -82,6 +82,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -803,6 +804,16 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
       }
 
       serverBossBars.clear();
+    }
+
+    if (server.isQueueEnabled()) {
+      final Map<String, String> autoQueueServers = server.getConfiguration().getQueue().getAutoQueueServers();
+
+      final String destinationName = destination.getServerInfo().getName();
+      if (autoQueueServers.containsKey(destinationName)) {
+        server.getQueueManager().getQueueCache().getQueue(autoQueueServers.get(destinationName))
+            .enqueue(player);
+      }
     }
 
     // Tell the server about the proxy's plugin message channels.

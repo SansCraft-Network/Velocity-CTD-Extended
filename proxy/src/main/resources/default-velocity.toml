@@ -448,6 +448,12 @@ banned-reason = [
     "banned"
 ]
 
+# The list of servers that should auto-queue players on join.
+auto-queue-servers = [
+    "limbo-1:factions",
+    "limbo-2:survival"
+]
+
 # Whether the user should be capable of entering multiple queues at once.
 allow-multi-queue = false
 

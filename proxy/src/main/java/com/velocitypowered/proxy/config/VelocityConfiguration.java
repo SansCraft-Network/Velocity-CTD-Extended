@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -2792,12 +2793,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     private boolean overrideBungeeMessaging;
 
     /**
-     * A list of servers that auto-queue the player on join.
-     */
-    @Expose
-    private List<String> autoQueueServers;
-
-    /**
      * Aliases that can be used by players to leave the queue (e.g., /leavequeue).
      */
     @Expose
@@ -2818,6 +2813,11 @@ public final class VelocityConfiguration implements ProxyConfig {
      * A list of reasons that will prevent a player from joining the queue.
      */
     private List<String> bannedReason;
+
+    /**
+     * A map of key-value server pairs for automatic queuing.
+     */
+    private HashMap<String, String> autoQueueServers;
 
     private Queue(final CommentedConfig config) {
       if (config == null) {
@@ -2841,6 +2841,10 @@ public final class VelocityConfiguration implements ProxyConfig {
       this.queueAdminAliases = config.getOrElse("queue-admin-aliases", new ArrayList<>());
       this.masterProxyIds = config.getOrElse("master-proxy-ids", new ArrayList<>());
       this.bannedReason = config.getOrElse("banned-reason", new ArrayList<>());
+      this.autoQueueServers = config.getOrElse("auto-queue-servers", new ArrayList<String>()).stream()
+          .map(line -> line.split(":", 2))
+          .filter(parts -> parts.length == 2)
+          .collect(Collectors.toMap(parts -> parts[0], parts -> parts[1], (a, b) -> b, HashMap::new));
     }
 
     /**
@@ -2980,15 +2984,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     /**
-     * Gets the list of servers that auto-queue players on join.
-     *
-     * @return a list of
-     */
-    public List<String> getAutoQueueServers() {
-      return autoQueueServers;
-    }
-
-    /**
      * Gets the list of command aliases for administrators managing the queue.
      *
      * @return a list of admin queue command aliases
@@ -3004,6 +2999,15 @@ public final class VelocityConfiguration implements ProxyConfig {
      */
     public List<String> getMasterProxyIds() {
       return masterProxyIds;
+    }
+
+    /**
+     * Gets a map of key-value server name pairs for auto-queueing.
+     *
+     * @return a map of key-value server name pairs.
+     */
+    public Map<String, String> getAutoQueueServers() {
+      return autoQueueServers;
     }
 
     @Override
@@ -3022,6 +3026,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", noQueueServers=" + noQueueServers
           + ", overrideBungeeMessaging=" + overrideBungeeMessaging
           + ", leaveQueueAliases=" + leaveQueueAliases
+          + ", autoQueueServers=" + autoQueueServers
           + ", queueAdminAliases=" + queueAdminAliases
           + ", masterProxyIds=" + masterProxyIds
           + ", bannedReason=" + bannedReason

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a transaction that transfers a player to a remote server.
- *
- * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
 public final class VelocityTransferRemote extends VelocityTransaction<VelocityRemote, ComponentPacket> {
@@ -42,10 +40,9 @@ public final class VelocityTransferRemote extends VelocityTransaction<VelocityRe
    * @param ip the IP address of the remote server
    * @param port the port of the remote server
    */
-  public VelocityTransferRemote(@NotNull CommandSource source, UUID uniqueId, String proxyId, String ip, int port) {
-    super(new VelocityRemote(uniqueId, proxyId, ip, port), source, "xcd_redis.command.transfer.timeout");
+  public VelocityTransferRemote(final @NotNull CommandSource source, final UUID uniqueId, final String proxyId, final String ip, final int port) {
+    super(new VelocityRemote(uniqueId, proxyId, ip, port), source, "redis.command.transfer.timeout");
 
-    // Send the result to the command source
     this.onComplete(packet -> PacketBehaviour.SEND_COMPONENT.behave(source, packet));
   }
 }

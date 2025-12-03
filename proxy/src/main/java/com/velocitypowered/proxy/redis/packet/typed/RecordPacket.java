@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@ package com.velocitypowered.proxy.redis.packet.typed;
 import com.velocitypowered.proxy.redis.packet.GenericPacket;
 
 /**
- * Represents a {@link Record} packet.
+ * Represents a packet whose payload is a {@link Record}.
  *
- * @author Elmar Blume - 15/05/2025
+ * @param <T> the type of {@link Record} stored as the packet payload
  */
 public class RecordPacket<T extends Record> extends GenericPacket<T> {
 
@@ -31,8 +31,7 @@ public class RecordPacket<T extends Record> extends GenericPacket<T> {
    *
    * @param payload the payload of the packet
    */
-  public RecordPacket(T payload) {
+  public RecordPacket(final T payload) {
     super(payload);
   }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,18 +28,39 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a player entry in the depot.
- *
- * @author Elmar Blume - 18/05/2025
  */
 public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
 
+  /**
+   * The username of the player represented by this entry.
+   */
   private final String username;
+
+  /**
+   * The identifier of the proxy on which the player is currently connected.
+   */
   private final String proxyId;
 
+  /**
+   * A map of queue priorities assigned to this player,
+   * indexed by queue/server name.
+   */
   private final Map<String, Integer> queuePriority;
 
+  /**
+   * Whether this player is permitted to bypass full queue restrictions.
+   */
   private boolean fullQueueBypass = false;
+
+  /**
+   * Whether this player is permitted to bypass queue placement entirely.
+   */
   private boolean queueBypass = false;
+
+  /**
+   * The name of the backend server the player is currently connected to,
+   * or {@code null} if the player is not on any server.
+   */
   private String serverName = null;
 
   /**
@@ -49,7 +70,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    * @param username the player's username
    * @param proxyId the ID of the proxy the player is on
    */
-  public PlayerEntry(UUID uniqueId, String username, String proxyId) {
+  public PlayerEntry(final UUID uniqueId, final String username, final String proxyId) {
     super(uniqueId);
 
     this.username = username;
@@ -63,7 +84,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    * @param player the player to construct from
    * @param proxyId the ID of the proxy the player is on
    */
-  public PlayerEntry(final @NotNull Player player, String proxyId) {
+  public PlayerEntry(final @NotNull Player player, final String proxyId) {
     this(player.getUniqueId(), player.getUsername(), proxyId);
 
     this.setServer(player.getCurrentServer().orElse(null));
@@ -77,7 +98,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    *
    * @param connection the server connection the player is on
    */
-  public void setServer(@Nullable ServerConnection connection) {
+  public void setServer(final @Nullable ServerConnection connection) {
     if (connection == null) {
       this.serverName = null;
       return;
@@ -100,7 +121,6 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    *
    * @return the proxy ID
    */
-
   public String getProxyId() {
     return proxyId;
   }
@@ -146,7 +166,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    *
    * @param serverName the server name
    */
-  public void setServerName(String serverName) {
+  public void setServerName(final String serverName) {
     this.serverName = serverName;
   }
 }

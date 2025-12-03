@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,12 +24,26 @@ import org.jetbrains.annotations.ApiStatus;
 /**
  * Represents an entry in a {@link Depot}.
  *
- * @author Elmar Blume - 18/05/2025
+ * <p>This class serves as the base type for objects stored in a Redis-backed
+ * {@link Depot}. Each entry is uniquely identified by a key and can be
+ * inserted, updated, or removed via its associated depot instance.</p>
+ *
+ * @param <K> the type of the unique identifier for the depot entry
+ * @param <T> the concrete {@link DepotEntry} subclass type
  */
 public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
 
+  /**
+   * The unique identifier assigned to this entry within the depot.
+   */
   private final K uniqueId;
 
+  /**
+   * The depot to which this entry is currently associated.
+   *
+   * <p>Marked {@code transient} because depot associations are not serialized
+   * and are re-established by the depot implementation when entries are loaded.</p>
+   */
   private transient @MonotonicNonNull Depot<K, T> depot;
 
   /**
@@ -37,7 +51,7 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
    *
    * @param key the unique id of the entry
    */
-  public DepotEntry(K key) {
+  public DepotEntry(final K key) {
     this.uniqueId = key;
   }
 
@@ -76,21 +90,36 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
    * @param depot the depot to set
    */
   @ApiStatus.Internal
-  public void setDepot(Depot<K, T> depot) {
+  public void setDepot(final Depot<K, T> depot) {
     if (depot != null) {
       this.depot = depot;
     }
   }
 
+  /**
+   * Determines whether this entry is equal to another object.
+   *
+   * <p>Two {@link DepotEntry} instances are considered equal if they are of the same
+   * concrete class and have the same {@link #uniqueId} value.</p>
+   *
+   * @param o the object to compare against
+   * @return {@code true} if the objects are equal, otherwise {@code false}
+   */
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
+
     DepotEntry<?, ?> that = (DepotEntry<?, ?>) o;
     return Objects.equals(uniqueId, that.uniqueId);
   }
 
+  /**
+   * Computes the hash code for this entry using its unique identifier.
+   *
+   * @return the hash code based on {@link #uniqueId}
+   */
   @Override
   public int hashCode() {
     return Objects.hashCode(uniqueId);

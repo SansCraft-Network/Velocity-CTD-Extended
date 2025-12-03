@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,6 @@ import java.util.UUID;
 
 /**
  * Represents a {@link UUID} packet.
- *
- * @author Elmar Blume - 12/05/2025
  */
 public class UuidPacket extends GenericPacket<UUID> {
 
@@ -32,7 +30,7 @@ public class UuidPacket extends GenericPacket<UUID> {
    *
    * @param payload the payload of the packet
    */
-  public UuidPacket(UUID payload) {
+  public UuidPacket(final UUID payload) {
     super(payload);
   }
 }

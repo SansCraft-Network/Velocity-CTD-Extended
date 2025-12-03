@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,8 +41,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a registry that holds all {@link RouteRegistration} for the VelocityRedis module. An
  * internal {@link Function} is used to handle the data and create a response from the data.
- *
- * @author Elmar Blume - 17/05/2025
  */
 public enum RouteRegistry {
 
@@ -55,13 +53,11 @@ public enum RouteRegistry {
    * Handles the {@link VelocitySwitchServer} packet by switching the player to the specified server.
    */
   VELOCITY_SWITCH_SERVER(VelocitySwitchServer.class, (server, packet) -> {
-    // Ignore if the player is not on the proxy
     final Player player = server.getPlayer(packet.getUsername()).orElse(null);
     if (player == null) {
       return;
     }
 
-    // Create a connection request to the target server if it exists
     server.getServer(packet.getServerName()).ifPresent(targetServer ->
             player.createConnectionRequest(targetServer).connectWithIndication());
   }),
@@ -69,10 +65,7 @@ public enum RouteRegistry {
   /**
    * Handles the {@link VelocityMessage} packet by sending a message to the specified target.
    */
-  VELOCITY_MESSAGE(VelocityMessage.class, (server, packet) -> {
-    // Send the message
-    packet.sendMessage(server);
-  }),
+  VELOCITY_MESSAGE(VelocityMessage.class, (server, packet) -> packet.sendMessage(server)),
 
   /**
    * Handles the {@link VelocityActionBar} packet by sending an action bar to the specified target.
@@ -83,7 +76,6 @@ public enum RouteRegistry {
       return;
     }
 
-    // Send the message to the target
     server.getPlayer(packet.getUniqueId()).ifPresent(player -> player.sendActionBar(component));
   }),
 
@@ -91,13 +83,11 @@ public enum RouteRegistry {
    * Handles the {@link VelocitySudo} packet by letting the specified player execute a command or chat message.
    */
   VELOCITY_SUDO(VelocitySudo.class, (server, packet) -> {
-    // Ignore if the player is not on the proxy
     final Player player = server.getPlayer(packet.getPayload()).orElse(null);
     if (player == null) {
       return;
     }
 
-    // Execute a command if applicable
     final String message = packet.getMessage();
     if (message.startsWith("/")) {
       final String command = message.split(" ")[0].substring(1);
@@ -107,7 +97,6 @@ public enum RouteRegistry {
       }
     }
 
-    // Otherwise spoof a chat input
     player.spoofChatInput(message);
   }),
 
@@ -115,7 +104,6 @@ public enum RouteRegistry {
    * Handles the {@link VelocityKick} packet by kicking the specified player with a reason.
    */
   VELOCITY_KICK(VelocityKick.class, (server, packet) -> {
-    // Ignore if the player is not on the proxy
     final ConnectedPlayer player = (ConnectedPlayer)  server.getPlayer(packet.getUniqueId()).orElse(null);
     if (player == null) {
       return;
@@ -126,7 +114,6 @@ public enum RouteRegistry {
       component = Component.text("You have been kicked from the proxy.", NamedTextColor.RED);
     }
 
-    // Disconnect (kick) the player
     player.disconnect0(component, true);
   }),
 
@@ -134,7 +121,6 @@ public enum RouteRegistry {
    * Handles the {@link VelocityQueueTransfer} packet by queuing the player to the specified queue.
    */
   VELOCITY_QUEUE(VelocityQueueTransfer.class, (server, packet) -> {
-    // Ignore if the player is not on the proxy
     final Player player = server.getPlayer(packet.getPayload()).orElse(null);
     if (player == null) {
       return;
@@ -147,15 +133,23 @@ public enum RouteRegistry {
     }
 
     queuePlayer.handleTransfer();
-  })
-  ;
+  });
 
+  /**
+   * The {@link RouteRegistration} that defines how this Redis packet type
+   * is routed and handled within the proxy.
+   */
   private final RouteRegistration<? extends RedisPacket> routeRegistration;
 
-  <T extends RedisPacket> RouteRegistry(Class<T> packetClass, @NotNull BiConsumer<VelocityServer, T> route) {
+  <T extends RedisPacket> RouteRegistry(final Class<T> packetClass, final @NotNull BiConsumer<VelocityServer, T> route) {
     this.routeRegistration = RouteRegistration.consumer(packetClass, packet -> route.accept(VelocityRedis.INSTANCE.getServer(), packet));
   }
 
+  /**
+   * Gets the {@link RouteRegistration} associated with this route entry.
+   *
+   * @return the route registration for this Redis packet type
+   */
   public RouteRegistration<? extends RedisPacket> getRouteRegistration() {
     return routeRegistration;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,6 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
  * Represents the in-memory implementation of {@link Queue}.
- *
- * @author Elmar Blume - 29/10/2025
  */
 public final class MemoryQueue extends AbstractQueue {
 
@@ -37,12 +35,12 @@ public final class MemoryQueue extends AbstractQueue {
    * @param server the proxy instance
    * @param backendInstance the backend instance server
    */
-  public MemoryQueue(VelocityServer server, VelocityRegisteredServer backendInstance) {
+  public MemoryQueue(final VelocityServer server, final VelocityRegisteredServer backendInstance) {
     super(server, backendInstance);
   }
 
   @Override
-  protected void notifyMaxRetriesReached(UUID uniqueId) {
+  protected void notifyMaxRetriesReached(final UUID uniqueId) {
     final TranslatableComponent component = Component.translatable("velocity.queue.error.max-send-retries-reached")
             .arguments(Component.text(this.getName()),
                     Argument.numeric("retries", this.server.getConfiguration().getQueue().getMaxSendRetries()));

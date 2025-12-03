@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,13 +22,22 @@ import java.util.UUID;
 
 /**
  * Represents a packet that sends a player to a remote address.
- *
- * @author Elmar Blume - 06/10/2025
  */
 public final class VelocityRemote extends UuidPacket {
 
+  /**
+   * The identifier of the proxy from which the player is being redirected.
+   */
   private final String proxyId;
+
+  /**
+   * The IP address of the remote server the player should be sent to.
+   */
   private final String ip;
+
+  /**
+   * The port number of the remote server the player should be sent to.
+   */
   private final int port;
 
   /**
@@ -39,7 +48,7 @@ public final class VelocityRemote extends UuidPacket {
    * @param ip the IP address of the remote server
    * @param port the port of the remote server
    */
-  public VelocityRemote(UUID uniqueId, String proxyId, String ip, int port) {
+  public VelocityRemote(final UUID uniqueId, final String proxyId, final String ip, final int port) {
     super(uniqueId);
 
     this.proxyId = proxyId;

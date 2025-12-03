@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,13 +45,22 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Represents the Lettuce implementation of the {@link RedisProvider} interface.
- *
- * @author Elmar Blume - 08/05/2025
  */
 public final class LettuceProvider extends AbstractRedisProvider {
+
+  /**
+   * Logger used for all Lettuce provider operations and diagnostics.
+   */
   private static final Logger LOGGER = LoggerFactory.getLogger(LettuceProvider.class);
 
+  /**
+   * The underlying Lettuce {@link RedisClient} used to establish Redis connections.
+   */
   private final RedisClient client;
+
+  /**
+   * The asynchronous Redis Pub/Sub command API used to publish packets and manage subscriptions.
+   */
   private RedisPubSubAsyncCommands<String, String> publisher;
 
   /**
@@ -59,10 +68,9 @@ public final class LettuceProvider extends AbstractRedisProvider {
    *
    * @param config the {@link VelocityConfiguration.Redis} instance to use for connection credentials
    */
-  public LettuceProvider(VelocityConfiguration.Redis config) {
+  public LettuceProvider(final VelocityConfiguration.Redis config) {
     super();
 
-    // Initialize the redis client from the config
     this.client = RedisClient.create(RedisURI.Builder.redis(config.getHost(), config.getPort())
             .withAuthentication(Objects.requireNonNullElse(config.getUsername(), ""),
                     Objects.requireNonNullElse(config.getPassword(), ""))
@@ -70,63 +78,59 @@ public final class LettuceProvider extends AbstractRedisProvider {
             .build());
   }
 
+  /**
+   * Restarts the underlying Redis Pub/Sub connection and resubscribes to the channel.
+   *
+   * <p>If an existing publisher connection is present, it is closed before a new
+   * connection is created.</p>
+   */
   @Override
   public void restart() {
-    // Close previous publisher connections
     if (this.publisher != null) {
       this.publisher.getStatefulConnection().close();
     }
 
-    // Reconnect and initialize the publisher
     final StatefulRedisPubSubConnection<String, String> connection = this.client.connectPubSub();
 
-    // Register the sent-packet listener
     connection.addListener(new RedisPubSubAdapter<>() {
       @Override
-      public void message(String channel, String message) {
+      public void message(final String channel, final String message) {
         if (!channel.equals(CHANNEL)) {
           return;
         }
 
-        // Read the incoming packet from the message
         final RedisPacket redisPacket = PacketSerializer.deserialize(message);
         if (redisPacket == null) {
           LOGGER.warn("Received a null packet from channel '{}', ignoring", channel);
           return;
         }
 
-        // Handle the one way packet
         if (redisPacket.isOneWay()) {
           handleOneWay(redisPacket);
           return;
         }
 
         if (!redisPacket.isReply()) {
-          // Check if the packet could be part of a transaction
           final TransactionHandler<?, ?> transactionHandler = transactionHandlers.get(Preconditions.checkNotNull(
                   redisPacket.getTransactionType(), "transactionType is null"));
           if (transactionHandler == null) {
             return;
           }
 
-          // Handle the transaction
           final RedisPacket replyPacket = transactionHandler.getReplyPacket(redisPacket);
           if (replyPacket == null) {
             return;
           }
 
-          // Publish the reply packet if required (non-null)
           LettuceProvider.this.publish(replyPacket);
         } else {
           final UUID transactionId = Preconditions.checkNotNull(redisPacket.getTransactionId());
 
-          // Check if the packet is part of a transaction
           final Transaction<?, ?> transaction = PENDING_TRANSACTIONS.remove(transactionId);
           if (transaction == null) {
             return;
           }
 
-          // Complete the transaction
           transaction.complete(redisPacket);
         }
       }
@@ -138,6 +142,11 @@ public final class LettuceProvider extends AbstractRedisProvider {
     LOGGER.info("Connected to Lettuce Redis Server on channel '{}'", CHANNEL);
   }
 
+  /**
+   * Disconnects from the Redis server by closing the Pub/Sub connection and shutting down the client.
+   *
+   * <p>If no active connection exists, a warning is logged and the call is ignored.</p>
+   */
   @Override
   public void disconnect() {
     if (!this.isConnected()) {
@@ -152,14 +161,21 @@ public final class LettuceProvider extends AbstractRedisProvider {
     LOGGER.info("Disconnected from Lettuce Redis Server on channel '{}'", CHANNEL);
   }
 
+  /**
+   * Publishes the given Redis packet to the configured Redis channel.
+   *
+   * <p>If the publisher has not been initialized yet, a warning is logged and the packet is not sent.</p>
+   *
+   * @param packet the packet to publish
+   * @param <T> the type of the Redis packet
+   */
   @Override
-  public <T extends RedisPacket> void publish(@NotNull T packet) {
+  public <T extends RedisPacket> void publish(final @NotNull T packet) {
     if (this.publisher == null) {
       LOGGER.warn("Attempted to publish a packet to channel '{}' but the publisher is not initialized", CHANNEL);
       return;
     }
 
-    // Publish the packet to the channel
     this.publisher.publish(CHANNEL, PacketSerializer.serialize(packet)).whenComplete((received, throwable) -> {
       if (throwable != null) {
         LOGGER.warn("Failed to publish packet to '{}' channel", CHANNEL, throwable);
@@ -169,19 +185,38 @@ public final class LettuceProvider extends AbstractRedisProvider {
     });
   }
 
+  /**
+   * Creates a new {@link Depot} associated with this Redis provider backed by Lettuce.
+   *
+   * @param valueClass the class of the values stored in the depot
+   * @param <K> the key type used by the depot
+   * @param <V> the depot entry type
+   * @return a new {@link LettuceDepot} instance
+   */
   @Override
   @Contract(value = "_ -> new", pure = true)
-  public <K, V extends DepotEntry<K, V>> @NotNull Depot<K, V> createDepot(Class<V> valueClass) {
+  public <K, V extends DepotEntry<K, V>> @NotNull Depot<K, V> createDepot(final Class<V> valueClass) {
     return new LettuceDepot<>(valueClass);
   }
 
+  /**
+   * Determines whether this provider is currently connected to Redis.
+   *
+   * @return {@code true} if the publisher exists and its connection is open, otherwise {@code false}
+   */
   @Override
   public boolean isConnected() {
     return this.publisher != null && this.publisher.getStatefulConnection().isOpen();
   }
 
+  /**
+   * Handles a one-way {@link RedisPacket} by routing it through a registered {@link RouteRegistration}, if present.
+   *
+   * @param redisPacket the one-way packet to handle
+   * @param <T> the type of Redis packet
+   */
   @SuppressWarnings("unchecked")
-  private <T extends RedisPacket> void handleOneWay(@NotNull T redisPacket) {
+  private <T extends RedisPacket> void handleOneWay(final @NotNull T redisPacket) {
     final RouteRegistration<T> routeRegistration = (RouteRegistration<T>) routeRegistrations.get(redisPacket.getType());
     if (routeRegistration == null) {
       LOGGER.warn("Received a packet of type '{}' from channel '{}', but no route registration exists, ignoring",
@@ -205,10 +240,25 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @param <V> the type of the object value in the depot
    */
   public final class LettuceDepot<K, V extends DepotEntry<K, V>> implements Depot<K, V> {
+
+    /**
+     * Shared {@link Gson} instance used for serializing and deserializing depot entries.
+     */
     private static final Gson GSON = PacketSerializer.GSON;
 
+    /**
+     * The Redis hash key name used to store entries for this depot.
+     */
     private final String name;
+
+    /**
+     * The class representing the value type stored in this depot.
+     */
     private final Class<V> valueClass;
+
+    /**
+     * The synchronous Pub/Sub commands used to interact with Redis hashes for this depot.
+     */
     private final RedisPubSubCommands<String, String> connection;
 
     /**
@@ -216,31 +266,54 @@ public final class LettuceProvider extends AbstractRedisProvider {
      *
      * @param valueClass the class of the depot value
      */
-    public LettuceDepot(@NotNull Class<V> valueClass) {
+    public LettuceDepot(final @NotNull Class<V> valueClass) {
       this.name = valueClass.getSimpleName().toLowerCase();
       this.valueClass = valueClass;
       this.connection = client.connectPubSub().sync();
     }
 
+    /**
+     * Checks whether a value is present in the depot for the given key.
+     *
+     * @param key the key to look up
+     * @return {@code true} if a value exists for the key, otherwise {@code false}
+     */
     @Override
-    public boolean contains(@NotNull K key) {
+    public boolean contains(final @NotNull K key) {
       return this.connection.hexists(this.name, parseKey(key));
     }
 
+    /**
+     * Retrieves a value from the depot by key.
+     *
+     * @param key the key to retrieve the value for
+     * @return the deserialized value, or {@code null} if none exists
+     */
     @Override
-    public @Nullable V get(@NotNull K key) {
+    public @Nullable V get(final @NotNull K key) {
       final String data = this.connection.hget(this.name, parseKey(key));
       return data == null ? null : deserialize(data);
     }
 
+    /**
+     * Inserts or updates the given value in the depot.
+     *
+     * @param value the value to upsert
+     */
     @Override
-    public void upsert(@NotNull V value) {
+    public void upsert(final @NotNull V value) {
       this.connection.hset(this.name, parseKey(value.getUniqueId()), serialize(value));
       value.setDepot(this);
     }
 
+    /**
+     * Removes a value from the depot by key, returning the removed value if present.
+     *
+     * @param key the key whose mapping should be removed
+     * @return the removed value, or {@code null} if no value existed
+     */
     @Override
-    public @Nullable V remove(@NotNull K key) {
+    public @Nullable V remove(final @NotNull K key) {
       if (this.connection.hexists(this.name, parseKey(key))) {
         final String data = this.connection.hget(this.name, parseKey(key));
         this.connection.hdel(this.name, parseKey(key));
@@ -251,11 +324,21 @@ public final class LettuceProvider extends AbstractRedisProvider {
       return null;
     }
 
+    /**
+     * Returns a collection of all values stored in this depot.
+     *
+     * @return a collection of all deserialized values
+     */
     @Override
     public Collection<V> values() {
       return this.connection.hvals(this.name).stream().map(this::deserialize).toList();
     }
 
+    /**
+     * Returns a collection of all keys stored in this depot.
+     *
+     * @return a collection of all keys
+     */
     @Override
     public Collection<String> keys() {
       return this.connection.hkeys(this.name);
@@ -267,17 +350,17 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @param entry the entry to serialize
      * @return the JSON string representation of the entry
      */
-    private @NotNull String serialize(@NotNull V entry) {
+    private @NotNull String serialize(final @NotNull V entry) {
       return GSON.toJson(entry, this.valueClass);
     }
 
     /**
-     * Deserializes the specified JSON string into an entry.
+     * Deserializes the specified JSON string into an entry and associates it with this depot.
      *
      * @param data the JSON string to deserialize
      * @return the deserialized entry
      */
-    private @NotNull V deserialize(@NotNull String data) {
+    private @NotNull V deserialize(final @NotNull String data) {
       final V entry = GSON.fromJson(data, this.valueClass);
       entry.setDepot(this);
 
@@ -285,14 +368,13 @@ public final class LettuceProvider extends AbstractRedisProvider {
     }
 
     /**
-     * Parses the specified key into a string.
+     * Parses the specified key into a string suitable for use in Redis.
      *
      * @param key the key to parse
-     * @return the parsed key
+     * @return the string representation of the key
      */
-    private @NotNull String parseKey(K key) {
+    private @NotNull String parseKey(final K key) {
       return String.valueOf(key);
     }
-
   }
 }

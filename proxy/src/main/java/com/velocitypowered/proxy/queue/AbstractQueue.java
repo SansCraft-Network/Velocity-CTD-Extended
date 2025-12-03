@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,20 +47,43 @@ import org.jetbrains.annotations.Unmodifiable;
 
 /**
  * Represents an abstract queue of a {@link VelocityRegisteredServer}.
- *
- * @author Elmar Blume - 03/04/2025
  */
 public abstract sealed class AbstractQueue implements Queue
     permits MemoryQueue, RedisQueue {
 
+  /**
+   * The proxy server instance associated with this queue.
+   */
   protected final VelocityServer server;
+
+  /**
+   * The queue manager responsible for coordinating queues and cache updates.
+   */
   private final QueueManager<?> queueManager;
+
+  /**
+   * The backend server instance that this queue targets.
+   */
   private final VelocityRegisteredServer backendInstance;
+
+  /**
+   * The underlying deque storing players currently in this queue.
+   */
   private final Deque<QueuePlayer> internalQueue;
 
+  /**
+   * The current online/offline status of the backend server.
+   */
   private ServerStatus status;
+
+  /**
+   * The current operational state of the queue (e.g., active, paused, full).
+   */
   private QueueState state;
 
+  /**
+   * Lazily-initialized cached name of the backend server used for this queue.
+   */
   private transient String name;
 
   /**
@@ -75,36 +98,42 @@ public abstract sealed class AbstractQueue implements Queue
     this.backendInstance = backendInstance;
     this.internalQueue = new ConcurrentLinkedDeque<>();
 
-    // Initialize the queue status and state
     this.status = ServerStatus.OFFLINE;
     this.state = server.getConfiguration().getQueue().getNoQueueServers()
         .contains(this.backendInstance.getServerInfo().getName()) ? QueueState.INACTIVE : QueueState.ACTIVE;
   }
 
   /**
-   * Constructs a new {@link java.util.AbstractQueue}.
+   * Constructs a new {@link java.util.AbstractQueue} from a persisted {@link QueueEntry}.
    *
    * @param server          the proxy server instance
    * @param backendInstance the backend instance server
+   * @param queueEntry      the persisted queue entry to initialize this queue from
    */
   public AbstractQueue(final VelocityServer server, final VelocityRegisteredServer backendInstance,
                        final @NotNull QueueEntry queueEntry) {
     this(server, backendInstance);
 
-    // Copy from the queue entry
     this.status = queueEntry.getStatus();
     this.state = queueEntry.getState();
 
-    // Populate the internal queue
     this.internalQueue.clear();
     this.internalQueue.addAll(queueEntry.getDeque());
     this.internalQueue.forEach(queuePlayer -> queuePlayer.setContext(server, this));
   }
 
+  /**
+   * Enqueues a new player into this queue using the supplied {@link QueuePlayerData}.
+   *
+   * <p>The player is inserted based on their priority so that higher-priority players
+   * are placed earlier in the queue. The queue cache is updated asynchronously after
+   * the enqueue operation completes.</p>
+   *
+   * @param data the player data to enqueue
+   */
   @Override
   public final void enqueue(final QueuePlayerData data) {
     final QueuePlayer queuePlayer = new QueuePlayer(this.server, this, data);
-    System.out.println("Enqueuing player with UUID: " + queuePlayer.getUniqueId() + " to queue for server: " + getName());
 
     synchronized (internalQueue) {
       final Iterator<QueuePlayer> iterator = internalQueue.iterator();
@@ -124,12 +153,10 @@ public abstract sealed class AbstractQueue implements Queue
         } while (iterator.hasNext());
       }
 
-      // Append to the end if not inserted
       if (!inserted) {
         internalQueue.addLast(queuePlayer);
       }
 
-      // Update cache asynchronously
       CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
     }
   }
@@ -141,7 +168,6 @@ public abstract sealed class AbstractQueue implements Queue
    * @param position    the position to insert the queue player at
    */
   private void insertAt(final QueuePlayer queuePlayer, final int position) {
-    // For small queues, use the existing approach
     if (internalQueue.size() < 100) {
       final ConcurrentLinkedQueue<QueuePlayer> tempQueue = new ConcurrentLinkedQueue<>();
 
@@ -157,7 +183,6 @@ public abstract sealed class AbstractQueue implements Queue
       internalQueue.clear();
       internalQueue.addAll(tempQueue);
     } else {
-      // Fallback for large queues
       List<QueuePlayer> tempList = new ArrayList<>(internalQueue);
       tempList.add(position, queuePlayer);
       internalQueue.clear();
@@ -165,23 +190,33 @@ public abstract sealed class AbstractQueue implements Queue
     }
   }
 
+  /**
+   * Dequeues a player from this queue by their unique identifier and optionally
+   * notifies them if they have reached the maximum number of connection retries.
+   *
+   * @param uniqueId          the unique identifier of the player to remove
+   * @param maxRetriesReached {@code true} if the player reached the maximum retries
+   */
   @Override
-  public void dequeue(final UUID uniqueId, boolean maxRetriesReached) {
-    // Notify the player if max retries have been reached
+  public void dequeue(final UUID uniqueId, final boolean maxRetriesReached) {
     if (maxRetriesReached) {
       server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> notifyMaxRetriesReached(uniqueId))
           .delay(1, TimeUnit.SECONDS).schedule();
     }
 
-    // Remove the player from the internal queue
     internalQueue.removeIf(queuePlayer -> queuePlayer.getUniqueId().equals(uniqueId));
 
-    // Update cache asynchronously
     CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
   }
 
+  /**
+   * Checks whether this queue currently contains a player with the given unique identifier.
+   *
+   * @param uniqueId the unique identifier of the player
+   * @return {@code true} if the player is in the queue, otherwise {@code false}
+   */
   @Override
-  public boolean contains(UUID uniqueId) {
+  public boolean contains(final UUID uniqueId) {
     for (QueuePlayer queuePlayer : internalQueue) {
       if (queuePlayer.getUniqueId().equals(uniqueId)) {
         return true;
@@ -191,23 +226,40 @@ public abstract sealed class AbstractQueue implements Queue
     return false;
   }
 
+  /**
+   * Attempts to transfer the given {@link QueuePlayer} to the backend server,
+   * if they are not already waiting for a connection.
+   *
+   * @param queuePlayer the player to transfer
+   */
   @Override
-  public void transferFirst(QueuePlayer queuePlayer) {
+  public void transferFirst(final QueuePlayer queuePlayer) {
     if (queuePlayer.isWaitingForConnection()) {
       return;
     }
 
-    // Mark the player as waiting for connection
     queuePlayer.transfer();
   }
 
+  /**
+   * Retrieves and removes the first player in the queue, or returns {@code null}
+   * if the queue is empty.
+   *
+   * @return the first {@link QueuePlayer}, or {@code null} if none
+   */
   @Override
   public QueuePlayer pollFirst() {
     return this.internalQueue.pollFirst();
   }
 
+  /**
+   * Retrieves the {@link QueuePlayer} associated with the given unique identifier.
+   *
+   * @param uniqueId the unique identifier of the player
+   * @return the queue player, or {@code null} if not found
+   */
   @Override
-  public @Nullable QueuePlayer getQueuePlayer(UUID uniqueId) {
+  public @Nullable QueuePlayer getQueuePlayer(final UUID uniqueId) {
     for (QueuePlayer queuePlayer : internalQueue) {
       if (queuePlayer.getUniqueId().equals(uniqueId)) {
         return queuePlayer;
@@ -217,11 +269,22 @@ public abstract sealed class AbstractQueue implements Queue
     return null;
   }
 
+  /**
+   * Returns an unmodifiable snapshot of all players currently in this queue.
+   *
+   * @return an unmodifiable collection of queue players
+   */
   @Override
   public @NotNull @Unmodifiable Collection<QueuePlayer> getQueuePlayers() {
     return List.copyOf(this.internalQueue.stream().toList());
   }
 
+  /**
+   * Gets the one-based position of the player with the given unique identifier in this queue.
+   *
+   * @param uniqueId the unique identifier of the player
+   * @return the position in the queue starting at 1, or {@code -1} if not found
+   */
   @Override
   public int getPosition(final UUID uniqueId) {
     int position = 1;
@@ -230,17 +293,28 @@ public abstract sealed class AbstractQueue implements Queue
       if (queuePlayer.getUniqueId().equals(uniqueId)) {
         return position;
       }
+
       position++;
     }
 
     return -1;
   }
 
+  /**
+   * Returns the backend server instance associated with this queue.
+   *
+   * @return the backend {@link VelocityRegisteredServer}
+   */
   @Override
   public VelocityRegisteredServer getBackendInstance() {
     return backendInstance;
   }
 
+  /**
+   * Gets the name of this queue, which corresponds to the backend server name.
+   *
+   * @return the queue name
+   */
   @Override
   public String getName() {
     if (this.name == null) {
@@ -250,52 +324,97 @@ public abstract sealed class AbstractQueue implements Queue
     return this.name;
   }
 
+  /**
+   * Returns the current number of players in this queue.
+   *
+   * @return the size of the queue
+   */
   @Override
   public int size() {
     return this.internalQueue.size();
   }
 
+  /**
+   * Checks whether the backend server is currently marked as online.
+   *
+   * @return {@code true} if the server is online, otherwise {@code false}
+   */
   @Override
   public boolean isOnline() {
     return status == ServerStatus.ONLINE;
   }
 
+  /**
+   * Checks whether this queue is currently paused.
+   *
+   * @return {@code true} if the queue is paused, otherwise {@code false}
+   */
   @Override
   public boolean isPaused() {
     return state == QueueState.PAUSED;
   }
 
+  /**
+   * Checks whether this queue is currently marked as full.
+   *
+   * @return {@code true} if the queue is full, otherwise {@code false}
+   */
   @Override
   public boolean isFull() {
     return state == QueueState.FULL;
   }
 
+  /**
+   * Gets the current {@link ServerStatus} of the backend server represented by this queue.
+   *
+   * @return the current server status
+   */
   @Override
   public ServerStatus getStatus() {
     return status;
   }
 
+  /**
+   * Updates the {@link ServerStatus} of the backend server and triggers a queue cache update
+   * if the status has changed.
+   *
+   * @param status the new server status
+   */
   @Override
-  public void setStatus(ServerStatus status) {
+  public void setStatus(final ServerStatus status) {
     if (this.status != status) {
       this.status = status;
       this.queueManager.getQueueCache().updateQueue(this);
     }
   }
 
+  /**
+   * Gets the current {@link QueueState} for this queue.
+   *
+   * @return the queue state
+   */
   @Override
   public QueueState getState() {
     return state;
   }
 
+  /**
+   * Updates the {@link QueueState} of this queue and triggers a queue cache update
+   * if the state has changed.
+   *
+   * @param state the new queue state
+   */
   @Override
-  public void setState(QueueState state) {
+  public void setState(final QueueState state) {
     if (this.state != state) {
       this.state = state;
       this.queueManager.getQueueCache().updateQueue(this);
     }
   }
 
+  /**
+   * Clears all players from this queue and asynchronously updates the queue cache.
+   */
   @Override
   public void teardown() {
     internalQueue.clear();
@@ -311,7 +430,7 @@ public abstract sealed class AbstractQueue implements Queue
    * @return a {@link Component} representing the formatted ETA
    */
   @ApiStatus.Internal
-  public Component calculateEta(long position) {
+  public Component calculateEta(final long position) {
     long delayInSeconds = (long) server.getConfiguration().getQueue().getSendDelay() * position;
     return QueueTimeFormatter.format(Math.max(delayInSeconds, 0));
   }
@@ -326,7 +445,7 @@ public abstract sealed class AbstractQueue implements Queue
    * @return a {@link Component} representing the player's current queue status in the action bar
    */
   @ApiStatus.Internal
-  public Component createActionbarComponent(@NotNull QueuePlayer queuePlayer) {
+  public Component createActionbarComponent(final @NotNull QueuePlayer queuePlayer) {
     int position = getPosition(queuePlayer.getUniqueId());
     if (queuePlayer.isQueueBypass()) {
       return Component.translatable("velocity.queue.player-status.bypass", NamedTextColor.YELLOW);
@@ -395,6 +514,6 @@ public abstract sealed class AbstractQueue implements Queue
    * @see RedisQueue#notifyMaxRetriesReached(UUID)
    */
   protected void notifyMaxRetriesReached(final UUID uniqueId) {
-    // empty implementation, should be overridden by subclasses - memory, redis
+    // Overridden by subclasses - memory, Redis
   }
 }

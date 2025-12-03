@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,12 +35,17 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents the redis cache implementation of {@link QueueCache} for a {@link Queue}.
- *
- * @author Elmar Blume - 03/04/2025
  */
 public final class RedisQueueCache implements QueueCache {
 
+  /**
+   * The proxy server instance used for backend lookup and queue resolution.
+   */
   private final VelocityServer server;
+
+  /**
+   * The Redis-backed depot service responsible for storing and retrieving queue entries.
+   */
   private final QueueDepotService service;
 
   /**
@@ -54,7 +59,7 @@ public final class RedisQueueCache implements QueueCache {
   }
 
   @Override
-  public @NotNull Queue getQueue(@NotNull String serverName) {
+  public @NotNull Queue getQueue(final @NotNull String serverName) {
     final VelocityRegisteredServer backendInstance = (VelocityRegisteredServer) this.server.getServer(serverName)
             .orElseThrow(() -> new QueueCacheException(serverName));
 
@@ -68,7 +73,7 @@ public final class RedisQueueCache implements QueueCache {
   }
 
   @Override
-  public @Nullable Queue getQueue(@NotNull Player player) {
+  public @Nullable Queue getQueue(final @NotNull Player player) {
     for (Queue queue : getQueues()) {
       if (queue.contains(player)) {
         return queue;
@@ -107,7 +112,7 @@ public final class RedisQueueCache implements QueueCache {
   }
 
   @Override
-  public void updateQueue(@NotNull Queue queue) {
+  public void updateQueue(final @NotNull Queue queue) {
     this.service.insertQueueEntry(queue);
   }
 }

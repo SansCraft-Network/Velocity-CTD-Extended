@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,13 +22,18 @@ import com.velocitypowered.proxy.redis.packet.typed.StringPacket;
 
 /**
  * Represents a packet that sends a player to a specific server.
- *
- * @author Elmar Blume - 20/06/2025
  */
 @OneWayPacket
 public final class VelocitySwitchServer extends StringPacket {
 
+  /**
+   * The username of the player who should be switched to another server.
+   */
   private final String username;
+
+  /**
+   * The name of the server the player should be switched to.
+   */
   private final String serverName;
 
   /**
@@ -37,7 +42,7 @@ public final class VelocitySwitchServer extends StringPacket {
    * @param username the username of the player to switch to the server of.
    * @param serverName the name of the server to switch to.
    */
-  public VelocitySwitchServer(String username, String serverName) {
+  public VelocitySwitchServer(final String username, final String serverName) {
     super(username);
 
     this.username = username;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,14 +30,23 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a queue entry in the depot.
- *
- * @author Elmar Blume - 10/10/2025
  */
 public final class QueueEntry extends DepotEntry<String, QueueEntry> {
 
+  /**
+   * The ordered collection of {@link QueuePlayer} entries stored for this queue.
+   * This deque mirrors the state of the in-memory queue at the time of persistence.
+   */
   private final Deque<QueuePlayer> deque = new ConcurrentLinkedDeque<>();
 
+  /**
+   * The current backend server status associated with this queue.
+   */
   private final ServerStatus status;
+
+  /**
+   * The current operational state of this queue (active, paused, full, inactive, etc.).
+   */
   private final QueueState state;
 
   /**
@@ -65,6 +74,7 @@ public final class QueueEntry extends DepotEntry<String, QueueEntry> {
         return queuePlayer;
       }
     }
+
     return null;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,31 +21,37 @@ import com.velocitypowered.proxy.redis.packet.RedisPacket;
 import java.util.function.Consumer;
 
 /**
- * Represents a route registration for a {@link RedisPacket}, implemented through
- * the {@link AbstractRouteRegistration} class utilizing a {@link Consumer} to handle the packet.
+ * Represents a {@link RouteRegistration} for a specific {@link RedisPacket} type
+ * that is handled via a {@link Consumer}.
  *
- * @author Elmar Blume - 08/05/2025
+ * <p>This registration type is used for one-way packets, where no reply is required
+ * and processing is performed directly by the provided consumer.</p>
+ *
+ * @param <T> the type of {@link RedisPacket} handled by this registration
  */
 public non-sealed class ConsumerRouteRegistration<T extends RedisPacket> extends AbstractRouteRegistration<T> {
 
+  /**
+   * The {@link Consumer} that processes packets of type {@code T}.
+   */
   private final Consumer<T> consumer;
 
   /**
    * Constructs a new {@link ConsumerRouteRegistration}.
    *
-   * @param packetClass the class type of the packet
-   * @param consumer   the consumer to handle the packet
+   * @param packetClass the packet class this registration handles
+   * @param consumer the consumer that will process incoming packets of type {@code T}
    */
-  public ConsumerRouteRegistration(Class<T> packetClass, Consumer<T> consumer) {
+  public ConsumerRouteRegistration(final Class<T> packetClass, final Consumer<T> consumer) {
     super(packetClass);
 
     this.consumer = consumer;
   }
 
   /**
-   * Get the consumer of the route registration.
+   * Gets the {@link Consumer} responsible for handling packets associated with this route.
    *
-   * @return the consumer of the route registration
+   * @return the consumer tied to this route registration
    */
   public Consumer<T> getConsumer() {
     return consumer;

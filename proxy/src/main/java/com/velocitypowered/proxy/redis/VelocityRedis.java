@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,28 +27,56 @@ import com.velocitypowered.proxy.redis.impl.depot.PlayerDepotService;
 import com.velocitypowered.proxy.redis.impl.depot.ProxyDepotService;
 import com.velocitypowered.proxy.redis.provider.LettuceProvider;
 import com.velocitypowered.proxy.redis.provider.RedisProvider;
-import com.velocitypowered.proxy.redis.transaction.TransactionHandler;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents the main class of the Redis module within CTD.
+ * Represents the central Redis integration manager used by the Velocity proxy.
  *
- * @author Elmar Blume - 13/05/2025
+ * <p>This class initializes and manages the Redis provider, depot services, route
+ * registrations, transaction handlers, and proxy identity information used for
+ * inter-proxy communication.</p>
  */
 public final class VelocityRedis {
 
+  /**
+   * Singleton instance of {@link VelocityRedis}, populated when the Redis module is initialized.
+   */
   public static @MonotonicNonNull VelocityRedis INSTANCE;
 
+  /**
+   * The {@link VelocityServer} instance that owns this Redis module.
+   */
   private final VelocityServer server;
+
+  /**
+   * The {@link RedisProvider} responsible for Redis communication and pub/sub.
+   */
   private final RedisProvider provider;
 
+  /**
+   * The service responsible for tracking player-related Redis entries.
+   */
   private final PlayerDepotService playerService;
+
+  /**
+   * The service responsible for managing proxy-related Redis entries.
+   */
   private final ProxyDepotService proxyService;
+
+  /**
+   * The service responsible for managing queue-related Redis entries.
+   */
   private final QueueDepotService queueService;
 
+  /**
+   * The proxy identifier for this server instance, used for inter-proxy coordination.
+   */
   private final String proxyId;
 
+  /**
+   * Whether the Redis module has been shutdown.
+   */
   private boolean shutdown = false;
 
   /**
@@ -56,7 +84,7 @@ public final class VelocityRedis {
    *
    * @param server the {@link VelocityServer} instance
    */
-  public VelocityRedis(@NotNull VelocityServer server) {
+  public VelocityRedis(final @NotNull VelocityServer server) {
     Preconditions.checkState(INSTANCE == null, "VelocityRedis is already initialized");
     INSTANCE = this;
 
@@ -76,15 +104,18 @@ public final class VelocityRedis {
   }
 
   /**
-   * Shuts down the Redis service.
+   * Shuts down the Redis service and all associated depot services.
+   *
+   * <p>This method ensures that all resources, connections, and cached entries
+   * are properly cleaned up before termination.</p>
    */
   public void shutdown() {
     if (shutdown) {
       return;
     }
+
     shutdown = true;
 
-    // Teardown all services
     this.playerService.teardown();
     this.proxyService.teardown();
     this.queueService.teardown();
@@ -93,13 +124,9 @@ public final class VelocityRedis {
 
   /**
    * Registers all route registrations defined in {@link RouteRegistry} with the current
-   * {@link RedisProvider} instance. Each route registration corresponds to a specific routing
-   * behavior for handling various packet types in the VelocityRedis module.
+   * {@link RedisProvider} instance.
    *
-   * <p>
-   * The route registration ensures that incoming packets corresponding to defined routes
-   * are processed appropriately, delegating functionality such as handling alerts, switching servers,
-   * messaging, and other operations across the Velocity proxy infrastructure.
+   * <p>Each route represents a "one-way" packet handler for incoming Redis packets.</p>
    */
   private void registerRoutes() {
     for (RouteRegistry registry : RouteRegistry.values()) {
@@ -109,12 +136,9 @@ public final class VelocityRedis {
 
   /**
    * Registers all transaction handlers defined in {@link TransactionHandlerRegistry} with the current
-   * {@link RedisProvider} instance. Each transaction handler corresponds to specific transaction
-   * functionality managed within the VelocityRedis module.
+   * {@link RedisProvider} instance.
    *
-   * <p>
-   * Iterates through all values in {@link TransactionHandlerRegistry} and registers their associated
-   * {@link TransactionHandler} using the {@code registerTransaction} method of the {@link RedisProvider}.
+   * <p>Each transaction handler represents logic for request/response packet pairs.</p>
    */
   private void registerTransactionHandlers() {
     for (TransactionHandlerRegistry registry : TransactionHandlerRegistry.values()) {
@@ -126,6 +150,7 @@ public final class VelocityRedis {
    * Gets the {@link VelocityServer} instance associated with this Redis provider.
    *
    * @return the server instance
+   * @throws IllegalStateException if the server reference is unexpectedly null
    */
   public VelocityServer getServer() {
     if (server == null) {
@@ -136,7 +161,7 @@ public final class VelocityRedis {
   }
 
   /**
-   * Gets the {@link RedisProvider} instance associated with this Redis module.
+   * Gets the {@link RedisProvider} instance for Redis communication.
    *
    * @return the redis provider
    */
@@ -145,7 +170,7 @@ public final class VelocityRedis {
   }
 
   /**
-   * Gets the {@link PlayerDepotService} instance associated with this Redis module.
+   * Gets the {@link PlayerDepotService} associated with this Redis module.
    *
    * @return the player service
    */
@@ -154,7 +179,7 @@ public final class VelocityRedis {
   }
 
   /**
-   * Gets the {@link ProxyDepotService} instance associated with this Redis module.
+   * Gets the {@link ProxyDepotService} associated with this Redis module.
    *
    * @return the proxy service
    */
@@ -163,7 +188,7 @@ public final class VelocityRedis {
   }
 
   /**
-   * Gets the {@link QueueDepotService} instance associated with this Redis module.
+   * Gets the {@link QueueDepotService} associated with this Redis module.
    *
    * @return the queue service
    */
@@ -172,7 +197,7 @@ public final class VelocityRedis {
   }
 
   /**
-   * Gets the {@link String} identifier for this proxy.
+   * Gets the proxy identifier for this server instance.
    *
    * @return the proxy identifier
    */
@@ -181,9 +206,9 @@ public final class VelocityRedis {
   }
 
   /**
-   * Checks whether the Redis service has been shutdown.
+   * Determines whether this Redis module has been shut down.
    *
-   * @return whether the Redis service has been shutdown
+   * @return {@code true} if the Redis service has been shut down, otherwise {@code false}
    */
   public boolean isShutdown() {
     return shutdown;

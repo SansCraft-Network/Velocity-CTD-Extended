@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,11 +25,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents an extension of the {@link AbstractDepotService} for the proxy depot, including
  * functionality to track certain information about a single proxy, or multiple proxies.
- *
- * @author Elmar Blume - 18/05/2025
  */
 public final class ProxyDepotService extends AbstractDepotService<String, ProxyEntry> {
 
+  /**
+   * The Redis manager used to interact with proxy-related data stored in Redis.
+   */
   private final VelocityRedis redis;
 
   /**
@@ -37,18 +38,16 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
    *
    * @param redis the {@link VelocityRedis} instance
    */
-  public ProxyDepotService(@NotNull VelocityRedis redis) {
+  public ProxyDepotService(final @NotNull VelocityRedis redis) {
     super(ProxyEntry.class, redis.getProvider());
 
     this.redis = redis;
 
-    // Create or update this proxy's entry in the depot
     this.depot.upsert(new ProxyEntry(redis.getServer()));
   }
 
   @Override
   public void teardown() {
-    // Remove this proxy's entry from the depot
     final ProxyEntry proxyEntry = this.get(this.redis.getServer().getProxyId());
     if (proxyEntry != null) {
       proxyEntry.remove();

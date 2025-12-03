@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,6 @@ import com.velocitypowered.proxy.queue.AbstractQueue;
 
 /**
  * Represents the state of a {@link AbstractQueue}.
- *
- * @author Elmar Blume - 03/04/2025
  */
 public enum QueueState {
 
@@ -48,5 +46,4 @@ public enum QueueState {
    * and does not process new elements until it is resumed.
    */
   PAUSED
-
 }

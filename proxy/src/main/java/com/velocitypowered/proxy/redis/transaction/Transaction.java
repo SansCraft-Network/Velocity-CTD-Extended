@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,29 +31,62 @@ import org.slf4j.LoggerFactory;
  * Represents a transaction process that has a {@link T sent-packet} and a {@link R reply-packet}. The transaction's
  * behaviour can be configured using the {@link Transaction#onTimeout(Consumer)} and {@link Transaction#onComplete(Consumer)}.
  *
- * @author Elmar Blume - 12/05/2025
+ * @param <T> the type of the sent {@link RedisPacket}
+ * @param <R> the type of the expected reply {@link RedisPacket}
  */
 public class Transaction<T extends RedisPacket, R extends RedisPacket> {
+
+  /**
+   * The default timeout value (in seconds) used for transactions.
+   */
   public static final int DEFAULT_TIMEOUT = 5;
+
+  /**
+   * The default time unit associated with {@link #DEFAULT_TIMEOUT}.
+   */
   public static final TimeUnit DEFAULT_TIME_UNIT = TimeUnit.SECONDS;
 
+  /**
+   * Shared logger for transaction-related debug and warning messages.
+   */
   private static final Logger LOGGER = LoggerFactory.getLogger(Transaction.class);
 
+  /**
+   * Unique identifier assigned to this transaction.
+   */
   private final UUID transactionId;
+
+  /**
+   * The packet sent as part of this transaction.
+   */
   private final T sentPacket;
 
+  /**
+   * The timeout duration to use for this transaction, expressed in {@link #timeUnit}.
+   */
   private int timeout = 5;
+
+  /**
+   * The time unit associated with {@link #timeout}.
+   */
   private TimeUnit timeUnit = TimeUnit.SECONDS;
 
-  private Consumer<T> timeoutConsumer; // called when the transaction times out
-  private Consumer<R> completeConsumer; // called when the transaction receives a reply
+  /**
+   * Consumer invoked when the transaction times out.
+   */
+  private Consumer<T> timeoutConsumer;
+
+  /**
+   * Consumer invoked when a reply packet is received for this transaction.
+   */
+  private Consumer<R> completeConsumer;
 
   /**
    * Constructs a new {@link Transaction} given an instance of the required sent-packet.
    *
    * @param sentPacket the sent-packet instance to publish
    */
-  public Transaction(@NotNull T sentPacket) {
+  public Transaction(final @NotNull T sentPacket) {
     this.transactionId = UUID.randomUUID();
     this.sentPacket = sentPacket;
     this.sentPacket.setTransactionId(this.transactionId);
@@ -68,16 +101,18 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
    *
    * @see RedisProvider#publish(Transaction, int, TimeUnit)
    */
-  public Transaction<T, R> publish(@NotNull RedisProvider provider) {
+  public Transaction<T, R> publish(final @NotNull RedisProvider provider) {
     provider.publish(this);
     return this;
   }
 
   /**
-   * Publish the {@link Transaction} to all subscribers on the redis.
+   * Publish the {@link Transaction} to all subscribers on the redis using the global
+   * {@link VelocityRedis} provider instance.
    *
    * @return itself for chaining
    *
+   * @throws IllegalStateException if no Redis provider is available
    * @see RedisProvider#publish(Transaction, int, TimeUnit)
    */
   public Transaction<T, R> publish() {
@@ -96,7 +131,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
    * @param timeUnit the time unit of the timeout argument
    * @return itself for chaining
    */
-  public Transaction<T, R> setTimeout(int timeout, TimeUnit timeUnit) {
+  public Transaction<T, R> setTimeout(final int timeout, final TimeUnit timeUnit) {
     this.timeout = timeout;
     this.timeUnit = timeUnit;
     return this;
@@ -108,7 +143,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
    * @param timeoutConsumer the consumer to call when the transaction times out
    * @return itself for chaining
    */
-  public Transaction<T, R> onTimeout(Consumer<T> timeoutConsumer) {
+  public Transaction<T, R> onTimeout(final Consumer<T> timeoutConsumer) {
     this.timeoutConsumer = timeoutConsumer;
     return this;
   }
@@ -119,7 +154,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
    * @param completeConsumer the consumer to call when the transaction receives a reply
    * @return itself for chaining
    */
-  public Transaction<T, R> onComplete(Consumer<R> completeConsumer) {
+  public Transaction<T, R> onComplete(final Consumer<R> completeConsumer) {
     this.completeConsumer = completeConsumer;
     return this;
   }
@@ -130,7 +165,7 @@ public class Transaction<T extends RedisPacket, R extends RedisPacket> {
    * @param replyPacket the reply packet to use as acceptance
    */
   @SuppressWarnings("unchecked")
-  public void complete(RedisPacket replyPacket) {
+  public void complete(final RedisPacket replyPacket) {
     if (this.completeConsumer != null) {
       try {
         this.completeConsumer.accept((R) replyPacket);

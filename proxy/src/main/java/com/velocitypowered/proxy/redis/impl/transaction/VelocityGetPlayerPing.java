@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a transaction that gets the ping of a player.
- *
- * @author Elmar Blume - 14/05/2025
  */
 public final class VelocityGetPlayerPing extends VelocityTransaction<StringPacket, ComponentPacket> {
 
@@ -36,10 +34,9 @@ public final class VelocityGetPlayerPing extends VelocityTransaction<StringPacke
    * @param source the command source to send the result to
    * @param username the username of the player to get the ping of
    */
-  public VelocityGetPlayerPing(@NotNull CommandSource source, @NotNull String username) {
-    super(new StringPacket(username), source, "xcd_redis.command.ping.timeout");
+  public VelocityGetPlayerPing(final @NotNull CommandSource source, final @NotNull String username) {
+    super(new StringPacket(username), source, "redis.command.ping.timeout");
 
-    // Send the ping result to the command source
     this.onComplete(packet -> PacketBehaviour.SEND_COMPONENT.behave(source, packet));
   }
 }

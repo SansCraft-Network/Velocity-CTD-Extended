@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,13 +23,17 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 
 /**
- * Represents a packet that kicks a player from any proxy.
+ * Represents a packet used to remotely kick a player from another proxy.
  *
- * @author Elmar Blume - 06/10/2025
+ * <p>This packet transports both the unique player identifier and the
+ * disconnect message, and is handled as a one-way message across proxies.</p>
  */
 @OneWayPacket
 public final class VelocityKick extends ComponentPacket {
 
+  /**
+   * The unique identifier of the player being kicked.
+   */
   private final UUID uniqueId;
 
   /**
@@ -38,7 +42,7 @@ public final class VelocityKick extends ComponentPacket {
    * @param uniqueId the player's unique ID
    * @param component the message to send
    */
-  public VelocityKick(UUID uniqueId, Component component) {
+  public VelocityKick(final UUID uniqueId, final Component component) {
     super(component);
 
     this.uniqueId = uniqueId;

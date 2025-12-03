@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,12 +30,17 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the in-memory cache implementation of {@link QueueCache} for a {@link Queue}.
- *
- * @author Elmar Blume - 03/04/2025
  */
 public final class MemoryQueueCache implements QueueCache {
 
+  /**
+   * The proxy server instance associated with this queue cache.
+   */
   private final VelocityServer server;
+
+  /**
+   * The in-memory mapping of backend server names to their corresponding queues.
+   */
   private final ConcurrentHashMap<String, Queue> queues;
 
   /**
@@ -43,20 +48,20 @@ public final class MemoryQueueCache implements QueueCache {
    *
    * @param server the proxy instance
    */
-  public MemoryQueueCache(VelocityServer server) {
+  public MemoryQueueCache(final VelocityServer server) {
     this.server = server;
     this.queues = new ConcurrentHashMap<>();
   }
 
   @Override
-  public @NotNull Queue getQueue(@NotNull String serverName) {
+  public @NotNull Queue getQueue(final @NotNull String serverName) {
     final VelocityRegisteredServer backendInstance = (VelocityRegisteredServer) this.server.getServer(serverName)
             .orElseThrow(() -> new QueueCacheException(serverName));
     return this.queues.computeIfAbsent(serverName, s -> new MemoryQueue(server, backendInstance));
   }
 
   @Override
-  public Queue getQueue(@NotNull Player player) {
+  public Queue getQueue(final @NotNull Player player) {
     for (Queue queue : getQueues()) {
       if (queue.contains(player)) {
         return queue;
@@ -72,9 +77,7 @@ public final class MemoryQueueCache implements QueueCache {
   }
 
   @Override
-  public void updateQueue(@NotNull Queue queue) {
+  public void updateQueue(final @NotNull Queue queue) {
     this.queues.put(queue.getName(), queue);
   }
 }
-
-

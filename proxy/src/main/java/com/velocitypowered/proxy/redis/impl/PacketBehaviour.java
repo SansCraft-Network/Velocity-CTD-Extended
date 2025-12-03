@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@ import net.kyori.adventure.text.Component;
  *
  * @param <C> the type of carrier
  * @param <T> the type of packet
- * @author Elmar Blume - 18/05/2025
  */
 public interface PacketBehaviour<C, T extends RedisPacket> {
 
@@ -50,5 +49,4 @@ public interface PacketBehaviour<C, T extends RedisPacket> {
    * @param packet  the packet to have a behaviour
    */
   void behave(C carrier, T packet);
-
 }

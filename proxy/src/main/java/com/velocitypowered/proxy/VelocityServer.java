@@ -330,6 +330,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   private com.velocitypowered.proxy.queue.manager.QueueManager<?> queueManager;
 
+  /**
+   * Provides access to the Redis integration used for multi-proxy features such
+   * as queues, dynamic proxy discovery, and global player tracking.
+   */
   private @MonotonicNonNull VelocityRedis redis;
 
   VelocityServer(final ProxyOptions options) {
@@ -1012,7 +1016,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
   }
 
-  private void registerCommand(final @NotNull String label, final boolean condition, Supplier<BrigadierCommand> supplier) {
+  private void registerCommand(final @NotNull String label, final boolean condition, final Supplier<BrigadierCommand> supplier) {
     if (!condition || commandManager.hasCommand(label)) {
       return;
     }
@@ -1714,7 +1718,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return new VelocityResourcePackInfo.BuilderImpl(url);
   }
 
-  public Logger getLogger() {
+  /**
+   * Returns the shared logger instance used by this proxy implementation.
+   *
+   * @return the proxy {@link Logger}
+   */
+  public final Logger getLogger() {
     return LOGGER;
   }
 

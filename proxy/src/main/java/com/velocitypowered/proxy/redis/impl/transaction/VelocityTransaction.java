@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents an extension of the {@link Transaction} for the VelocityRedis module.
  *
- * @author Elmar Blume - 02/10/2025
+ * <p>This provides Velocity-specific behavior for Redis request/response
+ * transactions, including automatic timeout messaging to a {@link CommandSource}
+ * when applicable.</p>
+ *
+ * @param <T> the type of Redis packet being sent
+ * @param <R> the type of Redis packet expected in response
  */
 public abstract class VelocityTransaction<T extends RedisPacket, R extends RedisPacket> extends Transaction<T, R> {
 
@@ -39,10 +44,9 @@ public abstract class VelocityTransaction<T extends RedisPacket, R extends Redis
    * @param source the command source to send the timeout message to.
    * @param timeoutTranslationKey the translation key to use for the timeout message.
    */
-  public VelocityTransaction(@NotNull T sentPacket, @Nullable CommandSource source, @Nullable String timeoutTranslationKey) {
+  public VelocityTransaction(final @NotNull T sentPacket, final @Nullable CommandSource source, final @Nullable String timeoutTranslationKey) {
     super(sentPacket);
 
-    // Set the default timeout behavior to send a message to the command source
     if (source != null && timeoutTranslationKey != null) {
       this.onTimeout(t -> source.sendMessage(Component.text(timeoutTranslationKey, NamedTextColor.RED)));
     }
@@ -53,7 +57,7 @@ public abstract class VelocityTransaction<T extends RedisPacket, R extends Redis
    *
    * @param sentPacket the packet to send.
    */
-  public VelocityTransaction(@NotNull T sentPacket) {
+  public VelocityTransaction(final @NotNull T sentPacket) {
     this(sentPacket, null, null);
   }
 }

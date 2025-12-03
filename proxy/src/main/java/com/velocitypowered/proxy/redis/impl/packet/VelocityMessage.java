@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,13 +26,20 @@ import net.kyori.adventure.text.Component;
 
 /**
  * Represents a packet that sends a message to a player or a command source.
- *
- * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
 public final class VelocityMessage extends ComponentPacket {
 
+  /**
+   * The encoded representation of the command source that should receive this message,
+   * or {@code null} if the message targets a specific player instead.
+   */
   private EncodedCommandSource commandSource = null;
+
+  /**
+   * The unique identifier of the player who should receive this message,
+   * or {@code null} if the message targets a command source instead.
+   */
   private UUID playerUniqueId = null;
 
   /**
@@ -41,7 +48,7 @@ public final class VelocityMessage extends ComponentPacket {
    * @param commandSource the command source to send the message to
    * @param component the message to send
    */
-  public VelocityMessage(EncodedCommandSource commandSource, Component component) {
+  public VelocityMessage(final EncodedCommandSource commandSource, final Component component) {
     super(component);
     this.commandSource = commandSource;
   }
@@ -52,7 +59,7 @@ public final class VelocityMessage extends ComponentPacket {
    * @param playerUniqueId the player's unique ID to send the message to
    * @param component the message to send
    */
-  public VelocityMessage(UUID playerUniqueId, Component component) {
+  public VelocityMessage(final UUID playerUniqueId, final Component component) {
     super(component);
     this.playerUniqueId = playerUniqueId;
   }

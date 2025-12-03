@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,11 +25,17 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Represents a packet that contains a serialized {@link Component}.
- *
- * @author Elmar Blume - 13/05/2025
  */
 public class ComponentPacket extends StringPacket {
+
+  /**
+   * Logger used to report component deserialization failures.
+   */
   private static final Logger LOGGER = LoggerFactory.getLogger(ComponentPacket.class);
+
+  /**
+   * Serializer used to convert components to and from their JSON representation.
+   */
   private static final GsonComponentSerializer SERIALIZER = GsonComponentSerializer.gson();
 
   /**
@@ -37,7 +43,7 @@ public class ComponentPacket extends StringPacket {
    *
    * @param component the component to serialize
    */
-  public ComponentPacket(Component component) {
+  public ComponentPacket(final Component component) {
     super(SERIALIZER.serialize(component));
   }
 

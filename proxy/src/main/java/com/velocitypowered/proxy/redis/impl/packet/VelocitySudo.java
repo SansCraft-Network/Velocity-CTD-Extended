@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,13 @@ import java.util.UUID;
 
 /**
  * Represents a packet that sends a sudo action for a player.
- *
- * @author Elmar Blume - 04/10/2025
  */
 @OneWayPacket
 public final class VelocitySudo extends UuidPacket {
 
+  /**
+   * The message or command that will be executed on behalf of the player.
+   */
   private final String message;
 
   /**
@@ -37,7 +38,7 @@ public final class VelocitySudo extends UuidPacket {
    * @param playerUniqueId the player's unique ID
    * @param message the message/command to send
    */
-  public VelocitySudo(UUID playerUniqueId, String message) {
+  public VelocitySudo(final UUID playerUniqueId, final String message) {
     super(playerUniqueId);
     this.message = message;
   }

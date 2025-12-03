@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 /**
  * Represents a queue of a {@link VelocityRegisteredServer}.
- *
- * @author Elmar Blume - 10/10/2025
  */
 public sealed interface Queue permits AbstractQueue {
 
@@ -42,7 +40,7 @@ public sealed interface Queue permits AbstractQueue {
    *
    * @param data the data of the player to be added to the queue
    */
-  void enqueue(final QueuePlayerData data);
+  void enqueue(QueuePlayerData data);
 
   /**
    * Adds a player to the queue using their player object.
@@ -68,7 +66,7 @@ public sealed interface Queue permits AbstractQueue {
    * @param uniqueId the unique identifier of the player to be removed from the queue
    * @param maxRetriesReached indicates whether the maximum number of retry attempts has been reached
    */
-  void dequeue(final UUID uniqueId, boolean maxRetriesReached);
+  void dequeue(UUID uniqueId, boolean maxRetriesReached);
 
   /**
    * Removes a player from the queue.
@@ -76,7 +74,7 @@ public sealed interface Queue permits AbstractQueue {
    * @param player the player to be removed from the queue
    * @param maxRetriesReached indicates whether the maximum number of retry attempts has been reached
    */
-  default void dequeue(final Player player, boolean maxRetriesReached) {
+  default void dequeue(final Player player, final boolean maxRetriesReached) {
     dequeue(player.getUniqueId(), maxRetriesReached);
   }
 
@@ -86,7 +84,7 @@ public sealed interface Queue permits AbstractQueue {
    * @param playerEntry the player entry to be removed from the queue
    * @param maxRetriesReached indicates whether the maximum number of retry attempts has been reached
    */
-  default void dequeue(final PlayerEntry playerEntry, boolean maxRetriesReached) {
+  default void dequeue(final PlayerEntry playerEntry, final boolean maxRetriesReached) {
     dequeue(playerEntry.getUniqueId(), maxRetriesReached);
   }
 
@@ -96,7 +94,7 @@ public sealed interface Queue permits AbstractQueue {
    * @param uniqueId the unique identifier of the player to check
    * @return true if the player is present in the queue; false otherwise
    */
-  boolean contains(final UUID uniqueId);
+  boolean contains(UUID uniqueId);
 
   /**
    * Checks if the queue contains a player identified by the specified player object.
@@ -123,7 +121,7 @@ public sealed interface Queue permits AbstractQueue {
    *
    * @param queuePlayer the queue player to transfer to
    */
-  void transferFirst(final QueuePlayer queuePlayer);
+  void transferFirst(QueuePlayer queuePlayer);
 
   /**
    * Retrieves and removes the first player in the queue.
@@ -156,7 +154,7 @@ public sealed interface Queue permits AbstractQueue {
    * @param uniqueId the unique identifier of the player whose position in the queue is to be retrieved
    * @return the position of the player in the queue, or -1 if the player is not present in the queue
    */
-  int getPosition(final UUID uniqueId);
+  int getPosition(UUID uniqueId);
 
   /**
    * Retrieves the position of a player in the queue based on their player object.
@@ -222,7 +220,7 @@ public sealed interface Queue permits AbstractQueue {
    *
    * @param status the new {@code ServerStatus} of the backend server
    */
-  void setStatus(final ServerStatus status);
+  void setStatus(ServerStatus status);
 
   /**
    * Retrieves the current state of the queue.
@@ -236,7 +234,7 @@ public sealed interface Queue permits AbstractQueue {
    *
    * @param state the new {@code QueueState} of the queue
    */
-  void setState(final QueueState state);
+  void setState(QueueState state);
 
   /**
    * Tear down the queue.

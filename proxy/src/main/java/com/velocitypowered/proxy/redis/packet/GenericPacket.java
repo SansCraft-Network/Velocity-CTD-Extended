@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,20 @@
 package com.velocitypowered.proxy.redis.packet;
 
 /**
- * Represents a packet that does not have a specific type set yet.
+ * Represents a generic Redis packet whose payload type is not predetermined.
  *
- * @author Elmar Blume - 08/05/2025
+ * <p>This class is used to wrap arbitrary data objects as Redis packets,
+ * particularly when serialization or deserialization occurs without a
+ * strongly typed packet class.</p>
+ *
+ * @param <T> the type of the payload carried by this packet
  */
 public non-sealed class GenericPacket<T> extends AbstractRedisPacket {
 
+  /**
+   * The payload stored within this packet. Its type is generic and determined
+   * at construction time.
+   */
   protected final T payload;
 
   /**
@@ -31,7 +39,7 @@ public non-sealed class GenericPacket<T> extends AbstractRedisPacket {
    *
    * @param payload the payload of the packet
    */
-  public GenericPacket(T payload) {
+  public GenericPacket(final T payload) {
     super();
     this.payload = payload;
   }
@@ -44,5 +52,4 @@ public non-sealed class GenericPacket<T> extends AbstractRedisPacket {
   public T getPayload() {
     return payload;
   }
-
 }

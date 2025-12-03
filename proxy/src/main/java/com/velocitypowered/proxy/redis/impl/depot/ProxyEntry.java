@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a proxy entry in the depot.
- *
- * @author Elmar Blume - 18/05/2025
  */
 public final class ProxyEntry extends DepotEntry<String, ProxyEntry> {
 
@@ -33,7 +31,7 @@ public final class ProxyEntry extends DepotEntry<String, ProxyEntry> {
    *
    * @param server the proxy instance
    */
-  public ProxyEntry(@NotNull VelocityServer server) {
+  public ProxyEntry(final @NotNull VelocityServer server) {
     super(server.getProxyId());
   }
 }

@@ -1873,17 +1873,25 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     return 0;
   }
 
+  /**
+   * Computes all queue priority levels assigned to this player across every
+   * registered backend server.
+   *
+   * <p>Each entry corresponds to {@code velocity.queue.priority.<server>.<level>} or
+   * the global {@code velocity.queue.priority.all.<level>} permissions. Higher
+   * values indicate higher priority when entering queues.</p>
+   *
+   * @return a map of server names to their resolved queue priority values
+   */
   @Override
   public Map<String, Integer> getQueuePriorities() {
     final Map<String, Integer> priorities = new HashMap<>();
 
-    // Go through all the servers and get the player's priority for each
     for (RegisteredServer server : server.getAllServers()) {
       final String serverName = server.getServerInfo().getName();
       priorities.put(serverName, getQueuePriority(serverName));
     }
 
-    // Also get the global priority
     priorities.put("all", getQueuePriority("all"));
 
     return priorities;

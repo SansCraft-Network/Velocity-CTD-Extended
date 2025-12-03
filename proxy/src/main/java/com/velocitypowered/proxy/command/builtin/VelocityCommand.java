@@ -790,19 +790,22 @@ public final class VelocityCommand {
     /**
      * Logger instance for logging errors during heap dump generation.
      */
-    private static final Logger logger = LogManager.getLogger(Heap.class);
-    /**
-     * Directory path where heap dumps will be saved.
-     */
-    private final Path dir = Path.of("./dumps");
+    private static final Logger LOGGER = LogManager.getLogger(Heap.class);
+
     /**
      * Method handle to the platform-specific heap dump method.
      */
     private MethodHandle heapGenerator;
+
     /**
      * Consumer that triggers heap dump generation and sends output to the command source.
      */
     private Consumer<CommandSource> heapConsumer;
+
+    /**
+     * Directory path where heap dumps will be saved.
+     */
+    private final Path dir = Path.of("./dumps");
 
     @Override
     public int run(final CommandContext<CommandSource> context) throws CommandSyntaxException {
@@ -863,7 +866,7 @@ public final class VelocityCommand {
       } catch (Throwable t) {
         source.sendMessage(Component.text("Failed to write heap dump, see server log for details",
             NamedTextColor.RED));
-        logger.error("Could not write heap", t);
+        LOGGER.error("Could not write heap", t);
       }
       return Command.SINGLE_SUCCESS;
     }

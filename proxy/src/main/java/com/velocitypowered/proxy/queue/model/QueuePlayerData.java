@@ -26,7 +26,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents the data of a player in a queue, used to construct a {@link QueuePlayer}.
  *
- * @author Elmar Blume - 06/11/2025
+ * @param uniqueId    the unique identifier of the player
+ * @param username    the username of the player
+ * @param priority    the queue priority of the player
+ * @param fullBypass  whether the player bypasses full server limits
+ * @param queueBypass whether the player bypasses the queue entirely
  */
 public record QueuePlayerData(@NotNull UUID uniqueId, @NotNull String username, int priority, boolean fullBypass, boolean queueBypass) {
 

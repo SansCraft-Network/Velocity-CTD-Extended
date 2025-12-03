@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,6 @@ import com.velocitypowered.proxy.redis.packet.GenericPacket;
 
 /**
  * Represents an {@link Integer} packet.
- *
- * @author Elmar Blume - 12/05/2025
  */
 public class IntegerPacket extends GenericPacket<Integer> {
 
@@ -31,7 +29,7 @@ public class IntegerPacket extends GenericPacket<Integer> {
    *
    * @param payload the payload of the packet
    */
-  public IntegerPacket(Integer payload) {
+  public IntegerPacket(final Integer payload) {
     super(payload);
   }
 }

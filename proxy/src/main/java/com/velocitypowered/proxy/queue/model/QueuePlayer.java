@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,22 +32,61 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player in a {@link AbstractQueue}.
- *
- * @author Elmar Blume - 03/04/2025
  */
 public final class QueuePlayer {
 
+  /**
+   * The unique identifier of the player represented by this queue entry.
+   */
   private final UUID uniqueId;
+
+  /**
+   * The username of the player represented by this queue entry.
+   */
   private final String username;
 
+  /**
+   * The priority value used to order this player within the queue.
+   * Higher values indicate higher priority.
+   */
   private int priority;
+
+  /**
+   * The number of times a connection attempt has been made for this player.
+   */
   private int connectionAttempts = 0;
+
+  /**
+   * Whether this player is currently in the process of connecting to a backend server.
+   */
   private boolean waitingForConnection;
+
+  /**
+   * Whether this player is allowed to bypass full-server restrictions.
+   */
   private boolean fullBypass;
+
+  /**
+   * Whether this player is allowed to bypass the queue entirely.
+   */
   private boolean queueBypass;
 
+  /**
+   * The proxy server instance associated with this queue player.
+   * Marked {@code transient} as it is context-dependent and not serialized.
+   */
   private transient VelocityServer server;
+
+  /**
+   * The queue that currently owns this player.
+   * Marked {@code transient} as it is reconstructed from context.
+   */
   private transient Queue queue;
+
+  /**
+   * The target backend server instance this player is queued to join.
+   * Marked {@code transient} as it is derived from the owning queue.
+   */
   private transient VelocityRegisteredServer targetInstance;
 
   /**
@@ -55,6 +94,8 @@ public final class QueuePlayer {
    *
    * @param server the proxy instance
    * @param queue  the queue instance
+   * @param data   the backing data for this queue player, including identifiers,
+   *               priority, and bypass flags
    */
   public QueuePlayer(final @NotNull VelocityServer server, final @NotNull Queue queue,
                      final @NotNull QueuePlayerData data) {
@@ -73,14 +114,12 @@ public final class QueuePlayer {
   /**
    * Initiates the transfer process for the player represented by this {@code QueuePlayer} instance.
    *
-   * <p>
-   * If Redis support is enabled in the server configuration, the transfer is handled by publishing
+   * <p>If Redis support is enabled in the server configuration, the transfer is handled by publishing
    * a {@code VelocityQueueTransfer} packet. Otherwise, a direct transfer process is
-   * initiated by calling {@code handleTransfer}.
+   * initiated by calling {@code handleTransfer}.</p>
    *
-   * <p>
-   * During the transfer process, the player's state is marked as {@code waitingForConnection},
-   * preventing potential conflicts from multiple transfer attempts.
+   * <p>During the transfer process, the player's state is marked as {@code waitingForConnection},
+   * preventing potential conflicts from multiple transfer attempts.</p>
    */
   public void transfer() {
     this.waitingForConnection = true;
@@ -154,7 +193,7 @@ public final class QueuePlayer {
    *
    * @param other the {@code QueuePlayer} instance from which to copy the properties; must not be null
    */
-  public void copyFrom(@NotNull QueuePlayer other) {
+  public void copyFrom(final @NotNull QueuePlayer other) {
     this.priority = other.priority;
     this.connectionAttempts = other.connectionAttempts;
     this.waitingForConnection = other.waitingForConnection;
@@ -168,7 +207,7 @@ public final class QueuePlayer {
    * @param server the VelocityServer instance
    * @param queue  the Queue instance
    */
-  public void setContext(@NotNull VelocityServer server, @NotNull Queue queue) {
+  public void setContext(final @NotNull VelocityServer server, final @NotNull Queue queue) {
     this.server = server;
     this.queue = queue;
     this.targetInstance = queue.getBackendInstance();
@@ -189,7 +228,6 @@ public final class QueuePlayer {
 
     if (this.server.isRedisEnabled()) {
       this.server.getRedis().getQueueService().upsertQueuePlayer(this);
-      //todo check if it works - thus far it works.
     }
   }
 

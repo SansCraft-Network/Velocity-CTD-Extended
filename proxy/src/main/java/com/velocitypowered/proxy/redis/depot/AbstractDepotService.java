@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,11 +28,19 @@ import org.jetbrains.annotations.Unmodifiable;
 /**
  * Represents an abstract implementation of the {@link DepotService} interface.
  *
- * @author Elmar Blume - 18/05/2025
+ * <p>This class provides the foundational behavior for interacting with
+ * a Redis-backed {@link Depot}. Subclasses extend this implementation to
+ * specialize the handling of particular {@link DepotEntry} types.</p>
+ *
+ * @param <K> the key type used by the depot
+ * @param <V> the value type stored in the depot, extending {@link DepotEntry}
  */
 public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K, V>>
         implements DepotService<K, V> {
 
+  /**
+   * The underlying Redis-backed depot used to store and retrieve entries.
+   */
   protected final Depot<K, V> depot;
 
   /**
@@ -41,28 +49,45 @@ public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K,
    * @param valueClass the class type of the value in the depot
    * @param provider the redis provider implementation instance
    */
-  public AbstractDepotService(Class<V> valueClass, @NotNull RedisProvider provider) {
+  public AbstractDepotService(final Class<V> valueClass, final @NotNull RedisProvider provider) {
     this.depot = provider.createDepot(valueClass);
   }
 
+  /**
+   * Retrieves a value from the depot by its key.
+   *
+   * @param key the key to retrieve
+   * @return the matching depot entry, or {@code null} if not found
+   */
   @Override
-  public @Nullable V get(K key) {
+  public @Nullable V get(final K key) {
     return this.depot.get(key);
   }
 
+  /**
+   * Retrieves an unmodifiable list of all entries stored in the depot.
+   *
+   * @return an unmodifiable list of all depot entries
+   */
   @Override
   @Unmodifiable
   public @NotNull List<V> getAll() {
     return List.copyOf(this.depot.values());
   }
 
+  /**
+   * Queries all entries in the depot that match the given predicate.
+   *
+   * @param predicate the predicate used to filter entries
+   * @return a collection of matching entries
+   */
   @Override
-  public @NotNull Collection<V> queryAll(Predicate<V> predicate) {
+  public @NotNull Collection<V> queryAll(final Predicate<V> predicate) {
     return this.depot.values().stream().filter(predicate).toList();
   }
 
   @Override
   public void teardown() {
-    // nothing by default
+    // Nothing by default
   }
 }

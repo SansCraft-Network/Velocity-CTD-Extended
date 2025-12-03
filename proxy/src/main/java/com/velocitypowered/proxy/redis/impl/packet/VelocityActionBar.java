@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,12 +25,13 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a packet that sends an action bar message to a player.
- *
- * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
 public final class VelocityActionBar extends ComponentPacket {
 
+  /**
+   * The unique identifier of the player who should receive the action bar message.
+   */
   private final UUID uniqueId;
 
   /**

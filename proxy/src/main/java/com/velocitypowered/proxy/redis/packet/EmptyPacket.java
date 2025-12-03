@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,6 @@ package com.velocitypowered.proxy.redis.packet;
 
 /**
  * Represents an empty packet.
- *
- * @author Elmar Blume - 20/06/2025
  */
 public non-sealed class EmptyPacket extends AbstractRedisPacket {
 }

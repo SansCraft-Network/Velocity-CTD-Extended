@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,11 +28,13 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a utility class for serializing {@link RedisPacket} objects to JSON strings using {@link Gson}.
- *
- * @author Elmar Blume - 09/05/2025
  */
 public final class PacketSerializer {
 
+  /**
+   * Shared {@link Gson} instance configured for Redis packet (de)serialization, excluding
+   * {@code transient} and {@code static} fields and preserving {@code null} values.
+   */
   public static final Gson GSON = new GsonBuilder()
           .excludeFieldsWithModifiers(Modifier.TRANSIENT, Modifier.STATIC)
           .disableHtmlEscaping()
@@ -47,7 +49,7 @@ public final class PacketSerializer {
    * @return the JSON string representation of the packet
    */
   @NotNull
-  public static <T extends RedisPacket> String serialize(@NotNull T packet) {
+  public static <T extends RedisPacket> String serialize(final @NotNull T packet) {
     return PacketSerializer.GSON.toJson(packet);
   }
 
@@ -55,11 +57,12 @@ public final class PacketSerializer {
    * Deserializes a JSON string to a {@link RedisPacket} object using {@link Gson}.
    *
    * @param serializedPacket the JSON string to deserialize
+   * @param packetClass      the concrete packet class to deserialize into
    * @param <T>              the class of the packet
-   * @return the deserialized {@link RedisPacket} object, or null if the deserialization fails
+   * @return the deserialized {@link RedisPacket} object, or {@code null} if the deserialization fails
    */
   @Nullable
-  public static <T extends RedisPacket> T deserialize(@NotNull String serializedPacket, Class<T> packetClass) {
+  public static <T extends RedisPacket> T deserialize(final @NotNull String serializedPacket, final Class<T> packetClass) {
     return PacketSerializer.GSON.fromJson(serializedPacket, packetClass);
   }
 
@@ -72,7 +75,7 @@ public final class PacketSerializer {
    */
   @Nullable
   @SuppressWarnings("unchecked")
-  public static <T extends RedisPacket> T deserialize(@NotNull String serializedPacket) {
+  public static <T extends RedisPacket> T deserialize(final @NotNull String serializedPacket) {
     final RedisPacket redisPacket = PacketSerializer.GSON.fromJson(serializedPacket, GenericPacket.class);
     if (redisPacket == null) {
       return null;
@@ -81,10 +84,8 @@ public final class PacketSerializer {
     try {
       final Class<T> type = (Class<T>) Class.forName(redisPacket.getType());
 
-      // Attempt to deserialize the packet using the type
       return PacketSerializer.GSON.fromJson(serializedPacket, type);
     } catch (ClassNotFoundException ignored) {
-      // Fallback to standard deserialization
       return (T) redisPacket;
     }
   }
@@ -96,7 +97,7 @@ public final class PacketSerializer {
    * @return the type field of the serialized packet, or null if the type field is not present
    */
   @Nullable
-  public static String prepare(@NotNull String serializedPacket) {
+  public static String prepare(final @NotNull String serializedPacket) {
     final JsonObject jsonObject = PacketSerializer.GSON.fromJson(serializedPacket, JsonObject.class);
     if (jsonObject == null || !jsonObject.has("type")) {
       return null;

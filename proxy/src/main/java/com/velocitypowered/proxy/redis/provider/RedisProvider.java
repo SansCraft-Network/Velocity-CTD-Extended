@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,26 +28,27 @@ import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents a redis provider.
- *
- * @author Elmar Blume - 08/05/2025
+ * Represents a Redis provider.
  */
 public sealed interface RedisProvider permits AbstractRedisProvider {
 
-  String CHANNEL = "velocityredis.xcd";
+  /**
+   * The Redis Pub/Sub channel name used for all Velocity Redis communication.
+   */
+  String CHANNEL = "velocity.redis";
 
   /**
-   * Restart the redis provider.
+   * Restart the Redis provider.
    */
   void restart();
 
   /**
-   * Disconnect the redis provider.
+   * Disconnect the Redis provider.
    */
   void disconnect();
 
   /**
-   * Publish a {@link RedisPacket} to the channel on the redis.
+   * Publish a {@link RedisPacket} to the channel on the Redis.
    *
    * @param packet the packet to publish
    * @param <T>    the type of the packet
@@ -55,7 +56,7 @@ public sealed interface RedisProvider permits AbstractRedisProvider {
   <T extends RedisPacket> void publish(@NotNull T packet);
 
   /**
-   * Publish a {@link Transaction} to all subscribers on the redis.
+   * Publish a {@link Transaction} to all subscribers on the Redis.
    *
    * @param transaction the transaction to publish
    * @param timeout     the timeout in seconds (default = 5)
@@ -65,13 +66,13 @@ public sealed interface RedisProvider permits AbstractRedisProvider {
   <T extends RedisPacket> void publish(@NotNull Transaction<T, ?> transaction, int timeout, TimeUnit timeUnit);
 
   /**
-   * Publish a {@link Transaction} to all subscribers on the redis.
+   * Publish a {@link Transaction} to all subscribers on the Redis.
    *
    * @param transaction the transaction to publish
    * @param <T>         the type of the sent-packet
    * @see #publish(Transaction, int, TimeUnit)
    */
-  default <T extends RedisPacket> void publish(@NotNull Transaction<T, ?> transaction) {
+  default <T extends RedisPacket> void publish(final @NotNull Transaction<T, ?> transaction) {
     publish(transaction, transaction.getTimeout(), transaction.getTimeUnit());
   }
 
@@ -123,9 +124,9 @@ public sealed interface RedisProvider permits AbstractRedisProvider {
   <K, V extends DepotEntry<K, V>> @NotNull Depot<K, V> createDepot(Class<V> valueClass);
 
   /**
-   * Check if the redis provider is connected.
+   * Check if the Redis provider is connected.
    *
-   * @return true if the redis provider is connected, false otherwise
+   * @return true if the Redis provider is connected, false otherwise
    */
   boolean isConnected();
 }

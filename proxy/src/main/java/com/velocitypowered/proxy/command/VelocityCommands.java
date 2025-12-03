@@ -81,7 +81,7 @@ public final class VelocityCommands {
                                                 final @Nullable Object registrant) {
     Preconditions.checkNotNull(delegate, "delegate");
     if (registrant == null) {
-      // the registrant is null if the `plugin` was absent when we try to register the command
+      // The registrant is null if the `plugin` was absent when we try to register the command
       return delegate;
     }
 
@@ -94,7 +94,7 @@ public final class VelocityCommands {
       case LiteralCommandNode<CommandSource> lcn -> {
         var literalBuilder = shallowCopyAsBuilder(lcn, delegate.getName(), true);
         literalBuilder.executes(maybeCommand);
-        // we also need to wrap any children
+        // We also need to wrap any children
         for (final CommandNode<CommandSource> child : delegate.getChildren()) {
           literalBuilder.then(wrap(child, registrant));
         }
@@ -107,7 +107,7 @@ public final class VelocityCommands {
               .withRedirect(delegate.getRedirect() != null ? wrap(delegate.getRedirect(), registrant) : null);
       case ArgumentCommandNode<CommandSource, ?> node -> {
         var argBuilder = node.createBuilder().executes(maybeCommand);
-        // we also need to wrap any children
+        // We also need to wrap any children
         for (final CommandNode<CommandSource> child : delegate.getChildren()) {
           argBuilder.then(wrap(child, registrant));
         }
@@ -178,7 +178,7 @@ public final class VelocityCommands {
                                     final Class<V> type, final V fallback) {
     final ParsedArgument<?, ?> argument = arguments.get(ARGS_NODE_NAME);
     if (argument == null) {
-      return fallback; // either no arguments were given or this isn't an InvocableCommand
+      return fallback; // Either no arguments were given or this isn't an InvocableCommand
     }
     final Object result = argument.getResult();
     try {
@@ -188,8 +188,6 @@ public final class VelocityCommands {
           + ", expected " + type, e);
     }
   }
-
-  // Alias nodes
 
   /**
    * Returns whether a literal node with the given name can be added to the {@link RootCommandNode}
@@ -262,8 +260,6 @@ public final class VelocityCommands {
 
     return builder;
   }
-
-  // Arguments node
 
   /**
    * Returns the argument's node for the command represented by the given alias node, if present;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a cache that stores the queue data, either in memory or in a Redis database.
  *
- * @author Elmar Blume - 03/04/2025
  * @see MemoryQueueCache
  * @see RedisQueueCache
  */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,16 +17,15 @@
 
 package com.velocitypowered.proxy.redis.packet.annotation;
 
+import com.velocitypowered.proxy.redis.packet.RedisPacket;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a {@link com.velocitypowered.proxy.redis.packet.RedisPacket} as a one way packet. Which
+ * Marks a {@link RedisPacket} as a one way packet. Which
  * means that the packet is not expected to be answered by the sender.
- *
- * @author Elmar Blume - 08/05/2025
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

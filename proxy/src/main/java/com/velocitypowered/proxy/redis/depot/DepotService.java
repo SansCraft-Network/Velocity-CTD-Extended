@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,9 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
- * Represents a service.
+ * Represents a service for interacting with a Redis-backed {@link Depot}.
  *
- * @author Elmar Blume - 18/05/2025
+ * <p>Implementations of this interface provide typed access to a depot's stored
+ * entries, allowing retrieval, querying, and teardown operations.</p>
+ *
+ * @param <K> the key type used to index entries in the depot
+ * @param <V> the value type stored in the depot, extending {@link DepotEntry}
  */
 public sealed interface DepotService<K, V extends DepotEntry<K, V>> permits AbstractDepotService {
 
@@ -42,7 +46,7 @@ public sealed interface DepotService<K, V extends DepotEntry<K, V>> permits Abst
   /**
    * Returns a collection of all values in the depot.
    *
-   * @return a immutable collection of all values in the depot
+   * @return an immutable collection of all values in the depot
    */
   @NotNull
   @Unmodifiable
@@ -67,12 +71,12 @@ public sealed interface DepotService<K, V extends DepotEntry<K, V>> permits Abst
    * @param predicate the predicate to filter the values by
    * @return the first value in the depot that matches the given predicate, or {@code null} if none match
    */
-  default @Nullable V query(Predicate<V> predicate) {
+  default @Nullable V query(final Predicate<V> predicate) {
     Collection<V> values = queryAll(predicate);
     if (values.isEmpty()) {
       return null;
     }
+
     return values.iterator().next();
   }
-
 }

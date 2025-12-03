@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,13 @@ import java.util.UUID;
 
 /**
  * Represents a redis packet that contains a queue transfer request.
- *
- * @author Elmar Blume - 04/11/2025
  */
 @OneWayPacket
 public final class VelocityQueueTransfer extends UuidPacket {
 
+  /**
+   * The name of the queue the player should be transferred into.
+   */
   private final String queueName;
 
   /**

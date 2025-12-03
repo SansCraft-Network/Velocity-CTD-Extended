@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,11 +26,12 @@ import net.kyori.adventure.text.Component;
 
 /**
  * Represents the in-memory implementation of {@link QueueManager} which uses a {@link MemoryQueueCache}.
- *
- * @author Elmar Blume - 02/04/2025
  */
 public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCache> {
 
+  /**
+   * The in-memory queue cache backing this manager.
+   */
   private final MemoryQueueCache queueCache;
 
   /**
@@ -38,7 +39,7 @@ public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCa
    *
    * @param server the proxy instance
    */
-  public MemoryQueueManager(VelocityServer server) {
+  public MemoryQueueManager(final VelocityServer server) {
     super(server);
 
     this.queueCache = new MemoryQueueCache(server);
@@ -46,17 +47,14 @@ public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCa
 
   @Override
   public boolean isMasterProxy() {
-    // note: MemoryQueueManager means there is only one proxy, so always true
     return true;
   }
 
   @Override
   public void pollFirst(final Queue queue, final QueuePlayer queuePlayer) {
     if (this.server.getPlayer(queuePlayer.getUniqueId()).isPresent()) {
-      // Transfer the first player in the queue
       queue.transferFirst(queuePlayer);
     } else {
-      // Remove the player from the queue if they are offline, yet still at the front
       queue.pollFirst();
     }
   }
@@ -67,7 +65,7 @@ public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCa
   }
 
   @Override
-  public void broadcastMessage(Queue queue, Function<QueuePlayer, Component> component) {
+  public void broadcastMessage(final Queue queue, final Function<QueuePlayer, Component> component) {
     for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
       this.server.getPlayer(queuePlayer.getUniqueId()).ifPresent(player ->
           player.sendMessage(component.apply(queuePlayer)));
@@ -75,7 +73,7 @@ public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCa
   }
 
   @Override
-  public void broadcastActionBar(Queue queue, Function<QueuePlayer, Component> component) {
+  public void broadcastActionBar(final Queue queue, final Function<QueuePlayer, Component> component) {
     for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
       this.server.getPlayer(queuePlayer.getUniqueId()).ifPresent(player ->
           player.sendActionBar(component.apply(queuePlayer)));

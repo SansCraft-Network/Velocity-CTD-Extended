@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A depot represents a map-like structure that stores a certain type of {@link V values}, indexed by a {@link String key} within
- * a Redis database/hash. It is used to store and retrieve objects in and from the database/hash.
+ * A depot represents a map-like structure that stores a certain type of {@link V values}, indexed by a key of type {@link K}
+ * within a Redis database/hash. It is used to store and retrieve objects in and from the database/hash.
  *
- * <p>
- * Within VelocityRedis, the depot is used to store and retrieve objects like online players, server info from other proxies.
+ * <p>Within VelocityRedis, the depot is used to store and retrieve objects like online players and server info from other proxies.</p>
  *
- * @author Elmar Blume - 18/05/2025
+ * @param <K> the key type used to index values in the depot
+ * @param <V> the value type stored in the depot, extending {@link DepotEntry}
  */
 public interface Depot<K, V extends DepotEntry<K, V>> {
 

@@ -180,7 +180,3 @@ dependencies {
     annotationProcessor(libs.auto.service)
     annotationProcessor(libs.log4j.core)
 }
-
-tasks.shadowJar {
-    archiveFileName.set("velocity.jar")
-}

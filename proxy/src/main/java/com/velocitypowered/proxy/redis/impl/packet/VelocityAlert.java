@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,6 @@ import net.kyori.adventure.text.Component;
 
 /**
  * Represents a packet that sends an alert message to all proxies.
- *
- * @author Elmar Blume - 09/05/2025
  */
 @OneWayPacket
 public final class VelocityAlert extends ComponentPacket {
@@ -34,8 +32,7 @@ public final class VelocityAlert extends ComponentPacket {
    *
    * @param component the message to send.
    */
-  public VelocityAlert(Component component) {
+  public VelocityAlert(final Component component) {
     super(component);
   }
-
 }

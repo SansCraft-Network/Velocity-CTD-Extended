@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a transaction that reloads any proxy.
- *
- * @author Elmar Blume - 02/10/2025
  */
 public final class VelocityReload extends VelocityTransaction<StringPacket, ComponentPacket> {
 
@@ -36,10 +34,9 @@ public final class VelocityReload extends VelocityTransaction<StringPacket, Comp
    * @param source the command source to send the result to
    * @param proxyId the id of the proxy to reload
    */
-  public VelocityReload(@NotNull CommandSource source, @NotNull String proxyId) {
-    super(new StringPacket(proxyId), source, "xcd_redis.command.reload.timeout");
+  public VelocityReload(final @NotNull CommandSource source, final @NotNull String proxyId) {
+    super(new StringPacket(proxyId), source, "redis.command.reload.timeout");
 
-    // Send the uptime result to the command source
     this.onComplete(packet -> PacketBehaviour.SEND_COMPONENT.behave(source, packet));
   }
 }

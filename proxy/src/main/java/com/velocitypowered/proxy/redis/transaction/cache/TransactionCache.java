@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,16 +30,27 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a map implementation of a transaction cache.
- *
- * @author Elmar Blume - 13/05/2025
  */
 public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
 
+  /**
+   * Tracks scheduled timeout tasks for each transaction ID stored in the cache.
+   */
   private final @MonotonicNonNull HashMap<UUID, ScheduledTask> refreshTasks;
 
+  /**
+   * Default delay used for scheduling transaction timeout tasks.
+   */
   private final double delay;
+
+  /**
+   * Time unit associated with the default delay.
+   */
   private final TimeUnit timeUnit;
 
+  /**
+   * Consumer invoked when a transaction is purged from the cache due to timeout.
+   */
   private BiConsumer<UUID, Transaction<?, ?>> purgeConsumer;
 
   /**
@@ -55,7 +66,7 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
    * @param delay the delay of the refresh tasks
    * @param timeUnit the time unit of the delay argument
    */
-  public TransactionCache(double delay, TimeUnit timeUnit) {
+  public TransactionCache(final double delay, final TimeUnit timeUnit) {
     this.refreshTasks = new HashMap<>();
     this.delay = delay;
     this.timeUnit = timeUnit;
@@ -66,13 +77,13 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
    *
    * @param purgeConsumer the purge consumer to call when a transaction is purged
    */
-  public TransactionCache(BiConsumer<UUID, Transaction<?, ?>> purgeConsumer) {
+  public TransactionCache(final BiConsumer<UUID, Transaction<?, ?>> purgeConsumer) {
     this();
     this.purgeConsumer = purgeConsumer;
   }
 
   @Override
-  public Transaction<?, ?> put(UUID key, Transaction<?, ?> value) {
+  public Transaction<?, ?> put(final UUID key, final Transaction<?, ?> value) {
     this.queue(value, this.delay, this.timeUnit);
     return super.put(key, value);
   }
@@ -88,16 +99,15 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
    * @param timeUnit the time unit of the delay parameter; must not be null
    * @return the previous transaction associated with the transaction ID, or null if there was no mapping
    */
-  public Transaction<?, ?> put(@NotNull Transaction<?, ?> value, int delay, TimeUnit timeUnit) {
+  public Transaction<?, ?> put(final @NotNull Transaction<?, ?> value, final int delay, final TimeUnit timeUnit) {
     this.queue(value, delay, timeUnit);
     return super.put(value.getTransactionId(), value);
   }
 
   @Override
-  public Transaction<?, ?> remove(Object key) {
+  public Transaction<?, ?> remove(final Object key) {
     final ScheduledTask scheduledTask = this.refreshTasks.remove(key);
 
-    // Cancel any refresh task
     if (scheduledTask != null) {
       scheduledTask.cancel();
     }
@@ -113,16 +123,14 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
    * @param delay the delay, after which the transaction will be processed
    * @param timeUnit the time unit used for the delay parameter; must not be null
    */
-  private void queue(@NotNull Transaction<?, ?> transaction, double delay, TimeUnit timeUnit) {
+  private void queue(final @NotNull Transaction<?, ?> transaction, final double delay, final TimeUnit timeUnit) {
     final UUID key = transaction.getTransactionId();
 
-    // Make sure to remove previous values
     if (this.refreshTasks.containsKey(key)) {
       this.refreshTasks.get(key).cancel();
       this.refreshTasks.remove(key);
     }
 
-    // Schedule the task
     final ScheduledTask scheduledTask = VelocityRedis.INSTANCE.getServer().getScheduler()
             .buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
               this.remove(key);
@@ -133,5 +141,4 @@ public final class TransactionCache extends HashMap<UUID, Transaction<?, ?>> {
 
     this.refreshTasks.put(key, scheduledTask);
   }
-
 }

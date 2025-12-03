@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,19 +36,38 @@ import org.slf4j.LoggerFactory;
 /**
  * Represents an abstract {@link RedisProvider} used to provide a common interface for all redis providers.
  *
- * @author Elmar Blume - 08/05/2025
  * @see LettuceProvider
  */
 public abstract sealed class AbstractRedisProvider implements RedisProvider permits LettuceProvider {
+
+  /**
+   * Shared logger for all Redis provider implementations.
+   */
   protected static final Logger LOGGER = LoggerFactory.getLogger(AbstractRedisProvider.class);
 
+  /**
+   * Cache of packets that have already been handled recently, used to prevent duplicate
+   * processing of the same {@link RedisPacket}. Uses a dummy {@link Byte} value as the cache value.
+   */
   protected static final Cache<@NotNull RedisPacket, @NotNull Byte> HANDLED_PACKETS = CacheBuilder.newBuilder() // byte = dummy value
           .expireAfterWrite(10, TimeUnit.SECONDS).build();
+
+  /**
+   * Cache of pending {@link Transaction} instances, which are automatically timed out
+   * via the associated {@link TransactionCache} callback.
+   */
   protected static final TransactionCache PENDING_TRANSACTIONS = new TransactionCache(
           (uuid, transaction) -> transaction.timeout());
 
+  /**
+   * The registry of all route registrations keyed by packet class name.
+   */
   @MonotonicNonNull
   protected final Map<String, RouteRegistration<? extends RedisPacket>> routeRegistrations;
+
+  /**
+   * The registry of all transaction handlers keyed by transaction class name.
+   */
   @MonotonicNonNull
   protected final Map<String, TransactionHandler<?, ?>> transactionHandlers;
 
@@ -60,8 +79,16 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
     this.transactionHandlers = new HashMap<>();
   }
 
+  /**
+   * Publishes a transaction's sent packet and registers the transaction for timeout handling.
+   *
+   * @param transaction the transaction whose packet should be published
+   * @param timeout the timeout value
+   * @param timeUnit the time unit of the timeout
+   * @param <T> the type of the Redis packet used in the transaction
+   */
   @Override
-  public <T extends RedisPacket> void publish(@NotNull Transaction<T, ?> transaction, int timeout, TimeUnit timeUnit) {
+  public <T extends RedisPacket> void publish(final @NotNull Transaction<T, ?> transaction, final int timeout, final TimeUnit timeUnit) {
     final T sentPacket = transaction.getSentPacket();
 
     HANDLED_PACKETS.put(sentPacket, (byte) 0);
@@ -70,8 +97,14 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
     this.publish(sentPacket);
   }
 
+  /**
+   * Registers a route for a specific {@link RedisPacket} type.
+   *
+   * @param routeRegistration the route registration to add
+   * @param <T> the type of Redis packet handled by the route
+   */
   @Override
-  public <T extends RedisPacket> void registerRoute(@NotNull RouteRegistration<T> routeRegistration) {
+  public <T extends RedisPacket> void registerRoute(final @NotNull RouteRegistration<T> routeRegistration) {
     final Class<T> packetClass = routeRegistration.getPacketClass();
 
     if (this.routeRegistrations.containsKey(packetClass.getName())) {
@@ -81,8 +114,14 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
     this.routeRegistrations.put(packetClass.getName(), routeRegistration);
   }
 
+  /**
+   * Unregisters the route associated with the given packet class, if present.
+   *
+   * @param packetClass the Redis packet class whose route should be removed
+   * @param <T> the type of Redis packet handled by the route
+   */
   @Override
-  public <T extends RedisPacket> void unregisterRoute(@NotNull Class<T> packetClass) {
+  public <T extends RedisPacket> void unregisterRoute(final @NotNull Class<T> packetClass) {
     if (this.routeRegistrations.remove(packetClass.getName()) == null) {
       LOGGER.debug("Route registration for '{}' does not exist, ignoring", packetClass.getSimpleName());
     } else {
@@ -90,8 +129,13 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
     }
   }
 
+  /**
+   * Registers a {@link TransactionHandler} for a given {@link Transaction} type.
+   *
+   * @param transactionHandler the handler to register
+   */
   @Override
-  public void registerTransaction(@NotNull TransactionHandler<?, ?> transactionHandler) {
+  public void registerTransaction(final @NotNull TransactionHandler<?, ?> transactionHandler) {
     final Class<? extends Transaction<?, ?>> transactionClass = transactionHandler.getTransactionClass();
 
     if (this.transactionHandlers.containsKey(transactionClass.getName())) {
@@ -101,8 +145,13 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
     this.transactionHandlers.put(transactionClass.getName(), transactionHandler);
   }
 
+  /**
+   * Unregisters the {@link TransactionHandler} associated with the given transaction class, if present.
+   *
+   * @param transactionClass the transaction class whose handler should be removed
+   */
   @Override
-  public void unregisterTransaction(@NotNull Class<? extends Transaction<?, ?>> transactionClass) {
+  public void unregisterTransaction(final @NotNull Class<? extends Transaction<?, ?>> transactionClass) {
     if (this.transactionHandlers.remove(transactionClass.getName()) == null) {
       LOGGER.debug("Transaction handler for '{}' does not exist, ignoring", transactionClass.getSimpleName());
     } else {
@@ -110,9 +159,15 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
     }
   }
 
+  /**
+   * Gets an immutable list of all registered {@link RouteRegistration} instances.
+   *
+   * @param <T> the type of Redis packet for which route registrations are requested
+   * @return an immutable list of route registrations
+   */
   @Override
   public <T extends RedisPacket> @NotNull ImmutableList<@NotNull RouteRegistration<T>> getRouteRegistrations() {
-    //noinspection unchecked
+    // noinspection unchecked
     return this.routeRegistrations.values().stream()
             .map(routeRegistration -> (RouteRegistration<T>) routeRegistration)
             .collect(ImmutableList.toImmutableList());

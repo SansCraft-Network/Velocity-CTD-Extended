@@ -35,7 +35,7 @@ public final class EncodedCommandSource {
   /**
    * Logger instance for internal error and debug reporting.
    */
-  private static final Logger logger = LoggerFactory.getLogger(EncodedCommandSource.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(EncodedCommandSource.class);
 
   /**
    * The encoded target identifier. Can be a UUID (for players), {@code #console}, or {@code #all}.
@@ -111,7 +111,7 @@ public final class EncodedCommandSource {
       try {
         uuid = UUID.fromString(this.target);
       } catch (IllegalArgumentException e) {
-        logger.error("invalid UUID in encoded command source", e);
+        LOGGER.error("invalid UUID in encoded command source", e);
         return;
       }
 
@@ -122,7 +122,7 @@ public final class EncodedCommandSource {
     switch (this.target) {
       case "#all" -> server.sendMessage(component);
       case "#console" -> server.getConsoleCommandSource().sendMessage(component);
-      default -> logger.warn("invalid target in encoded command source: {}", this.target);
+      default -> LOGGER.warn("invalid target in encoded command source: {}", this.target);
     }
   }
 

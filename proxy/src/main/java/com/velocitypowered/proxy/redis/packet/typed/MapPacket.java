@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,76 +25,144 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a {@link Map} packet.
+ * Represents a Redis packet whose payload is a {@link Map}.
  *
- * @author Elmar Blume - 12/05/2025
+ * <p>This class implements the {@link Map} interface directly, delegating all operations
+ * to the underlying payload supplied to {@link GenericPacket}.</p>
+ *
+ * @param <K> the type of keys contained in the map
+ * @param <V> the type of values contained in the map
  */
 public class MapPacket<K, V> extends GenericPacket<Map<K, V>> implements Map<K, V> {
 
   /**
-   * Constructs a new {@link MapPacket}.
+   * Creates a new {@link MapPacket} with the specified map payload.
    *
-   * @param payload the payload of the packet
+   * @param payload the map to wrap inside this packet; must not be null
    */
-  public MapPacket(Map<K, V> payload) {
+  public MapPacket(final Map<K, V> payload) {
     super(payload);
   }
 
+  /**
+   * Returns the number of key-value mappings in the underlying map.
+   *
+   * @return the number of entries in this map
+   */
   @Override
   public int size() {
     return this.payload.size();
   }
 
+  /**
+   * Returns whether the underlying map contains no key-value mappings.
+   *
+   * @return {@code true} if the map is empty, otherwise {@code false}
+   */
   @Override
   public boolean isEmpty() {
     return this.payload.isEmpty();
   }
 
+  /**
+   * Checks whether the underlying map contains a mapping for the specified key.
+   *
+   * @param key the key whose presence is to be tested
+   * @return {@code true} if the map contains the key, otherwise {@code false}
+   */
   @Override
-  public boolean containsKey(Object key) {
+  public boolean containsKey(final Object key) {
     return this.payload.containsKey(key);
   }
 
+  /**
+   * Checks whether the underlying map associates one or more keys with the specified value.
+   *
+   * @param value the value whose presence is to be tested
+   * @return {@code true} if the map contains the value, otherwise {@code false}
+   */
   @Override
-  public boolean containsValue(Object value) {
+  public boolean containsValue(final Object value) {
     return this.payload.containsValue(value);
   }
 
+  /**
+   * Retrieves the value associated with the specified key.
+   *
+   * @param key the key whose mapped value is to be returned
+   * @return the value mapped to the key, or {@code null} if no mapping exists
+   */
   @Override
-  public V get(Object key) {
+  public V get(final Object key) {
     return this.payload.get(key);
   }
 
+  /**
+   * Associates the specified value with the specified key in the underlying map.
+   *
+   * @param key the key with which the value is to be associated
+   * @param value the value to associate with the key
+   * @return the previous value associated with the key, or {@code null} if none existed
+   */
   @Override
-  public @Nullable V put(K key, V value) {
+  public @Nullable V put(final K key, final V value) {
     return this.payload.put(key, value);
   }
 
+  /**
+   * Removes the mapping for the specified key from the underlying map, if present.
+   *
+   * @param key the key whose mapping should be removed
+   * @return the value previously associated with the key, or {@code null} if no mapping was found
+   */
   @Override
-  public V remove(Object key) {
+  public V remove(final Object key) {
     return this.payload.remove(key);
   }
 
+  /**
+   * Copies all mappings from the specified map into the underlying map.
+   *
+   * @param m the map from which to copy key-value mappings
+   */
   @Override
-  public void putAll(@NotNull Map<? extends K, ? extends V> m) {
+  public void putAll(final @NotNull Map<? extends K, ? extends V> m) {
     this.payload.putAll(m);
   }
 
+  /**
+   * Removes all key-value mappings from the underlying map.
+   */
   @Override
   public void clear() {
     this.payload.clear();
   }
 
+  /**
+   * Returns a {@link Set} of all keys contained in the underlying map.
+   *
+   * @return a set of keys
+   */
   @Override
   public @NotNull Set<K> keySet() {
     return this.payload.keySet();
   }
 
+  /**
+   * Returns a {@link Collection} of all values contained in the underlying map.
+   *
+   * @return a collection of values
+   */
   @Override
   public @NotNull Collection<V> values() {
     return this.payload.values();
   }
 
+  /**
+   * Returns a {@link Set} view of all key-value mappings in the underlying map.
+   *
+   * @return a set of map entries
+   */
   @Override
   public @NotNull Set<Entry<K, V>> entrySet() {
     return this.payload.entrySet();

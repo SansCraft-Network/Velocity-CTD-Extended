@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,12 +33,17 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents the redis implementation of {@link QueueManager} which uses a {@link RedisQueueCache}.
- *
- * @author Elmar Blume - 02/04/2025
  */
 public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCache> {
 
+  /**
+   * The Redis-backed queue cache used by this queue manager.
+   */
   private final RedisQueueCache queueCache;
+
+  /**
+   * The Redis-backed player service used to check player online status across multiple proxies.
+   */
   private final PlayerDepotService playerService;
 
   /**
@@ -46,7 +51,7 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
    *
    * @param server the proxy instance
    */
-  public RedisQueueManager(@NotNull VelocityServer server) {
+  public RedisQueueManager(final @NotNull VelocityServer server) {
     super(server);
 
     this.queueCache = new RedisQueueCache(server);
@@ -62,12 +67,11 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
 
     final String ownProxy = this.server.getProxyId();
 
-    // If no master proxies are configured but there's only one active proxy, use it as master
     if (masterProxies.isEmpty() || (masterProxies.size() == 1 && masterProxies.getFirst().isEmpty())) {
       if (activeProxies.size() == 1 && activeProxies.getFirst().equalsIgnoreCase(ownProxy)) {
         return true;
       }
-      // If there's only one active proxy, use it as master regardless of configuration
+
       if (activeProxies.size() == 1) {
         return activeProxies.getFirst().equalsIgnoreCase(ownProxy);
       }
@@ -97,14 +101,11 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   @Override
   public void pollFirst(final Queue queue, final QueuePlayer queuePlayer) {
     if (this.playerService.isPlayerOnline(queuePlayer.getUniqueId())) {
-      // Transfer the first player in the queue
       queue.transferFirst(queuePlayer);
     } else {
-      // Remove the player from the queue if they are offline, yet still at the front
       queue.pollFirst();
     }
 
-    // Update the queue in the cache
     this.queueCache.updateQueue(queue);
   }
 
@@ -114,7 +115,7 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   }
 
   @Override
-  public void broadcastMessage(Queue queue, Function<QueuePlayer, Component> component) {
+  public void broadcastMessage(final Queue queue, final Function<QueuePlayer, Component> component) {
     for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
       new VelocityMessage(queuePlayer.getUniqueId(), component.apply(queuePlayer))
           .publish();
@@ -122,7 +123,7 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   }
 
   @Override
-  public void broadcastActionBar(Queue queue, Function<QueuePlayer, Component> component) {
+  public void broadcastActionBar(final Queue queue, final Function<QueuePlayer, Component> component) {
     for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
       new VelocityActionBar(queuePlayer.getUniqueId(), component.apply(queuePlayer))
           .publish();

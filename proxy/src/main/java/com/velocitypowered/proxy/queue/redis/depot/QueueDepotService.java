@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,11 +27,12 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a depot service for managing queue entries.
- *
- * @author Elmar Blume - 10/10/2025
  */
 public final class QueueDepotService extends AbstractDepotService<String, QueueEntry> {
 
+  /**
+   * The owning {@link VelocityServer} instance associated with this depot service.
+   */
   private final VelocityServer server;
 
   /**
@@ -39,7 +40,7 @@ public final class QueueDepotService extends AbstractDepotService<String, QueueE
    *
    * @param redis the redis provider implementation instance
    */
-  public QueueDepotService(@NotNull VelocityRedis redis) {
+  public QueueDepotService(@NotNull final VelocityRedis redis) {
     super(QueueEntry.class, redis.getProvider());
 
     this.server = redis.getServer();
@@ -55,7 +56,7 @@ public final class QueueDepotService extends AbstractDepotService<String, QueueE
    *
    * @param queue the queue to insert
    */
-  public void insertQueueEntry(@NotNull Queue queue) {
+  public void insertQueueEntry(final @NotNull Queue queue) {
     this.depot.upsert(new QueueEntry(queue));
   }
 
@@ -65,7 +66,7 @@ public final class QueueDepotService extends AbstractDepotService<String, QueueE
    * @param queueName the name of the queue to retrieve
    * @return the queue entry, or {@code null} if the queue does not exist
    */
-  public @Nullable QueueEntry getQueueEntry(@NotNull String queueName) {
+  public @Nullable QueueEntry getQueueEntry(final @NotNull String queueName) {
     return this.depot.get(queueName);
   }
 
@@ -74,7 +75,7 @@ public final class QueueDepotService extends AbstractDepotService<String, QueueE
    *
    * @param queuePlayer the queue player to update
    */
-  public void upsertQueuePlayer(@NotNull QueuePlayer queuePlayer) {
+  public void upsertQueuePlayer(final @NotNull QueuePlayer queuePlayer) {
     final QueueEntry queueEntry = this.getQueueEntry(queuePlayer.getQueueName());
     if (queueEntry == null) {
       return;

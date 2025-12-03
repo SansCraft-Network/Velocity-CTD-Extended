@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,26 +18,39 @@
 package com.velocitypowered.proxy.redis.registration;
 
 import com.velocitypowered.proxy.redis.packet.RedisPacket;
+import com.velocitypowered.proxy.redis.provider.RedisProvider;
 
 /**
- * Represents an abstract route registration for a {@link RedisPacket}.
+ * Represents an abstract {@link RouteRegistration} for a specific {@link RedisPacket} type.
  *
- * @author Elmar Blume - 08/05/2025
+ * <p>This class stores the packet class associated with the route so that the
+ * {@link RedisProvider} can look up the correct
+ * handler based on incoming packet type information.</p>
+ *
+ * @param <T> the type of {@link RedisPacket} handled by this registration
  */
 public abstract sealed class AbstractRouteRegistration<T extends RedisPacket> implements RouteRegistration<T>
         permits ConsumerRouteRegistration {
 
+  /**
+   * The class type of the {@link RedisPacket} associated with this route registration.
+   */
   private final Class<T> packetClass;
 
   /**
    * Constructs a new {@link AbstractRouteRegistration}.
    *
-   * @param packetClass the class type of the {@link RedisPacket}
+   * @param packetClass the concrete packet class this registration handles
    */
-  public AbstractRouteRegistration(Class<T> packetClass) {
+  public AbstractRouteRegistration(final Class<T> packetClass) {
     this.packetClass = packetClass;
   }
 
+  /**
+   * Gets the packet class associated with this route registration.
+   *
+   * @return the packet class that this registration handles
+   */
   @Override
   public Class<T> getPacketClass() {
     return packetClass;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Velocity Contributors
+ * Copyright (C) 2018-2025 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ import net.kyori.adventure.text.Component;
 /**
  * Represents the manager of the {@link Queue}-system.
  *
- * @author Elmar Blume - 02/04/2025
+ * @param <C> the type of {@link QueueCache} used by this queue manager
+ *
  * @see AbstractQueueManager
  * @see MemoryQueueManager
  * @see RedisQueueManager
@@ -60,7 +61,7 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    * @param queue the queue from which the first player will be polled
    * @param queuePlayer the queue player instance to handle during this operation
    */
-  void pollFirst(final Queue queue, final QueuePlayer queuePlayer);
+  void pollFirst(Queue queue, QueuePlayer queuePlayer);
 
   /**
    * Adds a player to the queue for the specified server.
@@ -68,7 +69,7 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    * @param player the player to be added to the queue
    * @param server the server for which the player is being queued
    */
-  void queue(final Player player, final VelocityRegisteredServer server);
+  void queue(Player player, VelocityRegisteredServer server);
 
   /**
    * Gets the {@link QueueCache} instance.
@@ -84,7 +85,7 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    *
    * @param player the player who has disconnected
    */
-  void onPlayerDisconnect(final Player player);
+  void onPlayerDisconnect(Player player);
 
   /**
    * Completely removes a player from the queue system and all associated data or references.
@@ -93,7 +94,7 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    *
    * @param player the player to be removed entirely from the queue system
    */
-  void removePlayerEntirely(final Player player);
+  void removePlayerEntirely(Player player);
 
   /**
    * Broadcasts a message to all players in the specified queue. The message is generated
@@ -103,7 +104,7 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    * @param component a function that generates the message {@link Component} for each
    *                  {@link QueuePlayer} in the specified queue
    */
-  void broadcastMessage(final Queue queue, final Function<QueuePlayer, Component> component);
+  void broadcastMessage(Queue queue, Function<QueuePlayer, Component> component);
 
   /**
    * Broadcasts an action bar message to all players in the specified queue.
@@ -112,5 +113,5 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    * @param queue the queue whose players will receive the broadcasted message
    * @param component a function that generates the message {@link Component} for each
    */
-  void broadcastActionBar(final Queue queue, final Function<QueuePlayer, Component> component);
+  void broadcastActionBar(Queue queue, Function<QueuePlayer, Component> component);
 }

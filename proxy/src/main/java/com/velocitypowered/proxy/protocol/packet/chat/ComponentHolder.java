@@ -62,7 +62,7 @@ public class ComponentHolder {
   /**
    * Logger instance for reporting errors during serialization/deserialization.
    */
-  private static final Logger logger = LogManager.getLogger(ComponentHolder.class);
+  private static final Logger LOGGER = LogManager.getLogger(ComponentHolder.class);
 
   /**
    * The maximum allowed size for JSON strings, used when reading components from buffer.
@@ -140,7 +140,7 @@ public class ComponentHolder {
           json = deserialize(binaryTag).toString();
           component = ProtocolUtils.getJsonChatSerializer(version).deserialize(json);
         } catch (Exception ex) {
-          logger.error("Error converting binary component to JSON component! Binary: {} JSON: {}", binaryTag, json, ex);
+          LOGGER.error("Error converting binary component to JSON component! Binary: {} JSON: {}", binaryTag, json, ex);
           throw ex;
         }
       }

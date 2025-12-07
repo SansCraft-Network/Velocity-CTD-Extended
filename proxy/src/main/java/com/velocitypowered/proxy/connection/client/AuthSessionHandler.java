@@ -68,12 +68,12 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   /**
    * Logger for textual log messages.
    */
-  private static final Logger logger = LogManager.getLogger(AuthSessionHandler.class, new ParameterizedMessageFactory());
+  private static final Logger LOGGER = LogManager.getLogger(AuthSessionHandler.class, new ParameterizedMessageFactory());
 
   /**
    * Logger for Adventure components.
    */
-  private static final ComponentLogger componentLogger = ComponentLogger.logger(AuthSessionHandler.class);
+  private static final ComponentLogger COMPONENT_LOGGER = ComponentLogger.logger(AuthSessionHandler.class);
 
   /**
    * The proxy server instance.
@@ -151,7 +151,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           finalProfile.getName(),
           mcConnection.getRemoteAddress().toString());
 
-      componentLogger.info(Component.text(discMessage).append(
+      COMPONENT_LOGGER.info(Component.text(discMessage).append(
           Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
               .arguments(
                   Argument.string("min", minimumVersion),
@@ -178,7 +178,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
       }
 
       if (server.getConfiguration().isLogPlayerConnections()) {
-        logger.info("{} has connected", player);
+        LOGGER.info("{} has connected", player);
       }
 
       return server.getEventManager()
@@ -188,7 +188,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
               // wait for permissions to load, then set the player permission function
               final PermissionFunction function = event.createFunction(player);
               if (function == null) {
-                logger.error("A plugin permission provider {} provided an invalid permission "
+                LOGGER.error("A plugin permission provider {} provided an invalid permission "
                         + "function for player {}. This is a bug in the plugin, not in "
                         + "Velocity. Falling back to the default permission function.",
                     event.getProvider().getClass().getName(), player.getUsername());
@@ -199,7 +199,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
             }
           }, mcConnection.eventLoop());
     }, mcConnection.eventLoop()).exceptionally((ex) -> {
-      logger.error("Exception during connection of {}", finalProfile, ex);
+      LOGGER.error("Exception during connection of {}", finalProfile, ex);
       return null;
     });
   }
@@ -247,15 +247,15 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
                   Component.translatable("multiplayer.disconnect.invalid_public_key"));
               return;
             } else {
-              logger.warn("Key for player {} could not be verified!", player.getUsername());
+              LOGGER.warn("Key for player {} could not be verified!", player.getUsername());
             }
           }
         } else {
-          logger.warn("A custom key type has been set for player {}", player.getUsername());
+          LOGGER.warn("A custom key type has been set for player {}", player.getUsername());
         }
       } else {
         if (!Objects.equals(playerKey.getSignatureHolder(), playerUniqueId)) {
-          logger.warn("UUID for Player {} mismatches! "
+          LOGGER.warn("UUID for Player {} mismatches! "
               + "Chat/Commands signatures will not work correctly for this player!",
                   player.getUsername());
         }
@@ -292,7 +292,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
       server.getEventManager().fire(new PostLoginEvent(connectedPlayer)).thenCompose(ignored -> connectToInitialServer(connectedPlayer))
           .exceptionally((ex) -> {
-            logger.error("Exception while connecting {} to initial server", connectedPlayer, ex);
+            LOGGER.error("Exception while connecting {} to initial server", connectedPlayer, ex);
             return null;
           });
     }
@@ -365,13 +365,13 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           mcConnection.setActiveSessionHandler(StateRegistry.PLAY, new InitialConnectSessionHandler(player, server));
           server.getEventManager().fire(new PostLoginEvent(player)).thenCompose((ignored) ->
               connectToInitialServer(player)).exceptionally((ex) -> {
-                logger.error("Exception while connecting {} to initial server", player, ex);
+                LOGGER.error("Exception while connecting {} to initial server", player, ex);
                 return null;
               });
         }
       }
     }, mcConnection.eventLoop()).exceptionally((ex) -> {
-      logger.error("Exception while completing login initialisation phase for {}", player, ex);
+      LOGGER.error("Exception while completing login initialisation phase for {}", player, ex);
       return null;
     });
   }

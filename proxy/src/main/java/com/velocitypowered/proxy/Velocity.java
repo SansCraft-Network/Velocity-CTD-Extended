@@ -34,11 +34,11 @@ public class Velocity {
   /**
    * The main logger used throughout the Velocity bootstrap lifecycle.
    */
-  private static final Logger logger;
+  private static final Logger LOGGER;
 
   static {
     System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
-    logger = LogManager.getLogger(Velocity.class);
+    LOGGER = LogManager.getLogger(Velocity.class);
 
     // We use BufferedImage for favicons, and on macOS this puts the Java application in the dock.
     // How inconvenient. Force AWT to work with its head chopped off.
@@ -76,7 +76,7 @@ public class Velocity {
         "Shutdown thread"));
 
     double bootTime = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime) / 1000d;
-    logger.info("Done ({}s)!", new DecimalFormat("#.##").format(bootTime));
+    LOGGER.info("Done ({}s)!", new DecimalFormat("#.##").format(bootTime));
     server.getConsoleCommandSource().start();
 
     // If we don't have a console available (because SimpleTerminalConsole returned), then we still

@@ -481,7 +481,7 @@ public final class VelocityCommand {
     /**
      * Logger instance used for reporting reload-related errors.
      */
-    private static final Logger logger = LogManager.getLogger(Reload.class);
+    private static final Logger LOGGER = LogManager.getLogger(Reload.class);
 
     @Override
     public int run(final CommandContext<CommandSource> context) {
@@ -495,7 +495,7 @@ public final class VelocityCommand {
               NamedTextColor.RED));
         }
       } catch (Exception e) {
-        logger.error("Unable to reload configuration", e);
+        LOGGER.error("Unable to reload configuration", e);
         source.sendMessage(Component.translatable("velocity.command.reload-failure",
             NamedTextColor.RED));
       }
@@ -729,7 +729,7 @@ public final class VelocityCommand {
     /**
      * Logger instance for logging errors and output related to the dump command.
      */
-    private static final Logger logger = LogManager.getLogger(Dump.class);
+    private static final Logger LOGGER = LogManager.getLogger(Dump.class);
 
     @Override
     public int run(final CommandContext<CommandSource> context) {
@@ -772,7 +772,7 @@ public final class VelocityCommand {
                 + "this proxy has been saved at " + dumpPath.toAbsolutePath(),
             NamedTextColor.GREEN));
       } catch (IOException e) {
-        logger.error("Failed to complete dump command, the executor was interrupted: {}", e.getMessage(), e);
+        LOGGER.error("Failed to complete dump command, the executor was interrupted: {}", e.getMessage(), e);
         source.sendMessage(Component.text(
             "We could not save the anonymized dump. Check the console for more details.",
             NamedTextColor.RED)
@@ -877,7 +877,7 @@ public final class VelocityCommand {
     /**
      * Logger instance for logging configuration analysis errors.
      */
-    private static final Logger logger = LogManager.getLogger(ConfigCheck.class);
+    private static final Logger LOGGER = LogManager.getLogger(ConfigCheck.class);
 
     @Override
     public int run(final CommandContext<CommandSource> context) {
@@ -887,7 +887,7 @@ public final class VelocityCommand {
       Path configPath = Path.of("velocity.toml");
 
       try {
-        ConfigDetector detector = new ConfigDetector(logger);
+        ConfigDetector detector = new ConfigDetector(LOGGER);
         ConfigAnalysis analysis = detector.analyzeConfiguration(configPath);
 
         // Send formatted results to the command source
@@ -929,7 +929,7 @@ public final class VelocityCommand {
       } catch (IOException e) {
         source.sendMessage(Component.translatable("velocity.command.config-check.error", NamedTextColor.RED)
             .arguments(Argument.string("message", e.getMessage())));
-        logger.error("Failed to analyze configuration file: {}", configPath, e);
+        LOGGER.error("Failed to analyze configuration file: {}", configPath, e);
       }
 
       return Command.SINGLE_SUCCESS;

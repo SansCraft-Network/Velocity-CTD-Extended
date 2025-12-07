@@ -72,7 +72,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   /**
    * The logger used to print configuration-related warnings and errors.
    */
-  private static final Logger logger = LogManager.getLogger(VelocityConfiguration.class);
+  private static final Logger LOGGER = LogManager.getLogger(VelocityConfiguration.class);
 
   /**
    * The IP address and port the proxy binds to.
@@ -401,28 +401,28 @@ public final class VelocityConfiguration implements ProxyConfig {
     boolean valid = true;
 
     if (bind.isEmpty()) {
-      logger.error("'bind' option is empty.");
+      LOGGER.error("'bind' option is empty.");
       valid = false;
     } else {
       try {
         AddressUtil.parseAddress(bind);
       } catch (IllegalArgumentException e) {
-        logger.error("'bind' option does not specify a valid IP address.", e);
+        LOGGER.error("'bind' option does not specify a valid IP address.", e);
         valid = false;
       }
     }
 
     if (!onlineMode) {
-      logger.warn("The proxy is running in offline mode! This is a security risk and you will NOT "
+      LOGGER.warn("The proxy is running in offline mode! This is a security risk and you will NOT "
           + "receive any support!");
     }
 
     switch (playerInfoForwardingMode) {
-      case NONE -> logger.warn("Player info forwarding is disabled! All players will appear to be connecting "
+      case NONE -> LOGGER.warn("Player info forwarding is disabled! All players will appear to be connecting "
               + "from the proxy and will have offline-mode UUIDs.");
       case MODERN, BUNGEEGUARD -> {
         if (forwardingSecret == null || forwardingSecret.length == 0) {
-          logger.error("You don't have a forwarding secret set. This is required for security.");
+          LOGGER.error("You don't have a forwarding secret set. This is required for security.");
           valid = false;
         }
       }
@@ -431,21 +431,21 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     if (servers.getBackendServers().isEmpty()) {
-      logger.warn("You don't have any servers configured.");
+      LOGGER.warn("You don't have any servers configured.");
     }
 
     for (Map.Entry<String, BackendServerConfig> entry : servers.getBackendServers().entrySet()) {
       try {
         AddressUtil.parseAddress(entry.getValue().address());
       } catch (IllegalArgumentException e) {
-        logger.error("Server {} does not have a valid IP address.", entry.getKey(), e);
+        LOGGER.error("Server {} does not have a valid IP address.", entry.getKey(), e);
         valid = false;
       }
 
       ServerInfoForwardingMode mode = entry.getValue().forwardingMode();
       if (mode == ServerInfoForwardingMode.MODERN || mode == ServerInfoForwardingMode.BUNGEEGUARD) {
         if (forwardingSecret == null || forwardingSecret.length == 0) {
-          logger.error("You don't have a forwarding secret set. This is required if "
+          LOGGER.error("You don't have a forwarding secret set. This is required if "
                   + "you are using MODERN or BUNGEEGUARD forwarding modes.");
           valid = false;
         }
@@ -454,7 +454,7 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     for (String s : servers.getAttemptConnectionOrder()) {
       if (!servers.getBackendServers().containsKey(s)) {
-        logger.error("Fallback server {} is not registered in your configuration!", s);
+        LOGGER.error("Fallback server {} is not registered in your configuration!", s);
         valid = false;
       }
     }
@@ -463,14 +463,14 @@ public final class VelocityConfiguration implements ProxyConfig {
     if (!configuredForcedHosts.isEmpty()) {
       for (Map.Entry<String, List<String>> entry : configuredForcedHosts.entrySet()) {
         if (entry.getValue().isEmpty()) {
-          logger.error("Forced host '{}' does not contain any servers", entry.getKey());
+          LOGGER.error("Forced host '{}' does not contain any servers", entry.getKey());
           valid = false;
           continue;
         }
 
         for (String server : entry.getValue()) {
           if (!servers.getBackendServers().containsKey(server)) {
-            logger.error("Server '{}' for forced host '{}' does not exist", server, entry.getKey());
+            LOGGER.error("Server '{}' for forced host '{}' does not exist", server, entry.getKey());
             valid = false;
           }
         }
@@ -479,13 +479,13 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     for (Map.Entry<String, List<String>> entry : slashServers.entrySet()) {
       if (entry.getValue().isEmpty()) {
-        logger.error("Slash server alias '{}' does not contain any servers", entry.getKey());
+        LOGGER.error("Slash server alias '{}' does not contain any servers", entry.getKey());
         valid = false;
         continue;
       }
 
       if (!servers.getBackendServers().containsKey(entry.getKey())) {
-        logger.error("Server '{}' does not exist in slash server aliases", entry.getKey());
+        LOGGER.error("Server '{}' does not exist in slash server aliases", entry.getKey());
         valid = false;
       }
     }
@@ -493,40 +493,40 @@ public final class VelocityConfiguration implements ProxyConfig {
     try {
       getMotd();
     } catch (Exception e) {
-      logger.error("Can't parse your MOTD", e);
+      LOGGER.error("Can't parse your MOTD", e);
       valid = false;
     }
 
     try {
       getMotdHover();
     } catch (Exception e) {
-      logger.error("Can't parse your MOTD hover", e);
+      LOGGER.error("Can't parse your MOTD hover", e);
       valid = false;
     }
 
     if (advanced.compressionLevel < -1 || advanced.compressionLevel > 9) {
-      logger.error("Invalid compression level {}", advanced.compressionLevel);
+      LOGGER.error("Invalid compression level {}", advanced.compressionLevel);
       valid = false;
     } else if (advanced.compressionLevel == 0) {
-      logger.warn("ALL packets going through the proxy will be uncompressed. This will increase "
+      LOGGER.warn("ALL packets going through the proxy will be uncompressed. This will increase "
           + "bandwidth usage.");
     }
 
     if (advanced.compressionThreshold < -1) {
-      logger.error("Invalid compression threshold {}", advanced.compressionLevel);
+      LOGGER.error("Invalid compression threshold {}", advanced.compressionLevel);
       valid = false;
     } else if (advanced.compressionThreshold == 0) {
-      logger.warn("ALL packets going through the proxy will be compressed. This will compromise "
+      LOGGER.warn("ALL packets going through the proxy will be compressed. This will compromise "
           + "throughput and increase CPU usage!");
     }
 
     if (advanced.loginRatelimit < 0) {
-      logger.error("Invalid login ratelimit {}ms", advanced.loginRatelimit);
+      LOGGER.error("Invalid login ratelimit {}ms", advanced.loginRatelimit);
       valid = false;
     }
 
     if (advanced.commandRateLimit < 0) {
-      logger.error("Invalid command rate limit {}", advanced.commandRateLimit);
+      LOGGER.error("Invalid command rate limit {}", advanced.commandRateLimit);
       valid = false;
     }
 
@@ -541,7 +541,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       try {
         this.favicon = Favicon.create(faviconPath);
       } catch (Exception e) {
-        logger.info("Unable to load your server-icon.png, continuing without it.", e);
+        LOGGER.info("Unable to load your server-icon.png, continuing without it.", e);
       }
     }
   }
@@ -1209,15 +1209,15 @@ public final class VelocityConfiguration implements ProxyConfig {
       config.load();
 
       try {
-        ConfigDetector detector = new ConfigDetector(logger);
+        ConfigDetector detector = new ConfigDetector(LOGGER);
         ConfigDetector.ConfigAnalysis analysis = detector.analyzeConfiguration(path);
 
         if (!analysis.missingOptions().isEmpty()) {
-          logger.warn("Missing configuration options: {}", String.join(", ", analysis.missingOptions()));
-          logger.warn("Run /velocity configcheck for full details");
+          LOGGER.warn("Missing configuration options: {}", String.join(", ", analysis.missingOptions()));
+          LOGGER.warn("Run /velocity configcheck for full details");
         }
       } catch (IOException e) {
-        logger.debug("Could not perform configuration check during configuration loading", e);
+        LOGGER.debug("Could not perform configuration check during configuration loading", e);
       }
 
       final ConfigurationMigration[] migrations = {
@@ -1230,7 +1230,7 @@ public final class VelocityConfiguration implements ProxyConfig {
 
       for (final ConfigurationMigration migration : migrations) {
         if (migration.shouldMigrate(config)) {
-          migration.migrate(config, logger);
+          migration.migrate(config, LOGGER);
         }
       }
 
@@ -1251,7 +1251,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         } else {
           Files.createFile(secretPath);
           Files.writeString(secretPath, forwardingSecretString = generateRandomString(12), StandardCharsets.UTF_8);
-          logger.info("The forwarding-secret-file does not exist. A new file has been created at {}", forwardSecretFile);
+          LOGGER.info("The forwarding-secret-file does not exist. A new file has been created at {}", forwardSecretFile);
         }
       }
 
@@ -1328,7 +1328,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           String url = link.get("link");
           Object serverName = link.get("server");
           if (!(serverName instanceof List<?> serverList)) {
-            logger.warn("Invalid 'server' value for server-link '{}'. Expected a list of servers like \"factions\" or \"minigames\"", entry.getKey());
+            LOGGER.warn("Invalid 'server' value for server-link '{}'. Expected a list of servers like \"factions\" or \"minigames\"", entry.getKey());
             continue;
           }
 
@@ -1765,7 +1765,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           } else if (value instanceof String str) {
             parsed.put(entry.getKey(), List.of(str));
           } else {
-            logger.warn("Invalid value in [command-aliases] for '{}': {}", entry.getKey(), value);
+            LOGGER.warn("Invalid value in [command-aliases] for '{}': {}", entry.getKey(), value);
           }
         }
       }
@@ -1807,7 +1807,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           } else if (value instanceof String str) {
             parsed.put(entry.getKey(), List.of(str));
           } else {
-            logger.warn("Invalid value in [proxy-command-aliases] for '{}': {}", entry.getKey(), value);
+            LOGGER.warn("Invalid value in [proxy-command-aliases] for '{}': {}", entry.getKey(), value);
           }
         }
       }

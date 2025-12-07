@@ -59,12 +59,12 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   /**
    * The logger used for standard logging output.
    */
-  private static final Logger logger = LogManager.getLogger(VelocityConsole.class, new ParameterizedMessageFactory());
+  private static final Logger LOGGER = LogManager.getLogger(VelocityConsole.class, new ParameterizedMessageFactory());
 
   /**
-   * The Adventure component logger for rich console output.
+   * The Adventure component LOGGER for rich console output.
    */
-  private static final ComponentLogger componentLogger = ComponentLogger.logger(VelocityConsole.class);
+  private static final ComponentLogger COMPONENT_LOGGER = ComponentLogger.logger(VelocityConsole.class);
 
   /**
    * The Velocity server instance backing this console.
@@ -98,7 +98,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   @Override
   public void sendMessage(final @NonNull Identity identity, final @NonNull Component message,
                           final @NonNull MessageType messageType) {
-    componentLogger.info(message);
+    COMPONENT_LOGGER.info(message);
   }
 
   @Override
@@ -110,8 +110,8 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
    * Sets up {@code System.out} and {@code System.err} to redirect to log4j.
    */
   public void setupStreams() {
-    System.setOut(IoBuilder.forLogger(logger).setLevel(Level.INFO).buildPrintStream());
-    System.setErr(IoBuilder.forLogger(logger).setLevel(Level.ERROR).buildPrintStream());
+    System.setOut(IoBuilder.forLogger(LOGGER).setLevel(Level.INFO).buildPrintStream());
+    System.setErr(IoBuilder.forLogger(LOGGER).setLevel(Level.ERROR).buildPrintStream());
   }
 
   /**
@@ -122,7 +122,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
     // we can safely block here, this is before any listeners fire
     this.permissionFunction = this.server.getEventManager().fire(event).join().createFunction(this);
     if (this.permissionFunction == null) {
-      logger.error(
+      LOGGER.error(
           "A plugin permission provider {} provided an invalid permission function"
               + " for the console. This is a bug in the plugin, not in Velocity. Falling"
               + " back to the default permission function.",
@@ -146,7 +146,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
               list.add(new Candidate(offer));
             }
           } catch (Exception e) {
-            logger.error("An error occurred while trying to perform tab completion.", e);
+            LOGGER.error("An error occurred while trying to perform tab completion.", e);
           }
         })
     );
@@ -166,10 +166,10 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
         return;
       }
       if (this.server.getConfiguration().isLogCommandExecutions()) {
-        logger.info("CONSOLE -> executed command /{}", command);
+        LOGGER.info("CONSOLE -> executed command /{}", command);
       }
     } catch (Exception e) {
-      logger.error("An error occurred while running this command.", e);
+      LOGGER.error("An error occurred while running this command.", e);
     }
   }
 

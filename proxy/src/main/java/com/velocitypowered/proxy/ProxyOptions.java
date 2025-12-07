@@ -41,7 +41,7 @@ public final class ProxyOptions {
   /**
    * Logger for reporting command-line parsing or help display issues.
    */
-  private static final Logger logger = LogManager.getLogger(ProxyOptions.class);
+  private static final Logger LOGGER = LogManager.getLogger(ProxyOptions.class);
 
   /**
    * Whether the user requested help using {@code -h} or {@code --help}.
@@ -110,7 +110,7 @@ public final class ProxyOptions {
       try {
         parser.printHelpOn(System.out);
       } catch (final IOException e) {
-        logger.error("Could not print help", e);
+        LOGGER.error("Could not print help", e);
       }
     }
   }

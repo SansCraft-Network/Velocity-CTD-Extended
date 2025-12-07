@@ -64,7 +64,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   /**
    * Logger for internal debug and error messages.
    */
-  private static final Logger logger = LogManager.getLogger(ClientConfigSessionHandler.class);
+  private static final Logger LOGGER = LogManager.getLogger(ClientConfigSessionHandler.class);
 
   /**
    * The Velocity server instance.
@@ -230,7 +230,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
             serverConn.getPlayer().getConnection().setAutoReading(true);
           }, player.getConnection().eventLoop()).exceptionally((ex) -> {
-            logger.error("Exception while handling plugin message packet for {}", player, ex);
+            LOGGER.error("Exception while handling plugin message packet for {}", player, ex);
             return null;
           });
     }
@@ -273,7 +273,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
         targetServer.ensureConnected().write(packet);
       }
     }).exceptionally(ex -> {
-      logger.error("Error forwarding known packs response to backend:", ex);
+      LOGGER.error("Error forwarding known packs response to backend:", ex);
       return null;
     });
 
@@ -459,7 +459,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
           player.getConnection().getChannel().pipeline().get(MinecraftEncoder.class).setState(StateRegistry.PLAY);
           server.getEventManager().fireAndForget(new PlayerFinishedConfigurationEvent(player, serverConn));
         }, player.getConnection().eventLoop()).exceptionally(ex -> {
-          logger.error("Error finishing configuration state:", ex);
+          LOGGER.error("Error finishing configuration state:", ex);
           return null;
         });
 

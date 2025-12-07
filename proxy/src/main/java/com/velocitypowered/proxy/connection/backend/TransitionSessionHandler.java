@@ -51,7 +51,7 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
   /**
    * Logger instance for reporting session handler events and errors.
    */
-  private static final Logger logger = LogManager.getLogger(TransitionSessionHandler.class);
+  private static final Logger LOGGER = LogManager.getLogger(TransitionSessionHandler.class);
 
   /**
    * The main Velocity server instance.
@@ -206,7 +206,7 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
           server.getEventManager().fireAndForget(new ServerPostConnectEvent(player, previousServer));
           resultFuture.complete(ConnectionRequestResults.successful(serverConn.getServer()));
         }, smc.eventLoop()).exceptionally(exc -> {
-          logger.error("Unable to switch to new server {} for {}",
+          LOGGER.error("Unable to switch to new server {} for {}",
               serverConn.getServerInfo().getName(),
               player.getUsername(), exc);
           player.disconnect(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);

@@ -52,7 +52,7 @@ public class VelocityTabList implements InternalTabList {
   /**
    * Logger used to report unusual tab list activity or inconsistencies.
    */
-  private static final Logger logger = LogManager.getLogger(VelocityConsole.class);
+  private static final Logger LOGGER = LogManager.getLogger(VelocityConsole.class);
 
   /**
    * The connected player that owns this tab list.
@@ -377,10 +377,10 @@ public class VelocityTabList implements InternalTabList {
             )
         );
       } else {
-        logger.debug("Received an add player packet for an existing entry; this does nothing.");
+        LOGGER.debug("Received an add player packet for an existing entry; this does nothing.");
       }
     } else if (currentEntry == null) {
-      logger.debug(
+      LOGGER.debug(
           "Received a partial player before an ADD_PLAYER action; profile could not be built. {}",
           entry);
       return;

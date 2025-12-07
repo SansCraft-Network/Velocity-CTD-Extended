@@ -62,7 +62,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   private static final Logger LOGGER = LogManager.getLogger(VelocityConsole.class, new ParameterizedMessageFactory());
 
   /**
-   * The Adventure component LOGGER for rich console output.
+   * The Adventure component logger for rich console output.
    */
   private static final ComponentLogger COMPONENT_LOGGER = ComponentLogger.logger(VelocityConsole.class);
 

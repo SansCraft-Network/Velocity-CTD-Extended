@@ -85,7 +85,7 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
    * <p>This method handles the invalid behavior of canceling signed chat messages, which is no longer allowed
    * starting from Minecraft version 1.19.1.</p>
    *
-   * @param logger the LOGGER used to log the error
+   * @param logger the logger used to log the error
    * @param player the player to disconnect due to the illegal action
    */
   public static void invalidCancel(final Logger logger, final ConnectedPlayer player) {

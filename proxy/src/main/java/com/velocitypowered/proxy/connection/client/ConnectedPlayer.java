@@ -1499,7 +1499,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     this.connectedServer = serverConnection;
     this.tryIndex = 0;
 
-    if (serverConnection != null && server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
+    if (serverConnection != null && server.isQueueEnabled() && server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
       server.getQueueManager().removePlayerEntirely(get());
     }
 

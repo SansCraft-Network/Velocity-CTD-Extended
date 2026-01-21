@@ -187,7 +187,6 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     // Index hasn't changed, we've read nothing
     try {
       final int packetId = readRawVarInt21(in);
-      // Index hasn't changed, we've read nothing
       if (index == in.readerIndex()) {
         in.resetReaderIndex();
         return true;

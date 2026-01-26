@@ -64,6 +64,7 @@ public enum TranslatableMapper implements BiConsumer<TranslatableComponent, Cons
       if (fallback == null) {
         fallback = translatableComponent.key();
       }
+
       componentConsumer.accept(Component.text(fallback));
     }
   }

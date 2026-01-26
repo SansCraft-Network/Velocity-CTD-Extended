@@ -243,7 +243,7 @@ public class ComponentHolder {
       }
 
       switch (listType.id()) {
-        case 1 -> {
+        case 1 -> { // BinaryTagTypes.BYTE:
           byte[] bytes = new byte[jsonArray.size()];
           for (int i = 0; i < bytes.length; i++) {
             bytes[i] = jsonArray.get(i).getAsNumber().byteValue();
@@ -251,7 +251,7 @@ public class ComponentHolder {
 
           return ByteArrayBinaryTag.byteArrayBinaryTag(bytes);
         }
-        case 3 -> {
+        case 3 -> { // BinaryTagTypes.INT:
           int[] ints = new int[jsonArray.size()];
           for (int i = 0; i < ints.length; i++) {
             ints[i] = jsonArray.get(i).getAsNumber().intValue();
@@ -259,7 +259,7 @@ public class ComponentHolder {
 
           return IntArrayBinaryTag.intArrayBinaryTag(ints);
         }
-        case 4 -> {
+        case 4 -> { // BinaryTagTypes.LONG:
           long[] longs = new long[jsonArray.size()];
           for (int i = 0; i < longs.length; i++) {
             longs[i] = jsonArray.get(i).getAsNumber().longValue();

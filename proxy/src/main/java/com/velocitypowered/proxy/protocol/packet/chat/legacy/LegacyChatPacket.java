@@ -55,6 +55,11 @@ public class LegacyChatPacket implements MinecraftPacket {
   public static final int MAX_SERVERBOUND_MESSAGE_LENGTH = 256;
 
   /**
+   * Maximum allowed length for a message sent from client to server (post-1.11).
+   */
+  private static final int MAX_SERVERBOUND_MESSAGE_LENGTH_LEGACY = getMaxServerboundMessageLength();
+
+  /**
    * UUID placeholder used when no sender is provided.
    */
   public static final UUID EMPTY_SENDER = new UUID(0, 0);
@@ -73,6 +78,19 @@ public class LegacyChatPacket implements MinecraftPacket {
    * The UUID of the original sender (1.16+ clientbound).
    */
   private @Nullable UUID sender;
+
+  private static int getMaxServerboundMessageLength() {
+    final String value = System.getProperty("velocity.legacyChatMaxServerboundLength");
+    if (value != null) {
+      try {
+        return Integer.parseInt(value.trim());
+      } catch (final NumberFormatException ignored) {
+        // This instance is effectively voided
+      }
+    }
+
+    return 100;
+  }
 
   /**
    * Constructs an empty {@code LegacyChatPacket} for decoding.
@@ -181,7 +199,8 @@ public class LegacyChatPacket implements MinecraftPacket {
   @Override
   public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
     message = ProtocolUtils.readString(buf, direction == ProtocolUtils.Direction.CLIENTBOUND
-        ? 262144 : version.noLessThan(ProtocolVersion.MINECRAFT_1_11) ? 256 : 100);
+        ? 262144 : version.noLessThan(ProtocolVersion.MINECRAFT_1_11) ? MAX_SERVERBOUND_MESSAGE_LENGTH
+          : MAX_SERVERBOUND_MESSAGE_LENGTH_LEGACY);
     if (direction == ProtocolUtils.Direction.CLIENTBOUND && version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
       type = buf.readByte();
       if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {

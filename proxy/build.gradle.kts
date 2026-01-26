@@ -25,10 +25,11 @@ tasks {
     }
 
     shadowJar {
-        transform(Log4j2PluginsCacheFileTransformer::class.java)
         filesMatching("META-INF/org/apache/logging/log4j/core/config/plugins/**") {
             duplicatesStrategy = DuplicatesStrategy.INCLUDE
         }
+
+        transform(Log4j2PluginsCacheFileTransformer::class.java)
 
         // Exclude all the collection types we don't intend to use
         exclude("it/unimi/dsi/fastutil/booleans/**")
@@ -125,7 +126,7 @@ fill {
     project("velocity")
 
     build {
-        channel = BuildChannel.STABLE
+        channel = BuildChannel.BETA
         versionFamily("3.0.0")
         version(projectVersion)
 

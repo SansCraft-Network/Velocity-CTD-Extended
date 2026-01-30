@@ -187,10 +187,9 @@ public final class GameProfile implements PlayerHeadObjectContents.SkinSource {
         ImmutableList.of());
   }
 
-  @SuppressWarnings("UnstableApiUsage") // permitted implementation
+  @SuppressWarnings("UnstableApiUsage") // Permitted unstable implementation
   @Override
-  public void applySkinToPlayerHeadContents(
-      final PlayerHeadObjectContents.@NotNull Builder builder) {
+  public void applySkinToPlayerHeadContents(final PlayerHeadObjectContents.@NotNull Builder builder) {
     if (this.properties.isEmpty()) {
       builder.id(this.id);
       return;

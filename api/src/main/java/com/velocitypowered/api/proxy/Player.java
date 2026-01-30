@@ -339,10 +339,9 @@ public interface Player extends
     return HoverEvent.showEntity(op.apply(HoverEvent.ShowEntity.showEntity(this, getUniqueId(), Component.text(getUsername()))));
   }
 
-  @SuppressWarnings("UnstableApiUsage") // permitted implementation
+  @SuppressWarnings("UnstableApiUsage") // Permitted unstable implementation
   @Override
-  default void applySkinToPlayerHeadContents(
-      final PlayerHeadObjectContents.@NotNull Builder builder) {
+  default void applySkinToPlayerHeadContents(final PlayerHeadObjectContents.@NotNull Builder builder) {
     builder.skin(this.getGameProfile());
     if (this.hasSentPlayerSettings()) {
       builder.hat(this.getPlayerSettings().getSkinParts().hasHat());

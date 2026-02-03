@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - libdeflate
+      - xcd-merge
 
 jobs:
   build:
@@ -26,6 +27,7 @@ jobs:
       run: ./gradlew build
 
     - name: Generate Release Tag
+      if: github.ref == 'refs/heads/libdeflate'
       id: release_tag
       run: |
         # Fetch all tags from remote
@@ -55,6 +57,7 @@ jobs:
         echo "New build number: $NEW_BUILD"
 
     - name: Upload Velocity
+      if: github.ref == 'refs/heads/libdeflate'
       uses: marvinpinto/action-automatic-releases@master
       with:
         title: "Velocity-CTD"

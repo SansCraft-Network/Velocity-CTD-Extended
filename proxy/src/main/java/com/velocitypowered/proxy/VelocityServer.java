@@ -328,7 +328,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Coordinates server queues and handles queue assignment logic.
    */
-  private com.velocitypowered.proxy.queue.manager.QueueManager<?> queueManager;
+  private QueueManager<?> queueManager;
 
   /**
    * Provides access to the Redis integration used for multi-proxy features such

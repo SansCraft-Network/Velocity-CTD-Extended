@@ -640,6 +640,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     return forwardingSecret.clone();
   }
 
+  @SuppressWarnings("removal")
   @Override
   public Map<String, String> getServers() {
     Map<String, String> serverAddresses = new HashMap<>();

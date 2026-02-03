@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Velocity Contributors
+ * Copyright (C) 2018-2026 Velocity Contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -78,8 +78,8 @@ public abstract class RateLimitedCommandHandler<T extends MinecraftPacket> imple
   public boolean handlePlayerCommand(final MinecraftPacket packet) {
     if (packetClass().isInstance(packet)) {
       if (!velocityServer.getCommandRateLimiter().attempt(player.getUniqueId())) {
-        if (velocityServer.getConfiguration().isKickOnCommandRateLimit() && failedAttempts++
-                >= velocityServer.getConfiguration().getKickAfterRateLimitedCommands()) {
+        if (velocityServer.getConfiguration().isKickOnCommandRateLimit()
+              && failedAttempts++ >= velocityServer.getConfiguration().getKickAfterRateLimitedCommands()) {
           player.disconnect(Component.translatable("velocity.kick.command-rate-limit"));
         }
 

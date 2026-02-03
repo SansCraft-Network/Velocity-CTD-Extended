@@ -9,7 +9,7 @@ lettuce = "7.2.1.RELEASE"
 [plugins]
 fill = "io.papermc.fill.gradle:1.0.10"
 shadow = "com.gradleup.shadow:9.3.1"
-spotless = "com.diffplug.spotless:8.2.0"
+spotless = "com.diffplug.spotless:8.2.1"
 
 [libraries]
 adventure-bom = "net.kyori:adventure-bom:4.26.1"
@@ -37,7 +37,7 @@ flare-fastutil = { module = "space.vectrix.flare:flare-fastutil", version.ref = 
 jline = "org.jline:jline-terminal-jansi:3.30.6"
 lettuce-core = { module = "io.lettuce:lettuce-core", version.ref = "lettuce" }
 jopt = "net.sf.jopt-simple:jopt-simple:5.0.4"
-junit = "org.junit.jupiter:junit-jupiter:5.14.2"
+junit = "org.junit.jupiter:junit-jupiter:6.0.2"
 jspecify = "org.jspecify:jspecify:1.0.0"
 kyori-ansi = "net.kyori:ansi:1.1.1"
 guava = "com.google.guava:guava:33.5.0-jre"

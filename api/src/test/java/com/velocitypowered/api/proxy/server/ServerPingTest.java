@@ -23,7 +23,7 @@ class ServerPingTest {
   void asBuilderConsistency() {
     ServerPing ping = new ServerPing(new Version(404, "1.13.2"),
         new Players(1, 1, ImmutableList.of(new SamplePlayer(Component.text("tuxed"), UUID.randomUUID()))),
-        Component.text("test"), null);
+        Component.text("test"), null, false);
     assertEquals(ping, ping.asBuilder().build());
   }
 }

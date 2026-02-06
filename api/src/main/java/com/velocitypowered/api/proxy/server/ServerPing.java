@@ -53,7 +53,7 @@ public final class ServerPing {
    */
   private final @Nullable ModInfo modinfo;
 
-  private final boolean preventsChatReports = false;
+  private final boolean preventsChatReports;
   
   /**
    * Constructs an initial ServerPing instance.
@@ -76,10 +76,11 @@ public final class ServerPing {
    * @param description the MOTD for the server
    * @param favicon the server's favicon, or {@code null} if not set
    * @param modinfo the mod info for the server, or {@code null} if not present
+   * @param preventsChatReports the mark of chat reports for the server
    */
   public ServerPing(final Version version, final @Nullable Players players,
                     final Component description, final @Nullable Favicon favicon,
-                    final @Nullable ModInfo modinfo, final bool preventsChatReports) {
+                    final @Nullable ModInfo modinfo, final boolean preventsChatReports) {
     this.version = Preconditions.checkNotNull(version, "version");
     this.players = players;
     this.description = Preconditions.checkNotNull(description, "description");
@@ -440,7 +441,7 @@ public final class ServerPing {
       return this;
     }
 
-    public boolean preventsChatReports(boolean bool) {
+    public Builder preventsChatReports(boolean bool) {
       this.preventsChatReports = bool;
       return this;
     }

@@ -28,7 +28,7 @@ online-mode = true
 enforce-chat-signing = true
 
 # Should tell client that proxy doesnt report chat messages? (useful for NoChatReports mod).
-prevents-chat-reports = true
+prevents-chat-reports = false
 
 # If false, disables processing of header and footer translations for better performance.
 translate-header-footer = true

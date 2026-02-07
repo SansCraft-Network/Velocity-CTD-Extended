@@ -4,7 +4,11 @@ configurate4 = "4.2.0"
 flare = "2.0.1"
 log4j = "2.25.3"
 netty = "4.2.9.Final"
-lettuce = "7.2.1.RELEASE"
+
+# temporarily on snapsho untilt 7.4.0+ is released
+# see https://github.com/redis/lettuce/issues/3584
+# see: https://github.com/redis/lettuce/pull/3585
+lettuce = "7.3.0-SNAPSHOT"
 
 [plugins]
 fill = "io.papermc.fill.gradle:1.0.10"

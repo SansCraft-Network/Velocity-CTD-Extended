@@ -39,9 +39,9 @@ public class ProxyAliasCommand implements SimpleCommand {
   private final List<String> commands;
 
   public ProxyAliasCommand(ProxyServer server, String alias, List<String> commands) {
-      this.server = server;
-      this.alias = alias;
-      this.commands = commands;
+    this.server = server;
+    this.alias = alias;
+    this.commands = commands;
   }
 
   @Override

@@ -29,12 +29,20 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 /**
  * A command that executes other commands as aliases.
  * This allows for creating simple command aliases that execute more complex commands.
- *
- * @param server   the proxy server instance
- * @param alias    the alias name for this command
- * @param commands the list of commands to execute when this alias is invoked
  */
-public record ProxyAliasCommand(ProxyServer server, String alias, List<String> commands) implements SimpleCommand {
+public class ProxyAliasCommand implements SimpleCommand {
+
+  private final ProxyServer server;
+
+  private final String alias;
+
+  private final List<String> commands;
+
+  public ProxyAliasCommand(ProxyServer server, String alias, List<String> commands) {
+      this.server = server;
+      this.alias = alias;
+      this.commands = commands;
+  }
 
   @Override
   public void execute(final @NonNull Invocation invocation) {
@@ -64,22 +72,10 @@ public record ProxyAliasCommand(ProxyServer server, String alias, List<String> c
     return true;
   }
 
-  /**
-   * Gets the alias name for this command.
-   *
-   * @return the alias name
-   */
-  @Override
   public String alias() {
     return alias;
   }
 
-  /**
-   * Gets the list of commands that this alias executes.
-   *
-   * @return the list of commands
-   */
-  @Override
   public List<String> commands() {
     return commands;
   }

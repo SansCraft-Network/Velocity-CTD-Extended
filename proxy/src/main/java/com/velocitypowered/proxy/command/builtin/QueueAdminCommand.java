@@ -55,7 +55,13 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity-CTD's {@code /queueadmin} command.
  */
-public record QueueAdminCommand(VelocityServer server) {
+public class QueueAdminCommand {
+
+  private final VelocityServer server;
+
+  public QueueAdminCommand(VelocityServer server) {
+    this.server = server;
+  }
 
   /**
    * Registers or unregisters the command based on the configuration value.

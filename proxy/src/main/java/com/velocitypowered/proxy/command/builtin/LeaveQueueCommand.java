@@ -37,7 +37,13 @@ import net.kyori.adventure.text.Component;
 /**
  * Implements Velocity-CTD's {@code /leavequeue} command.
  */
-public record LeaveQueueCommand(VelocityServer server) {
+public class LeaveQueueCommand {
+
+  private final VelocityServer server;
+
+  public LeaveQueueCommand(VelocityServer server) {
+    this.server = server;
+  }
 
   /**
    * Registers or unregisters the command based on the configuration value.

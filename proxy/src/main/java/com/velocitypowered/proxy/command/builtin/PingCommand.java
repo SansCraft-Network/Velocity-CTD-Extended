@@ -35,44 +35,45 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity-CTD's {@code /ping} command.
  */
-public class PingCommand {
+public class PingCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public PingCommand(final VelocityServer server) {
+  public PingCommand(VelocityServer server) {
     this.server = server;
   }
 
-  /**
-   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
-   *
-   * @return the command instance or {@code null} if disabled
-   */
-  public BrigadierCommand register() {
-    LiteralArgumentBuilder<CommandSource> node = BrigadierCommand.literalArgumentBuilder("ping")
-        .requires(source -> source.getPermissionValue("velocity.command.ping") == Tristate.TRUE)
-        .then(
-            BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-                .requires(source -> source.getPermissionValue("velocity.command.ping.others") == Tristate.TRUE)
-                .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
-                .executes(context -> {
-                  String player = context.getArgument("player", String.class);
-                  return this.getPing(context, player);
-                })
-        )
-        .executes(context -> {
-          if (context.getSource() instanceof Player player) {
-            return this.getPing(context, player.getUsername());
-          } else {
-            context.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);
-            return 0;
-          }
-        });
+  @Override
+  public String label() {
+    return "ping";
+  }
+
+  @Override
+  public BrigadierCommand build() {
+    LiteralArgumentBuilder<CommandSource> node = BrigadierCommand.literalArgumentBuilder(label())
+            .requires(source -> source.getPermissionValue("velocity.command.ping") == Tristate.TRUE)
+            .then(
+                    BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
+                            .requires(source -> source.getPermissionValue("velocity.command.ping.others") == Tristate.TRUE)
+                            .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
+                            .executes(context -> {
+                              String player = context.getArgument("player", String.class);
+                              return this.getPing(context, player);
+                            })
+            )
+            .executes(context -> {
+              if (context.getSource() instanceof Player player) {
+                return this.getPing(context, player.getUsername());
+              } else {
+                context.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);
+                return 0;
+              }
+            });
 
     return new BrigadierCommand(node);
   }
 
-  private int getPing(final CommandContext<CommandSource> context, final String username) {
+  private int getPing(CommandContext<CommandSource> context, String username) {
     boolean matchesSender = false;
     Player player = this.server.getPlayer(username).orElse(null);
 
@@ -87,20 +88,20 @@ public class PingCommand {
 
       if (ping == -1L) {
         context.getSource().sendMessage(
-            Component.translatable("velocity.command.ping.unknown", NamedTextColor.RED)
-                .arguments(Argument.string("player", player.getUsername())));
+                Component.translatable("velocity.command.ping.unknown", NamedTextColor.RED)
+                        .arguments(Argument.string("player", player.getUsername())));
         return 0;
       }
 
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.ping.self", NamedTextColor.GREEN)
-              .arguments(Argument.numeric("ping", ping))
+              Component.translatable("velocity.command.ping.self", NamedTextColor.GREEN)
+                      .arguments(Argument.numeric("ping", ping))
       );
     } else {
       if (server.isRedisEnabled()) {
         if (!this.server.getRedis().getPlayerService().isPlayerOnline(username)) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-              .arguments(Argument.string("player", username)));
+                  .arguments(Argument.string("player", username)));
           return -1;
         }
 
@@ -109,14 +110,14 @@ public class PingCommand {
       } else {
         if (player == null) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-              .arguments(Argument.string("player", username)));
+                  .arguments(Argument.string("player", username)));
           return -1;
         }
 
         Component component = Component.translatable("velocity.command.ping.other", NamedTextColor.GREEN)
-            .arguments(
-                Argument.string("player", player.getUsername()),
-                Argument.numeric("ping", player.getPing()));
+                .arguments(
+                        Argument.string("player", player.getUsername()),
+                        Argument.numeric("ping", player.getPing()));
 
         context.getSource().sendMessage(component);
       }

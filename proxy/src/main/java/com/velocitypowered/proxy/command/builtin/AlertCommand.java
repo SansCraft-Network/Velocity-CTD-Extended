@@ -35,43 +35,44 @@ import net.kyori.adventure.text.format.NamedTextColor;
 /**
  * Implements Velocity-CTD's {@code /alert} command.
  */
-public class AlertCommand {
+public class AlertCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public AlertCommand(final VelocityServer server) {
+  public AlertCommand(VelocityServer server) {
     this.server = server;
   }
 
-  /**
-   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
-   *
-   * @return the command instance or {@code null} if disabled
-   */
-  public BrigadierCommand register() {
-    final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
-        .literalArgumentBuilder("alert")
-        .requires(source ->
-            source.getPermissionValue("velocity.command.alert") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "alert"))
-        .then(BrigadierCommand
-            .requiredArgumentBuilder("message", StringArgumentType.greedyString())
-            .executes(this::alert));
+  @Override
+  public String label() {
+    return "alert";
+  }
+
+  @Override
+  public BrigadierCommand build() {
+    LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
+            .literalArgumentBuilder(label())
+            .requires(source ->
+                    source.getPermissionValue("velocity.command.alert") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+            .then(BrigadierCommand
+                    .requiredArgumentBuilder("message", StringArgumentType.greedyString())
+                    .executes(this::alert));
 
     return new BrigadierCommand(rootNode);
   }
 
-  private int alert(final CommandContext<CommandSource> context) {
+  private int alert(CommandContext<CommandSource> context) {
     String message = StringArgumentType.getString(context, "message");
     if (message.isEmpty()) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.alert.no-message", NamedTextColor.YELLOW)
+              Component.translatable("velocity.command.alert.no-message", NamedTextColor.YELLOW)
       );
 
       return 0;
     }
 
-    final TranslatableComponent alertComponent = Component.translatable("velocity.command.alert.message",
+    TranslatableComponent alertComponent = Component.translatable("velocity.command.alert.message",
             NamedTextColor.WHITE, ComponentUtils.colorify(message));
 
     if (server.isRedisEnabled()) {

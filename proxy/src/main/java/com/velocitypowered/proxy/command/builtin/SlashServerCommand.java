@@ -26,51 +26,47 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 
 /**
  * Implements Velocity-CTD's {@code /<server_name>} aliases.
  */
-public class SlashServerCommand {
+public class SlashServerCommand implements BuiltinCommand {
+
+  public static Function<VelocityServer, SlashServerCommand> factory(String serverName, String commandLabel) {
+    return proxyServer -> new SlashServerCommand(proxyServer, serverName, commandLabel);
+  }
 
   private final VelocityServer proxyServer;
-
   private final VelocityRegisteredServer server;
+  private final String commandLabel;
 
-  public SlashServerCommand(final VelocityServer proxyServer, final String serverName) {
+  public SlashServerCommand(VelocityServer proxyServer, String serverName, String commandLabel) {
     this.proxyServer = proxyServer;
     this.server = (VelocityRegisteredServer) this.proxyServer.getServer(serverName).orElseThrow();
+    this.commandLabel = commandLabel;
+
   }
 
-  /**
-   * Registers or unregisters the command based on the configuration value.
-   *
-   * @param name the literal name of the command (typically the server name)
-   */
-  public void register(final String name) {
-    final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
-        .literalArgumentBuilder(name)
-        .requires(src -> VelocityCommands.checkServerPermissions(server, src))
-        .executes(this::send);
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    proxyServer.getCommandManager().register(
-        proxyServer.getCommandManager().metaBuilder(command)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+  @Override
+  public String label() {
+    return commandLabel;
   }
 
-  /**
-   * Connects the player to the target server when the command is executed.
-   *
-   * @param ctx the command context containing command details
-   * @return a success code indicating the result of the command
-   */
-  private int send(final CommandContext<CommandSource> ctx) {
-    final Player player = (Player) ctx.getSource();
+  @Override
+  public BrigadierCommand build() {
+    LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
+            .literalArgumentBuilder(label())
+            .requires(src -> VelocityCommands.checkServerPermissions(server, src))
+            .executes(this::send);
+
+    return new BrigadierCommand(rootNode);
+  }
+
+  private int send(CommandContext<CommandSource> ctx) {
+    Player player = (Player) ctx.getSource();
 
     if (this.proxyServer.getConfiguration().getQueue().getNoQueueServers().contains(this.server.getServerInfo().getName())) {
       player.createConnectionRequest(this.server).connectWithIndication();

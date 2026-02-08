@@ -33,46 +33,49 @@ import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 /**
  * Implements Velocity's {@code /shutdown} command.
  */
-public final class ShutdownCommand {
+public class ShutdownCommand implements BuiltinCommand {
 
-  private ShutdownCommand() {
+  private final VelocityServer server;
+
+  public ShutdownCommand(VelocityServer server) {
+    this.server = server;
   }
 
-  /**
-   * Creates a Velocity Shutdown Command.
-   *
-   * @param server the proxy instance
-   * @return the Shutdown Command
-   */
-  public static BrigadierCommand command(final VelocityServer server) {
-    return new BrigadierCommand(LiteralArgumentBuilder.<CommandSource>literal("shutdown")
-        .requires(source -> source instanceof ConsoleCommandSource)
-        .executes(context -> {
-          server.shutdown(true);
-          return Command.SINGLE_SUCCESS;
-        })
-        .then(RequiredArgumentBuilder.<CommandSource, String>argument("reason",
-                StringArgumentType.greedyString())
+  @Override
+  public String label() {
+    return "shutdown";
+  }
+
+  @Override
+  public BrigadierCommand build() {
+    return new BrigadierCommand(LiteralArgumentBuilder.<CommandSource>literal(label())
+            .requires(source -> source instanceof ConsoleCommandSource)
             .executes(context -> {
-              String reason = context.getArgument("reason", String.class);
-              Component reasonComponent = null;
-
-              if (reason.startsWith("{") || reason.startsWith("[") || reason.startsWith("\"")) {
-                try {
-                  reasonComponent = GsonComponentSerializer.gson()
-                      .deserializeOrNull(reason);
-                } catch (JsonSyntaxException ignored) {
-                    // This is always ignored; thus, can be labeled as such.
-                }
-              }
-
-              if (reasonComponent == null) {
-                reasonComponent = MiniMessage.miniMessage().deserialize(reason);
-              }
-
-              server.shutdown(true, reasonComponent);
+              server.shutdown(true);
               return Command.SINGLE_SUCCESS;
             })
-        ).build());
+            .then(RequiredArgumentBuilder.<CommandSource, String>argument("reason",
+                            StringArgumentType.greedyString())
+                    .executes(context -> {
+                      String reason = context.getArgument("reason", String.class);
+                      Component reasonComponent = null;
+
+                      if (reason.startsWith("{") || reason.startsWith("[") || reason.startsWith("\"")) {
+                        try {
+                          reasonComponent = GsonComponentSerializer.gson()
+                                  .deserializeOrNull(reason);
+                        } catch (JsonSyntaxException ignored) {
+                          // This is always ignored; thus, can be labeled as such.
+                        }
+                      }
+
+                      if (reasonComponent == null) {
+                        reasonComponent = MiniMessage.miniMessage().deserialize(reason);
+                      }
+
+                      server.shutdown(true, reasonComponent);
+                      return Command.SINGLE_SUCCESS;
+                    })
+            ).build());
   }
 }

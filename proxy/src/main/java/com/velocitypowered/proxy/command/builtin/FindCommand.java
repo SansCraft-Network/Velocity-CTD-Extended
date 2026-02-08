@@ -40,44 +40,45 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity-CTD's {@code /find} command.
  */
-public class FindCommand {
+public class FindCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public FindCommand(final VelocityServer server) {
+  public FindCommand(VelocityServer server) {
     this.server = server;
   }
 
-  /**
-   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
-   *
-   * @return the command instance or {@code null} if disabled
-   */
-  public BrigadierCommand register() {
-    final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
-        .literalArgumentBuilder("find")
-        .requires(source ->
-          source.getPermissionValue("velocity.command.find") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "find"));
-    final RequiredArgumentBuilder<CommandSource, String> playerNode = BrigadierCommand
-        .requiredArgumentBuilder("player", StringArgumentType.word())
-        .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
-        .executes(this::find);
+  @Override
+  public String label() {
+    return "find";
+  }
+
+  @Override
+  public BrigadierCommand build() {
+    LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
+            .literalArgumentBuilder(label())
+            .requires(source ->
+                    source.getPermissionValue("velocity.command.find") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, label()));
+    RequiredArgumentBuilder<CommandSource, String> playerNode = BrigadierCommand
+            .requiredArgumentBuilder("player", StringArgumentType.word())
+            .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
+            .executes(this::find);
 
     rootNode.then(playerNode);
     return new BrigadierCommand(rootNode);
   }
 
-  private int find(final CommandContext<CommandSource> context) {
+  private int find(CommandContext<CommandSource> context) {
     if (server.isRedisEnabled()) {
       return findRedis(context);
     }
 
-    final String player = context.getArgument("player", String.class);
-    final Optional<Player> maybePlayer = server.getPlayer(player);
+    String player = context.getArgument("player", String.class);
+    Optional<Player> maybePlayer = server.getPlayer(player);
     if (maybePlayer.isEmpty()) {
       context.getSource().sendMessage(
-          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
+              CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
@@ -88,7 +89,7 @@ public class FindCommand {
     ServerConnection connection = p.getCurrentServer().orElse(null);
     if (connection == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
       );
 
       return 0;
@@ -97,37 +98,37 @@ public class FindCommand {
     RegisteredServer server = connection.getServer();
     if (server == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
       );
 
       return 0;
     }
 
     context.getSource().sendMessage(
-        Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
-            .arguments(
-                Argument.string("player", p.getUsername()),
-                Argument.string("server", server.getServerInfo().getName())));
+            Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
+                    .arguments(
+                            Argument.string("player", p.getUsername()),
+                            Argument.string("server", server.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
   }
 
-  private int findRedis(final CommandContext<CommandSource> context) {
-    final VelocityRedis redis = server.getRedis();
-    final String player = context.getArgument("player", String.class);
+  private int findRedis(CommandContext<CommandSource> context) {
+    VelocityRedis redis = server.getRedis();
+    String player = context.getArgument("player", String.class);
     if (!redis.getPlayerService().isPlayerOnline(player)) {
       context.getSource().sendMessage(
-          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
+              CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
     }
 
-    final PlayerEntry playerEntry = redis.getPlayerService().getPlayerEntry(player);
+    PlayerEntry playerEntry = redis.getPlayerService().getPlayerEntry(player);
 
     if (playerEntry == null || playerEntry.getServerName() == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
       );
 
       return 0;
@@ -136,17 +137,17 @@ public class FindCommand {
     RegisteredServer server = this.server.getServer(playerEntry.getServerName()).orElse(null);
     if (server == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
       );
 
       return 0;
     }
 
     context.getSource().sendMessage(
-        Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
-            .arguments(
-                Argument.string("player", playerEntry.getUsername()),
-                Argument.string("server", server.getServerInfo().getName() + " (" + playerEntry.getProxyId() + ")")));
+            Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
+                    .arguments(
+                            Argument.string("player", playerEntry.getUsername()),
+                            Argument.string("server", server.getServerInfo().getName() + " (" + playerEntry.getProxyId() + ")")));
 
     return Command.SINGLE_SUCCESS;
   }

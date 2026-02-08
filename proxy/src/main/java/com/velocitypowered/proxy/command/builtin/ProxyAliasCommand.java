@@ -45,30 +45,30 @@ public class ProxyAliasCommand implements SimpleCommand {
   }
 
   @Override
-  public void execute(final @NonNull Invocation invocation) {
+  public void execute(@NonNull Invocation invocation) {
     CommandSource source = invocation.source();
     String[] args = invocation.arguments();
     for (String command : commands) {
       String finalCommand = command.replace("{args}", String.join(" ", args));
       server.getCommandManager().executeAsync(source, finalCommand)
-            .whenComplete((result, throwable) -> {
-              if (throwable != null) {
-                source.sendMessage(Component.translatable("velocity.error.aliases")
-                    .arguments(
-                        Argument.string("alias", alias),
-                        Argument.string("command", command)));
-              }
-            });
+              .whenComplete((result, throwable) -> {
+                if (throwable != null) {
+                  source.sendMessage(Component.translatable("velocity.error.aliases")
+                          .arguments(
+                                  Argument.string("alias", alias),
+                                  Argument.string("command", command)));
+                }
+              });
     }
   }
 
   @Override
-  public CompletableFuture<List<String>> suggestAsync(final @NonNull Invocation invocation) {
+  public CompletableFuture<List<String>> suggestAsync(@NonNull Invocation invocation) {
     return CompletableFuture.completedFuture(List.of());
   }
 
   @Override
-  public boolean hasPermission(final @NonNull Invocation invocation) {
+  public boolean hasPermission(@NonNull Invocation invocation) {
     return true;
   }
 

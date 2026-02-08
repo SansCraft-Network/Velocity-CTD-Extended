@@ -35,12 +35,17 @@ import net.kyori.adventure.translation.GlobalTranslator;
 /**
  * Implements Velocity-CTD's {@code /hub} command.
  */
-public class HubCommand {
+public class HubCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public HubCommand(final VelocityServer server) {
+  public HubCommand(VelocityServer server) {
     this.server = server;
+  }
+
+  @Override
+  public String label() {
+    return "hub";
   }
 
   /**
@@ -48,15 +53,15 @@ public class HubCommand {
    *
    * @return the {@link BrigadierCommand} instance or {@code null} if disabled
    */
-  public BrigadierCommand register() {
+  public BrigadierCommand build() {
     return new BrigadierCommand(BrigadierCommand
-        .literalArgumentBuilder("hub")
-        .requires(source ->
-          source.getPermissionValue("velocity.command.hub") == Tristate.TRUE)
-        .executes(this::lobby).build());
+            .literalArgumentBuilder(label())
+            .requires(source ->
+                    source.getPermissionValue("velocity.command.hub") == Tristate.TRUE)
+            .executes(this::lobby).build());
   }
 
-  private int lobby(final CommandContext<CommandSource> context) {
+  private int lobby(CommandContext<CommandSource> context) {
     if (!(context.getSource() instanceof Player player)) {
       context.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);
       return 0;
@@ -67,14 +72,14 @@ public class HubCommand {
       return 0;
     }
 
-    final RegisteredServer registeredServer = connection.getServer();
+    RegisteredServer registeredServer = connection.getServer();
     if (registeredServer == null) {
       return 0;
     }
 
     if (server.getConfiguration().getAttemptConnectionOrder().contains(registeredServer.getServerInfo().getName())) {
       player.sendMessage(Component.translatable("velocity.command.hub.fallback-already-connected")
-          .arguments(Component.text(registeredServer.getServerInfo().getName())));
+              .arguments(Component.text(registeredServer.getServerInfo().getName())));
       return 0;
     }
 
@@ -92,7 +97,7 @@ public class HubCommand {
 
       if (translationExists(player)) {
         player.sendMessage(Component.translatable("velocity.command.hub.fallback-connecting")
-            .arguments(Component.text(serverToTry.getServerInfo().getName())));
+                .arguments(Component.text(serverToTry.getServerInfo().getName())));
       }
 
       if (this.server.getConfiguration().getQueue().getNoQueueServers().contains(serverToTry.getServerInfo().getName())
@@ -110,7 +115,7 @@ public class HubCommand {
     return 0;
   }
 
-  private static boolean translationExists(final Player player) {
+  private static boolean translationExists(Player player) {
     Locale locale = player.getEffectiveLocale();
 
     if (locale == null) {

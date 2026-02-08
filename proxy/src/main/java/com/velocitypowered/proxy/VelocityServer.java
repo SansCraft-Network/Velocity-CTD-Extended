@@ -22,7 +22,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -47,6 +46,7 @@ import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
 import com.velocitypowered.proxy.command.builtin.AlertCommand;
 import com.velocitypowered.proxy.command.builtin.AlertRawCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
 import com.velocitypowered.proxy.command.builtin.CallbackCommand;
 import com.velocitypowered.proxy.command.builtin.FindCommand;
 import com.velocitypowered.proxy.command.builtin.GlistCommand;
@@ -106,11 +106,13 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -119,7 +121,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.kyori.adventure.audience.Audience;
@@ -274,6 +276,11 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Maps online players by their IP address for duplicate connection detection.
    */
   private final Map<InetAddress, ConnectedPlayer> connectionsByIp = new ConcurrentHashMap<>();
+
+  /**
+   * Holds a set of all registered BuiltinCommand instances. Used for unregistering these commands later.
+   */
+  private final Set<BuiltinCommand> registeredBuiltinCommands = new HashSet<>();
 
   /**
    * The proxy's console interface, providing command input and logging output.
@@ -501,30 +508,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         || getConfiguration().getQueue().getMasterProxyIds().isEmpty()) && getConfiguration().getQueue().isEnabled()) {
       throw new IllegalArgumentException("'master-proxy-ids' cannot be empty when queues is enabled!");
     }
-
-    // Initialize commands first
-    final BrigadierCommand velocityParentCommand = VelocityCommand.create(this);
-    commandManager.register(
-        commandManager.metaBuilder(velocityParentCommand)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        velocityParentCommand
-    );
-    final BrigadierCommand callbackCommand = CallbackCommand.create();
-    commandManager.register(
-        commandManager.metaBuilder(callbackCommand)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        callbackCommand
-    );
-    final BrigadierCommand shutdownCommand = ShutdownCommand.command(this);
-    commandManager.register(
-        commandManager.metaBuilder(shutdownCommand)
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .aliases("end", "stop")
-            .build(),
-        shutdownCommand
-    );
 
     for (ServerInfo cliServer : options.getServers()) {
       servers.register(cliServer);
@@ -900,31 +883,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void unregisterCommands() {
-    unregisterCommand("server");
-    unregisterCommand("alert");
-    unregisterCommand("alertraw");
-    unregisterCommand("find");
-    unregisterCommand("glist");
-    unregisterCommand("plist");
-    unregisterCommand("ping");
-    unregisterCommand("send");
-    unregisterCommand("hub");
-    unregisterCommand("transfer");
-
-    for (Map.Entry<String, List<String>> entry : configuration.getCommandAliases().entrySet()) {
-      for (String alias : entry.getValue()) {
-        unregisterCommand(alias);
-      }
+    for (BuiltinCommand command : registeredBuiltinCommands) {
+      unregisterCommand(command.label());
     }
+    registeredBuiltinCommands.clear();
 
     for (String alias : configuration.getProxyCommandAliases().keySet()) {
       unregisterCommand(alias);
-    }
-
-    for (Map.Entry<String, List<String>> entry : configuration.getSlashServers().entrySet()) {
-      for (String alias : entry.getValue()) {
-        unregisterCommand(alias);
-      }
     }
   }
 
@@ -936,67 +901,33 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void registerCommands() {
-    registerCommand("alert", configuration.isAlertEnabled(), () -> new AlertCommand(this).register());
-    registerCommand("alertraw", configuration.isAlertRawEnabled(), () -> new AlertRawCommand(this).register());
-    registerCommand("find", configuration.isFindEnabled(), () -> new FindCommand(this).register());
-    registerCommand("transfer", configuration.isTransferEnabled(), () -> new TransferCommand(this).register());
-    registerCommand("glist", configuration.isGlistEnabled(), () -> new GlistCommand(this).register());
-    registerCommand("plist", configuration.isPlistEnabled(), () -> new PlistCommand(this).register());
-    registerCommand("ping", configuration.isPingEnabled(), () -> new PingCommand(this).register());
-    registerCommand("send", configuration.isSendEnabled(), () -> new SendCommand(this).register());
-    registerCommand("hub", configuration.isHubEnabled(), () -> new HubCommand(this).register());
+    registerCommand(VelocityCommand::new);
+    registerCommand(CallbackCommand::new);
+    registerCommand(ShutdownCommand::new);
+    registerCommand(configuration.isAlertEnabled(), AlertCommand::new);
+    registerCommand(configuration.isAlertRawEnabled(), AlertRawCommand::new);
+    registerCommand(configuration.isFindEnabled(), FindCommand::new);
+    registerCommand(configuration.isTransferEnabled(), TransferCommand::new);
+    registerCommand(configuration.isGlistEnabled(), GlistCommand::new);
+    registerCommand(configuration.isPlistEnabled(), PlistCommand::new);
+    registerCommand(configuration.isPingEnabled(), PingCommand::new);
+    registerCommand(configuration.isSendEnabled(), SendCommand::new);
+    registerCommand(configuration.isHubEnabled(), HubCommand::new);
+    registerCommand(configuration.getQueue().isEnabled(), QueueAdminCommand::new);
+    registerCommand(configuration.getQueue().isEnabled(), LeaveQueueCommand::new);
+    registerCommand(configuration.isServerEnabled(), ServerCommand::new);
 
-    if (configuration.getQueue().isEnabled()) {
-      if (!commandManager.hasCommand("queueadmin")) {
-        new QueueAdminCommand(this).register();
-      }
-
-      if (!commandManager.hasCommand("leavequeue")) {
-        new LeaveQueueCommand(this).register();
-      }
-    }
-
-    if (configuration.isServerEnabled() && !commandManager.hasCommand("server")) {
-      new ServerCommand(this).register();
-    }
-
+    // /<server_name> commands
     for (Map.Entry<String, List<String>> entry : configuration.getSlashServers().entrySet()) {
-      for (String alias : entry.getValue()) {
-        new SlashServerCommand(this, entry.getKey()).register(alias);
+      String serverName = entry.getKey();
+      List<String> commandLabels = entry.getValue();
+
+      for (String commandLabel : commandLabels) {
+        registerCommand(SlashServerCommand.factory(serverName, commandLabel));
       }
     }
 
-    for (Map.Entry<String, List<String>> entry : configuration.getCommandAliases().entrySet()) {
-      String baseCommand = entry.getKey();
-
-      if (!commandManager.hasCommand(baseCommand)) {
-        continue;
-      }
-
-      var meta = commandManager.getCommandMeta(baseCommand);
-      if (meta == null) {
-        continue;
-      }
-
-      var node = commandManager.getCommand(baseCommand);
-      if (!(node instanceof LiteralCommandNode<?> literal)) {
-        continue;
-      }
-
-      var command = literal.getCommand();
-      if (!(command instanceof Command commandAlias)) {
-        continue;
-      }
-
-      commandManager.register(
-          commandManager.metaBuilder(baseCommand)
-              .aliases(entry.getValue().toArray(String[]::new))
-              .plugin(VelocityVirtualPlugin.INSTANCE)
-              .build(),
-          commandAlias
-      );
-    }
-
+    // Proxy command aliases
     for (Map.Entry<String, List<String>> entry : configuration.getProxyCommandAliases().entrySet()) {
       String alias = entry.getKey();
       List<String> commands = entry.getValue();
@@ -1016,24 +947,53 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
   }
 
-  private void registerCommand(final @NotNull String label, final boolean condition, final Supplier<BrigadierCommand> supplier) {
-    if (!condition || commandManager.hasCommand(label)) {
+  private void registerCommand(Function<VelocityServer, ? extends BuiltinCommand> commandConstructor) {
+    BuiltinCommand command = commandConstructor.apply(this);
+    if (commandManager.hasCommand(command.label())) {
+      LOGGER.debug("Not registering built-in command /{}, command already exists.", command.label());
       return;
     }
 
-    final Command command = supplier.get();
-    if (command == null) {
+    BrigadierCommand brigadierCommand = command.build();
+    if (brigadierCommand == null) {
+      LOGGER.debug("Not registering built-in command /{}, returned null.", command.label());
       return;
     }
 
-    final List<String> aliases = configuration.getCommandAliases().getOrDefault(label, List.of());
+    if (!brigadierCommand.getNode().getName().equals(command.label())) {
+      throw new IllegalStateException("BuiltinCommand#label and BrigadierCommand node name mismatch.");
+    }
+
+    String[] aliases = findAliases(command);
+
     commandManager.register(
-        commandManager.metaBuilder(label)
-            .aliases(aliases.toArray(String[]::new))
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
+            commandManager.metaBuilder(brigadierCommand)
+                    .aliases(aliases)
+                    .plugin(VelocityVirtualPlugin.INSTANCE)
+                    .build(),
+            brigadierCommand
     );
+
+    registeredBuiltinCommands.add(command);
+
+    LOGGER.debug("Registered built-in command /{}", command.label());
+  }
+
+  private void registerCommand(boolean condition, Function<VelocityServer, ? extends BuiltinCommand> commandConstructor) {
+    if (condition) {
+      registerCommand(commandConstructor);
+    }
+  }
+
+  private String[] findAliases(BuiltinCommand command) {
+    List<String> aliases = new ArrayList<>(command.aliases());
+
+    List<String> configuredAliases = configuration.getCommandAliases().get(command.label());
+    if (configuredAliases != null) {
+      aliases.addAll(configuredAliases);
+    }
+
+    return aliases.toArray(String[]::new);
   }
 
   /**

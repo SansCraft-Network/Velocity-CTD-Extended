@@ -42,7 +42,7 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity-CTD's {@code /plist} command.
  */
-public class PlistCommand {
+public class PlistCommand implements BuiltinCommand {
 
   private static final String SERVER_ARG = "server";
 
@@ -50,81 +50,82 @@ public class PlistCommand {
 
   private final VelocityServer server;
 
-  public PlistCommand(final VelocityServer server) {
+  public PlistCommand(VelocityServer server) {
     this.server = server;
   }
 
-  /**
-   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
-   *
-   * @return the command instance or {@code null} if disabled
-   */
-  public BrigadierCommand register() {
+  @Override
+  public String label() {
+    return "plist";
+  }
+
+  @Override
+  public BrigadierCommand build() {
     if (!server.isRedisEnabled()) {
       return null;
     }
 
-    final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
-        .literalArgumentBuilder("plist")
-        .requires(source ->
-            source.getPermissionValue("velocity.command.plist") == Tristate.TRUE)
-        .executes(this::totalCount);
-    final ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
-        .requiredArgumentBuilder(PROXY_ARG, StringArgumentType.string())
-        .suggests((ctx, builder) -> VelocityCommands.suggestProxy(server, ctx, builder))
-        .executes(this::proxyCount)
-        .then(
-          BrigadierCommand.requiredArgumentBuilder(SERVER_ARG, StringArgumentType.string())
-          .suggests((context, builder) -> {
-            final String argument = context.getArguments().containsKey(SERVER_ARG)
-                ? context.getArgument(SERVER_ARG, String.class)
-                : "";
+    LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
+            .literalArgumentBuilder(label())
+            .requires(source ->
+                    source.getPermissionValue("velocity.command.plist") == Tristate.TRUE)
+            .executes(this::totalCount);
+    ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
+            .requiredArgumentBuilder(PROXY_ARG, StringArgumentType.string())
+            .suggests((ctx, builder) -> VelocityCommands.suggestProxy(server, ctx, builder))
+            .executes(this::proxyCount)
+            .then(
+                    BrigadierCommand.requiredArgumentBuilder(SERVER_ARG, StringArgumentType.string())
+                            .suggests((context, builder) -> {
+                              String argument = context.getArguments().containsKey(SERVER_ARG)
+                                      ? context.getArgument(SERVER_ARG, String.class)
+                                      : "";
 
-            for (RegisteredServer registeredServer : server.getAllServers()) {
-              final String serverName = registeredServer.getServerInfo().getName();
-              if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
-                builder.suggest(serverName);
-              }
-            }
+                              for (RegisteredServer registeredServer : server.getAllServers()) {
+                                String serverName = registeredServer.getServerInfo().getName();
+                                if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
+                                  builder.suggest(serverName);
+                                }
+                              }
 
-            if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
-              builder.suggest("all");
-            }
+                              if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
+                                builder.suggest("all");
+                              }
 
-            return builder.buildFuture();
-          })
-          .executes(this::serverCount)
-          .build()
-        )
-        .build();
+                              return builder.buildFuture();
+                            })
+                            .executes(this::serverCount)
+                            .build()
+            )
+            .build();
 
     rootNode.then(serverNode);
     return new BrigadierCommand(rootNode);
   }
 
-  private int totalCount(final CommandContext<CommandSource> context) {
-    final CommandSource source = context.getSource();
+  private int totalCount(CommandContext<CommandSource> context) {
+    CommandSource source = context.getSource();
     sendTotalProxyCount(source, this.server.getProxyId(), this.server.getPlayerCount());
     source.sendMessage(
-        Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW)
-            .arguments(Argument.string("alias", VelocityCommands.readAlias(context.getNodes()))));
+            Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW)
+                    .arguments(Argument.string("alias", VelocityCommands.readAlias(context.getNodes()))));
     return Command.SINGLE_SUCCESS;
   }
 
-  private Optional<String> validateProxy(final String proxyName, final CommandSource source) {
+  private Optional<String> validateProxy(String proxyName, CommandSource source) {
     return server.getRedis().getProxyService().getAllProxyIds().stream()
-        .filter(proxyId -> proxyId.equalsIgnoreCase(proxyName))
-        .findFirst()
-        .or(() -> {
-          source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist", NamedTextColor.RED)
-              .arguments(Component.text(proxyName)));
-          return Optional.empty();
-        });
+            .filter(proxyId -> proxyId.equalsIgnoreCase(proxyName))
+            .findFirst()
+            .or(() -> {
+              source.sendMessage(Component.translatable("velocity.command.proxy-does-not-exist", NamedTextColor.RED)
+                      .arguments(Component.text(proxyName)));
+              return Optional.empty();
+            });
   }
 
-  private int serverCount(final CommandContext<CommandSource> context) {
-    final String proxyName = getString(context, PROXY_ARG);
-    final String serverName = getString(context, SERVER_ARG);
+  private int serverCount(CommandContext<CommandSource> context) {
+    String proxyName = getString(context, PROXY_ARG);
+    String serverName = getString(context, SERVER_ARG);
 
     Optional<String> validatedProxy = validateProxy(proxyName, context.getSource());
     if (validatedProxy.isEmpty()) {
@@ -135,7 +136,7 @@ public class PlistCommand {
       List<PlayerEntry> allPlayers = new ArrayList<>();
       for (RegisteredServer registeredServer : server.getAllServers()) {
         List<PlayerEntry> serverPlayers =
-            new ArrayList<>(this.server.getRedis().getPlayerService().getPlayerEntriesOnProxy(validatedProxy.get()));
+                new ArrayList<>(this.server.getRedis().getPlayerService().getPlayerEntriesOnProxy(validatedProxy.get()));
         serverPlayers.removeIf(player -> !player.getServerName().equalsIgnoreCase(registeredServer.getServerInfo().getName()));
         allPlayers.addAll(serverPlayers);
         sendServerPlayers(context.getSource(), validatedProxy.get(), registeredServer, true);
@@ -154,46 +155,46 @@ public class PlistCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private int proxyCount(final CommandContext<CommandSource> context) {
-    final String proxyName = getString(context, PROXY_ARG);
+  private int proxyCount(CommandContext<CommandSource> context) {
+    String proxyName = getString(context, PROXY_ARG);
 
     Optional<String> validatedProxy = validateProxy(proxyName, context.getSource());
     if (validatedProxy.isEmpty()) {
       return Command.SINGLE_SUCCESS;
     }
 
-    final List<PlayerEntry> proxyPlayers = server.getRedis().getPlayerService().getPlayerEntriesOnProxy(validatedProxy.get());
+    List<PlayerEntry> proxyPlayers = server.getRedis().getPlayerService().getPlayerEntriesOnProxy(validatedProxy.get());
     sendTotalProxyCount(context.getSource(), validatedProxy.get(), proxyPlayers.size());
     return Command.SINGLE_SUCCESS;
   }
 
-  private Optional<RegisteredServer> validateServer(final String serverName, final CommandSource source) {
+  private Optional<RegisteredServer> validateServer(String serverName, CommandSource source) {
     return server.getAllServers().stream()
-        .filter(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(serverName))
-        .findFirst()
-        .or(() -> {
-          source.sendMessage(Component.translatable("velocity.command.server-does-not-exist", NamedTextColor.RED)
-              .arguments(Component.text(serverName)));
-          return Optional.empty();
-        });
+            .filter(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(serverName))
+            .findFirst()
+            .or(() -> {
+              source.sendMessage(Component.translatable("velocity.command.server-does-not-exist", NamedTextColor.RED)
+                      .arguments(Component.text(serverName)));
+              return Optional.empty();
+            });
   }
 
-  private void sendTotalProxyCount(final CommandSource target, final String proxyId, final int online) {
-    final TranslatableComponent.Builder msg = Component.translatable()
-        .key(online == 1
-            ? "velocity.command.plist-player-singular"
-            : "velocity.command.plist-player-plural"
-        ).color(NamedTextColor.YELLOW)
-        .arguments(
-            Argument.numeric("count", online),
-            Argument.string("proxy", proxyId));
+  private void sendTotalProxyCount(CommandSource target, String proxyId, int online) {
+    TranslatableComponent.Builder msg = Component.translatable()
+            .key(online == 1
+                    ? "velocity.command.plist-player-singular"
+                    : "velocity.command.plist-player-plural"
+            ).color(NamedTextColor.YELLOW)
+            .arguments(
+                    Argument.numeric("count", online),
+                    Argument.string("proxy", proxyId));
     target.sendMessage(msg.build());
   }
 
-  private void sendServerPlayers(final CommandSource target,
-                                 final String proxyId,
-                                 final RegisteredServer server,
-                                 final boolean fromAll) {
+  private void sendServerPlayers(CommandSource target,
+                                 String proxyId,
+                                 RegisteredServer server,
+                                 boolean fromAll) {
     List<Component> players = new ArrayList<>();
     int totalPlayers = 0;
 
@@ -209,14 +210,14 @@ public class PlistCommand {
     }
 
     Component playerList = players.stream()
-        .reduce((a, b) -> a.append(Component.text(", ")).append(b))
-        .orElse(Component.text(""));
+            .reduce((a, b) -> a.append(Component.text(", ")).append(b))
+            .orElse(Component.text(""));
     target.sendMessage(Component.translatable("velocity.command.plist-server")
-        .arguments(
-            Argument.string("server", server.getServerInfo().getName()),
-            Argument.numeric("count", totalPlayers),
-            Argument.component("players", playerList)
-        )
+            .arguments(
+                    Argument.string("server", server.getServerInfo().getName()),
+                    Argument.numeric("count", totalPlayers),
+                    Argument.component("players", playerList)
+            )
     );
   }
 }

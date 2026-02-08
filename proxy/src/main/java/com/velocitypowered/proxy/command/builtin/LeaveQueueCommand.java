@@ -28,7 +28,6 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.List;
@@ -37,7 +36,7 @@ import net.kyori.adventure.text.Component;
 /**
  * Implements Velocity-CTD's {@code /leavequeue} command.
  */
-public class LeaveQueueCommand {
+public class LeaveQueueCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
@@ -45,40 +44,40 @@ public class LeaveQueueCommand {
     this.server = server;
   }
 
-  /**
-   * Registers or unregisters the command based on the configuration value.
-   */
-  public void register() {
-    final List<String> aliases = server.getConfiguration().getQueue().getLeaveQueueAliases();
-
-    if (aliases.isEmpty()) {
-      return;
-    }
-
-    final LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand.literalArgumentBuilder(aliases.removeFirst())
-        .requires(source -> source.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)
-        .then(BrigadierCommand
-            .requiredArgumentBuilder("server", StringArgumentType.word())
-            .suggests(VelocityCommands.suggestServer(server, "server", false))
-            .executes(this::leaveQueue)
-        )
-        .executes(this::leaveAllQueuesNoRedis);
-
-    final BrigadierCommand command = new BrigadierCommand(rootNode);
-    server.getCommandManager().register(
-        server.getCommandManager().metaBuilder(command)
-            .aliases(aliases.toArray(new String[0]))
-            .plugin(VelocityVirtualPlugin.INSTANCE)
-            .build(),
-        command
-    );
+  @Override
+  public String label() {
+    return server.getConfiguration().getQueue().getLeaveQueueAliases()
+            .stream()
+            .findFirst()
+            .orElse("leavequeue");
   }
 
-  private int leaveAllQueuesNoRedis(final CommandContext<CommandSource> ctx) {
+  @Override
+  public List<String> aliases() {
+    return server.getConfiguration().getQueue().getLeaveQueueAliases()
+            .stream()
+            .skip(1) // label()
+            .toList();
+  }
+
+  public BrigadierCommand build() {
+    LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand.literalArgumentBuilder(label())
+            .requires(source -> source.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)
+            .then(BrigadierCommand
+                    .requiredArgumentBuilder("server", StringArgumentType.word())
+                    .suggests(VelocityCommands.suggestServer(server, "server", false))
+                    .executes(this::leaveQueue)
+            )
+            .executes(this::leaveAllQueuesNoRedis);
+
+    return new BrigadierCommand(rootNode);
+  }
+
+  private int leaveAllQueuesNoRedis(CommandContext<CommandSource> ctx) {
     if (ctx.getSource() instanceof Player player) {
       int amountDone = 0;
       for (RegisteredServer server : this.server.getAllServers()) {
-        final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(server.getServerInfo().getName());
+        Queue queue = this.server.getQueueManager().getQueueCache().getQueue(server.getServerInfo().getName());
         if (!queue.contains(player)) {
           continue;
         }
@@ -98,7 +97,7 @@ public class LeaveQueueCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private int leaveQueue(final CommandContext<CommandSource> ctx) {
+  private int leaveQueue(CommandContext<CommandSource> ctx) {
     if (!this.server.isRedisEnabled()) {
       return leaveQueueNoRedis(ctx);
     }
@@ -119,23 +118,23 @@ public class LeaveQueueCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private int leaveQueueNoRedis(final CommandContext<CommandSource> ctx) {
+  private int leaveQueueNoRedis(CommandContext<CommandSource> ctx) {
     VelocityRegisteredServer server = VelocityCommands.getServer(this.server, ctx, "server", false);
     if (server == null) {
       return -1;
     }
 
     if (ctx.getSource() instanceof Player player) {
-      final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(server.getServerInfo().getName());
+      Queue queue = this.server.getQueueManager().getQueueCache().getQueue(server.getServerInfo().getName());
       if (queue.contains(player)) {
         queue.dequeue(player, false);
         player.sendMessage(
-            Component.translatable("velocity.queue.command.left-queue")
-                .arguments(Component.text(server.getServerInfo().getName())));
+                Component.translatable("velocity.queue.command.left-queue")
+                        .arguments(Component.text(server.getServerInfo().getName())));
       } else {
         player.sendMessage(
-            Component.translatable("velocity.queue.error.not-in-queue")
-                .arguments(Component.text(server.getServerInfo().getName())));
+                Component.translatable("velocity.queue.error.not-in-queue")
+                        .arguments(Component.text(server.getServerInfo().getName())));
       }
     } else {
       ctx.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);

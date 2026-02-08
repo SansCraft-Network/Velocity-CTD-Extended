@@ -40,132 +40,132 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
  * Implements Velocity-CTD's {@code /transfer} command.
  * Sends players to another proxy if they're above 1.20.5.
  */
-public class TransferCommand {
+public class TransferCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public TransferCommand(final VelocityServer server) {
+  public TransferCommand(VelocityServer server) {
     this.server = server;
   }
 
-  /**
-   * Returns the command instance if enabled, or {@code null} if disabled via configuration.
-   *
-   * @return the command instance or {@code null} if disabled
-   */
-  public BrigadierCommand register() {
+  @Override
+  public String label() {
+    return "transfer";
+  }
+
+  @Override
+  public BrigadierCommand build() {
     if (!this.server.getConfiguration().isAcceptTransfers()) {
       return null;
     }
 
-    final LiteralCommandNode<CommandSource> transfer = BrigadierCommand.literalArgumentBuilder("transfer")
-        .requires(source -> source.getPermissionValue("velocity.command.transfer") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "transfer"))
-        .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-        .suggests((ctx, builder) -> {
-          final String argument = ctx.getArguments().containsKey("player")
-                  ? ctx.getArgument("player", String.class)
-                  : "";
+    LiteralCommandNode<CommandSource> transfer = BrigadierCommand.literalArgumentBuilder(label())
+            .requires(source -> source.getPermissionValue("velocity.command.transfer") == Tristate.TRUE)
+            .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+            .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
+                    .suggests((ctx, builder) -> {
+                      String argument = ctx.getArguments().containsKey("player")
+                              ? ctx.getArgument("player", String.class)
+                              : "";
 
-          if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
-            builder.suggest("all");
-          }
+                      if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
+                        builder.suggest("all");
+                      }
 
-          if ("current".regionMatches(true, 0, argument, 0, argument.length())
-              && ctx.getSource() instanceof Player) {
-            builder.suggest("current");
-          }
+                      if ("current".regionMatches(true, 0, argument, 0, argument.length())
+                              && ctx.getSource() instanceof Player) {
+                        builder.suggest("current");
+                      }
 
-          if (argument.isEmpty() || argument.startsWith("+")) {
-            for (final RegisteredServer server : server.getAllServers()) {
-              final String serverName = server.getServerInfo().getName();
+                      if (argument.isEmpty() || argument.startsWith("+")) {
+                        for (RegisteredServer server : server.getAllServers()) {
+                          String serverName = server.getServerInfo().getName();
 
-              if (serverName.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
-                builder.suggest("+" + serverName);
-              }
-            }
-          }
+                          if (serverName.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
+                            builder.suggest("+" + serverName);
+                          }
+                        }
+                      }
 
-          if (server.isRedisEnabled()) {
-            for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
-              if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
-                builder.suggest(playerEntry.getUsername());
-              }
-            }
+                      if (server.isRedisEnabled()) {
+                        for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
+                          if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
+                            builder.suggest(playerEntry.getUsername());
+                          }
+                        }
 
-            return builder.buildFuture();
-          }
+                        return builder.buildFuture();
+                      }
 
-          for (final Player player : server.getAllPlayers()) {
-            final String playerName = player.getUsername();
-            if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
-              builder.suggest(playerName);
-            }
-          }
+                      for (Player player : server.getAllPlayers()) {
+                        String playerName = player.getUsername();
+                        if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
+                          builder.suggest(playerName);
+                        }
+                      }
 
-          return builder.buildFuture();
-        })
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, "transfer"))
-        .then(BrigadierCommand.requiredArgumentBuilder("proxy-id", StringArgumentType.word())
-        .suggests((ctx, builder) -> {
-          final String argument = ctx.getArguments().containsKey("proxy")
-              ? ctx.getArgument("proxy", String.class)
-              : "";
-          for (ProxyAddress address : server.getConfiguration().getProxyAddresses()) {
-            if (address.proxyId().regionMatches(true, 0, argument, 0, argument.length())) {
-              builder.suggest(address.proxyId());
-            }
-          }
-          return builder.buildFuture();
-        })
-        .executes(this::transfer)))
-        .build();
+                      return builder.buildFuture();
+                    })
+                    .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+                    .then(BrigadierCommand.requiredArgumentBuilder("proxy-id", StringArgumentType.word())
+                            .suggests((ctx, builder) -> {
+                              String argument = ctx.getArguments().containsKey("proxy")
+                                      ? ctx.getArgument("proxy", String.class)
+                                      : "";
+                              for (ProxyAddress address : server.getConfiguration().getProxyAddresses()) {
+                                if (address.proxyId().regionMatches(true, 0, argument, 0, argument.length())) {
+                                  builder.suggest(address.proxyId());
+                                }
+                              }
+                              return builder.buildFuture();
+                            })
+                            .executes(this::transfer)))
+            .build();
 
     return new BrigadierCommand(transfer);
   }
 
-  private int transfer(final CommandContext<CommandSource> context) {
-    final String player = context.getArgument("player", String.class);
-    final String proxyId = context.getArgument("proxy-id", String.class);
-    final String normalizedProxyId = normalizeProxyId(proxyId);
+  private int transfer(CommandContext<CommandSource> context) {
+    String player = context.getArgument("player", String.class);
+    String proxyId = context.getArgument("proxy-id", String.class);
+    String normalizedProxyId = normalizeProxyId(proxyId);
 
     ProxyAddress address = server.getConfiguration().getProxyAddresses().stream()
-        .filter(proxy -> proxy.proxyId().equalsIgnoreCase(proxyId))
-        .findFirst()
-        .orElse(null);
+            .filter(proxy -> proxy.proxyId().equalsIgnoreCase(proxyId))
+            .findFirst()
+            .orElse(null);
 
     if (this.server.isRedisEnabled()) {
       if (!this.server.getRedis().getPlayerService().isPlayerOnline(player) && !player.equalsIgnoreCase("all")
-          && !player.equalsIgnoreCase("current") && !player.startsWith("+")) {
+              && !player.equalsIgnoreCase("current") && !player.startsWith("+")) {
         context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-            .arguments(Argument.string("player", player)));
+                .arguments(Argument.string("player", player)));
         return -1;
       }
     } else {
       if (this.server.getPlayer(player).isEmpty() && !player.equalsIgnoreCase("all") && !player.equalsIgnoreCase("current")
-          && !player.startsWith("+")) {
+              && !player.startsWith("+")) {
         context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-            .arguments(Argument.string("player", player)));
+                .arguments(Argument.string("player", player)));
         return -1;
       }
     }
 
     if (address == null) {
       context.getSource().sendMessage(Component.translatable("velocity.command.error.transfer.invalid-proxy")
-          .arguments(Component.text(proxyId)));
+              .arguments(Component.text(proxyId)));
       return -1;
     }
 
     if (player.equalsIgnoreCase("all")) {
       context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.all")
-          .arguments(Component.text(normalizedProxyId)));
+              .arguments(Component.text(normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
         for (Player p : this.server.getAllPlayers()) {
@@ -179,14 +179,14 @@ public class TransferCommand {
       RegisteredServer foundServer = findServer(player.substring(1)).orElse(null);
       if (foundServer == null) {
         context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-            .arguments(Component.text(player)));
+                .arguments(Component.text(player)));
         return -1;
       }
 
       context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.server")
-          .arguments(
-              Argument.string("server", foundServer.getServerInfo().getName()),
-              Argument.string("proxy",  normalizedProxyId)));
+              .arguments(
+                      Argument.string("server", foundServer.getServerInfo().getName()),
+                      Argument.string("proxy", normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
         for (Player p : foundServer.getPlayersConnected()) {
@@ -205,15 +205,15 @@ public class TransferCommand {
       ServerConnection foundServerConn = sender.getCurrentServer().orElse(null);
       if (foundServerConn == null) {
         context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-            .arguments(Component.text(player)));
+                .arguments(Component.text(player)));
         return -1;
       }
 
       RegisteredServer foundServer = this.server.getServer(foundServerConn.getServerInfo().getName()).orElseThrow();
 
       context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.server")
-          .arguments(Component.text(foundServer.getServerInfo().getName()),
-              Argument.string("proxy",  normalizedProxyId)));
+              .arguments(Component.text(foundServer.getServerInfo().getName()),
+                      Argument.string("proxy", normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
         for (Player p : foundServer.getPlayersConnected()) {
@@ -225,17 +225,17 @@ public class TransferCommand {
       }).delay(1, TimeUnit.SECONDS).schedule();
     } else {
       if (this.server.isRedisEnabled()) {
-        final PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(player);
+        PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(player);
 
         if (playerEntry == null || playerEntry.getUsername() == null || playerEntry.getProxyId() == null) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-              .arguments(Argument.string("player", player)));
+                  .arguments(Argument.string("player", player)));
           return -1;
         }
 
         context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
-            .arguments(Argument.string("player", playerEntry.getUsername()),
-                Argument.string("proxy",  normalizedProxyId)));
+                .arguments(Argument.string("player", playerEntry.getUsername()),
+                        Argument.string("proxy", normalizedProxyId)));
 
         new VelocityTransferRemote(context.getSource(), playerEntry.getUniqueId(), proxyId, address.ip(), address.port())
                 .publish();
@@ -243,19 +243,19 @@ public class TransferCommand {
         Optional<Player> maybePlayer = this.server.getPlayer(player);
         if (maybePlayer.isEmpty()) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-              .arguments(Argument.string("player", player)));
+                  .arguments(Argument.string("player", player)));
           return -1;
         }
 
         ConnectedPlayer connectedPlayer = (ConnectedPlayer) maybePlayer.get();
         if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
           context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
-              .arguments(Argument.string("player", connectedPlayer.getUsername()),
-                  Argument.string("proxy",  normalizedProxyId)));
+                  .arguments(Argument.string("player", connectedPlayer.getUsername()),
+                          Argument.string("proxy", normalizedProxyId)));
           connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
         } else {
           context.getSource().sendMessage(Component.translatable("velocity.command.transfer.invalid-version")
-              .arguments(Argument.string("player", connectedPlayer.getUsername())));
+                  .arguments(Argument.string("player", connectedPlayer.getUsername())));
         }
       }
     }
@@ -263,21 +263,14 @@ public class TransferCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private int usage(final CommandContext<CommandSource> context) {
-    context.getSource().sendMessage(
-        Component.translatable("velocity.command.transfer.usage", NamedTextColor.YELLOW)
-    );
-    return Command.SINGLE_SUCCESS;
-  }
-
-  private Optional<RegisteredServer> findServer(final String serverName) {
-    final Collection<RegisteredServer> servers = server.getAllServers();
-    final String lowerServerName = serverName.toLowerCase();
+  private Optional<RegisteredServer> findServer(String serverName) {
+    Collection<RegisteredServer> servers = server.getAllServers();
+    String lowerServerName = serverName.toLowerCase();
 
     Optional<RegisteredServer> bestMatch = Optional.empty();
 
     for (RegisteredServer server : servers) {
-      final String lowerName = server.getServerInfo().getName().toLowerCase();
+      String lowerName = server.getServerInfo().getName().toLowerCase();
 
       if (lowerName.equals(lowerServerName)) {
         bestMatch = Optional.of(server);
@@ -296,11 +289,11 @@ public class TransferCommand {
     return bestMatch;
   }
 
-  private String normalizeProxyId(final String inputProxyId) {
+  private String normalizeProxyId(String inputProxyId) {
     return server.getConfiguration().getProxyAddresses().stream()
-        .map(ProxyAddress::proxyId)
-        .filter(s -> s.equalsIgnoreCase(inputProxyId))
-        .findFirst()
-        .orElse(inputProxyId);
+            .map(ProxyAddress::proxyId)
+            .filter(s -> s.equalsIgnoreCase(inputProxyId))
+            .findFirst()
+            .orElse(inputProxyId);
   }
 }

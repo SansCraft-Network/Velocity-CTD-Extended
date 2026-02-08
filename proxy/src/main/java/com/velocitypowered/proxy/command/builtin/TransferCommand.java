@@ -44,20 +44,13 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Command that sends players to another proxy if they're above 1.20.5.
+ * Implements Velocity-CTD's {@code /transfer} command.
+ * Sends players to another proxy if they're above 1.20.5.
  */
 public class TransferCommand {
 
-  /**
-   * The Velocity server instance used to handle transfers and access server and proxy data.
-   */
   private final VelocityServer server;
 
-  /**
-   * Implements Velocity's {@code /transfer} command.
-   *
-   * @param server the Velocity server instance
-   */
   public TransferCommand(final VelocityServer server) {
     this.server = server;
   }

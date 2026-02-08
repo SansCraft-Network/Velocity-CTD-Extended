@@ -53,9 +53,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Implements the {@code /queueadmin} command.
- *
- * @param server The main Velocity server instance used to access server, queue, and configuration data.
+ * Implements Velocity-CTD's {@code /queueadmin} command.
  */
 public record QueueAdminCommand(VelocityServer server) {
 

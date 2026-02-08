@@ -38,21 +38,12 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Implements Velocity's {@code /find} command.
+ * Implements Velocity-CTD's {@code /find} command.
  */
 public class FindCommand {
 
-  /**
-   * The {@link VelocityServer} instance used to access players, servers,
-   * and Redis multi-proxy functionality.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs a new {@link FindCommand} using the provided {@link VelocityServer} instance.
-   *
-   * @param server the {@link VelocityServer} to use for player and server resolution
-   */
   public FindCommand(final VelocityServer server) {
     this.server = server;
   }

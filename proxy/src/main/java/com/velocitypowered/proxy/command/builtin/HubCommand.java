@@ -33,20 +33,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.GlobalTranslator;
 
 /**
- * Implements Velocity's {@code /hub} command.
+ * Implements Velocity-CTD's {@code /hub} command.
  */
 public class HubCommand {
 
-  /**
-   * The Velocity server instance used for configuration access and player redirection.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs a new {@link HubCommand} instance.
-   *
-   * @param server the Velocity server instance
-   */
   public HubCommand(final VelocityServer server) {
     this.server = server;
   }

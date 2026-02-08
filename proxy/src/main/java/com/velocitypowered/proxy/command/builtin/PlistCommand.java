@@ -40,30 +40,16 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Implements the Velocity default {@code /plist} command.
+ * Implements Velocity-CTD's {@code /plist} command.
  */
 public class PlistCommand {
 
-  /**
-   * The argument key used for identifying a specific server in command input.
-   */
   private static final String SERVER_ARG = "server";
 
-  /**
-   * The argument key used for identifying a specific proxy in command input.
-   */
   private static final String PROXY_ARG = "proxy";
 
-  /**
-   * The Velocity server instance.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs the {@code /plist} command handler.
-   *
-   * @param server the Velocity server instance
-   */
   public PlistCommand(final VelocityServer server) {
     this.server = server;
   }

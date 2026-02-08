@@ -87,24 +87,21 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * Implements the {@code /velocity} command and friends.
+ * Implements Velocity's {@code /velocity} command.
+ *
+ * <p>This command provides access to administrative utilities such as:</p>
+ * <ul>
+ *   <li>{@code /velocity dump} - Creates a diagnostic dump</li>
+ *   <li>{@code /velocity heap} - Triggers a heap dump</li>
+ *   <li>{@code /velocity info} - Displays version and environment info</li>
+ *   <li>{@code /velocity plugins} - Lists installed plugins</li>
+ *   <li>{@code /velocity reload} - Reloads the proxy configuration</li>
+ *   <li>{@code /velocity sudo} - Forces player(s) to run a command or message</li>
+ *   <li>{@code /velocity uptime} - Shows how long the proxy has been running</li>
+ * </ul>
  */
 public final class VelocityCommand {
 
-  /**
-   * Implements the {@code /velocity} command and its subcommands.
-   *
-   * <p>This command provides access to administrative utilities such as:</p>
-   * <ul>
-   *   <li>{@code /velocity dump} - Creates a diagnostic dump</li>
-   *   <li>{@code /velocity heap} - Triggers a heap dump</li>
-   *   <li>{@code /velocity info} - Displays version and environment info</li>
-   *   <li>{@code /velocity plugins} - Lists installed plugins</li>
-   *   <li>{@code /velocity reload} - Reloads the proxy configuration</li>
-   *   <li>{@code /velocity sudo} - Forces player(s) to run a command or message</li>
-   *   <li>{@code /velocity uptime} - Shows how long the proxy has been running</li>
-   * </ul>
-   */
   private static final String USAGE = "/velocity <%s>";
 
   /**

@@ -33,20 +33,12 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Implements Velocity's {@code /ping} command.
+ * Implements Velocity-CTD's {@code /ping} command.
  */
 public class PingCommand {
 
-  /**
-   * The Velocity server instance.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs a new {@link PingCommand}.
-   *
-   * @param server the Velocity server instance
-   */
   public PingCommand(final VelocityServer server) {
     this.server = server;
   }

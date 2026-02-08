@@ -31,7 +31,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 
 /**
- * Shuts down the proxy.
+ * Implements Velocity's {@code /shutdown} command.
  */
 public final class ShutdownCommand {
 

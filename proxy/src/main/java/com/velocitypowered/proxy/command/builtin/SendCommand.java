@@ -43,35 +43,18 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Implements the Velocity default {@code /send} command.
+ * Implements Velocity's {@code /send} command.
  */
 public class SendCommand {
 
-  /**
-   * The Velocity server instance used to retrieve player and server data.
-   */
-  private final VelocityServer server;
-
-  /**
-   * The Velocity Redis instance used for multi-proxy operations.
-   */
-  private final VelocityRedis redis;
-
-  /**
-   * The argument key for specifying the target server.
-   */
   private static final String SERVER_ARG = "server";
 
-  /**
-   * The argument key for specifying the player(s) to send.
-   */
   private static final String PLAYER_ARG = "player";
 
-  /**
-   * Creates a new {@link SendCommand} instance.
-   *
-   * @param server the Velocity server
-   */
+  private final VelocityServer server;
+
+  private final VelocityRedis redis;
+
   public SendCommand(final VelocityServer server) {
     this.server = server;
     this.redis = server.getRedis();

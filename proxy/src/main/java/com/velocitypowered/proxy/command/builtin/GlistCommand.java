@@ -44,25 +44,14 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Implements the Velocity default {@code /glist} command.
+ * Implements Velocity's {@code /glist} command.
  */
 public class GlistCommand {
 
-  /**
-   * The name of the argument used to specify the server in the {@code /glist} command.
-   */
   private static final String SERVER_ARG = "server";
 
-  /**
-   * The {@link VelocityServer} instance used to retrieve server and player information.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs a new {@link GlistCommand}.
-   *
-   * @param server the Velocity server instance
-   */
   public GlistCommand(final VelocityServer server) {
     this.server = server;
   }

@@ -31,27 +31,14 @@ import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import net.kyori.adventure.text.Component;
 
 /**
- * Implements {@code /<server_name>} aliases.
+ * Implements Velocity-CTD's {@code /<server_name>} aliases.
  */
 public class SlashServerCommand {
 
-  /**
-   * The Velocity server instance used to manage connections and access server metadata.
-   */
   private final VelocityServer proxyServer;
 
-  /**
-   * The specific target server this slash command connects to.
-   */
   private final VelocityRegisteredServer server;
 
-  /**
-   * Constructs a new {@link SlashServerCommand} for the given server name.
-   *
-   * @param proxyServer the proxy server instance
-   * @param serverName the name of the server this command will connect to
-   * @throws java.util.NoSuchElementException if the server name is not registered
-   */
   public SlashServerCommand(final VelocityServer proxyServer, final String serverName) {
     this.proxyServer = proxyServer;
     this.server = (VelocityRegisteredServer) this.proxyServer.getServer(serverName).orElseThrow();

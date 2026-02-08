@@ -33,20 +33,12 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
- * Implements Velocity's {@code /alert} command.
+ * Implements Velocity-CTD's {@code /alert} command.
  */
 public class AlertCommand {
 
-  /**
-   * The server instance used to perform broadcasts and access multi-proxy configuration.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs a new {@link AlertCommand} using the given {@link VelocityServer}.
-   *
-   * @param server the server instance to use for broadcasting messages
-   */
   public AlertCommand(final VelocityServer server) {
     this.server = server;
   }

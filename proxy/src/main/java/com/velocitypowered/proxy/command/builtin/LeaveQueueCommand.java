@@ -35,9 +35,7 @@ import java.util.List;
 import net.kyori.adventure.text.Component;
 
 /**
- * Implements the {@code /leavequeue} command.
- *
- * @param server The Velocity server instance used for accessing queue data and player state.
+ * Implements Velocity-CTD's {@code /leavequeue} command.
  */
 public record LeaveQueueCommand(VelocityServer server) {
 

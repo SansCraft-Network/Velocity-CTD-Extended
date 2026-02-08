@@ -33,20 +33,12 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
- * Implements Velocity's {@code /alertraw} command.
+ * Implements Velocity-CTD's {@code /alertraw} command.
  */
 public class AlertRawCommand {
 
-  /**
-   * The {@link VelocityServer} instance used for broadcasting messages and accessing proxy state.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs a new {@link AlertRawCommand} with the given server instance.
-   *
-   * @param server the proxy server instance
-   */
   public AlertRawCommand(final VelocityServer server) {
     this.server = server;
   }

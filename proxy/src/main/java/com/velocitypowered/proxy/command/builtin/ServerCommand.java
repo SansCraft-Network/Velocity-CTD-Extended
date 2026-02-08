@@ -47,26 +47,12 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
  */
 public final class ServerCommand {
 
-  /**
-   * The name of the server argument.
-   */
   private static final String SERVER_ARG = "server";
 
-  /**
-   * The maximum number of servers to list in the command output before showing an error.
-   */
   public static final int MAX_SERVERS_TO_LIST = 50;
 
-  /**
-   * The instance of {@link VelocityServer} to retrieve configuration and server metadata.
-   */
   private final VelocityServer server;
 
-  /**
-   * Constructs a new {@link ServerCommand} instance.
-   *
-   * @param server the Velocity server instance
-   */
   public ServerCommand(final VelocityServer server) {
     this.server = server;
   }

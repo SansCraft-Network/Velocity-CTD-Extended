@@ -31,7 +31,7 @@ import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 
 /**
- * Implements Velocity-CTD's {@code /<server_name>} aliases.
+ * Implements Velocity-CTD's {@code /<server_name>} commands.
  */
 public class SlashServerCommand implements BuiltinCommand {
 
@@ -39,15 +39,15 @@ public class SlashServerCommand implements BuiltinCommand {
     return proxyServer -> new SlashServerCommand(proxyServer, serverName, commandLabel);
   }
 
-  private final VelocityServer proxyServer;
-  private final VelocityRegisteredServer server;
+  private final VelocityServer server;
+  private final VelocityRegisteredServer registeredServer;
   private final String commandLabel;
 
-  public SlashServerCommand(VelocityServer proxyServer, String serverName, String commandLabel) {
-    this.proxyServer = proxyServer;
-    this.server = (VelocityRegisteredServer) this.proxyServer.getServer(serverName).orElseThrow();
+  public SlashServerCommand(VelocityServer server, String targetServerName, String commandLabel) {
+    this.server = server;
+    this.registeredServer = (VelocityRegisteredServer) this.server.getServer(targetServerName)
+            .orElseThrow(() -> new IllegalArgumentException("Target server '" + targetServerName + "' does not exist."));
     this.commandLabel = commandLabel;
-
   }
 
   @Override
@@ -59,7 +59,7 @@ public class SlashServerCommand implements BuiltinCommand {
   public BrigadierCommand build() {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
             .literalArgumentBuilder(label())
-            .requires(src -> VelocityCommands.checkServerPermissions(server, src))
+            .requires(src -> VelocityCommands.checkServerPermissions(registeredServer, src))
             .executes(this::send);
 
     return new BrigadierCommand(rootNode);
@@ -68,18 +68,22 @@ public class SlashServerCommand implements BuiltinCommand {
   private int send(CommandContext<CommandSource> ctx) {
     Player player = (Player) ctx.getSource();
 
-    if (this.proxyServer.getConfiguration().getQueue().getNoQueueServers().contains(this.server.getServerInfo().getName())) {
-      player.createConnectionRequest(this.server).connectWithIndication();
-      return Command.SINGLE_SUCCESS;
-    }
-
-    ServerConnection conn = player.getCurrentServer().orElse(null);
-    if (conn != null && conn.getServerInfo().getName().equalsIgnoreCase(server.getServerInfo().getName())) {
+    ServerConnection connection = player.getCurrentServer().orElse(null);
+    if (connection != null && connection.getServerInfo().getName()
+            .equalsIgnoreCase(registeredServer.getServerInfo().getName())) {
       player.sendMessage(Component.translatable("velocity.command.slashserver.already-connected"));
+      return -1;
+    }
+
+    if (server.getConfiguration().getQueue().getNoQueueServers() == null
+            || server.getConfiguration().getQueue().getNoQueueServers().contains(registeredServer.getServerInfo().getName())
+            || !server.isQueueEnabled()
+            || player.hasPermission("velocity.queue.bypass")) {
+      player.createConnectionRequest(registeredServer).connectWithIndication();
       return Command.SINGLE_SUCCESS;
     }
 
-    this.proxyServer.getQueueManager().queue(player, this.server);
+    server.getQueueManager().queue(player, registeredServer);
     return Command.SINGLE_SUCCESS;
   }
 }

@@ -59,6 +59,7 @@ import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.adventure.VelocityBossBarImplementation;
+import com.velocitypowered.proxy.config.DynamicFallbackFilter;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
 import com.velocitypowered.proxy.connection.MinecraftConnectionAssociation;
@@ -1423,8 +1424,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private Optional<RegisteredServer> getNextServerToTry(final @Nullable RegisteredServer current) {
     if (serversToTry == null || serversToTry.isEmpty()) {
       String virtualHostStr = getVirtualHost().map(InetSocketAddress::getHostString)
-          .orElse("")
-          .toLowerCase(Locale.ROOT);
+          .map(String::toLowerCase)
+          .orElse("");
 
       List<String> forcedHosts = server.getConfiguration().getForcedHosts().get(virtualHostStr);
       if (forcedHosts == null || forcedHosts.isEmpty()) {
@@ -1444,7 +1445,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       }
     }
 
-    String strategy = server.getConfiguration().getDynamicFallbackFilter().toUpperCase(Locale.ROOT);
+    DynamicFallbackFilter strategy = server.getConfiguration().getDynamicFallbackFilter();
     Optional<RegisteredServer> selectedServer = Optional.empty();
 
     for (int i = tryIndex; i < serversToTry.size(); i++) {
@@ -1463,19 +1464,19 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       RegisteredServer registeredServer = potentialServer.get();
 
       if (selectedServer.isEmpty()) {
-        if (strategy.equalsIgnoreCase("FIRST_AVAILABLE")) {
+        if (strategy == DynamicFallbackFilter.FIRST_AVAILABLE) {
           tryIndex = i;
           return Optional.of(registeredServer);
         }
 
         selectedServer = Optional.of(registeredServer);
         tryIndex = i;
-      } else if (strategy.equalsIgnoreCase("MOST_POPULATED")) {
+      } else if (strategy == DynamicFallbackFilter.MOST_POPULATED) {
         if (registeredServer.getTotalPlayerCount() > selectedServer.get().getTotalPlayerCount()) {
           selectedServer = Optional.of(registeredServer);
           tryIndex = i;
         }
-      } else if (strategy.equalsIgnoreCase("LEAST_POPULATED")) {
+      } else if (strategy == DynamicFallbackFilter.LEAST_POPULATED) {
         if (registeredServer.getTotalPlayerCount() < selectedServer.get().getTotalPlayerCount()) {
           selectedServer = Optional.of(registeredServer);
           tryIndex = i;

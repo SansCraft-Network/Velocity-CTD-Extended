@@ -1016,7 +1016,7 @@ public final class VelocityConfiguration implements ProxyConfig {
    *
    * @return the fallback filter identifier
    */
-  public String getDynamicFallbackFilter() {
+  public DynamicFallbackFilter getDynamicFallbackFilter() {
     return servers.getDynamicFallbackFilter();
   }
 
@@ -1598,7 +1598,7 @@ public final class VelocityConfiguration implements ProxyConfig {
      * <p>Common values include {@code "FIRST_AVAILABLE"}, {@code "MOST_POPULATED"},
      * or {@code "LEAST_POPULATED"}.
      */
-    private String dynamicFallbackFilter;
+    private DynamicFallbackFilter dynamicFallbackFilter;
 
     /**
      * A list of aliases that invoke server-related commands.
@@ -1614,7 +1614,7 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     private Servers(final CommentedConfig config) {
       this.serverAliases = List.of("joinqueue", "queue", "server");
-      this.dynamicFallbackFilter = "FIRST_AVAILABLE";
+      this.dynamicFallbackFilter = DynamicFallbackFilter.FIRST_AVAILABLE;
 
       if (config != null) {
         Map<String, BackendServerConfig> servers = new HashMap<>();
@@ -1662,16 +1662,9 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.servers = ImmutableMap.copyOf(servers);
         this.serverMinimumVersions = ImmutableMap.copyOf(serverMinimumVersions);
         this.attemptConnectionOrder = config.getOrElse("try", attemptConnectionOrder).stream().toList();
-        this.dynamicFallbackFilter = config.getOrElse("dynamic-fallbacks-filter", "FIRST_AVAILABLE");
+        this.dynamicFallbackFilter = config.getEnumOrElse("dynamic-fallbacks-filter", DynamicFallbackFilter.FIRST_AVAILABLE);
         this.serverAliases = config.getOrElse("server-aliases", List.of("joinqueue", "queue", "server"));
       }
-    }
-
-    private Servers(final Map<String, BackendServerConfig> servers, final List<String> attemptConnectionOrder) {
-      this.servers = servers;
-      this.attemptConnectionOrder = attemptConnectionOrder;
-      this.serverAliases = List.of("joinqueue", "queue", "server");
-      this.dynamicFallbackFilter = "FIRST_AVAILABLE";
     }
 
     public List<String> getServerAliases() {
@@ -1690,7 +1683,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       return attemptConnectionOrder;
     }
 
-    public String getDynamicFallbackFilter() {
+    public DynamicFallbackFilter getDynamicFallbackFilter() {
       return dynamicFallbackFilter;
     }
 

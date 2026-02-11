@@ -38,8 +38,8 @@ public final class IdentityHashStrategy<T> implements Strategy<T> {
    * @param <T> the type for which the strategy applies
    * @return a shared identity hash strategy instance
    */
+  @SuppressWarnings("unchecked")
   public static <T> Strategy<T> instance() {
-    // noinspection unchecked
     return INSTANCE;
   }
 

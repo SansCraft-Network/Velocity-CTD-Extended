@@ -60,6 +60,7 @@ public class LeaveQueueCommand implements BuiltinCommand {
             .toList();
   }
 
+  @Override
   public BrigadierCommand build() {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand.literalArgumentBuilder(label())
             .requires(source -> source.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)

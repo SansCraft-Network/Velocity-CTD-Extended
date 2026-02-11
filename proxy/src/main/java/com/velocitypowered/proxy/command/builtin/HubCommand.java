@@ -48,11 +48,7 @@ public class HubCommand implements BuiltinCommand {
     return "hub";
   }
 
-  /**
-   * Registers or unregisters the command based on the configuration value.
-   *
-   * @return the {@link BrigadierCommand} instance or {@code null} if disabled
-   */
+  @Override
   public BrigadierCommand build() {
     return new BrigadierCommand(BrigadierCommand
             .literalArgumentBuilder(label())

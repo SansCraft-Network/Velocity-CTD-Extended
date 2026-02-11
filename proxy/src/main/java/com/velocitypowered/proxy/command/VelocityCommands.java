@@ -39,6 +39,7 @@ import com.velocitypowered.api.command.InvocableCommand;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.brigadier.VelocityArgumentCommandNode;
@@ -54,6 +55,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.text.Component;
@@ -487,5 +489,33 @@ public final class VelocityCommands {
     List<RegisteredServer> servers = new ArrayList<>(proxy.getAllServers());
     servers.sort(Comparator.comparing(RegisteredServer::getServerInfo));
     return Collections.unmodifiableList(servers);
+  }
+
+  /**
+   * Sends or enqueues a player to a target server. Will throw if the player is already on the target server,
+   * the caller must check this first.
+   * Assumes `player` is connected to this proxy instance.
+   *
+   * @param proxyServer The VelocityServer instance
+   * @param player The player to send or enqueue to `target`
+   * @param target The target server to send or enqueue `player` to
+   */
+  public static void sendOrQueue(VelocityServer proxyServer, Player player, RegisteredServer target) {
+    Objects.requireNonNull(proxyServer, "proxyServer");
+    Objects.requireNonNull(player, "player");
+    Objects.requireNonNull(target, "target");
+
+    ServerConnection connection = player.getCurrentServer().orElse(null);
+    if (connection != null && connection.getServerInfo().getName().equalsIgnoreCase(target.getServerInfo().getName())) {
+      throw new IllegalArgumentException("Player is already on target server.");
+    }
+
+    if (proxyServer.getConfiguration().getQueue().getNoQueueServers().contains(target.getServerInfo().getName())
+            || !proxyServer.isQueueEnabled()
+            || player.hasPermission("velocity.queue.bypass")) {
+      player.createConnectionRequest(target).connectWithIndication();
+    } else {
+      proxyServer.getQueueManager().queue(player, (VelocityRegisteredServer) target);
+    }
   }
 }

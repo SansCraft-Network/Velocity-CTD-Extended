@@ -69,21 +69,12 @@ public class SlashServerCommand implements BuiltinCommand {
     Player player = (Player) ctx.getSource();
 
     ServerConnection connection = player.getCurrentServer().orElse(null);
-    if (connection != null && connection.getServerInfo().getName()
-            .equalsIgnoreCase(registeredServer.getServerInfo().getName())) {
+    if (connection != null && connection.getServer() == registeredServer) {
       player.sendMessage(Component.translatable("velocity.command.slashserver.already-connected"));
       return -1;
     }
 
-    if (server.getConfiguration().getQueue().getNoQueueServers() == null
-            || server.getConfiguration().getQueue().getNoQueueServers().contains(registeredServer.getServerInfo().getName())
-            || !server.isQueueEnabled()
-            || player.hasPermission("velocity.queue.bypass")) {
-      player.createConnectionRequest(registeredServer).connectWithIndication();
-      return Command.SINGLE_SUCCESS;
-    }
-
-    server.getQueueManager().queue(player, registeredServer);
+    VelocityCommands.sendOrQueue(server, player, registeredServer);
     return Command.SINGLE_SUCCESS;
   }
 }

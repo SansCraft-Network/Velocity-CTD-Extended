@@ -309,30 +309,13 @@ public final class VelocityConfiguration implements ProxyConfig {
    * Filter strategy used to select the best proxy from {@link #proxyAddresses}.
    */
   @Expose
-  private String dynamicProxyFilter;
+  private DynamicProxyFilterMode dynamicProxyFilter;
 
   /**
    * Server-specific player cap overrides (used for dynamic balancing).
    */
   @Expose
   private Map<String, Integer> playerCaps;
-
-  private VelocityConfiguration(final Servers servers, final ForcedHosts forcedHosts,
-                                final CommandAliases commandAliases,
-                                final ProxyCommandAliases proxyCommandAliases, final Commands commands,
-                                final Advanced advanced, final Query query, final Metrics metrics,
-                                final Redis redis, final Queue queue) {
-    this.servers = servers;
-    this.forcedHosts = forcedHosts;
-    this.commandAliases = commandAliases;
-    this.proxyCommandAliases = proxyCommandAliases;
-    this.commands = commands;
-    this.advanced = advanced;
-    this.query = query;
-    this.metrics = metrics;
-    this.redis = redis;
-    this.queue = queue;
-  }
 
   private VelocityConfiguration(final String bind, final String motd, final List<String> motdHover,
                                 final int showMaxPlayers, final boolean onlineMode,
@@ -350,7 +333,7 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 final boolean logMinimumVersion, final String minimumVersion,
                                 final Redis redis, final Queue queue, final Map<String, List<String>> slashServers,
                                 final Map<String, List<ServerLink>> serverLinks, final List<ProxyAddress> proxyAddresses,
-                                final String dynamicProxyFilter, final Map<String, Integer> playerCaps) {
+                                final DynamicProxyFilterMode dynamicProxyFilter, final Map<String, Integer> playerCaps) {
     this.bind = bind;
     this.motd = motd;
     this.motdHover = motdHover;
@@ -1101,11 +1084,11 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   /**
-   * Gets the dynamic proxy filter strategy identifier.
+   * Gets the dynamic proxy filter strategy mode.
    *
-   * @return the configured dynamic proxy filter name
+   * @return the configured dynamic proxy filter
    */
-  public String getDynamicProxyFilter() {
+  public DynamicProxyFilterMode getDynamicProxyFilter() {
     return this.dynamicProxyFilter;
   }
 
@@ -1348,10 +1331,11 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
       }
 
-      final List<ProxyAddress> addresses = new ArrayList<>();
-      String filter = "MOST_EMPTY";
+      DynamicProxyFilterMode filter = DynamicProxyFilterMode.MOST_EMPTY;
+      List<ProxyAddress> addresses = new ArrayList<>();
       if (proxyAddressesConfig != null) {
-        filter = proxyAddressesConfig.getOrElse("dynamic-proxy-filter", "MOST_EMPTY");
+        filter = proxyAddressesConfig.getEnumOrElse("dynamic-proxy-filter", filter);
+
         for (CommentedConfig.Entry entry : proxyAddressesConfig.entrySet()) {
           if (entry.getKey().equalsIgnoreCase("dynamic-proxy-filter")) {
             continue;

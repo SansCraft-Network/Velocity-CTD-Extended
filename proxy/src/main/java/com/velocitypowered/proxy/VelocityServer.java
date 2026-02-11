@@ -62,6 +62,7 @@ import com.velocitypowered.proxy.command.builtin.ShutdownCommand;
 import com.velocitypowered.proxy.command.builtin.SlashServerCommand;
 import com.velocitypowered.proxy.command.builtin.TransferCommand;
 import com.velocitypowered.proxy.command.builtin.VelocityCommand;
+import com.velocitypowered.proxy.config.DynamicProxyFilterMode;
 import com.velocitypowered.proxy.config.ProxyAddress;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -1195,12 +1196,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     shutdown(true);
   }
 
-  private ProxyAddress getProxyAddressToUse() {
+  private @Nullable ProxyAddress getProxyAddressToUse() {
     if (!this.isRedisEnabled()) {
       return null;
     }
 
-    final String filter = getConfiguration().getDynamicProxyFilter();
+    DynamicProxyFilterMode filter = getConfiguration().getDynamicProxyFilter();
     List<ProxyAddress> addresses = new ArrayList<>(getConfiguration().getProxyAddresses().stream().toList());
 
     if (isRedisEnabled()) {
@@ -1212,20 +1213,31 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     switch (filter) {
-      case "MOST_EMPTY" -> addresses.sort((o1, o2) -> {
-        int connectedSize1 = redis.getPlayerService().getPlayerEntriesOnProxy(o1.proxyId()).size();
-        int connectedSize2 = redis.getPlayerService().getPlayerEntriesOnProxy(o2.proxyId()).size();
-        return Long.compare(connectedSize1, connectedSize2);
-      });
-      case "LEAST_EMPTY" -> addresses.sort((o1, o2) -> {
-        int connectedSize1 = redis.getPlayerService().getPlayerEntriesOnProxy(o1.proxyId()).size();
-        int connectedSize2 = redis.getPlayerService().getPlayerEntriesOnProxy(o2.proxyId()).size();
-        return Long.compare(connectedSize2, connectedSize1);
-      });
-      case "NONE" -> {
+      case FIRST_FOUND -> {
+        // Don't sort
+      }
+      case MOST_EMPTY -> {
+        // Sort to get most empty first
+        addresses.sort((o1, o2) -> {
+          int connectedSize1 = redis.getPlayerService().getPlayerEntriesOnProxy(o1.proxyId()).size();
+          int connectedSize2 = redis.getPlayerService().getPlayerEntriesOnProxy(o2.proxyId()).size();
+          return Long.compare(connectedSize1, connectedSize2);
+        });
+      }
+      case LEAST_EMPTY -> {
+        // Sort to get least empty first
+        addresses.sort((o1, o2) -> {
+          int connectedSize1 = redis.getPlayerService().getPlayerEntriesOnProxy(o1.proxyId()).size();
+          int connectedSize2 = redis.getPlayerService().getPlayerEntriesOnProxy(o2.proxyId()).size();
+          return Long.compare(connectedSize2, connectedSize1);
+        });
+      }
+      case NONE -> {
+        // No next address
         return null;
       }
       default -> {
+        throw new IllegalStateException("Invalid filter '" + filter + "'.");
       }
     }
 

@@ -165,13 +165,13 @@ try = [
 # Sends you to the first available fallback server, the least populated
 # fallback server, or the most populated fallback server.
 # Available options:
-# - "FIRST_AVAILABLE":    Acts like regular Velocity and sends the player to
-#                         the first available server on the fallbacks list.
-# - "LEAST_POPULATED":    Sends the player to the fallback server
-#                         with the least number of players.
-# - "MOST_POPULATED":     Sends the player to the fallback server
-#                         with the most number of players.
-dynamic-fallbacks-filter = "FIRST_AVAILABLE"
+# - "first_available": Acts like regular Velocity and sends the player to
+#                      the first available server on the fallbacks list.
+# - "least_populated": Sends the player to the fallback server
+#                      with the least number of players.
+# - "most_populated":  Sends the player to the fallback server
+#                      with the most number of players.
+dynamic-fallbacks-filter = "first_available"
 
 # The list of aliases for the "/server" command when the queue system is enabled.
 server-aliases = [
@@ -533,15 +533,15 @@ server = [
 # to be sent to no fallback proxy, the most empty fallback proxy,
 # the least empty fallback proxy, or the first found fallback proxy.
 # Available options:
-# - "FIRST_FOUND":        Sends the player to the first available
-#                         proxy from the "master-proxy-ids" list.
-# - "MOST_EMPTY":         Sends the player to the fallback proxy
-#                         with the least number of players.
-# - "LEAST_EMPTY":        Sends the player to the fallback proxy
-#                         with the most number of players.
-# - "NONE":               Fully kicks the player from the entirety
-#                         of the network and is not sent anywhere.
-dynamic-proxy-filter = "MOST_EMPTY"
+# - "first_found": Sends the player to the first available
+#                  proxy from the "master-proxy-ids" list.
+# - "most_empty":  Sends the player to the fallback proxy
+#                  with the least number of players.
+# - "least_empty": Sends the player to the fallback proxy
+#                  with the most number of players.
+# - "none":        Fully kicks the player from the entirety
+#                  of the network and is not sent anywhere.
+dynamic-proxy-filter = "most_empty"
 
 [proxy-addresses.Proxy-1]
 proxy-id = "Proxy-1"

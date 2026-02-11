@@ -43,14 +43,6 @@ public class CommandMessages {
           "velocity.command.server-does-not-exist", NamedTextColor.RED);
 
   /**
-   * Indicates that multiple servers matched the specified input.
-   *
-   * <p>Translation key: {@code velocity.command.server-multiple-matches}</p>
-   */
-  public static final TranslatableComponent SERVER_MULTIPLE_MATCH = Component.translatable(
-          "velocity.command.server-multiple-matches", NamedTextColor.RED);
-
-  /**
    * Indicates that the specified player could not be found online.
    *
    * <p>Translation key: {@code velocity.command.player-not-found}</p>

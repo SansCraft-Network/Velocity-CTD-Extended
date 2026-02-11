@@ -113,18 +113,24 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   private State loginState = State.START;
 
   /**
+   * The server ID hash sent to Mojang for authentication, or {@code null} if offline-mode.
+   */
+  private final String serverIdHash;
+
+  /**
    * The minimum Minecraft version allowed to connect.
    * Was implemented in Minecraft 1.20.2.
    */
   private final String minimumVersion;
 
   AuthSessionHandler(final VelocityServer server, final LoginInboundConnection inbound,
-                     final GameProfile profile, final boolean onlineMode) {
+                     final GameProfile profile, final boolean onlineMode, final String serverIdHash) {
     this.server = Preconditions.checkNotNull(server, "server");
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
     this.profile = Preconditions.checkNotNull(profile, "profile");
     this.onlineMode = onlineMode;
     this.mcConnection = inbound.delegatedConnection();
+    this.serverIdHash = serverIdHash;
     this.minimumVersion = server.getConfiguration().getMinimumVersion();
   }
 
@@ -333,7 +339,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   private void completeLoginProtocolPhaseAndInitialize(final ConnectedPlayer player) {
     mcConnection.setAssociation(player);
 
-    server.getEventManager().fire(new LoginEvent(player)).thenAcceptAsync(event -> {
+    server.getEventManager().fire(new LoginEvent(player, serverIdHash)).thenAcceptAsync(event -> {
       if (mcConnection.isClosed()) {
         // The player was disconnected
         server.getEventManager().fireAndForget(new DisconnectEvent(player,

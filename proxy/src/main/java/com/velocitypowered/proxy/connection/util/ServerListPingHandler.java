@@ -27,12 +27,9 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PingPassthroughMode;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -239,26 +236,10 @@ public class ServerListPingHandler {
     if (passthroughMode == PingPassthroughMode.DISABLED) {
       return CompletableFuture.completedFuture(constructLocalPing(shownVersion));
     } else {
-      String virtualHostStr = connection.getVirtualHost().map(InetSocketAddress::getHostString)
-          .map(str -> str.toLowerCase(Locale.ROOT))
-          .orElse("");
+      List<String> serversToTry = ForcedHostResolver.resolveServersToTry(server, connection);
+      String virtualHost = ForcedHostResolver.normalizeHostString(connection.getVirtualHost().orElse(null));
 
-      List<String> serversToTry = server.getConfiguration().getForcedHosts().get(virtualHostStr);
-      if (serversToTry == null || serversToTry.isEmpty()) {
-        for (Map.Entry<String, List<String>> entry : server.getConfiguration().getForcedHosts().entrySet()) {
-          String pattern = entry.getKey().toLowerCase(Locale.ROOT);
-          if (pattern.startsWith("*.") && virtualHostStr.endsWith(pattern.substring(1))) {
-            serversToTry = entry.getValue();
-            break;
-          }
-        }
-      }
-
-      if (serversToTry == null || serversToTry.isEmpty()) {
-        serversToTry = server.getConfiguration().getAttemptConnectionOrder();
-      }
-
-      return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHostStr);
+      return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHost);
     }
   }
 }

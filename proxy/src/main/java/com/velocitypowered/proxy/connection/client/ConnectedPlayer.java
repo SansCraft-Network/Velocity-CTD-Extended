@@ -70,6 +70,7 @@ import com.velocitypowered.proxy.connection.player.resourcepack.VelocityResource
 import com.velocitypowered.proxy.connection.player.resourcepack.handler.ResourcePackHandler;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults.Impl;
+import com.velocitypowered.proxy.connection.util.ForcedHostResolver;
 import com.velocitypowered.proxy.connection.util.VelocityInboundConnection;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
@@ -1423,26 +1424,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   private Optional<RegisteredServer> getNextServerToTry(final @Nullable RegisteredServer current) {
     if (serversToTry == null || serversToTry.isEmpty()) {
-      String virtualHostStr = getVirtualHost().map(InetSocketAddress::getHostString)
-          .map(str -> str.toLowerCase(Locale.ROOT))
-          .orElse("");
-
-      List<String> forcedHosts = server.getConfiguration().getForcedHosts().get(virtualHostStr);
-      if (forcedHosts == null || forcedHosts.isEmpty()) {
-        for (Map.Entry<String, List<String>> entry : server.getConfiguration().getForcedHosts().entrySet()) {
-          String pattern = entry.getKey().toLowerCase(Locale.ROOT);
-          if (pattern.startsWith("*.") && virtualHostStr.endsWith(pattern.substring(1))) {
-            forcedHosts = entry.getValue();
-            break;
-          }
-        }
-      }
-
-      if (forcedHosts != null && !forcedHosts.isEmpty()) {
-        serversToTry = forcedHosts;
-      } else {
-        serversToTry = server.getConfiguration().getAttemptConnectionOrder();
-      }
+      serversToTry = ForcedHostResolver.resolveServersToTry(server, this);
     }
 
     DynamicFallbackFilter strategy = server.getConfiguration().getDynamicFallbackFilter();

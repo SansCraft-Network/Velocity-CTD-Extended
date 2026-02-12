@@ -93,7 +93,7 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
         if (server.getConfiguration().enforceChatSigning() && playerKey != null) {
           if (!packet.isUnsigned()
               && playerKey.getKeyRevision().noLessThan(IdentifiedKey.Revision.LINKED_V2)) {
-            logger.fatal("A plugin tried to deny a command with signable component(s). "
+            LOGGER.fatal("A plugin tried to deny a command with signable component(s). "
                 + "This is not supported. "
                 + "Disconnecting player {}. Command packet: {}",
                 player.getUsername(), packet);
@@ -118,7 +118,7 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
         } else {
           if (!packet.isUnsigned() && playerKey != null
               && playerKey.getKeyRevision().noLessThan(IdentifiedKey.Revision.LINKED_V2)) {
-            logger.fatal("A plugin tried to change a command with signed component(s). "
+            LOGGER.fatal("A plugin tried to change a command with signed component(s). "
                 + "This is not supported. "
                 + "Disconnecting player {}. Command packet: {}",
                 player.getUsername(), packet);
@@ -141,7 +141,7 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
 
           if (server.getConfiguration().enforceChatSigning() && !packet.isUnsigned() && playerKey != null
               && playerKey.getKeyRevision().noLessThan(IdentifiedKey.Revision.LINKED_V2)) {
-            logger.fatal("A plugin tried to change a command with signed component(s). "
+            LOGGER.fatal("A plugin tried to change a command with signed component(s). "
                 + "This is not supported. "
                 + "Disconnecting player {}. Command packet: {}",
                 player.getUsername(), packet);

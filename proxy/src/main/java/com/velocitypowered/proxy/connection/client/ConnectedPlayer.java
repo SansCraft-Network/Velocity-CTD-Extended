@@ -185,7 +185,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   /**
    * A structured Adventure component logger instance for logging player-related messages.
    */
-  private static final ComponentLogger logger = ComponentLogger.logger(ConnectedPlayer.class);
+  private static final ComponentLogger LOGGER = ComponentLogger.logger(ConnectedPlayer.class);
 
   /**
    * Provides structured pointers for {@link ConnectedPlayer} to resolve
@@ -1134,7 +1134,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     Component translated = this.translateMessage(reason);
 
     if (server.getConfiguration().isLogPlayerDisconnections()) {
-      logger.info(Component.text(this + " has disconnected: ").append(translated));
+      LOGGER.info(Component.text(this + " has disconnected: ").append(translated));
     }
 
     connection.closeWith(DisconnectPacket.create(translated, this.getProtocolVersion(), connection.getState()));
@@ -1212,9 +1212,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           Argument.string("server", server.getServerInfo().getName()));
     } else {
       if (Boolean.getBoolean("velocity.suppress-connection-timeout-logs")) {
-        logger.error("{}: unable to connect to server {}", this, server.getServerInfo().getName());
+        LOGGER.error("{}: unable to connect to server {}", this, server.getServerInfo().getName());
       } else {
-        logger.error("{}: unable to connect to server {}", this, server.getServerInfo().getName(), wrapped);
+        LOGGER.error("{}: unable to connect to server {}", this, server.getServerInfo().getName(), wrapped);
       }
 
       friendlyError = Component.translatable("velocity.error.connecting-server-error",
@@ -1242,7 +1242,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     String plainTextReason = PASS_THRU_TRANSLATE.serialize(disconnectReason);
     if (connectedServer != null && connectedServer.getServerInfo().equals(server.getServerInfo())) {
       if (this.server.getConfiguration().isLogPlayerConnections()) {
-        logger.info("{}: kicked from server {}: {}", this, server.getServerInfo().getName(), plainTextReason);
+        LOGGER.info("{}: kicked from server {}: {}", this, server.getServerInfo().getName(), plainTextReason);
       }
 
       handleConnectionException(server, disconnectReason,
@@ -1252,7 +1252,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                   Argument.component("reason", disconnectReason)), safe);
     } else {
       if (this.server.getConfiguration().isLogPlayerConnections()) {
-        logger.error("{}: disconnected while connecting to {}: {}", this,
+        LOGGER.error("{}: disconnected while connecting to {}: {}", this,
             server.getServerInfo().getName(), plainTextReason);
       }
 
@@ -1336,7 +1336,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
               switch (status.getStatus()) {
                 // Impossible/nonsensical cases
-                case ALREADY_CONNECTED -> logger.error("{}: already connected to {}", this,
+                case ALREADY_CONNECTED -> LOGGER.error("{}: already connected to {}", this,
                       status.getAttemptedConnection().getServerInfo().getName());
 
                 // Fatal case
@@ -2200,7 +2200,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           // Make sure we don't send any play packets to the player after update start
           connection.addPlayPacketQueueHandler();
         }, connection.eventLoop()).exceptionally((ex) -> {
-          logger.error("Error switching player connection to config state", ex);
+          LOGGER.error("Error switching player connection to config state", ex);
           return null;
         });
   }

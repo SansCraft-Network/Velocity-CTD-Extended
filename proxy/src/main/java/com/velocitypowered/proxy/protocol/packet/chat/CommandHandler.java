@@ -44,7 +44,7 @@ public interface CommandHandler<T extends MinecraftPacket> {
   /**
    * Shared logger for command handler operations.
    */
-  Logger logger = LogManager.getLogger(CommandHandler.class);
+  Logger LOGGER = LogManager.getLogger(CommandHandler.class);
 
   /**
    * Returns the class of packet this handler supports.
@@ -130,12 +130,12 @@ public interface CommandHandler<T extends MinecraftPacket> {
             .thenComposeAsync(event -> futurePacketCreator.apply(event, newLastSeenMessages))
             .thenApply(pkt -> {
               if (server.getConfiguration().isLogCommandExecutions()) {
-                logger.info("{} -> executed command /{}", player, message);
+                LOGGER.info("{} -> executed command /{}", player, message);
               }
 
               return pkt;
             }).exceptionally(e -> {
-              logger.info("Exception occurred while running command for {}", player.getUsername(), e);
+              LOGGER.info("Exception occurred while running command for {}", player.getUsername(), e);
               player.sendMessage(Component.translatable("velocity.command.generic-error", NamedTextColor.RED));
               return null;
             }), timestamp, lastSeenMessages);

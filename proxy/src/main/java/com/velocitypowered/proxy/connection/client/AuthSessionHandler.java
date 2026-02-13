@@ -290,7 +290,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
       if (!this.server.getConfiguration().getServerLinks().isEmpty()) {
         if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
-          String serverName = connectedPlayer.getNextServerToTry().map(s -> s.getServerInfo().getName()).orElse("");
+          String serverName = connectedPlayer.currentServerRetrySession().getNextServerToTry().map(s -> s.getServerInfo().getName()).orElse("");
           List<ServerLink> scopedLinks = server.getConfiguration().getServerLinksFor(serverName);
           connectedPlayer.setServerLinks(scopedLinks);
         }
@@ -383,7 +383,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   }
 
   private CompletableFuture<Void> connectToInitialServer(final ConnectedPlayer player) {
-    Optional<RegisteredServer> initialFromConfig = player.getNextServerToTry();
+    Optional<RegisteredServer> initialFromConfig = player.currentServerRetrySession().getNextServerToTry();
     PlayerChooseInitialServerEvent event =
         new PlayerChooseInitialServerEvent(player, initialFromConfig.orElse(null));
 

@@ -816,7 +816,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     if (!evacuate.isEmpty()) {
       CountDownLatch latch = new CountDownLatch(evacuate.size());
       for (ConnectedPlayer player : evacuate) {
-        Optional<RegisteredServer> next = player.getNextServerToTry();
+        Optional<RegisteredServer> next = player.currentServerRetrySession().getNextServerToTry();
         if (next.isPresent()) {
           player.createConnectionRequest(next.get()).connectWithIndication()
               .whenComplete((success, ex) -> {

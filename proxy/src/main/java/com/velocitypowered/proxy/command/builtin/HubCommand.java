@@ -80,7 +80,7 @@ public class HubCommand implements BuiltinCommand {
     ConnectedPlayer connectedPlayer = currentServer.getPlayer(player.getUniqueId());
     Objects.requireNonNull(connectedPlayer);
 
-    VelocityRegisteredServer nextServer = (VelocityRegisteredServer) connectedPlayer.getNextServerToTry().orElse(null);
+    VelocityRegisteredServer nextServer = (VelocityRegisteredServer) connectedPlayer.currentServerRetrySession().getNextServerToTry().orElse(null);
     if (nextServer == null) {
       player.sendMessage(Component.translatable("velocity.command.no-fallbacks"));
       return 0;

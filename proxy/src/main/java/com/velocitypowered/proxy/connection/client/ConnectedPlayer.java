@@ -110,7 +110,11 @@ import com.velocitypowered.proxy.util.collect.CappedSet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -149,7 +153,6 @@ import net.kyori.adventure.title.Title;
 import net.kyori.adventure.title.Title.Times;
 import net.kyori.adventure.title.TitlePart;
 import net.kyori.adventure.translation.GlobalTranslator;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -232,11 +235,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private PermissionFunction permissionFunction;
 
   /**
-   * The current index into the server fallback list.
-   */
-  private int tryIndex = 0;
-
-  /**
    * The current round-trip ping in milliseconds.
    */
   private long ping = -1;
@@ -307,11 +305,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private final CompletableFuture<Void> teardownFuture = new CompletableFuture<>();
 
   /**
-   * The list of servers to attempt connecting to, used for fallbacks.
-   */
-  private @MonotonicNonNull List<String> serversToTry = null;
-
-  /**
    * The handler responsible for managing resource pack offers and responses.
    */
   private final ResourcePackHandler resourcePackHandler;
@@ -364,6 +357,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    * player transitions between servers.</p>
    */
   private final BossBarManager bossBarManager;
+
+  /**
+   * The currently active server retry session, or `null` if there is no active session.
+   * Used for choosing fallback servers with consistent ordering.
+   */
+  private @Nullable ServerRetrySession serverRetrySession;
 
   ConnectedPlayer(final VelocityServer server, final GameProfile profile, final MinecraftConnection connection,
                   final @Nullable InetSocketAddress virtualHost, final @Nullable String rawVirtualHost, final boolean onlineMode,
@@ -1293,8 +1292,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     boolean kickedFromCurrent = connectedServer == null || connectedServer.getServer().equals(rs);
     ServerKickResult result;
     if (kickedFromCurrent) {
-      Optional<RegisteredServer> next = getNextServerToTry(rs);
-      result = next.map(RedirectPlayer::create).orElseGet(() -> DisconnectPlayer.create(friendlyReason));
+      var retrySession = currentServerRetrySession();
+      retrySession.exclude(rs);
+      Optional<RegisteredServer> next = retrySession.getNextServerToTry();
+
+      result = next.map(RedirectPlayer::create)
+          .orElseGet(() -> DisconnectPlayer.create(friendlyReason));
     } else {
       // If we were kicked by going to another server, the connection should not be in flight
       if (connectionInFlight != null && connectionInFlight.getServer().equals(rs)) {
@@ -1406,71 +1409,34 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   /**
-   * Finds another server to attempt to log into if we were unexpectedly disconnected from the
-   * server.
-   *
-   * @return the next server to try
+   * Returns the currently active retry session, or creates one if there is no active session.
+   * Used for choosing fallback servers with consistent ordering.
    */
-  public Optional<RegisteredServer> getNextServerToTry() {
-    return this.getNextServerToTry(null);
+  public @NonNull ServerRetrySession currentServerRetrySession() {
+    if (serverRetrySession == null) {
+      LOGGER.debug("Creating new server retry session.");
+      serverRetrySession = new ServerRetrySession();
+    }
+
+    if (serverRetrySession.exhausted()) {
+      LOGGER.debug("Fallback server retry session is exhausted.");
+    }
+
+    return serverRetrySession;
   }
 
   /**
-   * Finds another server to attempt to log into if we were unexpectedly disconnected from the
-   * server.
-   *
-   * @param current the "current" server that the player is on, useful as an override
-   * @return the next server to try
+   * Resets the server retry session. Should be called once the session is complete, meaning
+   * a server to connect to has been found and the session can be discarded.
+   * After calling this, the next call of {@code currentServerRetrySession()} will result
+   * in a new session being created.
+   * Used for choosing fallback servers with consistent ordering.
    */
-  private Optional<RegisteredServer> getNextServerToTry(final @Nullable RegisteredServer current) {
-    if (serversToTry == null || serversToTry.isEmpty()) {
-      serversToTry = ForcedHostResolver.resolveServersToTry(server, this);
+  private void resetServerRetrySession() {
+    if (serverRetrySession != null) {
+      LOGGER.debug("Resetting server retry session.");
+      serverRetrySession = null;
     }
-
-    DynamicFallbackFilter strategy = server.getConfiguration().getDynamicFallbackFilter();
-    Optional<RegisteredServer> selectedServer = Optional.empty();
-
-    for (int i = tryIndex; i < serversToTry.size(); i++) {
-      String toTryName = serversToTry.get(i);
-      if ((connectedServer != null && hasSameName(connectedServer.getServer(), toTryName))
-          || (connectionInFlight != null && hasSameName(connectionInFlight.getServer(), toTryName))
-          || (current != null && hasSameName(current, toTryName))) {
-        continue;
-      }
-
-      Optional<RegisteredServer> potentialServer = server.getServer(toTryName);
-      if (potentialServer.isEmpty()) {
-        continue;
-      }
-
-      RegisteredServer registeredServer = potentialServer.get();
-
-      if (selectedServer.isEmpty()) {
-        if (strategy == DynamicFallbackFilter.FIRST_AVAILABLE) {
-          tryIndex = i;
-          return Optional.of(registeredServer);
-        }
-
-        selectedServer = Optional.of(registeredServer);
-        tryIndex = i;
-      } else if (strategy == DynamicFallbackFilter.MOST_POPULATED) {
-        if (registeredServer.getTotalPlayerCount() > selectedServer.get().getTotalPlayerCount()) {
-          selectedServer = Optional.of(registeredServer);
-          tryIndex = i;
-        }
-      } else if (strategy == DynamicFallbackFilter.LEAST_POPULATED) {
-        if (registeredServer.getTotalPlayerCount() < selectedServer.get().getTotalPlayerCount()) {
-          selectedServer = Optional.of(registeredServer);
-          tryIndex = i;
-        }
-      }
-    }
-
-    return selectedServer;
-  }
-
-  private static boolean hasSameName(final RegisteredServer server, final String name) {
-    return server.getServerInfo().getName().equalsIgnoreCase(name);
   }
 
   /**
@@ -1480,7 +1446,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   public void setConnectedServer(final @Nullable VelocityServerConnection serverConnection) {
     this.connectedServer = serverConnection;
-    this.tryIndex = 0;
+    resetServerRetrySession();
 
     if (serverConnection != null && server.isQueueEnabled() && server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
       server.getQueueManager().removePlayerEntirely(get());
@@ -2407,6 +2373,118 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     }
   }
 
+  /**
+   * Used for choosing fallback servers with consistent ordering during a "fallback session".
+   */
+  public final class ServerRetrySession {
+
+    /**
+     * The deque of servers to attempt connecting to.
+     */
+    private final Deque<String> serversToTry;
+
+    private ServerRetrySession() {
+      serversToTry = calculateRetryDeque();
+    }
+
+    private Deque<String> calculateRetryDeque() {
+      List<String> retryList = new ArrayList<>(ForcedHostResolver.resolveServersToTry(server, ConnectedPlayer.this));
+
+      DynamicFallbackFilter strategy = server.getConfiguration().getDynamicFallbackFilter();
+      switch (strategy) {
+        case FIRST_AVAILABLE -> {
+          // nop
+        }
+        case MOST_POPULATED, LEAST_POPULATED -> {
+          Map<String, Integer> playerCounts = calculatePlayerCountMap(retryList);
+          Comparator<String> comparator = Comparator.comparingInt(playerCounts::get);
+          if (strategy == DynamicFallbackFilter.MOST_POPULATED) {
+            comparator = comparator.reversed();
+          }
+
+          retryList.sort(comparator);
+        }
+        default -> throw new IllegalStateException("Unknown dynamic fallback filter " + strategy + ".");
+      }
+
+      return new ArrayDeque<>(retryList);
+    }
+
+    /**
+     * When a {@code ServerRetrySession} is exhausted, calling {@code getNextServerToTry} will always result in an empty Optional.
+     * This method can be used to check this preemptively.
+     *
+     * @return Whether this retry session is exhausted.
+     */
+    public boolean exhausted() {
+      return serversToTry.isEmpty();
+    }
+
+    /**
+     * Excludes a server name from this retry session, meaning it will never be returned by {@code getNextServerToTry()} after this call.
+     *
+     * @param serverName The name of the server to exclude from this session.
+     */
+    public void exclude(String serverName) {
+      serversToTry.remove(serverName);
+    }
+
+    /**
+     * Excludes a server from this retry session, meaning it will never be returned by {@code getNextServerToTry()} after this call.
+     *
+     * @param server The server to exclude from this session.
+     */
+    public void exclude(RegisteredServer server) {
+      exclude(server.getServerInfo().getName());
+    }
+
+    /**
+     * Finds another server to attempt to log into if we were unexpectedly disconnected from the
+     * server.
+     *
+     * @return the next server to try
+     */
+    public Optional<RegisteredServer> getNextServerToTry() {
+      while (!serversToTry.isEmpty()) {
+        String nextServerName = serversToTry.pop();
+
+        if ((connectedServer != null && hasSameName(connectedServer.getServer(), nextServerName))
+            || (connectionInFlight != null && hasSameName(connectionInFlight.getServer(), nextServerName))) {
+          // skip server
+          continue;
+        }
+
+        Optional<RegisteredServer> maybeNextServer = server.getServer(nextServerName);
+        if (maybeNextServer.isEmpty()) {
+          // invalid server
+          continue;
+        }
+
+        return maybeNextServer;
+      }
+
+      // serversToTry is exhausted
+      return Optional.empty();
+    }
+
+    private Map<String, Integer> calculatePlayerCountMap(Collection<String> serverNames) {
+      Map<String, Integer> result = new HashMap<>(serverNames.size());
+      for (String serverName : serverNames) {
+        int playerCount = server.getServer(serverName)
+            .map(s -> (int) s.getTotalPlayerCount())
+            .orElse(0);
+
+        result.put(serverName, playerCount);
+      }
+
+      return result;
+    }
+
+    private boolean hasSameName(final RegisteredServer server, final String name) {
+      return server.getServerInfo().getName().equalsIgnoreCase(name);
+    }
+  }
+
   private static boolean containsString(final TextComponent component, final String searchString) {
     if (component.content().contains(searchString)) {
       return true;
@@ -2433,7 +2511,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   public boolean checkVersionCompatibility(final RegisteredServer server) {
     String serverName = server.getServerInfo().getName();
-    String serverMinimumVersion = ConnectedPlayer.this.server.getConfiguration().getMinimumVersionForServer(serverName);
+    String serverMinimumVersion = this.server.getConfiguration().getMinimumVersionForServer(serverName);
     
     ProtocolVersion minimumProtocolVersion = ProtocolVersion.getVersionByName(serverMinimumVersion);
     ProtocolVersion maximumProtocolVersion = ProtocolVersion.MAXIMUM_VERSION;

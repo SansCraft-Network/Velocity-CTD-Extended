@@ -17,15 +17,17 @@
 
 package com.velocitypowered.proxy.connection.util;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.unmodifiableList;
+
 import com.velocitypowered.api.proxy.InboundConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import java.net.InetSocketAddress;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Contract;
 
 /**
  * Resolves the configured backend server order to try for an inbound connection based on its
@@ -37,17 +39,18 @@ public class ForcedHostResolver {
   }
 
   /**
-   * Returns a lowercase (Locale.ROOT) host string for the given address, or {@code ""} if {@code null}.
+   * Returns a lowercase (Locale.ROOT) host string for the given address, or {@code null} if {@code address} is {@code null}.
    *
    * @param address the socket address to normalize (may be {@code null})
-   * @return the normalized host string, or {@code ""} if {@code address} is {@code null}
+   * @return the normalized host string, or {@code null} if {@code address} is {@code null}
    */
-  public static @NonNull String normalizeHostString(@Nullable InetSocketAddress address) {
-    if (address != null) {
-      return address.getHostString().toLowerCase(Locale.ROOT);
-    } else {
-      return "";
+  @Contract("null -> null; !null -> !null")
+  public static @Nullable String normalizeHostString(@Nullable InetSocketAddress address) {
+    if (address == null) {
+      return null;
     }
+
+    return address.getHostString().toLowerCase(Locale.ROOT);
   }
 
   /**
@@ -62,23 +65,30 @@ public class ForcedHostResolver {
       VelocityServer velocityServer,
       InboundConnection connection
   ) {
-    String virtualHost = normalizeHostString(connection.getVirtualHost().orElse(null));
+    String virtualHost = connection.getVirtualHost()
+        .map(ForcedHostResolver::normalizeHostString)
+        .orElse(null);
+    if (virtualHost != null) {
+      List<String> forcedHosts = velocityServer.getConfiguration()
+          .getForcedHosts()
+          .getOrDefault(virtualHost, emptyList());
 
-    List<String> forcedHosts = velocityServer.getConfiguration().getForcedHosts().get(virtualHost);
-    if (forcedHosts == null || forcedHosts.isEmpty()) {
-      for (Map.Entry<String, List<String>> entry : velocityServer.getConfiguration().getForcedHosts().entrySet()) {
-        String pattern = entry.getKey().toLowerCase(Locale.ROOT);
-        if (pattern.startsWith("*.") && virtualHost.endsWith(pattern.substring(1))) {
-          forcedHosts = entry.getValue();
-          break;
+      // Check for wildcard ("*.server.com" matches "anything.server.com")
+      if (forcedHosts.isEmpty()) {
+        for (Map.Entry<String, List<String>> entry : velocityServer.getConfiguration().getForcedHosts().entrySet()) {
+          String pattern = entry.getKey().toLowerCase(Locale.ROOT);
+          if (pattern.startsWith("*.") && virtualHost.endsWith(pattern.substring(1))) {
+            forcedHosts = entry.getValue();
+            break;
+          }
         }
+      }
+
+      if (!forcedHosts.isEmpty()) {
+        return unmodifiableList(forcedHosts);
       }
     }
 
-    if (forcedHosts != null && !forcedHosts.isEmpty()) {
-      return Collections.unmodifiableList(forcedHosts);
-    }
-
-    return Collections.unmodifiableList(velocityServer.getConfiguration().getAttemptConnectionOrder());
+    return unmodifiableList(velocityServer.getConfiguration().getAttemptConnectionOrder());
   }
 }

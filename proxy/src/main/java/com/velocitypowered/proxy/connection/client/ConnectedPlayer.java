@@ -70,7 +70,7 @@ import com.velocitypowered.proxy.connection.player.resourcepack.VelocityResource
 import com.velocitypowered.proxy.connection.player.resourcepack.handler.ResourcePackHandler;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults.Impl;
-import com.velocitypowered.proxy.connection.util.ForcedHostResolver;
+import com.velocitypowered.proxy.connection.util.FallbackServerResolver;
 import com.velocitypowered.proxy.connection.util.VelocityInboundConnection;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
@@ -2388,7 +2388,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     }
 
     private Deque<String> calculateRetryDeque() {
-      List<String> retryList = new ArrayList<>(ForcedHostResolver.resolveServersToTry(server, ConnectedPlayer.this));
+      List<String> retryList = new ArrayList<>(FallbackServerResolver.resolveServersToTry(server, ConnectedPlayer.this));
 
       DynamicFallbackFilter strategy = server.getConfiguration().getDynamicFallbackFilter();
       switch (strategy) {

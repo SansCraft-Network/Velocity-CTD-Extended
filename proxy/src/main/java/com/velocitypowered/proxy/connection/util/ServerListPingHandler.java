@@ -236,8 +236,8 @@ public class ServerListPingHandler {
     if (passthroughMode == PingPassthroughMode.DISABLED) {
       return CompletableFuture.completedFuture(constructLocalPing(shownVersion));
     } else {
-      List<String> serversToTry = ForcedHostResolver.resolveServersToTry(server, connection);
-      String virtualHost = ForcedHostResolver.normalizeHostString(connection.getVirtualHost().orElse(null));
+      List<String> serversToTry = FallbackServerResolver.resolveServersToTry(server, connection);
+      String virtualHost = FallbackServerResolver.normalizeHostString(connection.getVirtualHost().orElse(null));
 
       return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHost);
     }

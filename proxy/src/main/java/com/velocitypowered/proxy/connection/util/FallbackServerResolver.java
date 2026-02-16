@@ -33,9 +33,9 @@ import org.jetbrains.annotations.Contract;
  * Resolves the configured backend server order to try for an inbound connection based on its
  * virtual host and Velocity's forced-host rules.
  */
-public class ForcedHostResolver {
+public class FallbackServerResolver {
 
-  private ForcedHostResolver() {
+  private FallbackServerResolver() {
   }
 
   /**
@@ -54,8 +54,8 @@ public class ForcedHostResolver {
   }
 
   /**
-   * Returns the forced-host server list for the connection's virtual host (exact match, then {@code *.<suffix>} match),
-   * or falls back to the configured attempt-connection order if no rule matches.
+   * Returns the fallback server list for the connection's virtual host (exact match, then {@code *.<suffix>} match),
+   * or uses the configured attempt-connection order if no rule matches.
    *
    * @param velocityServer the Velocity server instance providing configuration access
    * @param connection the inbound connection whose virtual host is used for forced-host resolution
@@ -66,7 +66,7 @@ public class ForcedHostResolver {
       InboundConnection connection
   ) {
     String virtualHost = connection.getVirtualHost()
-        .map(ForcedHostResolver::normalizeHostString)
+        .map(FallbackServerResolver::normalizeHostString)
         .orElse(null);
     if (virtualHost != null) {
       List<String> forcedHosts = velocityServer.getConfiguration()

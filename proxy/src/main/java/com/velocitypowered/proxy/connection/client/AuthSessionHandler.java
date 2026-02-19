@@ -288,14 +288,6 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
       loginState = State.ACKNOWLEDGED;
       mcConnection.setActiveSessionHandler(StateRegistry.CONFIG, new ClientConfigSessionHandler(server, connectedPlayer));
 
-      if (!this.server.getConfiguration().getServerLinks().isEmpty()) {
-        if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
-          String serverName = connectedPlayer.currentServerRetrySession().getNextServerToTry().map(s -> s.getServerInfo().getName()).orElse("");
-          List<ServerLink> scopedLinks = server.getConfiguration().getServerLinksFor(serverName);
-          connectedPlayer.setServerLinks(scopedLinks);
-        }
-      }
-
       server.getEventManager().fire(new PostLoginEvent(connectedPlayer)).thenCompose(ignored -> connectToInitialServer(connectedPlayer))
           .exceptionally((ex) -> {
             LOGGER.error("Exception while connecting {} to initial server", connectedPlayer, ex);

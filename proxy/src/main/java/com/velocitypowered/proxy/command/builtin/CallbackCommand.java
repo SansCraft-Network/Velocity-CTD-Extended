@@ -37,7 +37,7 @@ public class CallbackCommand implements BuiltinCommand {
 
   @Override
   public String label() {
-    return "velocity:callback";
+    return ClickCallbackManager.COMMAND_LABEL;
   }
 
   @Override

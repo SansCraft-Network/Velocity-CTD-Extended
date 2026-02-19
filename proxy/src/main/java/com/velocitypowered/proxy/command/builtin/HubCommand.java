@@ -27,7 +27,9 @@ import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.connection.util.FallbackServerResolver;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import net.kyori.adventure.text.Component;
@@ -71,7 +73,8 @@ public class HubCommand implements BuiltinCommand {
     VelocityRegisteredServer currentServer = (VelocityRegisteredServer) con.getServer();
     Objects.requireNonNull(con);
 
-    if (server.getConfiguration().getAttemptConnectionOrder().contains(currentServer.getServerInfo().getName())) {
+    List<String> serversToTry = FallbackServerResolver.resolveServersToTry(server, player);
+    if (serversToTry.contains(currentServer.getServerInfo().getName())) {
       player.sendMessage(Component.translatable("velocity.command.hub.fallback-already-connected")
               .arguments(Component.text(currentServer.getServerInfo().getName())));
       return 0;

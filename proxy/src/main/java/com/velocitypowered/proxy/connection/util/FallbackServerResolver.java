@@ -65,27 +65,30 @@ public class FallbackServerResolver {
       VelocityServer velocityServer,
       InboundConnection connection
   ) {
-    String virtualHost = connection.getVirtualHost()
-        .map(FallbackServerResolver::normalizeHostString)
-        .orElse(null);
-    if (virtualHost != null) {
-      List<String> forcedHosts = velocityServer.getConfiguration()
-          .getForcedHosts()
-          .getOrDefault(virtualHost, emptyList());
+    if (velocityServer.getConfiguration().isForcedHostAsFallback()) {
+      String virtualHost = connection.getVirtualHost()
+          .map(FallbackServerResolver::normalizeHostString)
+          .orElse(null);
 
-      // Check for wildcard ("*.server.com" matches "anything.server.com")
-      if (forcedHosts.isEmpty()) {
-        for (Map.Entry<String, List<String>> entry : velocityServer.getConfiguration().getForcedHosts().entrySet()) {
-          String pattern = entry.getKey().toLowerCase(Locale.ROOT);
-          if (pattern.startsWith("*.") && virtualHost.endsWith(pattern.substring(1))) {
-            forcedHosts = entry.getValue();
-            break;
+      if (virtualHost != null) {
+        List<String> forcedHosts = velocityServer.getConfiguration()
+            .getForcedHosts()
+            .getOrDefault(virtualHost, emptyList());
+
+        // Check for wildcard ("*.example.com" matches "anything.example.com")
+        if (forcedHosts.isEmpty()) {
+          for (Map.Entry<String, List<String>> entry : velocityServer.getConfiguration().getForcedHosts().entrySet()) {
+            String pattern = entry.getKey().toLowerCase(Locale.ROOT);
+            if (pattern.startsWith("*.") && virtualHost.endsWith(pattern.substring(1))) {
+              forcedHosts = entry.getValue();
+              break;
+            }
           }
         }
-      }
 
-      if (!forcedHosts.isEmpty()) {
-        return unmodifiableList(forcedHosts);
+        if (!forcedHosts.isEmpty()) {
+          return unmodifiableList(forcedHosts);
+        }
       }
     }
 

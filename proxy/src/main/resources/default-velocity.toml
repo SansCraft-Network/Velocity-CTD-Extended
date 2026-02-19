@@ -191,6 +191,10 @@ server-aliases = [
     "minigames"
 ]
 
+# Whether to use the configured forced hosts as fallback (try) servers,
+# if a player joins through a forced host that's configured.
+forced-host-as-fallback = true
+
 [command-aliases]
 # What commands should have aliases for simpler execution that
 # do not already have a more advanced function or implementation.

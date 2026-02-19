@@ -30,6 +30,7 @@ import com.velocitypowered.api.proxy.server.ServerInfoForwardingMode;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.config.migration.ConfigurationMigration;
+import com.velocitypowered.proxy.config.migration.ForcedHostAsFallbackMigration;
 import com.velocitypowered.proxy.config.migration.ForwardingMigration;
 import com.velocitypowered.proxy.config.migration.KeyAuthenticationMigration;
 import com.velocitypowered.proxy.config.migration.MiniMessageTranslationsMigration;
@@ -671,6 +672,11 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
+  public boolean isForcedHostAsFallback() {
+    return forcedHosts.isForcedHostAsFallback();
+  }
+
+  @Override
   public boolean isCachePlayerProfileResultEnabled() {
     return advanced.isCachePlayerProfileResultEnabled();
   }
@@ -1209,7 +1215,8 @@ public final class VelocityConfiguration implements ProxyConfig {
           new KeyAuthenticationMigration(),
           new MotdMigration(),
           new MiniMessageTranslationsMigration(),
-          new TransferIntegrationMigration()
+          new TransferIntegrationMigration(),
+          new ForcedHostAsFallbackMigration()
       };
 
       for (final ConfigurationMigration migration : migrations) {
@@ -1818,19 +1825,26 @@ public final class VelocityConfiguration implements ProxyConfig {
      */
     private Map<String, List<String>> forcedHosts = ImmutableMap.of();
 
+    private boolean forcedHostAsFallback = true;
+
     private ForcedHosts() {
     }
 
     private ForcedHosts(final CommentedConfig config) {
       if (config != null) {
+        forcedHostAsFallback = config.get("forced-host-as-fallback");
+
         Map<String, List<String>> forcedHosts = new HashMap<>();
         for (UnmodifiableConfig.Entry entry : config.entrySet()) {
+          String key = entry.getKey().toLowerCase(Locale.ROOT);
+          if (key.equals("forced-host-as-fallback")) {
+            continue;
+          }
+
           if (entry.getValue() instanceof String) {
-            forcedHosts.put(entry.getKey().toLowerCase(Locale.ROOT),
-                ImmutableList.of(entry.getValue()));
+            forcedHosts.put(key, ImmutableList.of(entry.getValue()));
           } else if (entry.getValue() instanceof List) {
-            forcedHosts.put(entry.getKey().toLowerCase(Locale.ROOT),
-                ImmutableList.copyOf((List<String>) entry.getValue()));
+            forcedHosts.put(key, ImmutableList.copyOf((List<String>) entry.getValue()));
           } else {
             throw new IllegalStateException(
                 "Invalid value of type " + entry.getValue().getClass() + " in forced hosts!");
@@ -1851,6 +1865,14 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     private void setForcedHosts(final Map<String, List<String>> forcedHosts) {
       this.forcedHosts = forcedHosts;
+    }
+
+    private boolean isForcedHostAsFallback() {
+      return forcedHostAsFallback;
+    }
+
+    private void setForcedHostAsFallback(boolean forcedHostAsFallback) {
+      this.forcedHostAsFallback = forcedHostAsFallback;
     }
 
     @Override

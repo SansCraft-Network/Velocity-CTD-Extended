@@ -29,7 +29,8 @@ public sealed interface ConfigurationMigration permits
         KeyAuthenticationMigration,
         MiniMessageTranslationsMigration,
         MotdMigration,
-        TransferIntegrationMigration {
+        TransferIntegrationMigration,
+        ForcedHostAsFallbackMigration {
 
   /**
    * Determines whether this migration should be applied to the given config.

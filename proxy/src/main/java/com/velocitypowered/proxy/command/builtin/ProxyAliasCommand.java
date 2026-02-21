@@ -17,10 +17,13 @@
 
 package com.velocitypowered.proxy.command.builtin;
 
+import com.mojang.brigadier.tree.CommandNode;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.proxy.command.VelocityCommandManager;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -67,9 +70,45 @@ public class ProxyAliasCommand implements SimpleCommand {
     return CompletableFuture.completedFuture(List.of());
   }
 
+  /**
+   * Used as a requirement check here, not necessarily only for permission-checking.
+   *
+   * @param invocation The invocation used to check requirement predicates of the alias commands.
+   * @return Whether all the alias commands pass the requirement predicate check.
+   */
   @Override
   public boolean hasPermission(@NonNull Invocation invocation) {
-    return true;
+    // If any command doesn't resolve to a CommandNode, default to true to show the suggestion.
+    return passesCommandRequirements(invocation.source()).orElse(true);
+  }
+
+  /**
+   * Checks if the {@code commandSource} passes all requirement predicates of the registered commands
+   * referenced to by the {@code commands} list.
+   *
+   * @param commandSource The {@code CommandSource} to test to the {@code CommandNode<CommandSource>}'s requirement predicate with.
+   * @return {@code Optional.empty()} when any of the commands couldn't be resolved to a {@code CommandNode}.
+   *         {@code Optional.of(true)} if every command can be resolved to a {@code CommandNode} and
+   *         all of its requirement predicates return true.
+   *         {@code Optional.of(false)} if every command can be resolved to a {@code CommandNode} and
+   *         any of its requirement predicates return false.
+   */
+  private Optional<Boolean> passesCommandRequirements(@NonNull CommandSource commandSource) {
+    VelocityCommandManager commandManager = (VelocityCommandManager) server.getCommandManager();
+    for (String command : commands) {
+      String commandRoot = command.split(" ", 2)[0];
+      CommandNode<CommandSource> commandNode = commandManager.getDispatcher().getRoot().getChild(commandRoot);
+      if (commandNode == null) {
+        return Optional.empty();
+      }
+
+      boolean passes = commandNode.getRequirement().test(commandSource);
+      if (!passes) {
+        return Optional.of(false);
+      }
+    }
+
+    return Optional.of(true);
   }
 
   public String alias() {

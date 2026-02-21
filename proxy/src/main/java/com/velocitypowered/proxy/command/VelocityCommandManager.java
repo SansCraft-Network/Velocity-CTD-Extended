@@ -525,6 +525,10 @@ public class VelocityCommandManager implements CommandManager {
     return injector;
   }
 
+  public CommandDispatcher<CommandSource> getDispatcher() {
+    return dispatcher;
+  }
+
   private Executor getAsyncExecutor(final ParseResults<CommandSource> parse) {
     Object registrant;
     if (parse.getContext().getCommand() instanceof VelocityBrigadierCommandWrapper vbcw) {

@@ -72,6 +72,7 @@ import com.velocitypowered.proxy.connection.util.ConnectionMessages;
 import com.velocitypowered.proxy.connection.util.ConnectionRequestResults.Impl;
 import com.velocitypowered.proxy.connection.util.FallbackServerResolver;
 import com.velocitypowered.proxy.connection.util.VelocityInboundConnection;
+import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.packet.BundleDelimiterPacket;
@@ -110,6 +111,7 @@ import com.velocitypowered.proxy.util.collect.CappedSet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1455,6 +1457,51 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     if (serverConnection == connectionInFlight) {
       connectionInFlight = null;
     }
+
+    if (serverConnection != null && server.isQueueEnabled()) {
+      tryAutoQueue(serverConnection);
+    }
+  }
+
+  private void tryAutoQueue(final @NonNull VelocityServerConnection joinedServer) {
+    if (!server.isQueueEnabled() || server.getQueueManager().getQueueCache().isQueued(this)) {
+      return;
+    }
+
+    Map<String, String> autoQueueServers = server.getConfiguration().getQueue().getAutoQueueServers();
+
+    String currentServerName = joinedServer.getServerInfo().getName();
+    VelocityRegisteredServer queueServer = (VelocityRegisteredServer)
+        Optional.ofNullable(autoQueueServers.get(currentServerName))
+            .flatMap(server::getServer)
+            .orElse(null);
+
+    if (queueServer == null) {
+      return;
+    }
+
+    LOGGER.debug("Scheduling auto-queue for {}.", getUsername());
+
+    server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
+      if (connectedServer != joinedServer || connectionInFlight != null) {
+        LOGGER.debug("Aborting auto-queueing {} (server mismatch).", getUsername());
+        return;
+      }
+
+      if (server.getQueueManager().getQueueCache().isQueued(this)) {
+        LOGGER.debug("Aborting auto-queueing {} (now enqueued).", getUsername());
+        return;
+      }
+
+      LOGGER.debug("Auto-queueing {} to server {} because they joined {}.",
+          getUsername(),
+          queueServer.getServerInfo().getName(),
+          joinedServer.getServerInfo().getName());
+
+      server.getQueueManager().queue(this, queueServer);
+    })
+        .delay(Duration.ofSeconds(2))
+        .schedule();
   }
 
   /**

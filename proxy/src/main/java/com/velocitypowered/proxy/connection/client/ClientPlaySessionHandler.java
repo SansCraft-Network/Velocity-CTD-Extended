@@ -806,16 +806,6 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
       serverBossBars.clear();
     }
 
-    if (server.isQueueEnabled()) {
-      final Map<String, String> autoQueueServers = server.getConfiguration().getQueue().getAutoQueueServers();
-
-      final String destinationName = destination.getServerInfo().getName();
-      if (autoQueueServers.containsKey(destinationName)) {
-        server.getQueueManager().getQueueCache().getQueue(autoQueueServers.get(destinationName))
-            .enqueue(player);
-      }
-    }
-
     // Tell the server about the proxy's plugin message channels.
     ProtocolVersion serverVersion = serverMc.getProtocolVersion();
     final Collection<ChannelIdentifier> channels = server.getChannelRegistrar().getChannelsForProtocol(serverMc.getProtocolVersion());

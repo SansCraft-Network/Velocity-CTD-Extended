@@ -62,4 +62,15 @@ public sealed interface QueueCache permits MemoryQueueCache, RedisQueueCache {
    * @param queue the queue to update
    */
   void updateQueue(@NotNull Queue queue);
+
+  /**
+   * Checks whether the player is currently enqueued to a queue.
+   * Equivalent to {@code QueueCache#getQueue(player) != null}
+   *
+   * @param player The player to check
+   * @return Whether the player has a queue or not
+   */
+  default boolean isQueued(@NotNull Player player) {
+    return getQueue(player) != null;
+  }
 }

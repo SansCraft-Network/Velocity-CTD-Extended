@@ -129,7 +129,8 @@ public class ServerListPingHandler {
         new ServerPing.Players(online, configuration.getShowMaxPlayers(), samplePlayers),
         configuration.getMotd(),
         configuration.getFavicon().orElse(null),
-        configuration.isAnnounceForge() ? ModInfo.DEFAULT : null
+        configuration.isAnnounceForge() ? ModInfo.DEFAULT : null,
+        configuration.doesPreventChatReports()
     );
   }
 
@@ -223,7 +224,8 @@ public class ServerListPingHandler {
               fallback.getPlayers().orElse(null),
               response.getDescriptionComponent(),
               fallback.getFavicon().orElse(null),
-              response.getModinfo().orElse(null)
+              response.getModinfo().orElse(null),
+              fallback.getPreventsChatReports()
           );
         }
         return fallback;

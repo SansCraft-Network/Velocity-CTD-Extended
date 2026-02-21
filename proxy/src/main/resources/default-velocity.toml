@@ -452,12 +452,6 @@ banned-reason = [
     "banned"
 ]
 
-# The list of servers that should auto-queue players on join.
-auto-queue-servers = [
-    "limbo-1:factions",
-    "limbo-2:minigames"
-]
-
 # Whether the user should be capable of entering multiple queues at once.
 allow-multi-queue = false
 
@@ -493,6 +487,17 @@ queue-on-shutdown = true
 # If true, players that are sent via the BungeeCord Messaging channels are queued if the server has queueing enabled.
 # If false, they will bypass the queue and be sent directly to the backend.
 override-bungee-messaging = true
+
+[queue.auto-queue-servers]
+# The list of servers that should auto-queue players on join.
+# When a player joins the server on the left, it will enqueue them to the server(s) to the right.
+# If allow-multi-queue is disabled and multiple servers are configured, only the first server will be chosen.
+"minigames-limbo" = [
+    "minigames1",
+    "minigames2"
+]
+
+"factions-limbo" = "factions"
 
 [playercaps]
 # This allows you to define the maximum amount of players that can be on any

@@ -54,7 +54,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
-import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -2817,7 +2816,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     /**
      * A map of key-value server pairs for automatic queuing.
      */
-    private HashMap<String, String> autoQueueServers;
+    private Map<String, List<String>> autoQueueServers;
 
     private Queue(final CommentedConfig config) {
       if (config == null) {
@@ -2841,10 +2840,27 @@ public final class VelocityConfiguration implements ProxyConfig {
       this.queueAdminAliases = config.getOrElse("queue-admin-aliases", new ArrayList<>());
       this.masterProxyIds = config.getOrElse("master-proxy-ids", new ArrayList<>());
       this.bannedReason = config.getOrElse("banned-reason", new ArrayList<>());
-      this.autoQueueServers = config.getOrElse("auto-queue-servers", new ArrayList<String>()).stream()
-          .map(line -> line.split(":", 2))
-          .filter(parts -> parts.length == 2)
-          .collect(Collectors.toMap(parts -> parts[0], parts -> parts[1], (a, b) -> b, HashMap::new));
+      this.autoQueueServers = parseAutoQueueServers(config.get("auto-queue-servers"));
+    }
+
+    private Map<String, List<String>> parseAutoQueueServers(CommentedConfig config) {
+      Map<String, List<String>> autoQueueServers = new HashMap<>();
+      for (UnmodifiableConfig.Entry entry : config.entrySet()) {
+        String key = entry.getKey();
+
+        if (entry.getValue() instanceof String) {
+          String target = entry.getValue();
+          autoQueueServers.put(key, ImmutableList.of(target));
+        } else if (entry.getValue() instanceof List) {
+          List<String> targets = entry.getValue();
+          autoQueueServers.put(key, ImmutableList.copyOf(targets));
+        } else {
+          throw new IllegalStateException(
+              "Invalid value of type " + entry.getValue().getClass() + " in auto queue servers!");
+        }
+      }
+
+      return ImmutableMap.copyOf(autoQueueServers);
     }
 
     /**
@@ -3006,7 +3022,7 @@ public final class VelocityConfiguration implements ProxyConfig {
      *
      * @return a map of key-value server name pairs.
      */
-    public Map<String, String> getAutoQueueServers() {
+    public Map<String, List<String>> getAutoQueueServers() {
       return autoQueueServers;
     }
 

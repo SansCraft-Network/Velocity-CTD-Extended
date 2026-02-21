@@ -53,6 +53,9 @@ public final class ServerPing {
    */
   private final @Nullable ModInfo modinfo;
 
+  /**
+   * Whether the proxy should tell client that proxy prevents chat reports, useful in NoChatReports mod. (1.19+).
+   */
   private final boolean preventsChatReports;
   
   /**
@@ -64,8 +67,23 @@ public final class ServerPing {
    * @param favicon the server's favicon, or {@code null} if not set
    */
   public ServerPing(final Version version, final @Nullable Players players,
-                    final Component description, final @Nullable Favicon favicon, final boolean preventsChatReports) {
-    this(version, players, description, favicon, ModInfo.DEFAULT, preventsChatReports);
+                    final Component description, final @Nullable Favicon favicon) {
+    this(version, players, description, favicon, ModInfo.DEFAULT);
+  }
+
+  /**
+   * Constructs a ServerPing instance.
+   *
+   * @param version the version of the server
+   * @param players the players on the server, or {@code null} if not shown
+   * @param description the MOTD for the server
+   * @param favicon the server's favicon, or {@code null} if not set
+   * @param modinfo the mod info for the server, or {@code null} if not present
+   */
+  public ServerPing(final Version version, final @Nullable Players players,
+                    final Component description, final @Nullable Favicon favicon,
+                    final @Nullable ModInfo modinfo) {
+    this(version, players, description, favicon, modinfo, false);
   }
 
   /**
@@ -135,6 +153,11 @@ public final class ServerPing {
     return Optional.ofNullable(modinfo);
   }
 
+  /**
+   * Whether the proxy should tell client that proxy prevents chat reports, useful in NoChatReports mod. (1.19+).
+   *
+   * @return does prevents chat reports
+   */
   public boolean getPreventsChatReports() {
     return preventsChatReports;
   }
@@ -271,6 +294,9 @@ public final class ServerPing {
      */
     private boolean nullOutModinfo;
 
+    /**
+     * Whether the proxy should tell client that proxy prevents chat reports, useful in NoChatReports mod. (1.19+).
+     */
     private boolean preventsChatReports;
 
     private Builder() {
@@ -441,6 +467,12 @@ public final class ServerPing {
       return this;
     }
 
+    /**
+     * Whether the proxy should tell client that proxy prevents chat reports, useful in NoChatReports mod. (1.19+).
+     *
+     * @param bool does prevents chat reports
+     * @return this builder, for chaining
+     */
     public Builder preventsChatReports(boolean bool) {
       this.preventsChatReports = bool;
       return this;
@@ -538,6 +570,11 @@ public final class ServerPing {
       return mods;
     }
 
+    /**
+     * Whether the proxy should tell client that proxy prevents chat reports, useful in NoChatReports mod. (1.19+).
+     *
+     * @return does prevents chat reports
+     */
     public boolean getPreventsChatReports() {
       return preventsChatReports;
     }

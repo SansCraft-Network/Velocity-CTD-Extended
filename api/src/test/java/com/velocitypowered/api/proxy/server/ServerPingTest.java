@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableList;
 import com.velocitypowered.api.proxy.server.ServerPing.Players;
 import com.velocitypowered.api.proxy.server.ServerPing.SamplePlayer;
 import com.velocitypowered.api.proxy.server.ServerPing.Version;
+import com.velocitypowered.api.util.ModInfo;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ class ServerPingTest {
   void asBuilderConsistency() {
     ServerPing ping = new ServerPing(new Version(404, "1.13.2"),
         new Players(1, 1, ImmutableList.of(new SamplePlayer(Component.text("tuxed"), UUID.randomUUID()))),
-        Component.text("test"), null, false);
+        Component.text("test"), null, ModInfo.DEFAULT, true);
     assertEquals(ping, ping.asBuilder().build());
   }
 }

@@ -33,6 +33,7 @@ import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.Collections;
 import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -63,7 +64,11 @@ public class ServerCommand implements BuiltinCommand {
 
   @Override
   public List<String> aliases() {
-    return server.getConfiguration().getServerAliases();
+    if (server.isQueueEnabled()) {
+      return server.getConfiguration().getServerAliases();
+    } else {
+      return Collections.emptyList();
+    }
   }
 
   @Override

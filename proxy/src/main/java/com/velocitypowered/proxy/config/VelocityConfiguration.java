@@ -270,6 +270,12 @@ public final class VelocityConfiguration implements ProxyConfig {
   private boolean enforceChatSigning = true;
 
   /**
+   * Whether the proxy should tell client that proxy prevents chat reports, useful in NoChatReports mod. (1.19+).
+   */
+  @Expose
+  private boolean preventsChatReports = false;
+
+  /**
    * Whether to translate MiniMessage headers and footers into legacy color codes.
    */
   @Expose
@@ -329,7 +335,7 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 final Query query, final Metrics metrics, final boolean forceKeyAuthentication,
                                 final boolean logPlayerConnections, final boolean logPlayerDisconnections,
                                 final boolean logOfflineConnections, final boolean disableForge,
-                                final boolean enforceChatSigning, final boolean translateHeaderFooter,
+                                final boolean enforceChatSigning, final boolean preventsChatReports, final boolean translateHeaderFooter,
                                 final boolean logMinimumVersion, final String minimumVersion,
                                 final Redis redis, final Queue queue, final Map<String, List<String>> slashServers,
                                 final Map<String, List<ServerLink>> serverLinks, final List<ProxyAddress> proxyAddresses,
@@ -362,6 +368,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     this.logOfflineConnections = logOfflineConnections;
     this.disableForge = disableForge;
     this.enforceChatSigning = enforceChatSigning;
+    this.preventsChatReports = preventsChatReports;
     this.translateHeaderFooter = translateHeaderFooter;
     this.logMinimumVersion = logMinimumVersion;
     this.minimumVersion = minimumVersion;
@@ -586,6 +593,11 @@ public final class VelocityConfiguration implements ProxyConfig {
   @Override
   public boolean isOnlineMode() {
     return onlineMode;
+  }
+
+  @Override
+  public boolean doesPreventChatReports() {
+    return preventsChatReports;
   }
 
   @Override
@@ -1151,6 +1163,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         .add("logOfflineConnections", logOfflineConnections)
         .add("disableForge", disableForge)
         .add("enforceChatSigning", enforceChatSigning)
+        .add("preventsChatReports", preventsChatReports)
         .add("translateHeaderFooter", translateHeaderFooter)
         .add("logMinimumVersion", logMinimumVersion)
         .add("minimumVersion", minimumVersion)
@@ -1288,6 +1301,8 @@ public final class VelocityConfiguration implements ProxyConfig {
       final boolean disableForge = config.getOrElse("disable-forge", false);
       final boolean enforceChatSigning = config.getOrElse(
               "enforce-chat-signing", false);
+      final boolean preventsChatReports = config.getOrElse(
+              "prevents-chat-reports", false);
       final boolean translateHeaderFooter = config.getOrElse(
               "translate-header-footer", true);
       final boolean logMinimumVersion = config.getOrElse(
@@ -1398,6 +1413,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           logOfflineConnections,
           disableForge,
           enforceChatSigning,
+          preventsChatReports,
           translateHeaderFooter,
           logMinimumVersion,
           minimumVersion,

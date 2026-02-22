@@ -1387,7 +1387,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                           .stream()
                           .noneMatch(text -> containsString(kickMsg, text));
 
-                      if (isValidReason && (queue.getState() != QueueState.PAUSED || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
+                      if (isValidReason && (queue.getState() != QueueState.PAUSED
+                          || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
                         queue.enqueue(get());
                       }
                     }

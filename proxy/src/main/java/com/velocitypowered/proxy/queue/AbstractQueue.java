@@ -17,6 +17,10 @@
 
 package com.velocitypowered.proxy.queue;
 
+import static com.velocitypowered.proxy.queue.model.QueueState.FULL;
+import static com.velocitypowered.proxy.queue.model.QueueState.PAUSED;
+import static com.velocitypowered.proxy.queue.model.ServerStatus.ONLINE;
+
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.queue.manager.QueueManager;
@@ -74,7 +78,7 @@ public abstract sealed class AbstractQueue implements Queue
   /**
    * The current online/offline status of the backend server.
    */
-  private ServerStatus status;
+  private ServerStatus serverStatus;
 
   /**
    * The current operational state of the queue (e.g., active, paused, full).
@@ -98,7 +102,7 @@ public abstract sealed class AbstractQueue implements Queue
     this.backendInstance = backendInstance;
     this.internalQueue = new ConcurrentLinkedDeque<>();
 
-    this.status = ServerStatus.OFFLINE;
+    this.serverStatus = ServerStatus.OFFLINE;
     this.state = server.getConfiguration().getQueue().getNoQueueServers()
         .contains(this.backendInstance.getServerInfo().getName()) ? QueueState.INACTIVE : QueueState.ACTIVE;
   }
@@ -114,7 +118,7 @@ public abstract sealed class AbstractQueue implements Queue
                        final @NotNull QueueEntry queueEntry) {
     this(server, backendInstance);
 
-    this.status = queueEntry.getStatus();
+    this.serverStatus = queueEntry.getStatus();
     this.state = queueEntry.getState();
 
     this.internalQueue.clear();
@@ -335,43 +339,13 @@ public abstract sealed class AbstractQueue implements Queue
   }
 
   /**
-   * Checks whether the backend server is currently marked as online.
-   *
-   * @return {@code true} if the server is online, otherwise {@code false}
-   */
-  @Override
-  public boolean isOnline() {
-    return status == ServerStatus.ONLINE;
-  }
-
-  /**
-   * Checks whether this queue is currently paused.
-   *
-   * @return {@code true} if the queue is paused, otherwise {@code false}
-   */
-  @Override
-  public boolean isPaused() {
-    return state == QueueState.PAUSED;
-  }
-
-  /**
-   * Checks whether this queue is currently marked as full.
-   *
-   * @return {@code true} if the queue is full, otherwise {@code false}
-   */
-  @Override
-  public boolean isFull() {
-    return state == QueueState.FULL;
-  }
-
-  /**
    * Gets the current {@link ServerStatus} of the backend server represented by this queue.
    *
    * @return the current server status
    */
   @Override
-  public ServerStatus getStatus() {
-    return status;
+  public ServerStatus getServerStatus() {
+    return serverStatus;
   }
 
   /**
@@ -381,9 +355,9 @@ public abstract sealed class AbstractQueue implements Queue
    * @param status the new server status
    */
   @Override
-  public void setStatus(final ServerStatus status) {
-    if (this.status != status) {
-      this.status = status;
+  public void setServerStatus(final ServerStatus status) {
+    if (this.serverStatus != status) {
+      this.serverStatus = status;
       this.queueManager.getQueueCache().updateQueue(this);
     }
   }
@@ -449,7 +423,7 @@ public abstract sealed class AbstractQueue implements Queue
     int position = getPosition(queuePlayer.getUniqueId());
     if (queuePlayer.isQueueBypass()) {
       return Component.translatable("velocity.queue.player-status.bypass", NamedTextColor.YELLOW);
-    } else if (this.isFull() && !queuePlayer.isFullBypass()) {
+    } else if (state == FULL && !queuePlayer.isFullBypass()) {
       return Component.translatable("velocity.queue.player-status.full", NamedTextColor.YELLOW)
           .arguments(
               Component.text(position),
@@ -460,9 +434,9 @@ public abstract sealed class AbstractQueue implements Queue
     } else if (queuePlayer.isWaitingForConnection()) {
       return Component.translatable("velocity.queue.player-status.connecting", NamedTextColor.YELLOW)
           .arguments(Component.text(this.getName()));
-    } else if (isPaused()) {
+    } else if (state == PAUSED) {
       return Component.translatable("velocity.queue.player-status.paused", NamedTextColor.YELLOW);
-    } else if (isOnline()) {
+    } else if (serverStatus == ONLINE) {
       return Component.translatable("velocity.queue.player-status.online", NamedTextColor.YELLOW)
           .arguments(
               Component.text(position),
@@ -498,8 +472,8 @@ public abstract sealed class AbstractQueue implements Queue
                         Component.translatable("velocity.queue.command.listqueues.hover")
                             .arguments(
                                 Argument.numeric("size", size()),
-                                Argument.string("paused", isPaused() ? "True" : "False"),
-                                Argument.string("online", isOnline() ? "True" : "False")
+                                Argument.string("paused", state == PAUSED ? "True" : "False"),
+                                Argument.string("online", serverStatus == ONLINE ? "True" : "False")
                             ).asHoverEvent()
                     )
             )
@@ -513,7 +487,5 @@ public abstract sealed class AbstractQueue implements Queue
    * @see MemoryQueue#notifyMaxRetriesReached(UUID)
    * @see RedisQueue#notifyMaxRetriesReached(UUID)
    */
-  protected void notifyMaxRetriesReached(final UUID uniqueId) {
-    // Overridden by subclasses - memory, Redis
-  }
+  protected abstract void notifyMaxRetriesReached(final UUID uniqueId);
 }

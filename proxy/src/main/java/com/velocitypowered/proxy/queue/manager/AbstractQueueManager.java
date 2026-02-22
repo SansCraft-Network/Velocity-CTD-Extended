@@ -17,6 +17,13 @@
 
 package com.velocitypowered.proxy.queue.manager;
 
+import static com.velocitypowered.proxy.queue.model.QueueState.ACTIVE;
+import static com.velocitypowered.proxy.queue.model.QueueState.FULL;
+import static com.velocitypowered.proxy.queue.model.QueueState.PAUSED;
+import static com.velocitypowered.proxy.queue.model.ServerStatus.OFFLINE;
+import static com.velocitypowered.proxy.queue.model.ServerStatus.ONLINE;
+import static com.velocitypowered.proxy.queue.model.ServerStatus.WAITING;
+
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.scheduler.ScheduledTask;
@@ -28,8 +35,6 @@ import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.cache.QueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
-import com.velocitypowered.proxy.queue.model.QueueState;
-import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -154,7 +159,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
       }
     }
 
-    if (queue.isPaused() && !config.isAllowPausedQueueJoining()) {
+    if (queue.getState() == PAUSED && !config.isAllowPausedQueueJoining()) {
       player.sendMessage(Component.translatable("velocity.queue.error.paused")
           .arguments(Component.text(targetBackendName)));
       return;
@@ -276,8 +281,8 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
    *
    * <p>The transfer process adheres to the following conditions:</p>
    *
-   * <p>- Only queues in the {@link QueueState#ACTIVE} state are considered.
-   *    - Only queues where the backend server status is {@link ServerStatus#ONLINE} are processed.
+   * <p>- Only queues in the {@code QueueState#ACTIVE} state are considered.
+   *    - Only queues where the backend server status is {@code ServerStatus#ONLINE} are processed.
    *    - Queues with a size greater than 0 are eligible for processing.</p>
    *
    * <p>For each eligible queue:
@@ -293,13 +298,13 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
     }
 
     this.getQueueCache().getQueues().stream()
-        .filter(queue -> queue.getState() == QueueState.ACTIVE)
-        .filter(queue -> queue.getStatus() == ServerStatus.ONLINE)
+        .filter(queue -> queue.getState() == ACTIVE)
+        .filter(queue -> queue.getServerStatus() == ONLINE)
         .filter(queue -> queue.size() > 0)
         .limit(10)
         .forEach(queue -> {
           final QueuePlayer queuePlayer = queue.getQueuePlayers().stream().findFirst().orElse(null);
-          if (queuePlayer == null || queue.isFull() && !queuePlayer.isFullBypass()) {
+          if (queuePlayer == null || queue.getState() == FULL && !queuePlayer.isFullBypass()) {
             return;
           }
 
@@ -345,28 +350,31 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
           s.ping().orTimeout(3, TimeUnit.SECONDS).whenComplete((result, th) -> {
             if (th != null) {
-              queue.setStatus(ServerStatus.OFFLINE);
+              queue.setServerStatus(OFFLINE);
             }
 
-            if (queue.getStatus() == ServerStatus.OFFLINE && th == null) {
-              queue.setStatus(ServerStatus.WAITING);
+            if (queue.getServerStatus() == OFFLINE && th == null) {
+              queue.setServerStatus(WAITING);
               LAST_TURNED_ONLINE_TIME.put(queue.getName(), System.currentTimeMillis());
             }
 
             if (th == null && queue.getQueuePlayers().stream().anyMatch(QueuePlayer::isQueueBypass)) {
-              queue.setStatus(ServerStatus.ONLINE);
+              queue.setServerStatus(ONLINE);
             }
 
             final Long lastOnlineTime = LAST_TURNED_ONLINE_TIME.get(queue.getName());
 
-            if (th == null && lastOnlineTime != null && queue.getStatus() == ServerStatus.WAITING) {
+            if (th == null && lastOnlineTime != null && queue.getServerStatus() == WAITING) {
               double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
               if (System.currentTimeMillis() >= lastOnlineTime + queueDelay) {
-                queue.setStatus(ServerStatus.ONLINE);
+                queue.setServerStatus(ONLINE);
               }
             }
 
-            if (queue.getStatus() != ServerStatus.ONLINE && queue.isOnline()) {
+            // TODO What's going on here? This never runs. Original test was
+            //  `queue.getStatus() != ServerStatus.ONLINE && queue.isOnline()` which
+            //  is exactly the same as the refactored statement here.
+            if (queue.getServerStatus() != ONLINE && queue.getServerStatus() == ONLINE) {
               for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
                 if (queuePlayer.isQueueBypass()) {
                   queuePlayer.transfer();
@@ -375,7 +383,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
               }
             }
           }).exceptionally(throwable -> {
-            queue.setStatus(ServerStatus.OFFLINE);
+            queue.setServerStatus(OFFLINE);
             return null;
           });
         });

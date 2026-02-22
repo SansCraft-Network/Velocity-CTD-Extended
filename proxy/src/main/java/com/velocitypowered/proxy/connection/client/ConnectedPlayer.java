@@ -100,6 +100,7 @@ import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.queue.Queue;
+import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.tablist.InternalTabList;
 import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
@@ -1386,7 +1387,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                           .stream()
                           .noneMatch(text -> containsString(kickMsg, text));
 
-                      if (isValidReason && (!queue.isPaused() || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
+                      if (isValidReason && (queue.getState() != QueueState.PAUSED || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
                         queue.enqueue(get());
                       }
                     }

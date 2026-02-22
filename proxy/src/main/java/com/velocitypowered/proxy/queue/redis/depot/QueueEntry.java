@@ -58,7 +58,7 @@ public final class QueueEntry extends DepotEntry<String, QueueEntry> {
     super(queue.getName());
 
     this.deque.addAll(queue.getQueuePlayers());
-    this.status = queue.getStatus();
+    this.status = queue.getServerStatus();
     this.state = queue.getState();
   }
 

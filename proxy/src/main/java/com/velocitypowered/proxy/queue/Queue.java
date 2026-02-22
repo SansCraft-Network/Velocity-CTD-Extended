@@ -188,39 +188,18 @@ public sealed interface Queue permits AbstractQueue {
   int size();
 
   /**
-   * Checks if the server or queue is currently online.
-   *
-   * @return true if the server or queue is online; false otherwise
-   */
-  boolean isOnline();
-
-  /**
-   * Checks if the server or queue is currently paused.
-   *
-   * @return true if the server or queue is paused; false otherwise
-   */
-  boolean isPaused();
-
-  /**
-   * Checks if the server or queue is currently full.
-   *
-   * @return true if the server or queue is full; false otherwise
-   */
-  boolean isFull();
-
-  /**
    * Retrieves the current status of the backend server in relation to queuing.
    *
-   * @return the current {@code ServerStatus} of the backend server, such as {@code OFFLINE}, {@code WAITING}, or {@code ONLINE}
+   * @return the current {@code ServerStatus} of the backend server
    */
-  ServerStatus getStatus();
+  ServerStatus getServerStatus();
 
   /**
    * Sets the current status of the backend server in relation to queuing.
    *
    * @param status the new {@code ServerStatus} of the backend server
    */
-  void setStatus(ServerStatus status);
+  void setServerStatus(ServerStatus status);
 
   /**
    * Retrieves the current state of the queue.

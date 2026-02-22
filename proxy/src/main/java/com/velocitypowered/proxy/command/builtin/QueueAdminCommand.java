@@ -330,7 +330,7 @@ public class QueueAdminCommand implements BuiltinCommand {
 
     Queue queue = server.getQueue();
     String serverName = server.getServerInfo().getName();
-    if (queue.isPaused()) {
+    if (queue.getState() == QueueState.PAUSED) {
       queue.setState(QueueState.ACTIVE);
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
@@ -361,7 +361,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     }
 
     Queue queue = server.getQueue();
-    if (!queue.isPaused()) {
+    if (queue.getState() != QueueState.PAUSED) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-paused")
               .arguments(Component.text(server.getServerInfo().getName())));
       return -1;

@@ -78,6 +78,13 @@ public interface ProxyConfig {
   boolean isOnlineMode();
 
   /**
+   * Whether the proxy should tell client that proxy prevents chat reports, useful in NoChatReports mod. (1.19+).
+   * 
+   * @return does prevents chat reports
+   */
+  boolean doesPreventChatReports();
+
+  /**
    * If client's ISP/AS sent from this proxy is different from the one from Mojang's
    * authentication server, the player is kicked. This disallows some VPN and proxy
    * connections but is a weak form of protection.

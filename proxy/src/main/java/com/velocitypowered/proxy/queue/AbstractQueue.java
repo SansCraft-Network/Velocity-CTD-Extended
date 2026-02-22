@@ -17,9 +17,8 @@
 
 package com.velocitypowered.proxy.queue;
 
-import static com.velocitypowered.proxy.queue.model.QueueState.FULL;
 import static com.velocitypowered.proxy.queue.model.QueueState.PAUSED;
-import static com.velocitypowered.proxy.queue.model.ServerStatus.ONLINE;
+import static com.velocitypowered.proxy.queue.model.ServerStatus.FULL;
 
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
@@ -423,7 +422,7 @@ public abstract sealed class AbstractQueue implements Queue
     int position = getPosition(queuePlayer.getUniqueId());
     if (queuePlayer.isQueueBypass()) {
       return Component.translatable("velocity.queue.player-status.bypass", NamedTextColor.YELLOW);
-    } else if (state == FULL && !queuePlayer.isFullBypass()) {
+    } else if (serverStatus == FULL && !queuePlayer.isFullBypass()) {
       return Component.translatable("velocity.queue.player-status.full", NamedTextColor.YELLOW)
           .arguments(
               Component.text(position),
@@ -436,7 +435,7 @@ public abstract sealed class AbstractQueue implements Queue
           .arguments(Component.text(this.getName()));
     } else if (state == PAUSED) {
       return Component.translatable("velocity.queue.player-status.paused", NamedTextColor.YELLOW);
-    } else if (serverStatus == ONLINE) {
+    } else if (serverStatus.isActive()) {
       return Component.translatable("velocity.queue.player-status.online", NamedTextColor.YELLOW)
           .arguments(
               Component.text(position),
@@ -473,7 +472,7 @@ public abstract sealed class AbstractQueue implements Queue
                             .arguments(
                                 Argument.numeric("size", size()),
                                 Argument.string("paused", state == PAUSED ? "True" : "False"),
-                                Argument.string("online", serverStatus == ONLINE ? "True" : "False")
+                                Argument.string("online", serverStatus.isActive() ? "True" : "False")
                             ).asHoverEvent()
                     )
             )

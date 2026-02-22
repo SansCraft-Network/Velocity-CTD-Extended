@@ -48,9 +48,9 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
   private final Map<String, Integer> queuePriority;
 
   /**
-   * Whether this player is permitted to bypass full queue restrictions.
+   * Whether this player is permitted to bypass full server restrictions.
    */
-  private boolean fullQueueBypass = false;
+  private boolean fullServerBypass = false;
 
   /**
    * Whether this player is permitted to bypass queue placement entirely.
@@ -88,7 +88,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
     this(player.getUniqueId(), player.getUsername(), proxyId);
 
     this.setServer(player.getCurrentServer().orElse(null));
-    this.fullQueueBypass = player.hasPermission("velocity.queue.full.bypass");
+    this.fullServerBypass = player.hasPermission("velocity.queue.full.bypass");
     this.queueBypass = player.hasPermission("velocity.queue.bypass");
     this.queuePriority.putAll(player.getQueuePriorities());
   }
@@ -135,12 +135,12 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
   }
 
   /**
-   * Checks whether the player bypasses full queues.
+   * Checks whether the player bypasses full servers.
    *
-   * @return {@code true} if the player bypasses full queues, {@code false} otherwise
+   * @return {@code true} if the player bypasses full servers, {@code false} otherwise
    */
-  public boolean isFullQueueBypass() {
-    return fullQueueBypass;
+  public boolean isFullServerBypass() {
+    return fullServerBypass;
   }
 
   /**

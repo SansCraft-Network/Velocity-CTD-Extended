@@ -216,7 +216,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   private final Redis redis;
 
   /**
-   * Queue configuration used for handling players attempting to connect to full servers.
+   * Queue configuration used for handling players attempting to connect to servers.
    */
   @Expose
   private final Queue queue;

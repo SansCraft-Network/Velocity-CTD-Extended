@@ -37,5 +37,21 @@ public enum ServerStatus {
   /**
    * Indicates the backend server is online and able to accept player connections.
    */
-  ONLINE
+  ONLINE,
+
+  /**
+   * Indicates the backend server is online but has reached its maximum player capacity.
+   * Players without the full-server bypass permission will not be transferred until a slot opens.
+   */
+  FULL;
+
+  /**
+   * Returns {@code true} if the backend server is in any active state, meaning it is reachable
+   * and eligible for player transfers. This covers both {@link #ONLINE} and {@link #FULL}.
+   *
+   * @return {@code true} for {@code ONLINE} and {@code FULL}, {@code false} otherwise
+   */
+  public boolean isActive() {
+    return this == ONLINE || this == FULL;
+  }
 }

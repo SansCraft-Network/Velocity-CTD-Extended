@@ -78,7 +78,7 @@ public record QueuePlayerData(@NotNull UUID uniqueId, @NotNull String username, 
         playerEntry.getUniqueId(),
         playerEntry.getUsername(),
         playerEntry.getQueuePriorities().getOrDefault(queue.getName(), 0),
-        playerEntry.isFullQueueBypass(),
+        playerEntry.isFullServerBypass(),
         playerEntry.isQueueBypass()
     );
   }

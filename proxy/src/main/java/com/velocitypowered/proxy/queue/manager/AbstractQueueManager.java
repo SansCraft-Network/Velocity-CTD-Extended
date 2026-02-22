@@ -18,8 +18,8 @@
 package com.velocitypowered.proxy.queue.manager;
 
 import static com.velocitypowered.proxy.queue.model.QueueState.ACTIVE;
-import static com.velocitypowered.proxy.queue.model.QueueState.FULL;
 import static com.velocitypowered.proxy.queue.model.QueueState.PAUSED;
+import static com.velocitypowered.proxy.queue.model.ServerStatus.FULL;
 import static com.velocitypowered.proxy.queue.model.ServerStatus.OFFLINE;
 import static com.velocitypowered.proxy.queue.model.ServerStatus.ONLINE;
 import static com.velocitypowered.proxy.queue.model.ServerStatus.WAITING;
@@ -35,6 +35,7 @@ import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.cache.QueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
+import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -287,7 +288,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
    *
    * <p>For each eligible queue:
    * - The first {@link QueuePlayer} in the queue is retrieved.
-   * - The player will not be transferred if the queue is full, unless the player has a full bypass flag.
+   * - The player will not be transferred if the server is full, unless the player has a full bypass flag.
    * - If the conditions are met, the player is transferred using the {@code pollFirst} method.</p>
    *
    * <p>If the current proxy is not a master proxy, the method exits without performing any operation.</p>
@@ -299,12 +300,12 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     this.getQueueCache().getQueues().stream()
         .filter(queue -> queue.getState() == ACTIVE)
-        .filter(queue -> queue.getServerStatus() == ONLINE)
+        .filter(queue -> queue.getServerStatus().isActive())
         .filter(queue -> queue.size() > 0)
         .limit(10)
         .forEach(queue -> {
           final QueuePlayer queuePlayer = queue.getQueuePlayers().stream().findFirst().orElse(null);
-          if (queuePlayer == null || queue.getState() == FULL && !queuePlayer.isFullBypass()) {
+          if (queuePlayer == null || (queue.getServerStatus() == FULL && !queuePlayer.isFullBypass())) {
             return;
           }
 
@@ -317,23 +318,19 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
    * associated queues accordingly. This method processes only a limited number of servers
    * to avoid overwhelming the system.
    *
-   * <p>The method performs the following operations:</p>
+   * <p>Status transitions driven by each ping result:</p>
+   * <ul>
+   *   <li>Ping fails → {@code OFFLINE}.</li>
+   *   <li>Ping succeeds, was {@code OFFLINE} → {@code WAITING}; warmup timer starts.</li>
+   *   <li>Ping succeeds, already {@code ONLINE} or {@code FULL} → {@code ONLINE} or {@code FULL}
+   *       based on the server's self-reported player count (kept continuously in sync).</li>
+   *   <li>Ping succeeds, still {@code WAITING}, warmup delay elapsed → {@code ONLINE} or
+   *       {@code FULL} based on player count.</li>
+   * </ul>
    *
-   * <p>- Retrieves the list of queues from the queue cache and processes up to 5 of them.
-   *    - For each queue, attempts to retrieve the associated registered server.
-   *    - Uses asynchronous ping for each server with a timeout of 3 seconds.
-   *    - Updates the queue status based on the ping result:
-   *    - If the server is unreachable (i.e., throws an exception), the queue status is set to {@code OFFLINE}.
-   *    - If the server becomes reachable after being offline, the queue status is set to {@code WAITING}
-   * and the last online time is recorded.
-   * - If the server remains reachable and contains queue players with a bypass flag, the status is set
-   * to {@code ONLINE}.
-   * - If the {@code WAITING} status persists and the configured delay threshold is exceeded, the queue
-   * status changes to {@code ONLINE}.
-   * - For queues that are not {@code ONLINE} but have players configured as online, those players with bypass
-   * flags are transferred out of the queue.
-   *
-   * <p>The method leverages the asynchronous ping mechanism and timeout handling to avoid blocking operations.</p>
+   * <p>{@code FULL} is set when the server's self-reported online count equals or exceeds its
+   * maximum capacity; {@code ONLINE} is set otherwise. If the server does not report player
+   * counts the status defaults to {@code ONLINE}.</p>
    */
   private void pingBackends() {
     if (this.getQueueCache() == null) {
@@ -351,35 +348,34 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
           s.ping().orTimeout(3, TimeUnit.SECONDS).whenComplete((result, th) -> {
             if (th != null) {
               queue.setServerStatus(OFFLINE);
+              return;
             }
 
-            if (queue.getServerStatus() == OFFLINE && th == null) {
+            // Determine active status from the server's self-reported player count.
+            // If the server does not report player counts, default to ONLINE.
+            final boolean serverFull = result.getPlayers()
+                .map(players -> players.getMax() > 0 && players.getOnline() >= players.getMax())
+                .orElse(false);
+            final ServerStatus activeStatus = serverFull ? FULL : ONLINE;
+
+            // Server was offline - start the warmup period before sending players.
+            if (queue.getServerStatus() == OFFLINE) {
               queue.setServerStatus(WAITING);
               LAST_TURNED_ONLINE_TIME.put(queue.getName(), System.currentTimeMillis());
             }
 
-            if (th == null && queue.getQueuePlayers().stream().anyMatch(QueuePlayer::isQueueBypass)) {
-              queue.setServerStatus(ONLINE);
+            // Already in an active state - keep ONLINE/FULL in sync with player count.
+            if (queue.getServerStatus().isActive()) {
+              queue.setServerStatus(activeStatus);
+              return;
             }
 
+            // Still in WAITING - check whether the warmup delay has elapsed.
             final Long lastOnlineTime = LAST_TURNED_ONLINE_TIME.get(queue.getName());
-
-            if (th == null && lastOnlineTime != null && queue.getServerStatus() == WAITING) {
-              double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
+            if (lastOnlineTime != null) {
+              final double queueDelay = this.server.getConfiguration().getQueue().getQueueDelay() * 1000;
               if (System.currentTimeMillis() >= lastOnlineTime + queueDelay) {
-                queue.setServerStatus(ONLINE);
-              }
-            }
-
-            // TODO What's going on here? This never runs. Original test was
-            //  `queue.getStatus() != ServerStatus.ONLINE && queue.isOnline()` which
-            //  is exactly the same as the refactored statement here.
-            if (queue.getServerStatus() != ONLINE && queue.getServerStatus() == ONLINE) {
-              for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
-                if (queuePlayer.isQueueBypass()) {
-                  queuePlayer.transfer();
-                  queue.dequeue(queuePlayer.getUniqueId(), false);
-                }
+                queue.setServerStatus(activeStatus);
               }
             }
           }).exceptionally(throwable -> {

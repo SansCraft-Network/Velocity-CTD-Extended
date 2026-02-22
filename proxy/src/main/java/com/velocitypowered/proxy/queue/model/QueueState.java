@@ -36,11 +36,6 @@ public enum QueueState {
   ACTIVE,
 
   /**
-   * Indicates that the queue is in a full state, meaning it cannot accept any additional elements.
-   */
-  FULL,
-
-  /**
    * Indicates that the queue is in a paused state.
    * In this state, the queue temporarily halts its operations
    * and does not process new elements until it is resumed.

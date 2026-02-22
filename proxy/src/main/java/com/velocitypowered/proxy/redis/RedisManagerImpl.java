@@ -625,7 +625,7 @@ public class RedisManagerImpl {
         logger.error("Proxy ID '{}' is still marked as running. Killing"
             + " your proxies with Redis enabled is not suggested. Please wait"
             + " for Redis to automatically determine whether the proxy is online or not.", proxyId);
-        System.exit(0);
+        System.exit(1);
       }
     } catch (Exception e) {
       throw new IllegalStateException("Failed to validate Proxy ID.", e);

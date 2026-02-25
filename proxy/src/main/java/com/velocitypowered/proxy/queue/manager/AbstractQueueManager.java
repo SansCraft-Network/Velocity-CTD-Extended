@@ -37,7 +37,10 @@ import com.velocitypowered.proxy.queue.cache.QueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
@@ -298,18 +301,23 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
       return;
     }
 
-    this.getQueueCache().getQueues().stream()
+    Set<UUID> transferred = new HashSet<>();
+    getQueueCache().getQueues().stream()
         .filter(queue -> queue.getState() == ACTIVE)
         .filter(queue -> queue.getServerStatus().isActive())
         .filter(queue -> queue.size() > 0)
         .limit(10)
         .forEach(queue -> {
           final QueuePlayer queuePlayer = queue.getQueuePlayers().stream().findFirst().orElse(null);
-          if (queuePlayer == null || (queue.getServerStatus() == FULL && !queuePlayer.isFullBypass())) {
+          if (queuePlayer == null
+                  || (queue.getServerStatus() == FULL && !queuePlayer.isFullBypass())
+                  || transferred.contains(queuePlayer.getUniqueId())) {
             return;
           }
 
           this.pollFirst(queue, queuePlayer);
+
+          transferred.add(queuePlayer.getUniqueId());
         });
   }
 

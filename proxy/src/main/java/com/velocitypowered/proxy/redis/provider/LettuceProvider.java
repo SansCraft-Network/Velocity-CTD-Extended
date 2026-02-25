@@ -179,8 +179,6 @@ public final class LettuceProvider extends AbstractRedisProvider {
     this.publisher.publish(CHANNEL, PacketSerializer.serialize(packet)).whenComplete((received, throwable) -> {
       if (throwable != null) {
         LOGGER.warn("Failed to publish packet to '{}' channel", CHANNEL, throwable);
-      } else {
-        LOGGER.debug("Successfully published packet to '{}' channel, received by {} clients", CHANNEL, received);
       }
     });
   }

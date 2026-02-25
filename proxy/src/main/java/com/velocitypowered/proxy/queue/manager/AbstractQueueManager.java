@@ -180,12 +180,16 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
   @Override
   public final void onPlayerDisconnect(final Player player) {
-    final long timeout = getTimeoutInSeconds(player);
+    if (server.isShuttingDown()) {
+      removePlayerEntirely(player);
+      return;
+    }
 
-    if (timeout == -1 || this.server.isShuttingDown()) {
+    long timeout = getTimeoutInSeconds(player);
+    if (timeout == -1) {
       removePlayerEntirely(player);
     } else {
-      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () ->
+      server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () ->
           removePlayerEntirely(player)).delay(timeout, TimeUnit.SECONDS).schedule();
     }
   }

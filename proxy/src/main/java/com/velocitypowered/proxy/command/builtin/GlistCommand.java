@@ -129,13 +129,22 @@ public class GlistCommand implements BuiltinCommand {
 
   private void sendTotalProxyCount(CommandSource target) {
     int online = server.getPlayerCount();
+
+    String msgKey = (online == 1)
+        ? "velocity.command.glist-player-singular"
+        : "velocity.command.glist-player-plural";
+
+    if (server.isRedisEnabled()) {
+      msgKey += "-proxy-plural";
+    }
+
     TranslatableComponent.Builder msg = Component.translatable()
-            .key(online == 1
-                    ? "velocity.command.glist-player-singular"
-                    : "velocity.command.glist-player-plural"
-            ).color(NamedTextColor.YELLOW)
-            .arguments(
-                    Argument.string("players", Integer.toString(online)));
+        .key(msgKey)
+        .color(NamedTextColor.YELLOW)
+        .arguments(
+            Argument.string("players", Integer.toString(online))
+        );
+
     target.sendMessage(msg.build());
   }
 

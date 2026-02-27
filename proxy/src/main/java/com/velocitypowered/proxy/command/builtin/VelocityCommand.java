@@ -215,13 +215,13 @@ public class VelocityCommand implements BuiltinCommand {
     if (server.isRedisEnabled()) {
       reload = reload.then(
               BrigadierCommand.requiredArgumentBuilder("proxy", StringArgumentType.string())
-                      .suggests((ctx, builder) -> VelocityCommands.suggestProxy(server, ctx, builder))
+                      .suggests(VelocityCommands.suggestProxy(server, "proxy"))
                       .executes(new ReloadRemote(server))
       );
 
       uptime = uptime.then(
               BrigadierCommand.requiredArgumentBuilder("proxy", StringArgumentType.string())
-                      .suggests((ctx, builder) -> VelocityCommands.suggestProxy(server, ctx, builder))
+                      .suggests(VelocityCommands.suggestProxy(server, "proxy"))
                       .executes(new UptimeRemote(server))
       );
     }

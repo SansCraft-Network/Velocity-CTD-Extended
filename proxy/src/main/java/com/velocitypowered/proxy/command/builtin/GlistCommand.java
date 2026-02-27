@@ -49,6 +49,7 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 public class GlistCommand implements BuiltinCommand {
 
   private static final String SERVER_ARG = "server";
+  private static final String SERVER_ALL = "all";
 
   private final VelocityServer server;
 
@@ -70,24 +71,7 @@ public class GlistCommand implements BuiltinCommand {
             .executes(this::totalCount);
     ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
             .requiredArgumentBuilder(SERVER_ARG, StringArgumentType.string())
-            .suggests((context, builder) -> {
-              String argument = context.getArguments().containsKey(SERVER_ARG)
-                      ? context.getArgument(SERVER_ARG, String.class)
-                      : "";
-
-              for (RegisteredServer server : server.getAllServers()) {
-                String serverName = server.getServerInfo().getName();
-                if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
-                  builder.suggest(serverName);
-                }
-              }
-
-              if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
-                builder.suggest("all");
-              }
-
-              return builder.buildFuture();
-            })
+            .suggests(VelocityCommands.suggestServer(server, SERVER_ARG, true, false, SERVER_ALL))
             .executes(this::serverCount)
             .build();
 
@@ -108,7 +92,7 @@ public class GlistCommand implements BuiltinCommand {
   private int serverCount(CommandContext<CommandSource> context) {
     CommandSource source = context.getSource();
     String serverName = getString(context, SERVER_ARG);
-    if (serverName.equalsIgnoreCase("all")) {
+    if (serverName.equalsIgnoreCase(SERVER_ALL)) {
       for (RegisteredServer server : VelocityCommands.sortedServerList(server)) {
         sendServerPlayers(source, true, server);
       }

@@ -66,7 +66,7 @@ public class LeaveQueueCommand implements BuiltinCommand {
             .requires(source -> source.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)
             .then(BrigadierCommand
                     .requiredArgumentBuilder("server", StringArgumentType.word())
-                    .suggests(VelocityCommands.suggestServer(server, "server", false))
+                    .suggests(VelocityCommands.suggestServer(server, "server", false, true))
                     .executes(this::leaveQueue)
             )
             .executes(this::leaveAllQueuesNoRedis);

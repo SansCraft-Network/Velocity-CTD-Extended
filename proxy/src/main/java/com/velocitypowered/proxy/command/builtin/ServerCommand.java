@@ -86,7 +86,7 @@ public class ServerCommand implements BuiltinCommand {
           return Command.SINGLE_SUCCESS;
         })
         .then(BrigadierCommand.requiredArgumentBuilder(SERVER_ARG, StringArgumentType.word())
-            .suggests(VelocityCommands.suggestServer(server, SERVER_ARG, true))
+            .suggests(VelocityCommands.suggestServer(server, SERVER_ARG, true, true))
             .executes(ctx -> {
               Player player = (Player) ctx.getSource();
               VelocityRegisteredServer registeredServer = VelocityCommands.getServer(server, ctx, SERVER_ARG, true);

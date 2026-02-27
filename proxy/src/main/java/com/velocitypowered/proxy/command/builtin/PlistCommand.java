@@ -45,6 +45,7 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 public class PlistCommand implements BuiltinCommand {
 
   private static final String SERVER_ARG = "server";
+  private static final String SERVER_ALL = "all";
 
   private static final String PROXY_ARG = "proxy";
 
@@ -72,28 +73,11 @@ public class PlistCommand implements BuiltinCommand {
             .executes(this::totalCount);
     ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
             .requiredArgumentBuilder(PROXY_ARG, StringArgumentType.string())
-            .suggests((ctx, builder) -> VelocityCommands.suggestProxy(server, ctx, builder))
+            .suggests(VelocityCommands.suggestProxy(server, PROXY_ARG))
             .executes(this::proxyCount)
             .then(
                     BrigadierCommand.requiredArgumentBuilder(SERVER_ARG, StringArgumentType.string())
-                            .suggests((context, builder) -> {
-                              String argument = context.getArguments().containsKey(SERVER_ARG)
-                                      ? context.getArgument(SERVER_ARG, String.class)
-                                      : "";
-
-                              for (RegisteredServer registeredServer : server.getAllServers()) {
-                                String serverName = registeredServer.getServerInfo().getName();
-                                if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
-                                  builder.suggest(serverName);
-                                }
-                              }
-
-                              if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
-                                builder.suggest("all");
-                              }
-
-                              return builder.buildFuture();
-                            })
+                            .suggests(VelocityCommands.suggestServer(server, SERVER_ARG, true, false, SERVER_ALL))
                             .executes(this::serverCount)
                             .build()
             )

@@ -50,6 +50,7 @@ import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -58,6 +59,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -320,32 +322,36 @@ public final class VelocityCommands {
    * @param server the proxy server
    * @param argName the name of the string argument to complete
    * @param allowNonQueueable whether to suggest a server if the server has queueing disabled
+   * @param performPermissionCheck whether to perform permission checks before including a server as a suggestion.
+   *                               {@code magicServers}, if any, will also be included in this permission check.
+   *                               {@code "velocity.command.server.<name>"} will be used as the permission.
+   * @param magicServers "magic servers" to add, if any. useful for including an "all" argument option.
    * @return a suggestion provider that completes a server name
    */
   public static SuggestionProvider<CommandSource> suggestServer(final VelocityServer server, final String argName,
-                                                                final boolean allowNonQueueable) {
+                                                                final boolean allowNonQueueable, final boolean performPermissionCheck,
+                                                                final String... magicServers) {
     return (ctx, builder) -> {
-      boolean allowNonQueueable0 = allowNonQueueable;
       final String argument = ctx.getArguments().containsKey(argName)
           ? StringArgumentType.getString(ctx, argName)
           : "";
 
       VelocityConfiguration.Queue queueConfig = server.getConfiguration().getQueue();
 
-      if (!queueConfig.isEnabled()) {
-        allowNonQueueable0 = true;
-      }
+      List<String> possibilities = server.getAllServers().stream()
+          .map(s -> s.getServerInfo().getName())
+          .filter(s -> allowNonQueueable || !queueConfig.isEnabled() || !queueConfig.getNoQueueServers().contains(s))
+          .collect(Collectors.toList());
 
-      for (final RegisteredServer sv : server.getAllServers()) {
-        final String serverName = sv.getServerInfo().getName();
-        if (!allowNonQueueable0 && queueConfig.getNoQueueServers().contains(serverName)) {
-          continue;
-        }
+      possibilities.addAll(Arrays.asList(magicServers));
 
-        if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
-          if (ctx.getSource().getPermissionValue("velocity.command.server." + serverName) != Tristate.FALSE) {
-            builder.suggest(serverName);
+      for (String possibility : possibilities) {
+        if (possibility.regionMatches(true, 0, argument, 0, argument.length())) {
+          if (performPermissionCheck && ctx.getSource().getPermissionValue("velocity.command.server." + possibility) == Tristate.FALSE) {
+            continue;
           }
+
+          builder.suggest(possibility);
         }
       }
 
@@ -424,25 +430,30 @@ public final class VelocityCommands {
   }
 
   /**
-   * Suggests the name of a connected proxy.
+   * Generates a suggestion provider to complete the name of a proxy.
    *
-   * @param server the proxy server instance
-   * @param context the context passed to the {@code suggests} callback
-   * @param builder the builder passed to the {@code builder} callback
+   * @param server the proxy server
+   * @param magicProxies "magic proxies" to add, if any. useful for including an "all" argument option.
    * @return a future that resolves to the suggestions
    */
-  public static CompletableFuture<Suggestions> suggestProxy(final VelocityServer server, final CommandContext<CommandSource> context,
-                                                            final SuggestionsBuilder builder) {
-    final String argument = context.getArguments().containsKey("proxy")
-        ? context.getArgument("proxy", String.class)
-        : "";
-    for (String proxyId : server.getRedis().getProxyService().getAllProxyIds()) {
-      if (proxyId.toLowerCase().regionMatches(true, 0, argument.toLowerCase(), 0, argument.length())) {
-        builder.suggest(proxyId);
-      }
-    }
+  public static SuggestionProvider<CommandSource> suggestProxy(final VelocityServer server, final String argName,
+                                                               final String... magicProxies) {
+    return (ctx, builder) -> {
+      final String argument = ctx.getArguments().containsKey(argName)
+          ? ctx.getArgument(argName, String.class)
+          : "";
 
-    return builder.buildFuture();
+      List<String> possibilities = new ArrayList<>(server.getRedis().getProxyService().getAllProxyIds());
+      possibilities.addAll(Arrays.asList(magicProxies));
+
+      for (String possibility : possibilities) {
+        if (possibility.toLowerCase().regionMatches(true, 0, argument.toLowerCase(), 0, argument.length())) {
+          builder.suggest(possibility);
+        }
+      }
+
+      return builder.buildFuture();
+    };
   }
 
   /**

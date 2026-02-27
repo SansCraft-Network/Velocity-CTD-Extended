@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.queue.manager;
 
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.cache.MemoryQueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
@@ -73,10 +74,13 @@ public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCa
   }
 
   @Override
-  public void broadcastActionBar(final Queue queue, final Function<QueuePlayer, Component> component) {
-    for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
-      this.server.getPlayer(queuePlayer.getUniqueId()).ifPresent(player ->
-          player.sendActionBar(component.apply(queuePlayer)));
-    }
+  public void sendActionBar(final QueuePlayer queuePlayer) {
+    server.getPlayer(queuePlayer.getUniqueId())
+        .ifPresent(player -> {
+          AbstractQueue queue = (AbstractQueue) queuePlayer.getQueue();
+          Component actionBarComponent = queue.createActionbarComponent(queuePlayer);
+
+          player.sendActionBar(actionBarComponent);
+        });
   }
 }

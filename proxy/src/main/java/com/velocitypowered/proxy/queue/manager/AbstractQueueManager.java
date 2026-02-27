@@ -31,13 +31,15 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.cache.QueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -83,6 +85,12 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
    * Scheduled task responsible for periodically pinging backend servers to update their status.
    */
   private ScheduledTask backendHandshakeTask;
+
+  /**
+   * Ever-increasing tick number to handle looping over multiple queues predictably
+   * for the action bar task.
+   */
+  private int actionBarTick = 0;
 
   /**
    * Constructs a new {@link AbstractQueueManager}.
@@ -272,14 +280,37 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
 
     final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
     this.actionBarTask = this.server.getScheduler()
-        .buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-          for (Queue queue : this.getQueueCache().getQueues()) {
-            this.broadcastActionBar(queue, player -> ((AbstractQueue) queue).createActionbarComponent(player));
-          }
-        })
+        .buildTask(VelocityVirtualPlugin.INSTANCE, this::sendActionBars)
         .delay((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
         .repeat((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
         .schedule();
+  }
+
+  /**
+   * Responsible for broadcasting action bar messages to players in queues.
+   */
+  private void sendActionBars() {
+    // Map of Player UUIDs to the List of their QueuePlayer objects.
+    // If `enable-multi-queue` is `true`, each player may be
+    // referenced to by multiple QueuePlayer instances.
+    Map<UUID, List<QueuePlayer>> uuidToQueuePlayers = new HashMap<>();
+
+    for (Queue queue : this.getQueueCache().getQueues()) {
+      for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
+        uuidToQueuePlayers.computeIfAbsent(queuePlayer.getUniqueId(), k -> new ArrayList<>())
+            .add(queuePlayer);
+      }
+    }
+
+    for (List<QueuePlayer> queuePlayerList : uuidToQueuePlayers.values()) {
+      // Dividing by 2 here results in choosing the next queue to send
+      // information about every two seconds.
+      int index = (actionBarTick / 2) % queuePlayerList.size();
+      QueuePlayer queuePlayer = queuePlayerList.get(index);
+      sendActionBar(queuePlayer);
+    }
+
+    actionBarTick++;
   }
 
   /**

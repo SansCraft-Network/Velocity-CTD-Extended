@@ -110,8 +110,7 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
    * Broadcasts an action bar message to all players in the specified queue.
    * The message is generated for each player using the provided {@link Function}.
    *
-   * @param queue the queue whose players will receive the broadcasted message
-   * @param component a function that generates the message {@link Component} for each
+   * @param queuePlayer the queue player and its queue context to send the action bar to
    */
-  void broadcastActionBar(Queue queue, Function<QueuePlayer, Component> component);
+  void sendActionBar(QueuePlayer queuePlayer);
 }

@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.queue.manager;
 
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.cache.RedisQueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
@@ -123,10 +124,11 @@ public final class RedisQueueManager extends AbstractQueueManager<RedisQueueCach
   }
 
   @Override
-  public void broadcastActionBar(final Queue queue, final Function<QueuePlayer, Component> component) {
-    for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
-      new VelocityActionBar(queuePlayer.getUniqueId(), component.apply(queuePlayer))
-          .publish();
-    }
+  public void sendActionBar(final QueuePlayer queuePlayer) {
+    AbstractQueue queue = (AbstractQueue) queuePlayer.getQueue();
+    Component actionBarComponent = queue.createActionbarComponent(queuePlayer);
+
+    new VelocityActionBar(queuePlayer.getUniqueId(), actionBarComponent)
+        .publish();
   }
 }

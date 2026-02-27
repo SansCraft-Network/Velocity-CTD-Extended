@@ -232,6 +232,15 @@ public final class QueuePlayer {
   }
 
   /**
+   * Retrieves the queue associated with this {@code QueuePlayer} instance.
+   *
+   * @return the queue
+   */
+  public Queue getQueue() {
+    return queue;
+  }
+
+  /**
    * Retrieves the name of the queue associated with this {@code QueuePlayer} instance.
    *
    * @return the name of the queue

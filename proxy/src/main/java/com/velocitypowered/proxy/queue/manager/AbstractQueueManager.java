@@ -341,7 +341,6 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
         .filter(queue -> queue.getState() == ACTIVE)
         .filter(queue -> queue.getServerStatus().isActive())
         .filter(queue -> queue.size() > 0)
-        .limit(10)
         .forEach(queue -> {
           final QueuePlayer queuePlayer = queue.getQueuePlayers().stream().findFirst().orElse(null);
           if (queuePlayer == null
@@ -381,7 +380,6 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
     }
 
     this.getQueueCache().getQueues().stream()
-        .limit(5)
         .forEach(queue -> {
           RegisteredServer s = this.server.getServer(queue.getName()).orElse(null);
           if (s == null) {

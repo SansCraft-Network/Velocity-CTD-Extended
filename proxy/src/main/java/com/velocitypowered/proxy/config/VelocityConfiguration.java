@@ -1319,8 +1319,7 @@ public final class VelocityConfiguration implements ProxyConfig {
             List<String> value = ImmutableList.copyOf((List<String>) entry.getValue());
             slashServers.put(entry.getKey(), value);
           } else {
-            throw new IllegalStateException(
-                "Invalid value of type " + entry.getValue().getClass() + " in slash servers!");
+            logger.warn("Invalid value of type {} in slash servers!", entry.getValue().getClass());
           }
         }
       }
@@ -1861,8 +1860,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           } else if (entry.getValue() instanceof List) {
             forcedHosts.put(key, ImmutableList.copyOf((List<String>) entry.getValue()));
           } else {
-            throw new IllegalStateException(
-                "Invalid value of type " + entry.getValue().getClass() + " in forced hosts!");
+            logger.warn("Invalid value of type {} in forced hosts!", entry.getValue().getClass());
           }
         }
 

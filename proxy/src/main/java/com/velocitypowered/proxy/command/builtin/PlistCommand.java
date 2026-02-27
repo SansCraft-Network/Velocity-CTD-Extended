@@ -38,6 +38,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Implements Velocity-CTD's {@code /plist} command.
@@ -48,6 +49,7 @@ public class PlistCommand implements BuiltinCommand {
   private static final String SERVER_ALL = "all";
 
   private static final String PROXY_ARG = "proxy";
+  private static final String PROXY_ALL = "all";
 
   private final VelocityServer server;
 
@@ -73,7 +75,7 @@ public class PlistCommand implements BuiltinCommand {
             .executes(this::totalCount);
     ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
             .requiredArgumentBuilder(PROXY_ARG, StringArgumentType.string())
-            .suggests(VelocityCommands.suggestProxy(server, PROXY_ARG))
+            .suggests(VelocityCommands.suggestProxy(server, PROXY_ARG, PROXY_ALL))
             .executes(this::proxyCount)
             .then(
                     BrigadierCommand.requiredArgumentBuilder(SERVER_ARG, StringArgumentType.string())
@@ -89,10 +91,14 @@ public class PlistCommand implements BuiltinCommand {
 
   private int totalCount(CommandContext<CommandSource> context) {
     CommandSource source = context.getSource();
-    sendTotalProxyCount(source, this.server.getProxyId(), this.server.getPlayerCount());
-    source.sendMessage(
-            Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW)
-                    .arguments(Argument.string("alias", VelocityCommands.readAlias(context.getNodes()))));
+    sendTotalProxyCount(source, null, this.server.getPlayerCount());
+
+    if (!context.getArguments().containsKey(PROXY_ARG)) {
+      source.sendMessage(
+          Component.translatable("velocity.command.plist-view-proxy", NamedTextColor.YELLOW)
+              .arguments(Argument.string("alias", VelocityCommands.readAlias(context.getNodes()))));
+    }
+
     return Command.SINGLE_SUCCESS;
   }
 
@@ -111,36 +117,41 @@ public class PlistCommand implements BuiltinCommand {
     String proxyName = getString(context, PROXY_ARG);
     String serverName = getString(context, SERVER_ARG);
 
-    Optional<String> validatedProxy = validateProxy(proxyName, context.getSource());
-    if (validatedProxy.isEmpty()) {
-      return Command.SINGLE_SUCCESS;
+    String validatedProxy;
+    if (proxyName.equalsIgnoreCase(PROXY_ALL)) {
+      validatedProxy = null;
+    } else {
+      validatedProxy = validateProxy(proxyName, context.getSource()).orElse(null);
+      if (validatedProxy == null) {
+        return Command.SINGLE_SUCCESS;
+      }
     }
 
-    if ("all".equalsIgnoreCase(serverName)) {
-      List<PlayerEntry> allPlayers = new ArrayList<>();
+    if (serverName.equalsIgnoreCase(SERVER_ALL)) {
+      int totalPlayers = 0;
       for (RegisteredServer registeredServer : server.getAllServers()) {
-        List<PlayerEntry> serverPlayers =
-                new ArrayList<>(this.server.getRedis().getPlayerService().getPlayerEntriesOnProxy(validatedProxy.get()));
-        serverPlayers.removeIf(player -> !player.getServerName().equalsIgnoreCase(registeredServer.getServerInfo().getName()));
-        allPlayers.addAll(serverPlayers);
-        sendServerPlayers(context.getSource(), validatedProxy.get(), registeredServer, true);
+        int serverTotalPlayers = sendServerPlayers(context.getSource(), validatedProxy, registeredServer, true);
+        totalPlayers += serverTotalPlayers;
       }
 
-      sendTotalProxyCount(context.getSource(), validatedProxy.get(), allPlayers.size());
+      sendTotalProxyCount(context.getSource(), validatedProxy, totalPlayers);
       return Command.SINGLE_SUCCESS;
     }
 
-    Optional<RegisteredServer> validatedServer = validateServer(serverName, context.getSource());
-    if (validatedServer.isEmpty()) {
+    RegisteredServer validatedServer = validateServer(serverName, context.getSource()).orElse(null);
+    if (validatedServer == null) {
       return Command.SINGLE_SUCCESS;
     }
 
-    sendServerPlayers(context.getSource(), validatedProxy.get(), validatedServer.get(), false);
+    sendServerPlayers(context.getSource(), validatedProxy, validatedServer, false);
     return Command.SINGLE_SUCCESS;
   }
 
   private int proxyCount(CommandContext<CommandSource> context) {
     String proxyName = getString(context, PROXY_ARG);
+    if (proxyName.equals(PROXY_ALL)) {
+      return totalCount(context);
+    }
 
     Optional<String> validatedProxy = validateProxy(proxyName, context.getSource());
     if (validatedProxy.isEmpty()) {
@@ -163,34 +174,50 @@ public class PlistCommand implements BuiltinCommand {
             });
   }
 
-  private void sendTotalProxyCount(CommandSource target, String proxyId, int online) {
-    TranslatableComponent.Builder msg = Component.translatable()
-            .key(online == 1
-                    ? "velocity.command.plist-player-singular"
-                    : "velocity.command.plist-player-plural"
-            ).color(NamedTextColor.YELLOW)
-            .arguments(
-                    Argument.numeric("count", online),
-                    Argument.string("proxy", proxyId));
+  private void sendTotalProxyCount(CommandSource target, @Nullable String proxyId, int online) {
+    TranslatableComponent.Builder msg;
+    if (proxyId != null) {
+      msg = Component.translatable()
+          .key(online == 1
+              ? "velocity.command.plist-player-singular"
+              : "velocity.command.plist-player-plural"
+          ).color(NamedTextColor.YELLOW)
+          .arguments(
+              Argument.numeric("count", online),
+              Argument.string("proxy", proxyId)
+          );
+    } else {
+      msg = Component.translatable()
+          .key(online == 1
+              ? "velocity.command.plist-global-player-singular"
+              : "velocity.command.plist-global-player-plural"
+          ).color(NamedTextColor.YELLOW)
+          .arguments(
+              Argument.numeric("count", online)
+          );
+    }
+
     target.sendMessage(msg.build());
   }
 
-  private void sendServerPlayers(CommandSource target,
-                                 String proxyId,
+  // Returns total player count
+  private int sendServerPlayers(CommandSource target,
+                                 @Nullable String proxyId,
                                  RegisteredServer server,
-                                 boolean fromAll) {
+                                 boolean ignoreEmpty) {
     List<Component> players = new ArrayList<>();
     int totalPlayers = 0;
 
-    for (PlayerEntry playerEntry : this.server.getRedis().getPlayerService().getPlayerEntriesOnProxy(proxyId)) {
-      if (server.getServerInfo().getName().equalsIgnoreCase(playerEntry.getServerName())) {
+    for (PlayerEntry playerEntry : this.server.getRedis().getPlayerService().getAll()) {
+      if ((proxyId == null || playerEntry.getProxyId().equalsIgnoreCase(proxyId))
+          && server.getServerInfo().getName().equalsIgnoreCase(playerEntry.getServerName())) {
         players.add(Component.text(playerEntry.getUsername()));
         totalPlayers++;
       }
     }
 
-    if (fromAll && totalPlayers == 0) {
-      return;
+    if (ignoreEmpty && totalPlayers == 0) {
+      return 0;
     }
 
     Component playerList = players.stream()
@@ -203,5 +230,7 @@ public class PlistCommand implements BuiltinCommand {
                     Argument.component("players", playerList)
             )
     );
+
+    return totalPlayers;
   }
 }

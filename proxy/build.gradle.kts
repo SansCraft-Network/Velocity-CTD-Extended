@@ -102,6 +102,16 @@ tasks {
         val configurateBuildTask = project(":deprecated-configurate3").tasks.named("shadowJar")
         dependsOn(configurateBuildTask)
         from(zipTree(configurateBuildTask.map { it.outputs.files.singleFile }))
+
+        // Embed :velocity-luckperms-integration as META-INF/velocityctd/integrations/velocity-luckperms-integration.jar
+        val lpJar = project(":velocity-luckperms-integration")
+            .tasks
+            .named<Jar>("jar")
+        dependsOn(lpJar)
+        from(lpJar.flatMap { it.archiveFile }) {
+            into("META-INF/velocityctd/integrations")
+            rename { "velocity-luckperms-integration.jar" }
+        }
     }
 
     runShadow {

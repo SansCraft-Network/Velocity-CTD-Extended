@@ -208,7 +208,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
             } else if (permissionFunction instanceof AdvancedPermissionResolver) {
               player.setPermissionResolver((AdvancedPermissionResolver) permissionFunction);
             } else {
-              player.setPermissionResolver(createPermissionResolverAdapter(permissionFunction));
+              player.setPermissionResolver(createPermissionResolverAdapter(player, permissionFunction));
             }
 
             startLoginCompletion(player);

@@ -150,7 +150,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
     } else if (permissionFunction instanceof AdvancedPermissionResolver) {
       this.permissionResolver = (AdvancedPermissionResolver) permissionFunction;
     } else {
-      this.permissionResolver = createPermissionResolverAdapter(permissionFunction);
+      this.permissionResolver = createPermissionResolverAdapter(this, permissionFunction);
     }
   }
 

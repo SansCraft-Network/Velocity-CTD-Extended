@@ -17,16 +17,19 @@
 
 package com.velocitypowered.proxy.console;
 
-import static com.velocitypowered.api.permission.PermissionFunction.ALWAYS_TRUE;
+import static com.velocitypowered.proxy.permission.AdvancedPermissionResolverAdapterFactory.createPermissionResolverAdapter;
 
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.permission.PermissionFunction;
+import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import net.kyori.adventure.audience.MessageType;
 import net.kyori.adventure.identity.Identity;
 import net.kyori.adventure.permission.PermissionChecker;
@@ -45,6 +48,7 @@ import org.apache.logging.log4j.io.IoBuilder;
 import org.apache.logging.log4j.message.ParameterizedMessageFactory;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jline.reader.Candidate;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -55,6 +59,12 @@ import org.jline.reader.LineReaderBuilder;
  */
 @SuppressWarnings("UnstableApiUsage")
 public final class VelocityConsole extends SimpleTerminalConsole implements ConsoleCommandSource {
+
+  /**
+   * The default {@link AdvancedPermissionResolver} to use when no other resolver is provided
+   * by plugins through the {@link PermissionsSetupEvent}.
+   */
+  private static final AdvancedPermissionResolver DEFAULT_PERMISSION_RESOLVER = AdvancedPermissionResolver.ALWAYS_TRUE;
 
   /**
    * The logger used for standard logging output.
@@ -72,9 +82,9 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   private final VelocityServer server;
 
   /**
-   * The permission function applied to the console. Defaults to {@link PermissionFunction#ALWAYS_TRUE}.
+   * The permission resolver applied to the console. Defaults to {@link AdvancedPermissionResolver#ALWAYS_TRUE}.
    */
-  private PermissionFunction permissionFunction = ALWAYS_TRUE;
+  private AdvancedPermissionResolver permissionResolver = DEFAULT_PERMISSION_RESOLVER;
 
   /**
    * The pointer registry for this console instance.
@@ -103,7 +113,14 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
 
   @Override
   public @NonNull Tristate getPermissionValue(final @NonNull String permission) {
-    return this.permissionFunction.getPermissionValue(permission);
+    return permissionResolver.getPermissionValue(permission);
+  }
+
+  @Override
+  @NonNull
+  @Unmodifiable
+  public Map<String, Boolean> getPermissionMap() {
+    return permissionResolver.getPermissionMap();
   }
 
   /**
@@ -118,16 +135,22 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
    * Sets up permissions for the console.
    */
   public void setupPermissions() {
-    PermissionsSetupEvent event = new PermissionsSetupEvent(this, s -> ALWAYS_TRUE);
+    PermissionsSetupEvent event = new PermissionsSetupEvent(this, s -> DEFAULT_PERMISSION_RESOLVER);
     // we can safely block here, this is before any listeners fire
-    this.permissionFunction = this.server.getEventManager().fire(event).join().createFunction(this);
-    if (this.permissionFunction == null) {
+    PermissionProvider permissionProvider = this.server.getEventManager().fire(event).join().getProvider();
+
+    PermissionFunction permissionFunction = permissionProvider.createFunction(this);
+    if (permissionFunction == null) {
       LOGGER.error(
           "A plugin permission provider {} provided an invalid permission function"
               + " for the console. This is a bug in the plugin, not in Velocity. Falling"
               + " back to the default permission function.",
-          event.getProvider().getClass().getName());
-      this.permissionFunction = ALWAYS_TRUE;
+          permissionProvider.getClass().getName());
+      this.permissionResolver = DEFAULT_PERMISSION_RESOLVER;
+    } else if (permissionFunction instanceof AdvancedPermissionResolver) {
+      this.permissionResolver = (AdvancedPermissionResolver) permissionFunction;
+    } else {
+      this.permissionResolver = createPermissionResolverAdapter(permissionFunction);
     }
   }
 

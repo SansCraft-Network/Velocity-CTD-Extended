@@ -67,6 +67,8 @@ public final class PermissionsSetupEvent {
 
   /**
    * Uses the provider function to obtain a {@link PermissionFunction} for the subject.
+   * Implementation may return a {@link com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver} instead.
+   * The caller may check for this to use the more advanced permission operations.
    *
    * @param subject the subject
    * @return the obtained permission function
@@ -85,7 +87,8 @@ public final class PermissionsSetupEvent {
   }
 
   /**
-   * Sets the {@link PermissionFunction} that should be used for the subject.
+   * Sets the {@link PermissionProvider} that should provide the {@link PermissionFunction} for this subject.
+   * This may be a {@link com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver} instead.
    *
    * <p>Specifying <code>null</code> will reset the provider to the default
    * instance given when the event was posted.</p>

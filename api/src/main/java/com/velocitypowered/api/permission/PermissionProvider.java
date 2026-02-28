@@ -15,6 +15,8 @@ public interface PermissionProvider {
 
   /**
    * Creates a {@link PermissionFunction} for the subject.
+   * Implementation may return a {@link com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver} instead.
+   * The caller may check for this to use the more advanced permission operations.
    *
    * @param subject the subject
    * @return the function

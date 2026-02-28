@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) 2018-2026 Velocity Contributors
+ *
+ * The Velocity API is licensed under the terms of the MIT License. For more details,
+ * reference the LICENSE file in the api top-level directory.
+ */
+
+package com.velocitypowered.api.permission.advanced;
+
+import com.velocitypowered.api.permission.PermissionFunction;
+import com.velocitypowered.api.permission.Tristate;
+import java.util.Map;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.Unmodifiable;
+
+/**
+ * An extension of {@link PermissionFunction} that allows the implementation of some more complex methods.
+ */
+public interface AdvancedPermissionResolver extends PermissionFunction {
+
+  /**
+   * A simple advanced permission resolver adapter backed by {@link PermissionFunction#ALWAYS_TRUE}.
+   */
+  AdvancedPermissionResolver ALWAYS_TRUE = new SimplePermissionResolverAdapter(PermissionFunction.ALWAYS_TRUE);
+
+  /**
+   * A simple advanced permission resolver adapter backed by {@link PermissionFunction#ALWAYS_FALSE}.
+   */
+  AdvancedPermissionResolver ALWAYS_FALSE = new SimplePermissionResolverAdapter(PermissionFunction.ALWAYS_FALSE);
+
+  /**
+   * A simple advanced permission resolver adapter backed by {@link PermissionFunction#ALWAYS_UNDEFINED}.
+   */
+  AdvancedPermissionResolver ALWAYS_UNDEFINED = new SimplePermissionResolverAdapter(PermissionFunction.ALWAYS_UNDEFINED);
+
+  /**
+   * Gets the subjects setting for a particular permission.
+   *
+   * @param permission the permission
+   * @return the value the permission is set to
+   */
+  @Override
+  @NonNull
+  Tristate getPermissionValue(String permission);
+
+  /**
+   * Gets the subjects permission map.
+   *
+   * @return the permission map
+   */
+  @NonNull
+  @Unmodifiable
+  Map<String, Boolean> getPermissionMap();
+}

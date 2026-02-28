@@ -42,9 +42,8 @@ import com.velocitypowered.api.event.player.configuration.PlayerEnterConfigurati
 import com.velocitypowered.api.network.HandshakeIntent;
 import com.velocitypowered.api.network.ProtocolState;
 import com.velocitypowered.api.network.ProtocolVersion;
-import com.velocitypowered.api.permission.PermissionFunction;
-import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.permission.Tristate;
+import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
@@ -160,6 +159,7 @@ import net.kyori.adventure.translation.GlobalTranslator;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 /**
  * Represents a player connected to the proxy.
@@ -184,11 +184,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       PlainTextComponentSerializer.builder().flattener(TranslatableMapper.FLATTENER).build();
 
   /**
-   * The default permission provider used if none is explicitly assigned to the player.
+   * The default permission resolver used if none is explicitly assigned to the player.
    *
    * <p>Always returns {@link Tristate#UNDEFINED} for any permission query.</p>
    */
-  static final PermissionProvider DEFAULT_PERMISSIONS = s -> PermissionFunction.ALWAYS_UNDEFINED;
+  protected static final AdvancedPermissionResolver DEFAULT_PERMISSION_RESOLVER = AdvancedPermissionResolver.ALWAYS_UNDEFINED;
 
   /**
    * A structured Adventure component logger instance for logging player-related messages.
@@ -234,9 +234,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private GameProfile profile;
 
   /**
-   * The permission function used to evaluate permission checks for this player.
+   * The permission resolver used to evaluate permission checks for this player.
    */
-  private PermissionFunction permissionFunction;
+  private AdvancedPermissionResolver permissionResolver;
 
   /**
    * The current round-trip ping in milliseconds.
@@ -377,7 +377,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     this.virtualHost = virtualHost;
     this.rawVirtualHost = rawVirtualHost;
     this.handshakeIntent = handshakeIntent;
-    this.permissionFunction = PermissionFunction.ALWAYS_UNDEFINED;
+    this.permissionResolver = DEFAULT_PERMISSION_RESOLVER;
     this.connectionPhase = connection.getType().getInitialClientPhase();
     this.onlineMode = onlineMode;
     this.clientsideChannels = CappedSet.create(MAX_CLIENTSIDE_PLUGIN_CHANNELS);
@@ -713,12 +713,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   /**
-   * Sets the permission function to evaluate permissions for this player.
+   * Sets the permission resolver to evaluate permissions for this player.
    *
-   * @param permissionFunction the new permission function
+   * @param permissionResolver the new permission resolver
    */
-  void setPermissionFunction(final PermissionFunction permissionFunction) {
-    this.permissionFunction = permissionFunction;
+  protected void setPermissionResolver(final AdvancedPermissionResolver permissionResolver) {
+    this.permissionResolver = permissionResolver;
   }
 
   /**
@@ -1611,15 +1611,17 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     return "[connected player] " + profile.getName() + " (" + playerIp + ")";
   }
 
-  /**
-   * Evaluates the given permission string using the current {@link PermissionFunction}.
-   *
-   * @param permission the permission to check
-   * @return the tristate result of the permission evaluation
-   */
   @Override
+  @NonNull
   public Tristate getPermissionValue(final String permission) {
-    return permissionFunction.getPermissionValue(permission);
+    return permissionResolver.getPermissionValue(permission);
+  }
+
+  @Override
+  @NonNull
+  @Unmodifiable
+  public Map<String, Boolean> getPermissionMap() {
+    return permissionResolver.getPermissionMap();
   }
 
   /**

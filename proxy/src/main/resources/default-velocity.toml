@@ -540,6 +540,7 @@ server = [
 # Proxy addresses are specified to ensure that the player
 # can be transferred using the "/transfer" command and
 # does not require Redis to be activated for use.
+# The proxy IP must be reachable by the clients (do not use the internal IP).
 
 # This allows you to specify whether you would like your players
 # to be sent to no fallback proxy, the most empty fallback proxy,
@@ -557,10 +558,10 @@ dynamic-proxy-filter = "most_empty"
 
 [proxy-addresses.Proxy-1]
 proxy-id = "Proxy-1"
-ip = "127.0.0.1"
+ip = "203.0.113.50"
 port = 25565
 
 [proxy-addresses.Proxy-2]
 proxy-id = "Proxy-2"
-ip = "127.0.0.1"
+ip = "203.0.113.60"
 port = 25566

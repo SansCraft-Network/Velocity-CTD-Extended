@@ -11,6 +11,7 @@ import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import java.util.Map;
 import net.kyori.adventure.permission.PermissionChecker;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
@@ -40,11 +41,12 @@ public interface PermissionSubject {
 
   /**
    * Gets the subjects permission map.
+   * Should return null when the permission map is unavailable.
    * Used as a delegate for {@link AdvancedPermissionResolver#getPermissionMap()}
    *
-   * @return the permission map
+   * @return the permission map or {@code null if unavailable}
    */
-  @NonNull
+  @Nullable
   @Unmodifiable
   Map<String, Boolean> getPermissionMap();
 

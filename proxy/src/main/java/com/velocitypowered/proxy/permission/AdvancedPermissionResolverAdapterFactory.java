@@ -53,7 +53,7 @@ public final class AdvancedPermissionResolverAdapterFactory {
       "META-INF/velocityctd/integrations/velocity-luckperms-integration.jar";
 
   private static volatile boolean hasLoadedProvider = false;
-  private static volatile @Nullable AdvancedPermissionResolverProvider cachedProvider;
+  private static volatile @Nullable AdvancedPermissionResolverProvider cachedProvider = null;
 
   private AdvancedPermissionResolverAdapterFactory() {
   }

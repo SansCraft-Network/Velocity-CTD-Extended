@@ -1618,7 +1618,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   @Override
-  @NonNull
+  @Nullable
   @Unmodifiable
   public Map<String, Boolean> getPermissionMap() {
     return permissionResolver.getPermissionMap();

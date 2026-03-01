@@ -43,7 +43,7 @@ public class LuckpermsAdvancedPermissionResolver implements AdvancedPermissionRe
    * Instantiates a {@code LuckpermsAdvancedPermissionResolver}.
    *
    * @param player the Velocity player
-   * @param delegate the LuckPerms PermissionFunction delegate. it's expected, though not required, that this
+   * @param delegate the LuckPerms PermissionFunction delegate. It's expected, though not required, that this
    *                 is a {@code me.lucko.luckperms.velocity.service.PlayerPermissionProvider}.
    */
   public LuckpermsAdvancedPermissionResolver(Player player, PermissionFunction delegate) {

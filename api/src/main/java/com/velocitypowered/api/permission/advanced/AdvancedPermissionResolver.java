@@ -11,6 +11,7 @@ import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.Tristate;
 import java.util.Map;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
@@ -45,10 +46,11 @@ public interface AdvancedPermissionResolver extends PermissionFunction {
 
   /**
    * Gets the subjects permission map.
+   * Should return null when the permission map is unavailable.
    *
-   * @return the permission map
+   * @return the permission map or {@code null if unavailable}
    */
-  @NonNull
+  @Nullable
   @Unmodifiable
   Map<String, Boolean> getPermissionMap();
 }

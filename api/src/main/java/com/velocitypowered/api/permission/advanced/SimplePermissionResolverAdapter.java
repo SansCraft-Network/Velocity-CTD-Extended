@@ -11,6 +11,7 @@ import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.Tristate;
 import java.util.Map;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Unmodifiable;
  *
  * <p>
  * Permission checks are delegated to the provided {@code PermissionFunction}. Advanced/bulk operations are not
- * supported by the backing API and therefore behave as no-ops, returning empty results.
+ * supported by the backing API and therefore behave as no-ops, and/or returning null results.
  */
 public class SimplePermissionResolverAdapter implements AdvancedPermissionResolver {
 
@@ -41,9 +42,9 @@ public class SimplePermissionResolverAdapter implements AdvancedPermissionResolv
   }
 
   @Override
-  @NonNull
+  @Nullable
   @Unmodifiable
   public Map<String, Boolean> getPermissionMap() {
-    return Map.of();
+    return null;
   }
 }

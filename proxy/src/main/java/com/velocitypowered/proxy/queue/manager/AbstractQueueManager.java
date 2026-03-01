@@ -36,6 +36,7 @@ import com.velocitypowered.proxy.queue.cache.QueueCache;
 import com.velocitypowered.proxy.queue.model.QueuePlayer;
 import com.velocitypowered.proxy.queue.model.ServerStatus;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import com.velocitypowered.proxy.util.PermissionUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -438,12 +439,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
       return 0;
     }
 
-    for (int i = 86400; i > 0; i--) {
-      if (player.hasPermission("velocity.queue.timeout." + i)) {
-        return i;
-      }
-    }
-
-    return -1;
+    return PermissionUtils.findHighestPermissionValue(player, "velocity.queue.timeout.", 86_400)
+        .orElse(-1);
   }
 }

@@ -107,6 +107,7 @@ import com.velocitypowered.proxy.tablist.VelocityTabList;
 import com.velocitypowered.proxy.tablist.VelocityTabListLegacy;
 import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
 import com.velocitypowered.proxy.util.DurationUtils;
+import com.velocitypowered.proxy.util.PermissionUtils;
 import com.velocitypowered.proxy.util.TranslatableMapper;
 import com.velocitypowered.proxy.util.collect.CappedSet;
 import io.netty.buffer.ByteBuf;
@@ -1862,21 +1863,18 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       return 0;
     }
 
-    // First check for global permissions (higher priority for staff members)
-    for (int i = 100; i > 0; i--) {
-      if (hasPermission("velocity.queue.priority.all." + i)) {
-        return i;
-      }
-    }
+    final int maxPriority = 100;
 
-    // Then check for server-specific permissions (lower priority)
-    for (int i = 100; i > 0; i--) {
-      if (hasPermission("velocity.queue.priority." + serverName + "." + i)) {
-        return i;
-      }
-    }
-
-    return 0;
+    return PermissionUtils.findHighestPermissionValue(this, "velocity.queue.priority.all.", maxPriority)
+        .or(() -> {
+          if (serverName.equals("all")) {
+            // Skip check if serverName == "all" (already checked above).
+            return Optional.empty();
+          } else {
+            return PermissionUtils.findHighestPermissionValue(this, "velocity.queue.priority." + serverName + ".", maxPriority);
+          }
+        })
+        .orElse(0);
   }
 
   /**

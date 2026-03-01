@@ -22,9 +22,22 @@ import static java.util.Objects.requireNonNull;
 import com.velocitypowered.api.permission.PermissionSubject;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class PermissionUtils {
+
+  /**
+   * Instance for logging.
+   */
+  private static final Logger LOGGER = LogManager.getLogger(PermissionUtils.class);
+
+  /**
+   * Flag that stores whether we have sent a warning log that the slower
+   * {@link #findHighestPermissionValueWithHasPermission} is being used.
+   */
+  private static boolean slowWarningLogged = false;
 
   /**
    * Returns the highest positive integer {@code v} ({@code 1}..{@code max}) for which {@code subject} has the permission
@@ -76,6 +89,17 @@ public class PermissionUtils {
     if (permissionMap != null) {
       return findHighestPermissionValueWithPermissionMap(subject, permissionPrefix, max, permissionMap);
     } else {
+      if (!slowWarningLogged) {
+        slowWarningLogged = true;
+
+        LOGGER.warn(
+            "The permission provider did not expose a permission map, so a slower method will be used "
+                + "for more complex permission checks. If possible, consider switching to a permission "
+                + "provider that integrates with Velocity-CTD's AdvancedPermissionResolver, or use "
+                + "LuckPerms which has built-in support for this by Velocity-CTD."
+        );
+      }
+
       return findHighestPermissionValueWithHasPermission(subject, permissionPrefix, max);
     }
   }

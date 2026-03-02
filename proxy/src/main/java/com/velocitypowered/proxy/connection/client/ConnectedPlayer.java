@@ -19,6 +19,7 @@ package com.velocitypowered.proxy.connection.client;
 
 import static com.velocitypowered.api.proxy.ConnectionRequestBuilder.Status.ALREADY_CONNECTED;
 import static com.velocitypowered.proxy.connection.util.ConnectionRequestResults.plainResult;
+import static com.velocitypowered.proxy.permission.AdvancedPermissionResolverAdapterFactory.createPermissionResolverAdapter;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
@@ -42,6 +43,7 @@ import com.velocitypowered.api.event.player.configuration.PlayerEnterConfigurati
 import com.velocitypowered.api.network.HandshakeIntent;
 import com.velocitypowered.api.network.ProtocolState;
 import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
@@ -711,6 +713,19 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   @Override
   public Optional<String> getRawVirtualHost() {
     return Optional.ofNullable(rawVirtualHost);
+  }
+
+  /**
+   * Sets the permission function to evaluate permissions for this player.
+   * Internally, this will set {@link #permissionResolver} by calling
+   * {@code createPermissionResolverAdapter(this, permissionFunction)}.
+   * This method is not used in this codebase, however some external plugins
+   * rely on calling this method through reflection so we must keep it.
+   *
+   * @param permissionFunction the new permission function
+   */
+  protected void setPermissionFunction(final PermissionFunction permissionFunction) {
+    this.permissionResolver = createPermissionResolverAdapter(this, permissionFunction);
   }
 
   /**

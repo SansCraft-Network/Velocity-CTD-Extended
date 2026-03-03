@@ -9,7 +9,7 @@ lettuce = "7.4.0.RELEASE"
 [plugins]
 fill = "io.papermc.fill.gradle:1.0.10"
 shadow = "com.gradleup.shadow:9.3.2"
-spotless = "com.diffplug.spotless:8.2.1"
+spotless = "com.diffplug.spotless:8.3.0"
 
 [libraries]
 adventure-bom = "net.kyori:adventure-bom:4.26.1"

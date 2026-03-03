@@ -123,6 +123,13 @@ public enum RouteRegistry {
   VELOCITY_QUEUE(VelocityQueueTransfer.class, (server, packet) -> {
     final Player player = server.getPlayer(packet.getPayload()).orElse(null);
     if (player == null) {
+      if (!server.getRedis().getPlayerService().isPlayerOnline(packet.getPayload())) {
+        final Queue queue = server.getQueueManager().getQueueCache().getQueue(packet.getQueueName());
+        final QueuePlayer queuePlayer = queue.getQueuePlayer(packet.getPayload());
+        if (queuePlayer != null) {
+          queuePlayer.abortTransfer();
+        }
+      }
       return;
     }
 

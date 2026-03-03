@@ -21,12 +21,14 @@ import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
+import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.queue.AbstractQueue;
 import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -127,6 +129,11 @@ public final class QueuePlayer {
     if (this.server.isRedisEnabled()) {
       new VelocityQueueTransfer(this.getUniqueId(), this.targetInstance.getServerInfo().getName())
           .publish();
+
+      this.server.getScheduler()
+          .buildTask(VelocityVirtualPlugin.INSTANCE, this::abortTransfer)
+          .delay(this.server.getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
+          .schedule();
     } else {
       handleTransfer();
     }
@@ -142,7 +149,7 @@ public final class QueuePlayer {
     }
 
     final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
-    this.server.getPlayer(this.getUniqueId()).ifPresent(player -> {
+    this.server.getPlayer(this.getUniqueId()).ifPresentOrElse(player -> {
       final String targetServerName = this.targetInstance.getServerInfo().getName();
       final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(targetServerName);
 
@@ -185,7 +192,29 @@ public final class QueuePlayer {
 
         return null;
       });
-    });
+    }, this::updateProperties);
+  }
+
+  /**
+   * Aborts an in-flight transfer attempt for this player, resetting the
+   * {@code waitingForConnection} flag so the queue can progress. Called when the transfer
+   * packet was published but no proxy could reach the player (race condition or pub/sub drop).
+   */
+  @ApiStatus.Internal
+  public void abortTransfer() {
+    if (this.server.isRedisEnabled()) {
+      final var queueEntry = this.server.getRedis().getQueueService().getQueueEntry(this.queue.getName());
+      if (queueEntry == null) {
+        return;
+      }
+
+      final QueuePlayer current = queueEntry.getQueuePlayer(this.uniqueId);
+      if (current == null || !current.isWaitingForConnection()) {
+        return;
+      }
+    }
+
+    updateProperties();
   }
 
   /**

@@ -343,16 +343,20 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
         .filter(queue -> queue.getServerStatus().isActive())
         .filter(queue -> queue.size() > 0)
         .forEach(queue -> {
-          final QueuePlayer queuePlayer = queue.getQueuePlayers().stream().findFirst().orElse(null);
-          if (queuePlayer == null
-                  || (queue.getServerStatus() == FULL && !queuePlayer.isFullBypass())
-                  || transferred.contains(queuePlayer.getUniqueId())) {
-            return;
+          final QueuePlayer queuePlayer = queue.getQueuePlayers()
+                  .stream()
+                  // Skip players that have already been queued this transfer tick
+                  .filter(p -> !transferred.contains(p.getUniqueId()))
+                  // If the server is full, only match players with isFullBypass()
+                  .filter(p -> queue.getServerStatus() != FULL || p.isFullBypass())
+                  .findFirst()
+                  .orElse(null);
+
+          if (queuePlayer != null) {
+            this.pollFirst(queue, queuePlayer);
+
+            transferred.add(queuePlayer.getUniqueId());
           }
-
-          this.pollFirst(queue, queuePlayer);
-
-          transferred.add(queuePlayer.getUniqueId());
         });
   }
 

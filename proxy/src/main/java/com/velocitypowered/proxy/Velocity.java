@@ -59,10 +59,10 @@ public class Velocity {
     // Disable io_uring for lettuce if no option is set.
     if (System.getProperty("io.lettuce.core.iouring") == null
             && System.getProperty("io.lettuce.core.epoll") == null) {
-      logger.debug("Disabling io_uring for lettuce.");
+      LOGGER.debug("Disabling io_uring for lettuce.");
       System.setProperty("io.lettuce.core.iouring", "false");
     } else {
-      logger.debug("Found lettuce io_uring/epoll flag, not disabling io_uring.");
+      LOGGER.debug("Found lettuce io_uring/epoll flag, not disabling io_uring.");
     }
   }
 

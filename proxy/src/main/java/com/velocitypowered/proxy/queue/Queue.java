@@ -117,18 +117,21 @@ public sealed interface Queue permits AbstractQueue {
   }
 
   /**
-   * Transfers the first player in the queue to the specified queue player.
+   * Initiates the transfer of the given {@link QueuePlayer} to their target backend server,
+   * unless they are already waiting for a connection.
    *
-   * @param queuePlayer the queue player to transfer to
+   * @param queuePlayer the queue player to transfer
    */
-  void transferFirst(QueuePlayer queuePlayer);
+  void transferPlayer(QueuePlayer queuePlayer);
 
   /**
-   * Retrieves and removes the first player in the queue.
+   * Removes the given {@link QueuePlayer} from the queue without notifying them.
+   * Used to silently discard a player who is no longer eligible for transfer
+   * (e.g. they are offline).
    *
-   * @return the first player in the queue, or {@code null} if the queue is empty
+   * @param queuePlayer the queue player to remove
    */
-  QueuePlayer pollFirst();
+  void removePlayer(QueuePlayer queuePlayer);
 
   /**
    * Retrieves the first player in the queue.

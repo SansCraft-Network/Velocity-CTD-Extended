@@ -54,14 +54,14 @@ public sealed interface QueueManager<C extends QueueCache> permits AbstractQueue
   boolean isMasterProxy();
 
   /**
-   * Removes and processes the first {@link QueuePlayer} in the specified {@link Queue}.
-   * This method handles dequeueing the first player from the queue and initiates any
-   * necessary procedures associated with their removal or transfer.
+   * Processes the given {@link QueuePlayer} from the specified {@link Queue}: either
+   * initiates their transfer to the backend server if they are online, or removes them
+   * from the queue if they are not.
    *
-   * @param queue the queue from which the first player will be polled
-   * @param queuePlayer the queue player instance to handle during this operation
+   * @param queue       the queue that owns the player
+   * @param queuePlayer the queue player to process
    */
-  void pollFirst(Queue queue, QueuePlayer queuePlayer);
+  void processPlayer(Queue queue, QueuePlayer queuePlayer);
 
   /**
    * Adds a player to the queue for the specified server.

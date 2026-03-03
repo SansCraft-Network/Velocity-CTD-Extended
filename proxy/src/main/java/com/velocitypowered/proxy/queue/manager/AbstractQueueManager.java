@@ -328,7 +328,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
    * <p>For each eligible queue:
    * - The first {@link QueuePlayer} in the queue is retrieved.
    * - The player will not be transferred if the server is full, unless the player has a full bypass flag.
-   * - If the conditions are met, the player is transferred using the {@code pollFirst} method.</p>
+   * - If the conditions are met, the player is transferred using the {@code processPlayer} method.</p>
    *
    * <p>If the current proxy is not a master proxy, the method exits without performing any operation.</p>
    */
@@ -353,7 +353,7 @@ public abstract sealed class AbstractQueueManager<C extends QueueCache> implemen
                   .orElse(null);
 
           if (queuePlayer != null) {
-            this.pollFirst(queue, queuePlayer);
+            this.processPlayer(queue, queuePlayer);
 
             transferred.add(queuePlayer.getUniqueId());
           }

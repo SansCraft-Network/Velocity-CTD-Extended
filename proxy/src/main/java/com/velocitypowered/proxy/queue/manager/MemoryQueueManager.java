@@ -52,11 +52,11 @@ public final class MemoryQueueManager extends AbstractQueueManager<MemoryQueueCa
   }
 
   @Override
-  public void pollFirst(final Queue queue, final QueuePlayer queuePlayer) {
+  public void processPlayer(final Queue queue, final QueuePlayer queuePlayer) {
     if (this.server.getPlayer(queuePlayer.getUniqueId()).isPresent()) {
-      queue.transferFirst(queuePlayer);
+      queue.transferPlayer(queuePlayer);
     } else {
-      queue.pollFirst();
+      queue.removePlayer(queuePlayer);
     }
   }
 

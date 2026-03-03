@@ -230,13 +230,13 @@ public abstract sealed class AbstractQueue implements Queue
   }
 
   /**
-   * Attempts to transfer the given {@link QueuePlayer} to the backend server,
-   * if they are not already waiting for a connection.
+   * Initiates the transfer of the given {@link QueuePlayer} to the backend server,
+   * unless they are already waiting for a connection.
    *
    * @param queuePlayer the player to transfer
    */
   @Override
-  public void transferFirst(final QueuePlayer queuePlayer) {
+  public void transferPlayer(final QueuePlayer queuePlayer) {
     if (queuePlayer.isWaitingForConnection()) {
       return;
     }
@@ -245,14 +245,17 @@ public abstract sealed class AbstractQueue implements Queue
   }
 
   /**
-   * Retrieves and removes the first player in the queue, or returns {@code null}
-   * if the queue is empty.
+   * Removes the given {@link QueuePlayer} from the queue without notifying them.
+   * Used to silently discard a player who is no longer eligible for transfer
+   * (e.g. they are offline).
    *
-   * @return the first {@link QueuePlayer}, or {@code null} if none
+   * @param queuePlayer the queue player to remove
    */
   @Override
-  public QueuePlayer pollFirst() {
-    return this.internalQueue.pollFirst();
+  public void removePlayer(final QueuePlayer queuePlayer) {
+    internalQueue.removeIf(qp -> qp.getUniqueId().equals(queuePlayer.getUniqueId()));
+
+    CompletableFuture.runAsync(() -> queueManager.getQueueCache().updateQueue(this));
   }
 
   /**

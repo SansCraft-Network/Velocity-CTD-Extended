@@ -21,6 +21,7 @@ import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.queue.RedisVelocityQueueManager;
 import com.velocitypowered.proxy.queue.VelocityQueueEntry;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueSync;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
@@ -123,7 +124,8 @@ public enum RouteRegistry {
    */
   VELOCITY_QUEUE_SYNC(VelocityQueueSync.class, (server, packet) -> {
     if (server.isQueueEnabled()) {
-      server.getQueueManager().handleSync(packet);
+      RedisVelocityQueueManager redisVelocityQueueManager = ((RedisVelocityQueueManager) server.getQueueManager());
+      redisVelocityQueueManager.handleSync(packet);
     }
   }),
 

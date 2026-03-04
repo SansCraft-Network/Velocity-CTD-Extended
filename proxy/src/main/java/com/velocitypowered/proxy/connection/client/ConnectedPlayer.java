@@ -2366,7 +2366,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           }
 
           // Check if the player's version is compatible with the server's minimum version
-          if (checkVersionCompatibility(realDestination)) {
+          if (!checkVersionCompatibility(realDestination)) {
             return completedFuture(plainResult(ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, realDestination));
           }
 
@@ -2595,7 +2595,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           .arguments(
               Argument.string("min", serverMinimumVersion),
               Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
-      return true;
+      return false;
     }
 
     // Check if the server uses modern forwarding and the client is too old
@@ -2606,9 +2606,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           .arguments(
               Argument.string("min", "1.13"),
               Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
-      return true;
+      return false;
     }
 
-    return false;
+    return true;
   }
 }

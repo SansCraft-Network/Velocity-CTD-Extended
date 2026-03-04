@@ -17,9 +17,6 @@
 
 package com.velocitypowered.proxy.queue;
 
-import static com.velocitypowered.api.queue.QueueState.PAUSED;
-import static com.velocitypowered.api.queue.ServerStatus.FULL;
-
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.queue.Queue;
@@ -28,9 +25,6 @@ import com.velocitypowered.api.queue.QueueEntryData;
 import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.queue.ServerStatus;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.queue.redis.depot.VelocityQueueDepotEntry;
-import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueSync;
-import com.velocitypowered.proxy.queue.util.QueueTimeFormatter;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,28 +32,22 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.Function;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 /**
- * Single implementation of {@link Queue}.
- *
- * <p>Maintains an in-memory ordered list of {@link VelocityQueueEntry} objects. In Redis mode,
- * every mutation is also broadcast to other proxies via a
- * {@link VelocityQueueSync} pub/sub packet so that all proxies have an identical
- * local copy. The pub/sub approach avoids the read-modify-write race condition that
- * exists when two proxies try to overwrite the same Redis hash field simultaneously.</p>
+ * Local implementation of {@link Queue}.
  */
-public final class VelocityQueue implements Queue {
+public class VelocityQueue implements Queue {
 
-  private final VelocityServer server;
-  private final VelocityQueueManager manager;
+  protected final VelocityServer server;
+  protected final VelocityQueueManager manager;
+
   private final VelocityRegisteredServer backend;
 
   /**
@@ -83,20 +71,6 @@ public final class VelocityQueue implements Queue {
     this.state = initialState;
   }
 
-  /**
-   * Reconstructs a queue from a persisted {@link VelocityQueueDepotEntry} (Redis cold start).
-   */
-  public VelocityQueue(final VelocityServer server, final VelocityQueueManager manager,
-                       final VelocityRegisteredServer backend,
-                       final VelocityQueueDepotEntry entry) {
-    this(server, manager, backend, entry.getState());
-    this.serverStatus = entry.getServerStatus();
-    for (VelocityQueueEntry queueEntry : entry.getEntries()) {
-      queueEntry.setContext(server, this);
-      this.players.addLast(queueEntry);
-    }
-  }
-
   @Override
   public String getName() {
     return backend.getServerInfo().getName();
@@ -114,27 +88,14 @@ public final class VelocityQueue implements Queue {
 
   @Override
   public void enqueue(final @NotNull QueueEntryData data) {
-    final VelocityQueueEntry entry = new VelocityQueueEntry(server, this, data);
+    final VelocityQueueEntry entry = createEntry(data);
     insertByPriority(entry);
-
-    if (server.isRedisEnabled()) {
-      new VelocityQueueSync(VelocityQueueSync.Payload.enqueue(
-          getName(), data.uniqueId(), data.username(), data.priority(),
-          data.fullBypass(), data.queueBypass()
-      )).publish();
-      persistAsync();
-    }
   }
 
   @Override
   public void dequeue(final @NotNull UUID uniqueId) {
     synchronized (players) {
       players.removeIf(p -> p.getUniqueId().equals(uniqueId));
-    }
-
-    if (server.isRedisEnabled()) {
-      new VelocityQueueSync(VelocityQueueSync.Payload.dequeue(getName(), uniqueId)).publish();
-      persistAsync();
     }
   }
 
@@ -176,6 +137,14 @@ public final class VelocityQueue implements Queue {
   }
 
   @Override
+  public void broadcastMessage(final @NotNull Function<QueueEntry, Component> componentFn) {
+    for (QueueEntry entry : getEntries()) {
+      final Component msg = componentFn.apply(entry);
+      server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendMessage(msg));
+    }
+  }
+
+  @Override
   public int size() {
     return players.size();
   }
@@ -191,11 +160,6 @@ public final class VelocityQueue implements Queue {
       return;
     }
     this.serverStatus = status;
-
-    if (server.isRedisEnabled()) {
-      new VelocityQueueSync(VelocityQueueSync.Payload.statusChange(getName(), status)).publish();
-      persistAsync();
-    }
   }
 
   @Override
@@ -209,71 +173,12 @@ public final class VelocityQueue implements Queue {
       return;
     }
     this.state = state;
-
-    if (server.isRedisEnabled()) {
-      new VelocityQueueSync(VelocityQueueSync.Payload.stateChange(getName(), state)).publish();
-      persistAsync();
-    }
   }
 
   @Override
   public void teardown() {
     synchronized (players) {
       players.clear();
-    }
-    if (server.isRedisEnabled()) {
-      persistAsync();
-    }
-  }
-
-  /**
-   * Applies an ENQUEUE sync from another proxy. Does not re-publish.
-   */
-  @ApiStatus.Internal
-  void applyEnqueue(final VelocityQueueSync.Payload p) {
-    final QueueEntryData data = new QueueEntryData(p.playerUuid(), p.username(),
-        p.priority(), p.fullBypass(), p.queueBypass());
-    final VelocityQueueEntry entry = new VelocityQueueEntry(server, this, data);
-    insertByPriority(entry);
-  }
-
-  /**
-   * Applies a DEQUEUE sync from another proxy. Does not re-publish.
-   */
-  @ApiStatus.Internal
-  void applyDequeue(final UUID uuid) {
-    synchronized (players) {
-      players.removeIf(p -> p.getUniqueId().equals(uuid));
-    }
-  }
-
-  /**
-   * Applies a STATE_CHANGE sync from another proxy. Does not re-publish.
-   */
-  @ApiStatus.Internal
-  void applyStateChange(final QueueState newState) {
-    this.state = newState;
-  }
-
-  /**
-   * Applies a STATUS_CHANGE sync from another proxy. Does not re-publish.
-   */
-  @ApiStatus.Internal
-  void applyStatusChange(final ServerStatus newStatus) {
-    this.serverStatus = newStatus;
-  }
-
-  /**
-   * Applies a WAITING_CHANGE sync from another proxy. Does not re-publish.
-   */
-  @ApiStatus.Internal
-  void applyWaitingChange(final VelocityQueueSync.Payload p) {
-    for (VelocityQueueEntry entry : players) {
-      if (entry.getUniqueId().equals(p.playerUuid())) {
-        entry.applyWaitingChangeFromPacket(p.waitingForConnection(), p.connectionAttempts(),
-            p.updatedPriority(), p.updatedFullBypass(), p.updatedQueueBypass());
-        break;
-      }
     }
   }
 
@@ -295,63 +200,45 @@ public final class VelocityQueue implements Queue {
    */
   @ApiStatus.Internal
   void removeEntry(final VelocityQueueEntry entry) {
-    players.removeIf(p -> p.getUniqueId().equals(entry.getUniqueId()));
-    if (server.isRedisEnabled()) {
-      new VelocityQueueSync(VelocityQueueSync.Payload.dequeue(getName(), entry.getUniqueId())).publish();
-      persistAsync();
+    synchronized (players) {
+      players.removeIf(p -> p.getUniqueId().equals(entry.getUniqueId()));
     }
   }
 
   /**
    * Computes the estimated time to transfer for the given position.
    */
-  public Component calculateEta(final long position) {
-    long delayInSeconds = (long) server.getConfiguration().getQueue().getSendDelay() * position;
-    return QueueTimeFormatter.format(Math.max(delayInSeconds, 0));
+  public int calculateEta(final int position) {
+    int eta = (int) (server.getConfiguration().getQueue().getSendDelay() * position);
+    return Math.max(eta, 0);
   }
 
   /**
-   * Creates the action bar component shown to the player at their current position.
-   */
-  public Component createActionbarComponent(final @NotNull VelocityQueueEntry entry) {
-    final int position = getPosition(entry.getUniqueId()).orElseThrow();
-
-    if (entry.isQueueBypass()) {
-      return Component.translatable("velocity.queue.player-status.bypass", NamedTextColor.YELLOW);
-    } else if (serverStatus == FULL && !entry.isFullBypass()) {
-      return Component.translatable("velocity.queue.player-status.full", NamedTextColor.YELLOW)
-          .arguments(
-              Component.text(position),
-              Component.text(this.size()),
-              Component.text(this.getName()),
-              calculateEta(position));
-    } else if (entry.isWaitingForConnection()) {
-      return Component.translatable("velocity.queue.player-status.connecting", NamedTextColor.YELLOW)
-          .arguments(Component.text(this.getName()));
-    } else if (state == PAUSED) {
-      return Component.translatable("velocity.queue.player-status.paused", NamedTextColor.YELLOW);
-    } else if (serverStatus.isActive()) {
-      return Component.translatable("velocity.queue.player-status.online", NamedTextColor.YELLOW)
-          .arguments(
-              Component.text(position),
-              Component.text(this.size()),
-              Component.text(this.getName()),
-              calculateEta(position));
-    } else {
-      return Component.translatable("velocity.queue.player-status.offline", NamedTextColor.YELLOW)
-          .arguments(
-              Component.text(position),
-              Component.text(this.size()),
-              Component.text(this.getName()));
-    }
-  }
-
-  /**
-   * Returns the raw internal list. Used by {@link VelocityQueueDepotEntry} for snapshotting.
+   * Returns the raw internal list. Used by
+   * {@link com.velocitypowered.proxy.queue.redis.depot.VelocityQueueDepotEntry} for snapshotting.
    */
   @ApiStatus.Internal
   public List<VelocityQueueEntry> getInternalEntries() {
     return new ArrayList<>(players);
+  }
+
+  /**
+   * Appends a pre-constructed entry to the end of the deque without priority sorting.
+   */
+  protected void addEntryInternal(final VelocityQueueEntry entry) {
+    players.addLast(entry);
+  }
+
+  /**
+   * Creates a new queue entry for the given data.
+   *
+   * <p>Subclasses override this to produce the appropriate entry type</p>
+   *
+   * @param data the player data
+   * @return a new entry instance
+   */
+  protected VelocityQueueEntry createEntry(final @NotNull QueueEntryData data) {
+    return new VelocityQueueEntry(server, this, data);
   }
 
   /**
@@ -389,17 +276,6 @@ public final class VelocityQueue implements Queue {
     tempList.add(position, entry);
     players.clear();
     players.addAll(tempList);
-  }
-
-  /**
-   * Persists this queue's state to Redis asynchronously. Only the master proxy needs
-   * to do this, but all proxies can safely call it (non-master calls are harmless overhead).
-   */
-  private void persistAsync() {
-    if (manager.isMasterProxy()) {
-      CompletableFuture.runAsync(() ->
-          server.getRedis().getQueueService().upsertQueue(this));
-    }
   }
 
   /**

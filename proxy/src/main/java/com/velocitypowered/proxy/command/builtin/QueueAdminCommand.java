@@ -355,9 +355,10 @@ public class QueueAdminCommand implements BuiltinCommand {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
               .arguments(Component.text(serverName)));
 
-      this.server.getQueueManager().broadcastMessage(queue,
-              q -> Component.translatable("velocity.queue.command.unpaused")
-                      .arguments(Component.text(serverName)));
+      queue.broadcastMessage(
+          q -> Component.translatable("velocity.queue.command.unpaused")
+              .arguments(Component.text(serverName))
+      );
       return Command.SINGLE_SUCCESS;
     } else {
       queue.setState(QueueState.PAUSED);
@@ -365,9 +366,10 @@ public class QueueAdminCommand implements BuiltinCommand {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.pause")
               .arguments(Component.text(serverName)));
 
-      this.server.getQueueManager().broadcastMessage(queue,
-              q -> Component.translatable("velocity.queue.command.paused")
-                      .arguments(Component.text(serverName)));
+      queue.broadcastMessage(
+          q -> Component.translatable("velocity.queue.command.paused")
+              .arguments(Component.text(serverName))
+      );
     }
 
     return Command.SINGLE_SUCCESS;
@@ -391,9 +393,10 @@ public class QueueAdminCommand implements BuiltinCommand {
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.unpause")
             .arguments(Component.text(server.getServerInfo().getName())));
 
-    this.server.getQueueManager().broadcastMessage(queue,
-            q -> Component.translatable("velocity.queue.command.unpaused")
-                    .arguments(Component.text(server.getServerInfo().getName())));
+    queue.broadcastMessage(
+        q -> Component.translatable("velocity.queue.command.unpaused")
+            .arguments(Component.text(server.getServerInfo().getName()))
+    );
     return Command.SINGLE_SUCCESS;
   }
 
@@ -443,7 +446,7 @@ public class QueueAdminCommand implements BuiltinCommand {
       return -1;
     }
 
-    if (player instanceof ConnectedPlayer connectedPlayer && connectedPlayer.checkVersionCompatibility(server)) {
+    if (player instanceof ConnectedPlayer connectedPlayer && !connectedPlayer.checkVersionCompatibility(server)) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.version-incompatible")
               .arguments(
                       Argument.string("player", player.getUsername()),

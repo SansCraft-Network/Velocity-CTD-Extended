@@ -79,6 +79,7 @@ import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.util.FaviconSerializer;
 import com.velocitypowered.proxy.protocol.util.GameProfileSerializer;
+import com.velocitypowered.proxy.queue.RedisVelocityQueueManager;
 import com.velocitypowered.proxy.queue.VelocityQueueManager;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.scheduler.VelocityScheduler;
@@ -524,7 +525,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     if (configuration.getQueue().isEnabled()) {
-      queueManager = new VelocityQueueManager(this);
+      queueManager = isRedisEnabled()
+          ? new RedisVelocityQueueManager(this)
+          : new VelocityQueueManager(this);
     }
 
     registerCommands();

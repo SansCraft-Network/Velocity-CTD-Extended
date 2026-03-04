@@ -24,8 +24,6 @@ import com.velocitypowered.api.queue.QueueEntryData;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueSync;
-import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -35,26 +33,21 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a player that is currently in a {@link VelocityQueue}.
- *
- * <p>Instances are created when a player is enqueued and destroyed when they are dequeued.
- * The {@code server} and {@code queue} fields are {@code transient} so they survive
- * JSON serialization for Redis persistence; they are re-injected via {@link #setContext}
- * after deserialization.</p>
  */
-public final class VelocityQueueEntry implements QueueEntry {
+public class VelocityQueueEntry implements QueueEntry {
 
   private final UUID uniqueId;
   private final String username;
-  private volatile int priority;
-  private volatile int connectionAttempts;
-  private volatile boolean waitingForConnection;
-  private volatile boolean fullBypass;
-  private volatile boolean queueBypass;
+  protected volatile int priority;
+  protected volatile int connectionAttempts;
+  protected volatile boolean waitingForConnection;
+  protected volatile boolean fullBypass;
+  protected volatile boolean queueBypass;
 
   /**
    * Injected after construction or deserialization.
    */
-  private transient VelocityServer server;
+  protected transient VelocityServer server;
 
   /**
    * Injected after construction or deserialization.
@@ -81,12 +74,12 @@ public final class VelocityQueueEntry implements QueueEntry {
   }
 
   /**
-   * Re-injects the server and queue context after deserialization from Redis.
+   * (Re-)Injects the server and queue context.
    *
    * @param server the proxy server
    * @param queue  the owning queue
    */
-  public void setContext(final @NotNull VelocityServer server, final @NotNull VelocityQueue queue) {
+  protected void setContext(final @NotNull VelocityServer server, final @NotNull VelocityQueue queue) {
     this.server = server;
     this.queue = queue;
   }
@@ -133,33 +126,15 @@ public final class VelocityQueueEntry implements QueueEntry {
 
   /**
    * Initiates the transfer of this player to their target server.
-   *
-   * <p>In Redis mode the master proxy publishes a {@link VelocityQueueTransfer} packet
-   * so the proxy that has the player connected can handle the actual connection.
-   * A timeout task is scheduled to abort the transfer if no proxy handles it in time.
-   * In memory mode the transfer is handled directly.</p>
    */
   public void transfer() {
     this.waitingForConnection = true;
-
-    if (this.server.isRedisEnabled()) {
-      publishWaitingChange();
-
-      new VelocityQueueTransfer(this.uniqueId, this.queue.getName()).publish();
-
-      this.server.getScheduler()
-          .buildTask(VelocityVirtualPlugin.INSTANCE, this::abortTransfer)
-          .delay(this.server.getConfiguration().getReadTimeout(), TimeUnit.MILLISECONDS)
-          .schedule();
-    } else {
-      handleTransfer();
-    }
+    handleTransfer();
   }
 
   /**
    * Performs the actual connection attempt for this player on the proxy that has them connected.
-   * Called either directly (memory mode) or in response to a {@link VelocityQueueTransfer} packet
-   * (Redis mode).
+   * Called directly in local mode, and in response to a VelocityQueueTransfer packet in Redis mode.
    */
   @ApiStatus.Internal
   public void handleTransfer() {
@@ -198,27 +173,14 @@ public final class VelocityQueueEntry implements QueueEntry {
   }
 
   /**
-   * Aborts a pending transfer that was never picked up by any proxy.
+   * Aborts a pending transfer that was never picked up.
    *
-   * <p>Called by the timeout task scheduled in {@link #transfer()} when Redis is enabled.
-   * If the transfer was actually handled by another proxy, that proxy will have published a
-   * {@code WAITING_CHANGE} sync (or a {@code DEQUEUE} sync) which updates the volatile
-   * {@code waitingForConnection} field before this timeout fires - so the early-return
-   * guard is always up to date without consulting the Redis depot.</p>
+   * <p>This is a no-op in local mode (only one proxy, transfers are always local).
+   * The Redis subclass overrides this to reset the waiting flag and notify other proxies.</p>
    */
   @ApiStatus.Internal
   public void abortTransfer() {
-    // If the transfer was already handled (another proxy reset the flag via a WAITING_CHANGE
-    // sync, or the entry was dequeued), the volatile field reflects that - skip the abort.
-    if (!this.waitingForConnection) {
-      return;
-    }
-
-    // Reset locally and notify other proxies
-    this.waitingForConnection = false;
-    this.connectionAttempts++;
-    refreshPermissions();
-    publishWaitingChange();
+    // no-op
   }
 
   private void resetAfterFailedTransfer(final VelocityConfiguration.Queue config) {
@@ -241,7 +203,10 @@ public final class VelocityQueueEntry implements QueueEntry {
     }
   }
 
-  private void refreshPermissions() {
+  /**
+   * Refreshes the player's current permissions into the entry's cached fields.
+   */
+  protected void refreshPermissions() {
     this.server.getPlayer(this.uniqueId).ifPresent(player -> {
       this.priority = player.getQueuePriority(this.queue.getName());
       this.fullBypass = player.hasPermission("velocity.queue.full.bypass");
@@ -249,34 +214,13 @@ public final class VelocityQueueEntry implements QueueEntry {
     });
   }
 
-  private void publishWaitingChange() {
-    if (this.server.isRedisEnabled()) {
-      new VelocityQueueSync(VelocityQueueSync.Payload.waitingChange(
-          this.queue.getName(), this.uniqueId, this.waitingForConnection,
-          this.connectionAttempts, this.priority, this.fullBypass, this.queueBypass
-      )).publish();
-    }
-  }
-
   /**
-   * Updates this entry's mutable fields from a WAITING_CHANGE sync packet.
-   * Used when receiving a sync packet from another proxy.
+   * Hook called whenever {@code waitingForConnection} or the related permission fields change.
    *
-   * @param waiting            the new waitingForConnection value
-   * @param attempts           the new connectionAttempts value
-   * @param updatedPriority    the refreshed priority
-   * @param updatedFullBypass  the refreshed fullBypass flag
-   * @param updatedQueueBypass the refreshed queueBypass flag
+   * <p>No-op in local mode. The Redis subclass overrides this to publish a
+   * {@code WAITING_CHANGE} sync packet to all other proxies.</p>
    */
-  @ApiStatus.Internal
-  public void applyWaitingChangeFromPacket(final boolean waiting, final int attempts,
-                                           final int updatedPriority,
-                                           final boolean updatedFullBypass,
-                                           final boolean updatedQueueBypass) {
-    this.waitingForConnection = waiting;
-    this.connectionAttempts = attempts;
-    this.priority = updatedPriority;
-    this.fullBypass = updatedFullBypass;
-    this.queueBypass = updatedQueueBypass;
+  protected void publishWaitingChange() {
+    // no-op
   }
 }

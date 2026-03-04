@@ -19,8 +19,9 @@ package com.velocitypowered.proxy.queue.redis.depot;
 
 import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.queue.ServerStatus;
+import com.velocitypowered.proxy.queue.RedisVelocityQueue;
+import com.velocitypowered.proxy.queue.RedisVelocityQueueEntry;
 import com.velocitypowered.proxy.queue.VelocityQueue;
-import com.velocitypowered.proxy.queue.VelocityQueueEntry;
 import com.velocitypowered.proxy.redis.depot.DepotEntry;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,7 @@ public final class VelocityQueueDepotEntry extends DepotEntry<String, VelocityQu
   /**
    * The ordered list of queue entries persisted for this queue.
    */
-  private final List<VelocityQueueEntry> entries;
+  private final List<RedisVelocityQueueEntry> entries;
 
   /**
    * The server status at the time of persistence.
@@ -57,9 +58,11 @@ public final class VelocityQueueDepotEntry extends DepotEntry<String, VelocityQu
    *
    * @param queue the queue to snapshot
    */
-  public VelocityQueueDepotEntry(final @NotNull VelocityQueue queue) {
+  public VelocityQueueDepotEntry(final @NotNull RedisVelocityQueue queue) {
     super(queue.getName());
-    this.entries = new ArrayList<>(queue.getInternalEntries());
+
+    //noinspection unchecked
+    this.entries = new ArrayList<>((List<RedisVelocityQueueEntry>) (List<?>) queue.getInternalEntries());
     this.serverStatus = queue.getServerStatus();
     this.state = queue.getState();
   }
@@ -69,7 +72,7 @@ public final class VelocityQueueDepotEntry extends DepotEntry<String, VelocityQu
    *
    * @return the queue entries
    */
-  public List<VelocityQueueEntry> getEntries() {
+  public List<RedisVelocityQueueEntry> getEntries() {
     return entries;
   }
 

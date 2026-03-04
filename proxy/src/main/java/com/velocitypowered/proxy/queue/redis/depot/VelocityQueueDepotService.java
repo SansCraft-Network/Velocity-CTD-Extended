@@ -17,7 +17,7 @@
 
 package com.velocitypowered.proxy.queue.redis.depot;
 
-import com.velocitypowered.proxy.queue.VelocityQueue;
+import com.velocitypowered.proxy.queue.RedisVelocityQueue;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.depot.AbstractDepotService;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public final class VelocityQueueDepotService
    *
    * @param queue the queue to persist
    */
-  public void upsertQueue(final @NotNull VelocityQueue queue) {
+  public void upsertQueue(final @NotNull RedisVelocityQueue queue) {
     this.depot.upsert(new VelocityQueueDepotEntry(queue));
   }
 

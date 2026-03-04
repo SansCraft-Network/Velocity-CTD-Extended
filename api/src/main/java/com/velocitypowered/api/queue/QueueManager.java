@@ -10,8 +10,6 @@ package com.velocitypowered.api.queue;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.util.Collection;
-import java.util.function.Function;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,13 +103,4 @@ public interface QueueManager {
    * @param player the player to remove
    */
   void removePlayerEntirely(@NotNull Player player);
-
-  /**
-   * Sends a message to every player in the given queue, with the message content
-   * generated per-player by the provided function.
-   *
-   * @param queue       the queue whose members will receive the message
-   * @param componentFn a function producing a {@link Component} for each {@link QueueEntry}
-   */
-  void broadcastMessage(@NotNull Queue queue, @NotNull Function<QueueEntry, Component> componentFn);
 }

@@ -28,7 +28,6 @@ import static com.velocitypowered.proxy.util.PermissionUtils.findHighestPermissi
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.queue.Queue;
-import com.velocitypowered.api.queue.QueueEntry;
 import com.velocitypowered.api.queue.QueueManager;
 import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.queue.ServerStatus;
@@ -37,11 +36,7 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.queue.redis.depot.VelocityQueueDepotEntry;
-import com.velocitypowered.proxy.queue.redis.depot.VelocityQueueDepotService;
-import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueSync;
-import com.velocitypowered.proxy.redis.impl.packet.VelocityActionBar;
-import com.velocitypowered.proxy.redis.impl.packet.VelocityMessage;
+import com.velocitypowered.proxy.queue.util.QueueComponents;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,29 +50,32 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Single implementation of {@link QueueManager}, handling both memory-only and Redis modes.
+ * Local implementation of {@link QueueManager}.
  */
-public final class VelocityQueueManager implements QueueManager {
+public class VelocityQueueManager implements QueueManager {
 
   /**
    * Timestamp (ms) of when each server last transitioned from OFFLINE to WAITING.
-   * Shared across all calls to pingBackends on this proxy.
    */
-  private static final Map<String, Long> LAST_TURNED_ONLINE_TIME = new ConcurrentHashMap<>();
+  protected static final Map<String, Long> LAST_TURNED_ONLINE_TIME = new ConcurrentHashMap<>();
 
-  private final VelocityServer server;
+  /**
+   * How many ticks between switching to displaying the next queue on the round-robin action-bar display.
+   */
+  private static final int TICKS_PER_ACTION_BAR_CHANGE = 2;
+
+  protected final VelocityServer server;
 
   /**
    * Local in-memory queues keyed by server name.
    */
-  private final ConcurrentHashMap<String, VelocityQueue> queues = new ConcurrentHashMap<>();
+  protected final ConcurrentHashMap<String, VelocityQueue> queues = new ConcurrentHashMap<>();
 
   private @Nullable ScheduledTask transferTask;
   private @Nullable ScheduledTask actionBarTask;
@@ -89,40 +87,79 @@ public final class VelocityQueueManager implements QueueManager {
   private int actionBarTick = 0;
 
   /**
-   * Constructs a new {@link VelocityQueueManager}, loading persisted state from Redis
-   * (if enabled) and scheduling periodic tasks.
+   * Constructs a new {@link VelocityQueueManager} and starts periodic tasks.
+   *
+   * <p>The constructor calls {@link #preInitialize()} before filling in server queues
+   * so that subclasses can load persisted state (e.g. from the Redis depot) before the
+   * gap-fill loop runs. {@link #postInitialize()} is called after scheduling so
+   * subclasses can register reconnect listeners or other post-start hooks.</p>
    *
    * @param server the proxy instance
    */
   public VelocityQueueManager(final @NotNull VelocityServer server) {
     this.server = server;
 
-    // Initialise queues for every registered server
-    if (server.isRedisEnabled()) {
-      loadFromRedis();
-    }
+    preInitialize();
 
-    // Ensure every registered server has a queue (fill gaps left by cold-start)
+    // Ensure every registered server has a queue (fills gaps not covered by preInitialize).
     for (RegisteredServer rs : server.getAllServers()) {
       final String name = rs.getServerInfo().getName();
       queues.computeIfAbsent(name, n -> {
         final boolean inactive = server.getConfiguration().getQueue()
             .getNoQueueServers().contains(n);
-        return new VelocityQueue(server, this, (VelocityRegisteredServer) rs,
-            inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
+        return createQueue((VelocityRegisteredServer) rs, inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
       });
     }
 
     rescheduleTasks();
 
-    // On Redis reconnect, reload queue state from the depot so any packets that were
-    // dropped during the disconnection are recovered. Schedule on the Velocity scheduler
-    // to avoid blocking Lettuce's internal I/O thread.
-    if (server.isRedisEnabled()) {
-      server.getRedis().addReconnectListener(() ->
-          server.getScheduler()
-              .buildTask(VelocityVirtualPlugin.INSTANCE, this::reloadFromRedis)
-              .schedule());
+    postInitialize();
+  }
+
+  /**
+   * Called at the start of the constructor, before the server queue fill-gap loop.
+   */
+  protected void preInitialize() {
+    // no-op
+  }
+
+  /**
+   * Called at the end of the constructor, after {@link #rescheduleTasks()}.
+   */
+  protected void postInitialize() {
+    // no-op
+  }
+
+  /**
+   * Returns {@code true} if this proxy should act as the queue master.
+   * Always {@code true} in local (non-Redis) mode.
+   */
+  @Override
+  public boolean isMasterProxy() {
+    return true;
+  }
+
+  /**
+   * Checks whether the player with the given UUID is online on this proxy.
+   */
+  protected boolean isPlayerOnline(final UUID uuid) {
+    return server.getPlayer(uuid).isPresent();
+  }
+
+  /**
+   * Creates a new queue for the given backend server.
+   */
+  protected VelocityQueue createQueue(final VelocityRegisteredServer rs, final QueueState state) {
+    return new VelocityQueue(server, this, rs, state);
+  }
+
+  /**
+   * Sends an action-bar update for the given queue entry.
+   */
+  protected void sendActionBar(final VelocityQueueEntry entry) {
+    final Component component = QueueComponents.createActionbarComponent(entry);
+    if (component != null) {
+      server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendActionBar(component));
     }
   }
 
@@ -138,47 +175,13 @@ public final class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public boolean isMasterProxy() {
-    if (!server.isRedisEnabled()) {
-      return true;
-    }
-
-    final List<String> masterProxies = server.getConfiguration().getQueue().getMasterProxyIds();
-    final List<String> activeProxies = new ArrayList<>(
-        server.getRedis().getProxyService().getAllProxyIds());
-    Collections.sort(activeProxies);
-
-    final String ownId = server.getProxyId();
-
-    if (masterProxies.isEmpty() || (masterProxies.size() == 1 && masterProxies.getFirst().isEmpty())) {
-      // No explicit master list: alphabetically-first active proxy is master
-      return !activeProxies.isEmpty() && activeProxies.getFirst().equalsIgnoreCase(ownId);
-    }
-
-    // Find the first master-proxy ID that is currently active
-    activeProxies.retainAll(masterProxies);
-    if (activeProxies.isEmpty()) {
-      return false;
-    }
-
-    for (String candidate : masterProxies) {
-      if (activeProxies.contains(candidate)) {
-        return candidate.equalsIgnoreCase(ownId);
-      }
-    }
-
-    return false;
-  }
-
-  @Override
   public @NotNull Queue getQueue(final @NotNull String serverName) {
     final VelocityRegisteredServer rs = (VelocityRegisteredServer) server.getServer(serverName)
         .orElseThrow(() -> new IllegalArgumentException("Unknown server: " + serverName));
 
     return queues.computeIfAbsent(serverName, n -> {
       final boolean inactive = server.getConfiguration().getQueue().getNoQueueServers().contains(n);
-      return new VelocityQueue(server, this, rs,
-          inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
+      return createQueue(rs, inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
     });
   }
 
@@ -238,7 +241,7 @@ public final class VelocityQueueManager implements QueueManager {
       return;
     }
 
-    if (player instanceof ConnectedPlayer cp && cp.checkVersionCompatibility(targetServer)) {
+    if (player instanceof ConnectedPlayer cp && !cp.checkVersionCompatibility(targetServer)) {
       return;
     }
 
@@ -271,48 +274,6 @@ public final class VelocityQueueManager implements QueueManager {
       if (queue.contains(player)) {
         queue.dequeue(player);
       }
-    }
-  }
-
-  @Override
-  public void broadcastMessage(final @NotNull Queue queue,
-                               final @NotNull Function<QueueEntry, Component> componentFn) {
-    for (QueueEntry entry : queue.getEntries()) {
-      final Component msg = componentFn.apply(entry);
-      if (server.isRedisEnabled()) {
-        new VelocityMessage(entry.getUniqueId(), msg).publish();
-      } else {
-        server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendMessage(msg));
-      }
-    }
-  }
-
-  /**
-   * Applies a {@link VelocityQueueSync} packet received from another proxy to the local
-   * in-memory queue. This is the mechanism that keeps all proxies in sync.
-   *
-   * @param packet the incoming sync packet
-   */
-  public void handleSync(final @NotNull VelocityQueueSync packet) {
-    final VelocityQueueSync.Payload p = packet.getPayload();
-    if (p == null) {
-      return;
-    }
-
-    final VelocityQueue queue;
-    try {
-      queue = (VelocityQueue) getQueue(p.serverName());
-    } catch (IllegalArgumentException ignored) {
-      return; // unknown server
-    }
-
-    switch (p.action()) {
-      case ENQUEUE -> queue.applyEnqueue(p);
-      case DEQUEUE -> queue.applyDequeue(p.playerUuid());
-      case STATE_CHANGE -> queue.applyStateChange(p.newState());
-      case STATUS_CHANGE -> queue.applyStatusChange(p.newStatus());
-      case WAITING_CHANGE -> queue.applyWaitingChange(p);
-      default -> throw new IllegalStateException("Unknown action " + p.action() + ".");
     }
   }
 
@@ -389,12 +350,7 @@ public final class VelocityQueueManager implements QueueManager {
             return;
           }
 
-          // Check player is still online somewhere
-          final boolean online = server.isRedisEnabled()
-              ? server.getRedis().getPlayerService().isPlayerOnline(candidate.getUniqueId())
-              : server.getPlayer(candidate.getUniqueId()).isPresent();
-
-          if (online) {
+          if (isPlayerOnline(candidate.getUniqueId())) {
             queue.transferEntry(candidate);
             transferredThisTick.add(candidate.getUniqueId());
           } else {
@@ -468,61 +424,12 @@ public final class VelocityQueueManager implements QueueManager {
         });
 
     for (List<VelocityQueueEntry> entries : byPlayer.values()) {
-      final int index = (actionBarTick / 2) % entries.size();
+      final int index = (actionBarTick / TICKS_PER_ACTION_BAR_CHANGE) % entries.size();
       final VelocityQueueEntry entry = entries.get(index);
       sendActionBar(entry);
     }
 
     actionBarTick++;
-  }
-
-  private void sendActionBar(final VelocityQueueEntry entry) {
-    final Component component = entry.getQueue().createActionbarComponent(entry);
-
-    if (server.isRedisEnabled()) {
-      new VelocityActionBar(entry.getUniqueId(), component).publish();
-    } else {
-      server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendActionBar(component));
-    }
-  }
-
-  /**
-   * Reloads queue state from the Redis depot after a pub/sub reconnection.
-   *
-   * <p>Any packets that were missed during the disconnection window are recovered by
-   * re-reading the master-written depot snapshot. If this proxy is currently master it
-   * additionally re-broadcasts all server statuses and queue states so non-master proxies
-   * can also recover.</p>
-   */
-  private void reloadFromRedis() {
-    loadFromRedis();
-
-    if (isMasterProxy()) {
-      for (VelocityQueue queue : queues.values()) {
-        new VelocityQueueSync(VelocityQueueSync.Payload.statusChange(
-            queue.getName(), queue.getServerStatus())).publish();
-        new VelocityQueueSync(VelocityQueueSync.Payload.stateChange(
-            queue.getName(), queue.getState())).publish();
-      }
-    }
-  }
-
-  private void loadFromRedis() {
-    final VelocityQueueDepotService service = server.getRedis().getQueueService();
-    for (VelocityQueueDepotEntry entry : service.getAll()) {
-      final VelocityRegisteredServer rs = (VelocityRegisteredServer) server
-          .getServer(entry.getUniqueId()).orElse(null);
-      if (rs != null) {
-        queues.put(entry.getUniqueId(), new VelocityQueue(server, this, rs, entry));
-
-        // If the persisted status is WAITING, seed the warmup timer so pingBackends() can
-        // promote it to ONLINE/FULL once the delay elapses. Without this the queue would
-        // stay stuck in WAITING forever because LAST_TURNED_ONLINE_TIME would have no entry.
-        if (entry.getServerStatus() == WAITING) {
-          LAST_TURNED_ONLINE_TIME.put(entry.getUniqueId(), System.currentTimeMillis());
-        }
-      }
-    }
   }
 
   private int getTimeoutInSeconds(final Player player) {

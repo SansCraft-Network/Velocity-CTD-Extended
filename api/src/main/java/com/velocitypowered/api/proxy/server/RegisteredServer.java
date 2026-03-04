@@ -10,6 +10,7 @@ package com.velocitypowered.api.proxy.server;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.ChannelMessageSink;
 import com.velocitypowered.api.proxy.player.PlayerInfo;
+import com.velocitypowered.api.queue.Queue;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -67,4 +68,11 @@ public interface RegisteredServer extends ChannelMessageSink, Audience {
    * @since 3.2.0
    */
   CompletableFuture<ServerPing> ping(PingOptions pingOptions);
+
+  /**
+   * Gets the queue for this server.
+   *
+   * @return The queue of the server
+   */
+  Queue getQueue();
 }

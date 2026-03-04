@@ -16,6 +16,7 @@ import com.velocitypowered.api.proxy.messages.ChannelRegistrar;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import com.velocitypowered.api.queue.QueueManager;
 import com.velocitypowered.api.scheduler.Scheduler;
 import com.velocitypowered.api.util.ProxyVersion;
 import java.net.InetSocketAddress;
@@ -172,6 +173,13 @@ public interface ProxyServer extends Audience {
    * @return the command manager
    */
   CommandManager getCommandManager();
+
+  /**
+   * Returns the queue manager currently in use.
+   *
+   * @return the {@link QueueManager}, or {@code null} if not initialized
+   */
+  QueueManager getQueueManager();
 
   /**
    * Gets the {@link Scheduler} instance.

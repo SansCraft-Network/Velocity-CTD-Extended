@@ -56,6 +56,8 @@ import com.velocitypowered.api.proxy.messages.PluginMessageEncoder;
 import com.velocitypowered.api.proxy.player.PlayerSettings;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.queue.Queue;
+import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.api.util.ServerLink;
@@ -100,8 +102,6 @@ import com.velocitypowered.proxy.protocol.packet.config.ClientboundServerLinksPa
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
-import com.velocitypowered.proxy.queue.Queue;
-import com.velocitypowered.proxy.queue.model.QueueState;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.tablist.InternalTabList;
 import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
@@ -1395,7 +1395,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
                     if (!this.server.getConfiguration().getQueue().getNoQueueServers().contains(targetServerName)) {
                       TextComponent kickMsg = (TextComponent) originalEvent.getServerKickReason().orElse(Component.empty());
-                      final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(targetServerName);
+                      final Queue queue = this.server.getQueueManager().getQueue(targetServerName);
 
                       // Checks if the kick reason is valid for a re-queue
                       // This is done to make sure players don't get constantly sent over and over again in a kick loop
@@ -1483,7 +1483,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   private void tryAutoQueue(final @NonNull VelocityServerConnection joinedServer) {
-    if (!server.isQueueEnabled() || server.getQueueManager().getQueueCache().isQueued(this)) {
+    if (!server.isQueueEnabled() || server.getQueueManager().isQueued(this)) {
       return;
     }
 
@@ -1509,7 +1509,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         return;
       }
 
-      if (server.getQueueManager().getQueueCache().isQueued(this)) {
+      if (server.getQueueManager().isQueued(this)) {
         LOGGER.debug("Aborting auto-queueing player {} (now enqueued).", getUsername());
         return;
       }

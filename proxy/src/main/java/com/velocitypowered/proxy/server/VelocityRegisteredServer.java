@@ -35,6 +35,8 @@ import com.velocitypowered.api.proxy.server.PingOptions;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.proxy.server.ServerPing;
+import com.velocitypowered.api.queue.Queue;
+import com.velocitypowered.api.queue.QueueManager;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -47,8 +49,6 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintFrameDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
-import com.velocitypowered.proxy.queue.Queue;
-import com.velocitypowered.proxy.queue.manager.QueueManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -384,16 +384,17 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
   }
 
   /**
-   * Gets the queue from the cache.
+   * Gets the queue for this server.
    *
    * @return The queue of the server
    */
+  @Override
   public Queue getQueue() {
-    final QueueManager<?> queueManager = requireNonNull(this.server).getQueueManager();
+    final QueueManager queueManager = requireNonNull(this.server).getQueueManager();
     if (queueManager == null) {
       throw new IllegalStateException("No QueueManager available on the server");
     }
 
-    return queueManager.getQueueCache().getQueue(serverInfo.getName());
+    return queueManager.getQueue(serverInfo.getName());
   }
 }

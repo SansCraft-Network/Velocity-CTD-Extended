@@ -79,9 +79,7 @@ import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.util.FaviconSerializer;
 import com.velocitypowered.proxy.protocol.util.GameProfileSerializer;
-import com.velocitypowered.proxy.queue.manager.MemoryQueueManager;
-import com.velocitypowered.proxy.queue.manager.QueueManager;
-import com.velocitypowered.proxy.queue.manager.RedisQueueManager;
+import com.velocitypowered.proxy.queue.VelocityQueueManager;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.scheduler.VelocityScheduler;
 import com.velocitypowered.proxy.server.ServerMap;
@@ -336,7 +334,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Coordinates server queues and handles queue assignment logic.
    */
-  private QueueManager<?> queueManager;
+  private VelocityQueueManager queueManager;
 
   /**
    * Provides access to the Redis integration used for multi-proxy features such
@@ -369,9 +367,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Returns the queue manager currently in use.
    *
-   * @return the {@link QueueManager}, or {@code null} if not initialized
+   * @return the {@link VelocityQueueManager}, or {@code null} if not initialized
    */
-  public QueueManager<?> getQueueManager() {
+  @Override
+  public VelocityQueueManager getQueueManager() {
     return queueManager;
   }
 
@@ -525,11 +524,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     if (configuration.getQueue().isEnabled()) {
-      if (configuration.getRedis().isEnabled()) {
-        queueManager = new RedisQueueManager(this);
-      } else {
-        queueManager = new MemoryQueueManager(this);
-      }
+      queueManager = new VelocityQueueManager(this);
     }
 
     registerCommands();

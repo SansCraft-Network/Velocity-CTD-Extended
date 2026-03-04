@@ -17,6 +17,8 @@
 
 package com.velocitypowered.proxy.command.builtin;
 
+import static com.velocitypowered.api.queue.QueueState.PAUSED;
+
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -29,14 +31,14 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.queue.Queue;
+import com.velocitypowered.api.queue.QueueEntry;
+import com.velocitypowered.api.queue.QueueEntryData;
+import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.queue.AbstractQueue;
-import com.velocitypowered.proxy.queue.Queue;
-import com.velocitypowered.proxy.queue.manager.AbstractQueueManager;
-import com.velocitypowered.proxy.queue.model.QueuePlayer;
-import com.velocitypowered.proxy.queue.model.QueueState;
+import com.velocitypowered.proxy.queue.VelocityQueue;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
@@ -203,12 +205,29 @@ public class QueueAdminCommand implements BuiltinCommand {
 
       VelocityRegisteredServer registeredServer = (VelocityRegisteredServer) server;
       Queue queue = this.server.getQueueManager()
-              .getQueueCache().getQueue(registeredServer.getServerInfo().getName());
+              .getQueue(registeredServer.getServerInfo().getName());
 
-      source.sendMessage(((AbstractQueue) queue).createListComponent());
+      source.sendMessage(createListComponent((VelocityQueue) queue));
     }
 
     return Command.SINGLE_SUCCESS;
+  }
+
+  private Component createListComponent(VelocityQueue queue) {
+    return Component.translatable("velocity.queue.command.listqueues.item")
+        .arguments(
+            Argument.component("server",
+                Component.text(queue.getName())
+                    .hoverEvent(
+                        Component.translatable("velocity.queue.command.listqueues.hover")
+                            .arguments(
+                                Argument.numeric("size", queue.size()),
+                                Argument.string("paused", queue.getState() == PAUSED ? "True" : "False"),
+                                Argument.string("online", queue.getServerStatus().isActive() ? "True" : "False")
+                            ).asHoverEvent()
+                    )
+            )
+        );
   }
 
   private int list(CommandContext<CommandSource> ctx) {
@@ -234,9 +253,9 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (serverName.equalsIgnoreCase("all")) {
       Set<UUID> uniquePlayers = new HashSet<>();
 
-      for (Queue queue : this.server.getQueueManager().getQueueCache().getQueues()) {
-        for (QueuePlayer queuePlayer : queue.getQueuePlayers()) {
-          uniquePlayers.add(queuePlayer.getUniqueId());
+      for (Queue queue : this.server.getQueueManager().getQueues()) {
+        for (QueueEntry queueEntry : queue.getEntries()) {
+          uniquePlayers.add(queueEntry.getUniqueId());
         }
       }
 
@@ -258,8 +277,8 @@ public class QueueAdminCommand implements BuiltinCommand {
         VelocityRegisteredServer velocityRegisteredServer = (VelocityRegisteredServer) s;
         List<Component> players = new ArrayList<>();
 
-        for (QueuePlayer queuePlayer : velocityRegisteredServer.getQueue().getQueuePlayers()) {
-          players.add(Component.text(queuePlayer.getUsername()));
+        for (QueueEntry queueEntry : velocityRegisteredServer.getQueue().getEntries()) {
+          players.add(Component.text(queueEntry.getUsername()));
         }
 
         players.stream()
@@ -297,8 +316,8 @@ public class QueueAdminCommand implements BuiltinCommand {
       return -1;
     }
 
-    for (QueuePlayer queuePlayer : server.getQueue().getQueuePlayers()) {
-      players.add(Component.text(queuePlayer.getUsername()));
+    for (QueueEntry queueEntry : server.getQueue().getEntries()) {
+      players.add(Component.text(queueEntry.getUsername()));
     }
 
     VelocityRegisteredServer finalServer = server;
@@ -398,7 +417,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     }
 
     if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-      for (Queue queue : this.server.getQueueManager().getQueueCache().getQueues()) {
+      for (Queue queue : this.server.getQueueManager().getQueues()) {
         if (queue.contains(player.getUniqueId())) {
           ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
                   .arguments(
@@ -458,7 +477,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     }
 
     if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-      for (Queue queue : this.server.getQueueManager().getQueueCache().getQueues()) {
+      for (Queue queue : this.server.getQueueManager().getQueues()) {
         if (queue.contains(playerEntry.getUniqueId())) {
           ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-queued.other")
                   .arguments(
@@ -484,7 +503,12 @@ public class QueueAdminCommand implements BuiltinCommand {
       return -1;
     }
 
-    server.getQueue().enqueue(playerEntry);
+    server.getQueue().enqueue(new QueueEntryData(
+            playerEntry.getUniqueId(),
+            playerEntry.getUsername(),
+            playerEntry.getQueuePriorities().getOrDefault(server.getServerInfo().getName(), 0),
+            playerEntry.isFullServerBypass(),
+            playerEntry.isQueueBypass()));
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.added")
             .arguments(
@@ -519,7 +543,7 @@ public class QueueAdminCommand implements BuiltinCommand {
       ServerConnection conn = player.getCurrentServer().orElse(null);
       if (conn != null && conn.getServerInfo().getName().equalsIgnoreCase(from.getServerInfo().getName())) {
         if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-          boolean alreadyQueued = this.server.getQueueManager().getQueueCache().getQueues().stream()
+          boolean alreadyQueued = this.server.getQueueManager().getQueues().stream()
                   .anyMatch(queue -> queue.contains(player.getUniqueId()));
           if (alreadyQueued) {
             continue;
@@ -571,8 +595,8 @@ public class QueueAdminCommand implements BuiltinCommand {
       String conn = playerEntry.getServerName();
       if (conn != null && conn.equalsIgnoreCase(from.getServerInfo().getName())) {
         if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
-          boolean alreadyQueued = this.server.getQueueManager().getQueueCache().getQueues().stream()
-                  .anyMatch(status -> status.contains(playerEntry));
+          boolean alreadyQueued = this.server.getQueueManager().getQueues().stream()
+                  .anyMatch(status -> status.contains(playerEntry.getUniqueId()));
           if (alreadyQueued) {
             continue;
           }
@@ -591,7 +615,12 @@ public class QueueAdminCommand implements BuiltinCommand {
       return -1;
     }
     for (PlayerEntry playerEntry : connected) {
-      to.getQueue().enqueue(playerEntry);
+      to.getQueue().enqueue(new QueueEntryData(
+              playerEntry.getUniqueId(),
+              playerEntry.getUsername(),
+              playerEntry.getQueuePriorities().getOrDefault(to.getServerInfo().getName(), 0),
+              playerEntry.isFullServerBypass(),
+              playerEntry.isQueueBypass()));
     }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.addedall-player" + (connected.size() == 1 ? "" : "s"))
@@ -658,7 +687,7 @@ public class QueueAdminCommand implements BuiltinCommand {
 
       if (velocityRegisteredServer.getQueue().contains(player.getUniqueId())) {
         amountDone++;
-        velocityRegisteredServer.getQueue().dequeue(player.getUniqueId(), false);
+        velocityRegisteredServer.getQueue().dequeue(player.getUniqueId());
       }
     }
 
@@ -729,7 +758,7 @@ public class QueueAdminCommand implements BuiltinCommand {
 
       if (velocityRegisteredServer.getQueue().contains(playerEntry.getUniqueId())) {
         amountDone++;
-        velocityRegisteredServer.getQueue().dequeue(playerEntry.getUniqueId(), false);
+        velocityRegisteredServer.getQueue().dequeue(playerEntry.getUniqueId());
       }
     }
 
@@ -762,7 +791,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     for (Player player : this.server.getAllPlayers()) {
       if (server.getQueue().contains(player.getUniqueId())) {
         amount++;
-        server.getQueue().dequeue(player.getUniqueId(), false);
+        server.getQueue().dequeue(player.getUniqueId());
       }
     }
 
@@ -788,9 +817,9 @@ public class QueueAdminCommand implements BuiltinCommand {
     int amount = 0;
 
     for (PlayerEntry playerEntry : this.server.getRedis().getPlayerService().getAll()) {
-      if (server.getQueue().contains(playerEntry)) {
+      if (server.getQueue().contains(playerEntry.getUniqueId())) {
         amount++;
-        server.getQueue().dequeue(playerEntry, false);
+        server.getQueue().dequeue(playerEntry.getUniqueId());
       }
     }
 
@@ -808,13 +837,4 @@ public class QueueAdminCommand implements BuiltinCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  /**
-   * Gets the {@link AbstractQueueManager} instance instead of the interface. This is needed for some
-   * advanced operations, and/or internal uses.
-   *
-   * @return the abstract queue manager instance
-   */
-  private AbstractQueueManager<?> getQueueManager() {
-    return (AbstractQueueManager<?>) this.server.getQueueManager();
-  }
 }

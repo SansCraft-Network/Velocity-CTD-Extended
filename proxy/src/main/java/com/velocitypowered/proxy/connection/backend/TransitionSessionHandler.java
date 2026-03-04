@@ -24,6 +24,7 @@ import com.velocitypowered.api.event.player.ServerConnectedEvent;
 import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
+import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.ConnectionTypes;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -38,7 +39,6 @@ import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
 import com.velocitypowered.proxy.protocol.packet.JoinGamePacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
-import com.velocitypowered.proxy.queue.Queue;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -197,9 +197,9 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
           }
 
           if (this.server.isQueueEnabled()) {
-            final Queue queue = this.server.getQueueManager().getQueueCache().getQueue(serverConn.getServer()
+            final Queue queue = this.server.getQueueManager().getQueue(serverConn.getServer()
                     .getServerInfo().getName());
-            queue.dequeue(player.getUniqueId(), false);
+            queue.dequeue(player.getUniqueId());
           }
 
           // We're done! :)

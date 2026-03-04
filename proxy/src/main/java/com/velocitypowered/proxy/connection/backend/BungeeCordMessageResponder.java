@@ -26,6 +26,7 @@ import com.velocitypowered.api.proxy.messages.LegacyChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.MinecraftChannelIdentifier;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -33,7 +34,6 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataInput;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
-import com.velocitypowered.proxy.queue.Queue;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
@@ -226,10 +226,12 @@ public class BungeeCordMessageResponder {
 
     String queuedServer = null;
 
-    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
-      if (queue.contains(playerUuid)) {
-        queuedServer = queue.getName();
-        break;
+    if (proxy.isQueueEnabled()) {
+      for (Queue queue : proxy.getQueueManager().getQueues()) {
+        if (queue.contains(playerUuid)) {
+          queuedServer = queue.getName();
+          break;
+        }
       }
     }
 
@@ -251,19 +253,22 @@ public class BungeeCordMessageResponder {
 
     ByteBuf buf = Unpooled.buffer();
 
-    int position = -1;
-
-    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
-      if (queue.contains(playerUuid)) {
-        position = queue.getPosition(playerUuid);
-        break;
+    Integer position = null;
+    if (proxy.isQueueEnabled()) {
+      for (Queue queue : proxy.getQueueManager().getQueues()) {
+        if (queue.contains(playerUuid)) {
+          position = queue.getPosition(playerUuid).orElse(null);
+          if (position != null) {
+            break;
+          }
+        }
       }
     }
 
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
       out.writeUTF("QueuedPosition");
       out.writeUTF(playerUuid.toString());
-      out.writeInt(position);
+      out.writeInt(position != null ? position : -1);
     }
 
     if (buf.isReadable()) {
@@ -280,10 +285,12 @@ public class BungeeCordMessageResponder {
 
     int position = -1;
 
-    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
-      if (queue.contains(playerUuid)) {
-        position = queue.size();
-        break;
+    if (proxy.isQueueEnabled()) {
+      for (Queue queue : proxy.getQueueManager().getQueues()) {
+        if (queue.contains(playerUuid)) {
+          position = queue.size();
+          break;
+        }
       }
     }
 
@@ -307,10 +314,12 @@ public class BungeeCordMessageResponder {
 
     boolean paused = false;
 
-    for (Queue queue : proxy.getQueueManager().getQueueCache().getQueues()) {
-      if (queue.contains(playerUuid)) {
-        paused = true;
-        break;
+    if (proxy.isQueueEnabled()) {
+      for (Queue queue : proxy.getQueueManager().getQueues()) {
+        if (queue.contains(playerUuid)) {
+          paused = true;
+          break;
+        }
       }
     }
 

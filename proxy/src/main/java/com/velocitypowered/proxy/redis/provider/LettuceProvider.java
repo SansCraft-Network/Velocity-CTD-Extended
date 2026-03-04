@@ -37,6 +37,7 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +93,19 @@ public final class LettuceProvider extends AbstractRedisProvider {
 
     final StatefulRedisPubSubConnection<String, String> connection = this.client.connectPubSub();
 
+    // Tracks whether the initial subscribe has completed. The first subscribed() callback is
+    // the initial subscribe; every subsequent one is a re-subscribe after a reconnect.
+    final AtomicBoolean subscribedOnce = new AtomicBoolean(false);
+
     connection.addListener(new RedisPubSubAdapter<>() {
+      @Override
+      public void subscribed(final String channel, final long count) {
+        if (CHANNEL.equals(channel) && subscribedOnce.getAndSet(true)) {
+          // Re-subscribe after a reconnect, notify listeners so they can reload state.
+          fireReconnectListeners();
+        }
+      }
+
       @Override
       public void message(final String channel, final String message) {
         if (!channel.equals(CHANNEL)) {

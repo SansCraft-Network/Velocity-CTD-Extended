@@ -18,10 +18,11 @@
 package com.velocitypowered.proxy.redis.impl;
 
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.queue.Queue;
-import com.velocitypowered.proxy.queue.model.QueuePlayer;
+import com.velocitypowered.proxy.queue.VelocityQueueEntry;
+import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueSync;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityActionBar;
@@ -118,28 +119,42 @@ public enum RouteRegistry {
   }),
 
   /**
-   * Handles the {@link VelocityQueueTransfer} packet by queuing the player to the specified queue.
+   * Handles the {@link VelocityQueueSync} packet by applying the state change to the local queue.
+   */
+  VELOCITY_QUEUE_SYNC(VelocityQueueSync.class, (server, packet) -> {
+    if (server.isQueueEnabled()) {
+      server.getQueueManager().handleSync(packet);
+    }
+  }),
+
+  /**
+   * Handles the {@link VelocityQueueTransfer} packet by transferring the player to their target server.
    */
   VELOCITY_QUEUE(VelocityQueueTransfer.class, (server, packet) -> {
+    final Queue queue;
+    try {
+      queue = server.getQueueManager().getQueue(packet.getQueueName());
+    } catch (IllegalArgumentException ignored) {
+      return; // unknown server - stale or malformed packet
+    }
+
     final Player player = server.getPlayer(packet.getPayload()).orElse(null);
     if (player == null) {
       if (!server.getRedis().getPlayerService().isPlayerOnline(packet.getPayload())) {
-        final Queue queue = server.getQueueManager().getQueueCache().getQueue(packet.getQueueName());
-        final QueuePlayer queuePlayer = queue.getQueuePlayer(packet.getPayload());
-        if (queuePlayer != null) {
-          queuePlayer.abortTransfer();
+        final VelocityQueueEntry entry = (VelocityQueueEntry) queue.getEntry(packet.getPayload());
+        if (entry != null) {
+          entry.abortTransfer();
         }
       }
       return;
     }
 
-    final Queue queue = server.getQueueManager().getQueueCache().getQueue(packet.getQueueName());
-    final QueuePlayer queuePlayer = queue.getQueuePlayer(packet.getPayload());
-    if (queuePlayer == null) {
+    final VelocityQueueEntry entry = (VelocityQueueEntry) queue.getEntry(packet.getPayload());
+    if (entry == null) {
       return;
     }
 
-    queuePlayer.handleTransfer();
+    entry.handleTransfer();
   });
 
   /**

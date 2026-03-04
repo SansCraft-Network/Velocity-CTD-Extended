@@ -28,7 +28,7 @@ public class QueueTimeFormatter {
   /**
    * Formats a time value as a component.
    *
-   * @param name the name of the time unit
+   * @param name  the name of the time unit
    * @param value the value of the time unit
    * @return the time formatted as a component
    */
@@ -47,7 +47,7 @@ public class QueueTimeFormatter {
     long days = TimeUnit.SECONDS.toDays(inputSeconds);
     long hours = (TimeUnit.SECONDS.toHours(inputSeconds) - (days * 24L));
     long minutes = (TimeUnit.SECONDS.toMinutes(inputSeconds)
-                - (TimeUnit.SECONDS.toHours(inputSeconds) * 60));
+        - (TimeUnit.SECONDS.toHours(inputSeconds) * 60));
 
     Component output = Component.empty();
     if (days != 0) {
@@ -63,7 +63,7 @@ public class QueueTimeFormatter {
     }
 
     long seconds = (TimeUnit.SECONDS.toSeconds(inputSeconds)
-            - (TimeUnit.SECONDS.toMinutes(inputSeconds) * 60));
+        - (TimeUnit.SECONDS.toMinutes(inputSeconds) * 60));
 
     return output.append(formatComponent("second", seconds));
   }

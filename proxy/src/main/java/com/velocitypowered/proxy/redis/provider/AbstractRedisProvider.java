@@ -26,7 +26,9 @@ import com.velocitypowered.proxy.redis.transaction.Transaction;
 import com.velocitypowered.proxy.redis.transaction.TransactionHandler;
 import com.velocitypowered.proxy.redis.transaction.cache.TransactionCache;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +60,11 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    */
   protected static final TransactionCache PENDING_TRANSACTIONS = new TransactionCache(
           (uuid, transaction) -> transaction.timeout());
+
+  /**
+   * Listeners notified whenever the Redis pub/sub connection is re-established after a drop.
+   */
+  private final List<Runnable> reconnectListeners = new CopyOnWriteArrayList<>();
 
   /**
    * The registry of all route registrations keyed by packet class name.
@@ -171,5 +178,25 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
     return this.routeRegistrations.values().stream()
             .map(routeRegistration -> (RouteRegistration<T>) routeRegistration)
             .collect(ImmutableList.toImmutableList());
+  }
+
+  /**
+   * Registers a listener to be called whenever the Redis pub/sub connection is re-established
+   * after a disconnection.
+   *
+   * @param listener the callback to invoke on reconnect
+   */
+  public void addReconnectListener(final @NotNull Runnable listener) {
+    this.reconnectListeners.add(listener);
+  }
+
+  /**
+   * Invokes all registered reconnect listeners.
+   * Called by the provider implementation when the pub/sub channel is re-subscribed.
+   */
+  protected void fireReconnectListeners() {
+    for (Runnable listener : this.reconnectListeners) {
+      listener.run();
+    }
   }
 }

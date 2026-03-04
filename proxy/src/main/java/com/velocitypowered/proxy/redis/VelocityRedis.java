@@ -20,11 +20,12 @@ package com.velocitypowered.proxy.redis;
 import com.google.common.base.Preconditions;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
-import com.velocitypowered.proxy.queue.redis.depot.QueueDepotService;
+import com.velocitypowered.proxy.queue.redis.depot.VelocityQueueDepotService;
 import com.velocitypowered.proxy.redis.impl.RouteRegistry;
 import com.velocitypowered.proxy.redis.impl.TransactionHandlerRegistry;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerDepotService;
 import com.velocitypowered.proxy.redis.impl.depot.ProxyDepotService;
+import com.velocitypowered.proxy.redis.provider.AbstractRedisProvider;
 import com.velocitypowered.proxy.redis.provider.LettuceProvider;
 import com.velocitypowered.proxy.redis.provider.RedisProvider;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -67,7 +68,7 @@ public final class VelocityRedis {
   /**
    * The service responsible for managing queue-related Redis entries.
    */
-  private final QueueDepotService queueService;
+  private final VelocityQueueDepotService queueService;
 
   /**
    * The proxy identifier for this server instance, used for inter-proxy coordination.
@@ -97,7 +98,7 @@ public final class VelocityRedis {
 
     this.playerService = new PlayerDepotService(this);
     this.proxyService = new ProxyDepotService(this);
-    this.queueService = new QueueDepotService(this);
+    this.queueService = new VelocityQueueDepotService(this);
 
     this.registerRoutes();
     this.registerTransactionHandlers();
@@ -188,11 +189,11 @@ public final class VelocityRedis {
   }
 
   /**
-   * Gets the {@link QueueDepotService} associated with this Redis module.
+   * Gets the {@link VelocityQueueDepotService} associated with this Redis module.
    *
    * @return the queue service
    */
-  public QueueDepotService getQueueService() {
+  public VelocityQueueDepotService getQueueService() {
     return queueService;
   }
 
@@ -203,6 +204,16 @@ public final class VelocityRedis {
    */
   public String getProxyId() {
     return proxyId;
+  }
+
+  /**
+   * Registers a listener that is invoked whenever the Redis pub/sub connection is
+   * re-established after a disconnection.
+   *
+   * @param listener the callback to register
+   */
+  public void addReconnectListener(final @NotNull Runnable listener) {
+    ((AbstractRedisProvider) provider).addReconnectListener(listener);
   }
 
   /**

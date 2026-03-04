@@ -35,7 +35,7 @@ public final class VelocityQueueTransfer extends UuidPacket {
   /**
    * Constructs a new {@link VelocityQueueTransfer}.
    *
-   * @param uniqueId the player's unique id
+   * @param uniqueId  the player's unique id
    * @param queueName the queue name
    */
   public VelocityQueueTransfer(final UUID uniqueId, final String queueName) {

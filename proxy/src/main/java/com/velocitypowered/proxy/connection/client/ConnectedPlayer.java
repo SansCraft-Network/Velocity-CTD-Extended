@@ -327,6 +327,15 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private boolean dontRemoveFromRedis;
 
   /**
+   * Whether this player has fully completed the login handshake and is considered
+   * truly connected to this proxy. Only {@code true} after the login success packet
+   * has been sent. Used to suppress cleanup callbacks (queue, depot) for connections
+   * that were registered but then immediately rejected (e.g. duplicate login on a
+   * remote proxy).
+   */
+  private boolean fullyConnected = false;
+
+  /**
    * The brand name reported by the client (e.g. "vanilla", "forge"), or {@code null} if not sent.
    */
   private @Nullable String clientBrand;
@@ -408,12 +417,14 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       bar.viewerDisconnected(this);
     }
 
-    if (this.server.isRedisEnabled()) {
-      this.server.getRedis().getPlayerService().onPlayerDisconnect(this);
-    }
+    if (this.fullyConnected) {
+      if (this.server.isRedisEnabled()) {
+        this.server.getRedis().getPlayerService().onPlayerDisconnect(this);
+      }
 
-    if (this.server.isQueueEnabled()) {
-      this.server.getQueueManager().onPlayerDisconnect(this);
+      if (this.server.isQueueEnabled()) {
+        this.server.getQueueManager().onPlayerDisconnect(this);
+      }
     }
   }
 
@@ -1126,6 +1137,14 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   public boolean isDontRemoveFromRedis() {
     return this.dontRemoveFromRedis;
+  }
+
+  /**
+   * Marks this player as fully connected, meaning the login success packet has been sent
+   * and the player is considered truly online on this proxy.
+   */
+  public void setFullyConnected() {
+    this.fullyConnected = true;
   }
 
   /**

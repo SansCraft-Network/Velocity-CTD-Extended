@@ -68,6 +68,15 @@ public interface QueueEntry {
   boolean isQueueBypass();
 
   /**
+   * Returns the 1-based position of this entry in its owning queue.
+   *
+   * <p>This value is kept up to date by the queue whenever entries are added or removed.</p>
+   *
+   * @return the current queue position, where 1 is at the front
+   */
+  int getPosition();
+
+  /**
    * Returns the {@link Queue} that this entry belongs to.
    *
    * @return the owning queue

@@ -17,6 +17,8 @@
 
 package com.velocitypowered.proxy.queue;
 
+import static java.util.Collections.unmodifiableCollection;
+
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.queue.Queue;
@@ -26,13 +28,10 @@ import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.queue.ServerStatus;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Function;
 import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.ApiStatus;
@@ -49,11 +48,7 @@ public class VelocityQueue implements Queue {
   protected final VelocityQueueManager manager;
 
   private final VelocityRegisteredServer backend;
-
-  /**
-   * The primary in-memory player list. Always accessed under {@code synchronized(players)}.
-   */
-  private final ConcurrentLinkedDeque<VelocityQueueEntry> players;
+  private final QueuePlayerList playerList = new QueuePlayerList();
 
   private volatile ServerStatus serverStatus;
   private volatile QueueState state;
@@ -66,7 +61,6 @@ public class VelocityQueue implements Queue {
     this.server = server;
     this.manager = manager;
     this.backend = backend;
-    this.players = new ConcurrentLinkedDeque<>();
     this.serverStatus = ServerStatus.OFFLINE;
     this.state = initialState;
   }
@@ -88,52 +82,33 @@ public class VelocityQueue implements Queue {
 
   @Override
   public void enqueue(final @NotNull QueueEntryData data) {
-    final VelocityQueueEntry entry = createEntry(data);
-    insertByPriority(entry);
+    playerList.insertByPriority(createEntry(data));
   }
 
   @Override
   public void dequeue(final @NotNull UUID uniqueId) {
-    synchronized (players) {
-      players.removeIf(p -> p.getUniqueId().equals(uniqueId));
-    }
+    playerList.remove(uniqueId);
   }
 
   @Override
   public boolean contains(final @NotNull UUID uniqueId) {
-    for (VelocityQueueEntry entry : players) {
-      if (entry.getUniqueId().equals(uniqueId)) {
-        return true;
-      }
-    }
-    return false;
+    return playerList.contains(uniqueId);
   }
 
   @Override
   public @Nullable QueueEntry getEntry(final @NotNull UUID uniqueId) {
-    for (VelocityQueueEntry entry : players) {
-      if (entry.getUniqueId().equals(uniqueId)) {
-        return entry;
-      }
-    }
-    return null;
+    return playerList.get(uniqueId);
   }
 
   @Override
   public @NotNull @Unmodifiable Collection<QueueEntry> getEntries() {
-    return List.copyOf(players);
+    return unmodifiableCollection(playerList.snapshot());
   }
 
   @Override
   public Optional<Integer> getPosition(final @NotNull UUID uniqueId) {
-    int pos = 1;
-    for (VelocityQueueEntry entry : players) {
-      if (entry.getUniqueId().equals(uniqueId)) {
-        return Optional.of(pos);
-      }
-      pos++;
-    }
-    return Optional.empty();
+    return Optional.ofNullable(playerList.get(uniqueId))
+        .map(VelocityQueueEntry::getPosition);
   }
 
   @Override
@@ -146,7 +121,7 @@ public class VelocityQueue implements Queue {
 
   @Override
   public int size() {
-    return players.size();
+    return playerList.size();
   }
 
   @Override
@@ -177,9 +152,7 @@ public class VelocityQueue implements Queue {
 
   @Override
   public void teardown() {
-    synchronized (players) {
-      players.clear();
-    }
+    playerList.clear();
   }
 
   /**
@@ -200,9 +173,7 @@ public class VelocityQueue implements Queue {
    */
   @ApiStatus.Internal
   void removeEntry(final VelocityQueueEntry entry) {
-    synchronized (players) {
-      players.removeIf(p -> p.getUniqueId().equals(entry.getUniqueId()));
-    }
+    playerList.remove(entry.getUniqueId());
   }
 
   /**
@@ -219,63 +190,26 @@ public class VelocityQueue implements Queue {
    */
   @ApiStatus.Internal
   public List<VelocityQueueEntry> getInternalEntries() {
-    return new ArrayList<>(players);
+    return playerList.snapshot();
   }
 
   /**
    * Appends a pre-constructed entry to the end of the deque without priority sorting.
    */
   protected void addEntryInternal(final VelocityQueueEntry entry) {
-    players.addLast(entry);
+    playerList.addLast(entry);
   }
 
   /**
    * Creates a new queue entry for the given data.
    *
-   * <p>Subclasses override this to produce the appropriate entry type</p>
+   * <p>Subclasses override this to produce the appropriate entry type.</p>
    *
    * @param data the player data
    * @return a new entry instance
    */
   protected VelocityQueueEntry createEntry(final @NotNull QueueEntryData data) {
     return new VelocityQueueEntry(server, this, data);
-  }
-
-  /**
-   * Inserts the entry at the correct position according to descending priority order,
-   * preserving insertion order (FIFO) within the same priority tier.
-   */
-  private void insertByPriority(final VelocityQueueEntry entry) {
-    synchronized (players) {
-      if (contains(entry.getUniqueId())) {
-        return; // duplicate
-      }
-
-      final Iterator<VelocityQueueEntry> it = players.iterator();
-      int position = 0;
-      boolean inserted = false;
-
-      while (it.hasNext()) {
-        final VelocityQueueEntry current = it.next();
-        if (current.getPriority() < entry.getPriority()) {
-          insertAt(entry, position);
-          inserted = true;
-          break;
-        }
-        position++;
-      }
-
-      if (!inserted) {
-        players.addLast(entry);
-      }
-    }
-  }
-
-  private void insertAt(final VelocityQueueEntry entry, final int position) {
-    final List<VelocityQueueEntry> tempList = new ArrayList<>(players);
-    tempList.add(position, entry);
-    players.clear();
-    players.addAll(tempList);
   }
 
   /**

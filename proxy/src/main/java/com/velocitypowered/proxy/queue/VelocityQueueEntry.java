@@ -55,6 +55,12 @@ public class VelocityQueueEntry implements QueueEntry {
   private transient VelocityQueue queue;
 
   /**
+   * The 1-based position of this entry in its owning queue.
+   * Injected after construction, deserialization, and on position change.
+   */
+  private transient Integer position;
+
+  /**
    * Creates a new {@link VelocityQueueEntry} from the given data.
    *
    * @param server the proxy server
@@ -82,6 +88,15 @@ public class VelocityQueueEntry implements QueueEntry {
   protected void setContext(final @NotNull VelocityServer server, final @NotNull VelocityQueue queue) {
     this.server = server;
     this.queue = queue;
+  }
+
+  /**
+   * (Re-)Injects the position index.
+   *
+   * @param position the position index
+   */
+  protected void setPosition(final int position) {
+    this.position = position;
   }
 
   @Override
@@ -117,6 +132,15 @@ public class VelocityQueueEntry implements QueueEntry {
   @Override
   public boolean isQueueBypass() {
     return queueBypass;
+  }
+
+  @Override
+  public int getPosition() {
+    if (position == null) {
+      throw new IllegalStateException("Position not set yet.");
+    }
+
+    return position;
   }
 
   @Override

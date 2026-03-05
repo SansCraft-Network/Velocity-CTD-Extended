@@ -58,6 +58,7 @@ import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.api.queue.QueueState;
+import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.api.util.ServerLink;
@@ -380,6 +381,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   private @Nullable ServerRetrySession serverRetrySession;
 
+  /**
+   * The task that delays the auto-queue operation. This is kept track of to cancel this
+   * task on disconnect.
+   */
+  private @Nullable ScheduledTask tryAutoQueueTask;
+
   ConnectedPlayer(final VelocityServer server, final GameProfile profile, final MinecraftConnection connection,
                   final @Nullable InetSocketAddress virtualHost, final @Nullable String rawVirtualHost, final boolean onlineMode,
                   final HandshakeIntent handshakeIntent, final @Nullable IdentifiedKey playerKey) {
@@ -415,6 +422,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   public void disconnected() {
     for (final VelocityBossBarImplementation bar : this.bossBars) {
       bar.viewerDisconnected(this);
+    }
+
+    if (tryAutoQueueTask != null) {
+      tryAutoQueueTask.cancel();
+      tryAutoQueueTask = null;
     }
 
     if (this.fullyConnected) {
@@ -1520,9 +1532,23 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       return;
     }
 
+    if (tryAutoQueueTask != null) {
+      LOGGER.debug("Cancelling previous auto-queue for player {}.", getUsername());
+
+      tryAutoQueueTask.cancel();
+      tryAutoQueueTask = null;
+    }
+
     LOGGER.debug("Scheduling auto-queue for player {}.", getUsername());
 
-    server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
+    tryAutoQueueTask = server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
+      // Safe-guard if this player is offline. Should never be reached because the task
+      // should be cancelled by ConnectedPlayer#disconnected.
+      if (!server.getAllPlayers().contains(this)) {
+        LOGGER.debug("Aborting auto-queueing player {} (now offline).", getUsername());
+        return;
+      }
+
       if (connectedServer != joinedServer || connectionInFlight != null) {
         LOGGER.debug("Aborting auto-queueing player {} (server mismatch).", getUsername());
         return;

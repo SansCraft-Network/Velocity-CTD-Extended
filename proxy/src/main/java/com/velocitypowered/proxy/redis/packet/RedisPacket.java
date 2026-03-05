@@ -63,7 +63,7 @@ public sealed interface RedisPacket permits AbstractRedisPacket {
   void setReply(boolean reply);
 
   /**
-   * Get the unique if of the {@link com.velocitypowered.proxy.redis.transaction.Transaction} this
+   * Get the unique ID of the {@link com.velocitypowered.proxy.redis.transaction.Transaction} this
    * packet is part of.
    *
    * @return the unique id of the transaction

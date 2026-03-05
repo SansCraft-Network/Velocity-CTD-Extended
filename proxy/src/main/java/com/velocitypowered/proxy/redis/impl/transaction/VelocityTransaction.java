@@ -48,7 +48,7 @@ public abstract class VelocityTransaction<T extends RedisPacket, R extends Redis
     super(sentPacket);
 
     if (source != null && timeoutTranslationKey != null) {
-      this.onTimeout(t -> source.sendMessage(Component.text(timeoutTranslationKey, NamedTextColor.RED)));
+      this.onTimeout(t -> source.sendMessage(Component.translatable(timeoutTranslationKey, NamedTextColor.RED)));
     }
   }
 

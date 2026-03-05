@@ -92,9 +92,10 @@ public enum RouteRegistry {
 
     final String message = packet.getMessage();
     if (message.startsWith("/")) {
-      final String command = message.split(" ")[0].substring(1);
-      if (server.getCommandManager().hasCommand(command)) {
-        server.getCommandManager().executeAsync(player, command);
+      final String fullCommand = message.substring(1);
+      final String commandLabel = fullCommand.split(" ")[0];
+      if (server.getCommandManager().hasCommand(commandLabel)) {
+        server.getCommandManager().executeAsync(player, fullCommand);
         return;
       }
     }

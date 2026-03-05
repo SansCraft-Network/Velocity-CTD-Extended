@@ -54,7 +54,7 @@ public abstract class TransactionHandler<T extends RedisPacket, R extends RedisP
    * @param packet the incoming packet to handle
    * @return a newly created reply packet, or {@code null} if no reply is required
    */
-  public abstract R handlePacket(T packet);
+  public abstract @Nullable R handlePacket(T packet);
 
   /**
    * Creates the reply packet for the given incoming {@link RedisPacket}, if any.

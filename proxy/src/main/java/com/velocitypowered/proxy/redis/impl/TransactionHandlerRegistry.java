@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Represents a registry that holds all {@link TransactionHandler} for the VelocityRedis module. An
@@ -136,7 +137,7 @@ public enum TransactionHandlerRegistry {
     this.transactionHandler = new TransactionHandler<>(transactionClass) {
 
       @Override
-      public R handlePacket(final T packet) {
+      public @Nullable R handlePacket(final T packet) {
         return delegate.handleData(VelocityRedis.INSTANCE.getServer(), packet);
       }
     };
@@ -169,6 +170,6 @@ public enum TransactionHandlerRegistry {
      * @param data   the incoming Redis packet data
      * @return the reply packet, or {@code null} if no reply is required
      */
-    R handleData(VelocityServer server, T data);
+    @Nullable R handleData(VelocityServer server, T data);
   }
 }

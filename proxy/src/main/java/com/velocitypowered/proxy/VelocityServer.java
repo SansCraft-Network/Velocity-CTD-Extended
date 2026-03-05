@@ -335,7 +335,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Coordinates server queues and handles queue assignment logic.
    */
-  private VelocityQueueManager queueManager;
+  private @Nullable VelocityQueueManager queueManager;
 
   /**
    * Provides access to the Redis integration used for multi-proxy features such
@@ -860,7 +860,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     ipAttemptLimiter = Ratelimiters.createWithMilliseconds(newConfiguration.getLoginRatelimit());
     this.configuration = newConfiguration;
     eventManager.fireAndForget(new ProxyReloadEvent());
-    queueManager.reload();
+
+    if (queueManager != null) {
+      queueManager.reload();
+    }
 
     if (!this.getConfiguration().getServerLinks().isEmpty()) {
       for (Player player : this.getAllPlayers()) {
@@ -1074,7 +1077,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
       ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
 
-      if (this.isQueueEnabled()) {
+      if (this.queueManager != null) {
         players.forEach(p -> this.queueManager.removePlayerEntirely(p));
         this.queueManager.teardown();
       }

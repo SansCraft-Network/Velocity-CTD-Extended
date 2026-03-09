@@ -66,6 +66,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -541,13 +542,10 @@ public final class VelocityCommands {
    * @param raw the raw string to deserialize
    * @return the deserialized component
    */
-  public static Component deserializeComponent(final String raw) {
+  public static Component deserializeComponent(final @NonNull String raw) {
     if (raw.startsWith("{") || raw.startsWith("[") || raw.startsWith("\"")) {
       try {
-        final Component parsed = GsonComponentSerializer.gson().deserializeOrNull(raw);
-        if (parsed != null) {
-          return parsed;
-        }
+        return GsonComponentSerializer.gson().deserializeOrNull(raw);
       } catch (JsonSyntaxException ignored) {
         // fall through to MiniMessage
       }

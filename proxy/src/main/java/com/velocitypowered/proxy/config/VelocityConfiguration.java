@@ -774,12 +774,12 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   /**
-   * Returns whether the <code>/ip</code> command is enabled.
+   * Returns whether the <code>/gip</code> command is enabled.
    *
    * @return {@code true} if enabled
    */
-  public boolean isIpEnabled() {
-    return commands.isIpEnabled();
+  public boolean isGipEnabled() {
+    return commands.isGipEnabled();
   }
 
   /**
@@ -1954,11 +1954,11 @@ public final class VelocityConfiguration implements ProxyConfig {
     private boolean gkickCommand = true;
 
     /**
-     * Whether the /ip command is enabled.
+     * Whether the /gip command is enabled.
      * Allows operators to retrieve the IP address of an online player.
      */
     @Expose
-    private boolean ipCommand = true;
+    private boolean gipCommand = true;
 
     /**
      * Whether the /glist command is enabled.
@@ -2018,7 +2018,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.alertRawCommand = config.getOrElse("alertraw-enabled", true);
         this.findCommand = config.getOrElse("find-enabled", true);
         this.gkickCommand = config.getOrElse("gkick-enabled", true);
-        this.ipCommand = config.getOrElse("ip-enabled", true);
+        this.gipCommand = config.getOrElse("gip-enabled", true);
         this.glistCommand = config.getOrElse("glist-enabled", true);
         this.plistCommand = config.getOrElse("plist-enabled", true);
         this.hubCommand = config.getOrElse("hub-enabled", true);
@@ -2049,8 +2049,8 @@ public final class VelocityConfiguration implements ProxyConfig {
       return gkickCommand;
     }
 
-    public boolean isIpEnabled() {
-      return ipCommand;
+    public boolean isGipEnabled() {
+      return gipCommand;
     }
 
     public boolean isGlistEnabled() {

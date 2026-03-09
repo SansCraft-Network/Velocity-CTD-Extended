@@ -34,19 +34,19 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
 
 /**
- * Implements Velocity-CTD's {@code /ip} command.
+ * Implements Velocity-CTD's {@code /gip} command.
  */
-public class IpCommand implements BuiltinCommand {
+public class GipCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public IpCommand(final VelocityServer server) {
+  public GipCommand(final VelocityServer server) {
     this.server = server;
   }
 
   @Override
   public String label() {
-    return "ip";
+    return "gip";
   }
 
   @Override
@@ -58,7 +58,7 @@ public class IpCommand implements BuiltinCommand {
 
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
         .literalArgumentBuilder(label())
-        .requires(source -> source.getPermissionValue("velocity.command.ip") == Tristate.TRUE)
+        .requires(source -> source.getPermissionValue("velocity.command.gip") == Tristate.TRUE)
         .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
         .then(playerNode);
 
@@ -79,14 +79,14 @@ public class IpCommand implements BuiltinCommand {
 
     if (player == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.ip.not-found")
+          Component.translatable("velocity.command.gip.not-found")
       );
       return 0;
     }
 
     final String ip = player.getRemoteAddress().getAddress().getHostAddress();
     context.getSource().sendMessage(
-        Component.translatable("velocity.command.ip.message")
+        Component.translatable("velocity.command.gip.message")
             .arguments(
                 Argument.string("0", player.getUsername()),
                 Argument.string("1", ip)
@@ -102,7 +102,7 @@ public class IpCommand implements BuiltinCommand {
 
     if (!redis.getPlayerService().isPlayerOnline(playerName)) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.ip.not-found")
+          Component.translatable("velocity.command.gip.not-found")
       );
       return 0;
     }
@@ -110,13 +110,13 @@ public class IpCommand implements BuiltinCommand {
     final PlayerEntry entry = redis.getPlayerService().getPlayerEntry(playerName);
     if (entry == null || entry.getIpAddress() == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.ip.not-found")
+          Component.translatable("velocity.command.gip.not-found")
       );
       return 0;
     }
 
     context.getSource().sendMessage(
-        Component.translatable("velocity.command.ip.message")
+        Component.translatable("velocity.command.gip.message")
             .arguments(
                 Argument.string("0", entry.getUsername()),
                 Argument.string("1", entry.getIpAddress())

@@ -39,6 +39,7 @@ import com.velocitypowered.api.proxy.config.BackendServerConfig;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
+import com.velocitypowered.api.queue.QueueManager;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ProxyVersion;
@@ -367,11 +368,16 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   /**
    * Returns the queue manager currently in use.
+   * Will throw when the queue is not enabled. Please check this beforehand with {@link #isQueueEnabled()}.
    *
-   * @return the {@link VelocityQueueManager}, or {@code null} if not initialized
+   * @return the {@link QueueManager}, or throws {@link IllegalStateException} if not initialized
    */
   @Override
   public VelocityQueueManager getQueueManager() {
+    if (queueManager == null) {
+      throw new IllegalStateException("Queue is not enabled.");
+    }
+
     return queueManager;
   }
 
@@ -1705,6 +1711,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    *
    * @return true if the queue system is enabled, otherwise false
    */
+  @Override
   public boolean isQueueEnabled() {
     return this.configuration.getQueue().isEnabled();
   }

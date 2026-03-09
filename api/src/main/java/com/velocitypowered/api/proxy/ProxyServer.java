@@ -175,9 +175,17 @@ public interface ProxyServer extends Audience {
   CommandManager getCommandManager();
 
   /**
-   * Returns the queue manager currently in use.
+   * Check whether the queue system is enabled for the proxy.
    *
-   * @return the {@link QueueManager}, or {@code null} if not initialized
+   * @return true if the queue system is enabled, otherwise false
+   */
+  boolean isQueueEnabled();
+
+  /**
+   * Returns the queue manager currently in use.
+   * Will throw when the queue is not enabled. Please check this beforehand with {@link #isQueueEnabled()}.
+   *
+   * @return the {@link QueueManager}, or throws {@link IllegalStateException} if not initialized
    */
   QueueManager getQueueManager();
 

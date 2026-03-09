@@ -52,7 +52,7 @@ public record ConfigDetector(Logger logger) {
    */
   private static final Set<String> IGNORED_SECTIONS = Set.of("servers", "server-links",
           "forced-hosts", "slash-servers", "playercaps", "proxy-addresses",
-          "command-aliases", "proxy-command-aliases");
+          "command-aliases", "proxy-command-aliases", "auto-queue-servers");
 
   /**
    * Configuration analysis result containing details about outdated configurations.

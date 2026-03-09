@@ -29,6 +29,7 @@ import com.velocitypowered.api.proxy.config.ProxyConfig;
 import com.velocitypowered.api.proxy.server.ServerInfoForwardingMode;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.ServerLink;
+import com.velocitypowered.proxy.config.migration.AutoQueueServersMigration;
 import com.velocitypowered.proxy.config.migration.ConfigurationMigration;
 import com.velocitypowered.proxy.config.migration.ForcedHostAsFallbackMigration;
 import com.velocitypowered.proxy.config.migration.ForwardingMigration;
@@ -1228,7 +1229,8 @@ public final class VelocityConfiguration implements ProxyConfig {
           new MotdMigration(),
           new MiniMessageTranslationsMigration(),
           new TransferIntegrationMigration(),
-          new ForcedHostAsFallbackMigration()
+          new ForcedHostAsFallbackMigration(),
+          new AutoQueueServersMigration()
       };
 
       for (final ConfigurationMigration migration : migrations) {

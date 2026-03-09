@@ -30,7 +30,8 @@ public sealed interface ConfigurationMigration permits
         MiniMessageTranslationsMigration,
         MotdMigration,
         TransferIntegrationMigration,
-        ForcedHostAsFallbackMigration {
+        ForcedHostAsFallbackMigration,
+        AutoQueueServersMigration {
 
   /**
    * Determines whether this migration should be applied to the given config.

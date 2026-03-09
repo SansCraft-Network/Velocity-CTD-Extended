@@ -26,9 +26,11 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.proxy.VelocityServer;
+import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Implements Velocity's {@code /shutdown} command.
@@ -44,6 +46,11 @@ public class ShutdownCommand implements BuiltinCommand {
   @Override
   public String label() {
     return "shutdown";
+  }
+
+  @Override
+  public @NonNull List<String> aliases() {
+    return List.of("end", "stop");
   }
 
   @Override

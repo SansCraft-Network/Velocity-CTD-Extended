@@ -529,14 +529,14 @@ public final class VelocityCommands {
             || player.hasPermission("velocity.queue.bypass")) {
       player.createConnectionRequest(target).connectWithIndication();
     } else {
-      proxyServer.getQueueManager().queue(player, (VelocityRegisteredServer) target);
+      proxyServer.getQueueManager().queue(player, target);
     }
   }
 
   /**
    * Deserializes a raw string into a {@link Component}, trying JSON first and falling back to
-   * MiniMessage. Strings that start with {@code {}, {@code [}, or {@code "} are attempted as
-   * JSON; everything else goes straight to MiniMessage.
+   * MiniMessage. Strings that start with <code>{</code>, <code>[</code>, or <code>"</code>
+   * are attempted as JSON; everything else goes straight to MiniMessage.
    *
    * @param raw the raw string to deserialize
    * @return the deserialized component

@@ -52,6 +52,7 @@ import com.velocitypowered.proxy.command.builtin.CallbackCommand;
 import com.velocitypowered.proxy.command.builtin.FindCommand;
 import com.velocitypowered.proxy.command.builtin.GkickCommand;
 import com.velocitypowered.proxy.command.builtin.GlistCommand;
+import com.velocitypowered.proxy.command.builtin.IpCommand;
 import com.velocitypowered.proxy.command.builtin.HubCommand;
 import com.velocitypowered.proxy.command.builtin.LeaveQueueCommand;
 import com.velocitypowered.proxy.command.builtin.PingCommand;
@@ -917,6 +918,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     registerCommand(configuration.isAlertRawEnabled(), AlertRawCommand::new);
     registerCommand(configuration.isFindEnabled(), FindCommand::new);
     registerCommand(configuration.isGkickEnabled(), GkickCommand::new);
+    registerCommand(configuration.isIpEnabled(), IpCommand::new);
     registerCommand(configuration.isTransferEnabled(), TransferCommand::new);
     registerCommand(configuration.isGlistEnabled(), GlistCommand::new);
     registerCommand(configuration.isPlistEnabled(), PlistCommand::new);

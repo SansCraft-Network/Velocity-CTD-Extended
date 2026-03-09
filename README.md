@@ -43,6 +43,8 @@ dependencies, useful performance improvements, and more.
 * Configurable `/find` command that locates yourself and other users.
 * Configurable `/gkick` command that kicks a player from the network, supporting
   both local and cross-proxy (Redis) players.
+* Configurable `/ip` command that retrieves the IP address of an online player,
+  supporting both local and cross-proxy (Redis) players.
 * `/hub` with `/lobby` alias that sends you to the/a fallback server,
   which synchronizes with the activation and deactivation of dynamic fallbacks.
 * Configurable `/ping` command that displays your and other users' ping.
@@ -91,6 +93,8 @@ dependencies, useful performance improvements, and more.
   including players connected to a different proxy in a Redis multi-proxy setup).
 * `velocity.command.hub` [/hub & /lobby] (Allows you to be sent to the hub/lobby or
   your fallback server(s), depending on your setup).
+* `velocity.command.ip` [/ip] (Allows you to retrieve the IP address of an online player,
+  including players connected to a different proxy in a Redis multi-proxy setup).
 * `velocity.command.ping` [/ping] (Returns your latency of the proxy you are currently
   connected to and not the latency of the backend server).
 * `velocity.command.plist` [/plist] (Returns the total users on your proxy

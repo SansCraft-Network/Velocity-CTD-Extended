@@ -64,6 +64,11 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
   private String serverName = null;
 
   /**
+   * The IP address of the player, or {@code null} if not available.
+   */
+  private String ipAddress = null;
+
+  /**
    * Constructs a new {@link PlayerEntry}.
    *
    * @param uniqueId the player's unique id
@@ -91,6 +96,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
     this.fullServerBypass = player.hasPermission("velocity.queue.full.bypass");
     this.queueBypass = player.hasPermission("velocity.queue.bypass");
     this.queuePriority.putAll(player.getQueuePriorities());
+    this.ipAddress = player.getRemoteAddress().getAddress().getHostAddress();
   }
 
   /**
@@ -168,5 +174,14 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    */
   public void setServerName(final String serverName) {
     this.serverName = serverName;
+  }
+
+  /**
+   * Gets the IP address of the player.
+   *
+   * @return the IP address, or {@code null} if not available
+   */
+  public @Nullable String getIpAddress() {
+    return ipAddress;
   }
 }

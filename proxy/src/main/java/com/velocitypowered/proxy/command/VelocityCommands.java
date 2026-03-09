@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.command;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -62,7 +63,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -528,5 +531,28 @@ public final class VelocityCommands {
     } else {
       proxyServer.getQueueManager().queue(player, (VelocityRegisteredServer) target);
     }
+  }
+
+  /**
+   * Deserializes a raw string into a {@link Component}, trying JSON first and falling back to
+   * MiniMessage. Strings that start with {@code {}, {@code [}, or {@code "} are attempted as
+   * JSON; everything else goes straight to MiniMessage.
+   *
+   * @param raw the raw string to deserialize
+   * @return the deserialized component
+   */
+  public static Component deserializeComponent(final String raw) {
+    if (raw.startsWith("{") || raw.startsWith("[") || raw.startsWith("\"")) {
+      try {
+        final Component parsed = GsonComponentSerializer.gson().deserializeOrNull(raw);
+        if (parsed != null) {
+          return parsed;
+        }
+      } catch (JsonSyntaxException ignored) {
+        // fall through to MiniMessage
+      }
+    }
+
+    return MiniMessage.miniMessage().deserialize(raw);
   }
 }

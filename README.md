@@ -41,6 +41,8 @@ dependencies, useful performance improvements, and more.
 * Configurable `/alertraw` command to send non-prefixed messages across your
   entire network.
 * Configurable `/find` command that locates yourself and other users.
+* Configurable `/gkick` command that kicks a player from the network, supporting
+  both local and cross-proxy (Redis) players.
 * `/hub` with `/lobby` alias that sends you to the/a fallback server,
   which synchronizes with the activation and deactivation of dynamic fallbacks.
 * Configurable `/ping` command that displays your and other users' ping.
@@ -85,6 +87,8 @@ dependencies, useful performance improvements, and more.
   alerts to all users on the proxy or proxies, depending on your setup).
 * `velocity.command.find` [/find] (Allows you to find the specific server a user is
   actively connected to on the network).
+* `velocity.command.gkick` [/gkick] (Allows you to kick a player from the network,
+  including players connected to a different proxy in a Redis multi-proxy setup).
 * `velocity.command.hub` [/hub & /lobby] (Allows you to be sent to the hub/lobby or
   your fallback server(s), depending on your setup).
 * `velocity.command.ping` [/ping] (Returns your latency of the proxy you are currently

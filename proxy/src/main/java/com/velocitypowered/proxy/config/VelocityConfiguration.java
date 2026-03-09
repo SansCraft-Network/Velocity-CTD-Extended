@@ -765,6 +765,15 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   /**
+   * Returns whether the <code>/gkick</code> command is enabled.
+   *
+   * @return {@code true} if enabled
+   */
+  public boolean isGkickEnabled() {
+    return commands.isGkickEnabled();
+  }
+
+  /**
    * Returns whether the <code>/transfer</code> command is enabled.
    *
    * @return {@code true} if enabled
@@ -1929,6 +1938,13 @@ public final class VelocityConfiguration implements ProxyConfig {
     private boolean findCommand = true;
 
     /**
+     * Whether the /gkick command is enabled.
+     * Allows operators to kick players across the entire network.
+     */
+    @Expose
+    private boolean gkickCommand = true;
+
+    /**
      * Whether the /glist command is enabled.
      * Displays a list of all online players across all servers.
      */
@@ -1985,6 +2001,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         this.alertCommand = config.getOrElse("alert-enabled", true);
         this.alertRawCommand = config.getOrElse("alertraw-enabled", true);
         this.findCommand = config.getOrElse("find-enabled", true);
+        this.gkickCommand = config.getOrElse("gkick-enabled", true);
         this.glistCommand = config.getOrElse("glist-enabled", true);
         this.plistCommand = config.getOrElse("plist-enabled", true);
         this.hubCommand = config.getOrElse("hub-enabled", true);
@@ -2009,6 +2026,10 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     public boolean isFindEnabled() {
       return findCommand;
+    }
+
+    public boolean isGkickEnabled() {
+      return gkickCommand;
     }
 
     public boolean isGlistEnabled() {

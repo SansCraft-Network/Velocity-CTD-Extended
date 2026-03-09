@@ -17,7 +17,6 @@
 
 package com.velocitypowered.proxy.command.builtin;
 
-import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -26,10 +25,8 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.command.VelocityCommands;
 import java.util.List;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
@@ -65,22 +62,7 @@ public class ShutdownCommand implements BuiltinCommand {
                             StringArgumentType.greedyString())
                     .executes(context -> {
                       String reason = context.getArgument("reason", String.class);
-                      Component reasonComponent = null;
-
-                      if (reason.startsWith("{") || reason.startsWith("[") || reason.startsWith("\"")) {
-                        try {
-                          reasonComponent = GsonComponentSerializer.gson()
-                                  .deserializeOrNull(reason);
-                        } catch (JsonSyntaxException ignored) {
-                          // This is always ignored; thus, can be labeled as such.
-                        }
-                      }
-
-                      if (reasonComponent == null) {
-                        reasonComponent = MiniMessage.miniMessage().deserialize(reason);
-                      }
-
-                      server.shutdown(true, reasonComponent);
+                      server.shutdown(true, VelocityCommands.deserializeComponent(reason));
                       return Command.SINGLE_SUCCESS;
                     })
             ).build());

@@ -33,7 +33,6 @@ import com.velocitypowered.proxy.connection.util.FallbackServerResolver;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.translation.GlobalTranslator;
 

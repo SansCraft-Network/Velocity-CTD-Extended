@@ -52,6 +52,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +61,8 @@ import org.jetbrains.annotations.Nullable;
  * Local implementation of {@link QueueManager}.
  */
 public class VelocityQueueManager implements QueueManager {
+
+  private static final Logger LOGGER = LogManager.getLogger(VelocityQueueManager.class);
 
   /**
    * Timestamp (ms) of when each server last transitioned from OFFLINE to WAITING.
@@ -191,14 +195,9 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public boolean isQueued(final @NotNull Player player) {
-    return getQueueFor(player) != null;
-  }
-
-  @Override
-  public @Nullable Queue getQueueFor(final @NotNull Player player) {
+  public @Nullable Queue getQueueFor(final @NotNull UUID uniqueId) {
     for (VelocityQueue q : queues.values()) {
-      if (q.contains(player.getUniqueId())) {
+      if (q.contains(uniqueId)) {
         return q;
       }
     }
@@ -258,21 +257,24 @@ public class VelocityQueueManager implements QueueManager {
     }
 
     final int timeout = getTimeoutInSeconds(player);
-    if (timeout == -1) {
+    if (timeout <= 0) {
+      LOGGER.debug("Removing player {} from all queues immediately (no timeout).", player.getUsername());
       removePlayerEntirely(player);
     } else {
+      LOGGER.debug("Removing player {} from all queues in {} second(s) (has timeout).", player.getUsername(), timeout);
+      UUID playerUniqueId = player.getUniqueId();
       server.getScheduler()
-          .buildTask(VelocityVirtualPlugin.INSTANCE, () -> removePlayerEntirely(player))
+          .buildTask(VelocityVirtualPlugin.INSTANCE, () -> removePlayerEntirely(playerUniqueId))
           .delay(timeout, TimeUnit.SECONDS)
           .schedule();
     }
   }
 
   @Override
-  public void removePlayerEntirely(final @NotNull Player player) {
+  public void removePlayerEntirely(final @NotNull UUID uniqueId) {
     for (VelocityQueue queue : queues.values()) {
-      if (queue.contains(player)) {
-        queue.dequeue(player);
+      if (queue.contains(uniqueId)) {
+        queue.dequeue(uniqueId);
       }
     }
   }
@@ -438,6 +440,6 @@ public class VelocityQueueManager implements QueueManager {
     }
 
     return findHighestPermissionValue(player, "velocity.queue.timeout.", 86_400)
-        .orElse(-1);
+        .orElse(0);
   }
 }

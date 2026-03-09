@@ -337,6 +337,14 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private boolean fullyConnected = false;
 
   /**
+   * Whether the player has fully connected to the first server it's connecting to.
+   * This flag will be {@code true} after the first call to
+   * {@link #setConnectedServer(VelocityServerConnection)} with a non-null
+   * {@link VelocityServerConnection} as its argument.
+   */
+  private boolean firstServerConnected = false;
+
+  /**
    * The brand name reported by the client (e.g. "vanilla", "forge"), or {@code null} if not sent.
    */
   private @Nullable String clientBrand;
@@ -1317,7 +1325,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     if (this.server.isQueueEnabled() && disconnectReason instanceof TextComponent text) {
       for (String reason : this.server.getConfiguration().getQueue().getBannedReason()) {
         if (containsString(text, reason)) {
-          this.server.getQueueManager().removePlayerEntirely(get());
+          this.server.getQueueManager().removePlayerEntirely(this);
           break;
         }
       }
@@ -1436,7 +1444,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
                       if (isValidReason && (queue.getState() != QueueState.PAUSED
                           || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
-                        queue.enqueue(get());
+                        queue.enqueue(this);
                       }
                     }
                   }
@@ -1500,16 +1508,24 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     this.connectedServer = serverConnection;
     resetServerRetrySession();
 
-    if (serverConnection != null && server.isQueueEnabled() && server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
-      server.getQueueManager().removePlayerEntirely(get());
-    }
-
     if (serverConnection == connectionInFlight) {
       connectionInFlight = null;
     }
 
-    if (serverConnection != null && server.isQueueEnabled()) {
-      tryAutoQueue(serverConnection);
+    if (serverConnection != null) {
+      if (server.isQueueEnabled()) {
+        if (server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch() && firstServerConnected) {
+          // Only remove player from all queues entirely if this is NOT the first server we connect to (firstServerConnected flag)
+          // to ensure timeouts work correctly when a player re-joins the network/
+          server.getQueueManager().removePlayerEntirely(this);
+        }
+
+        tryAutoQueue(serverConnection);
+      }
+
+      if (!firstServerConnected) {
+        firstServerConnected = true;
+      }
     }
   }
 
@@ -1649,15 +1665,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    */
   public CompletableFuture<Void> getTeardownFuture() {
     return teardownFuture;
-  }
-
-  /**
-   * Get instance of itself for other classes to retrieve.
-   *
-   * @return The current labeled class so others can retrieve.
-   */
-  public ConnectedPlayer get() {
-    return this;
   }
 
   /**
@@ -2467,16 +2474,13 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             if (server.isQueueEnabled()) {
               for (String r : server.getConfiguration().getQueue().getBannedReason()) {
                 if (containsString(textComponent, r)) {
-                  server.getQueueManager().removePlayerEntirely(get());
+                  server.getQueueManager().removePlayerEntirely(ConnectedPlayer.this);
                 }
               }
             }
           }
           default -> {
-            // In this case, the default handler removes the user on server switch.
-            if (server.getConfiguration().getQueue().isRemovePlayerOnServerSwitch()) {
-              server.getQueueManager().removePlayerEntirely(get());
-            }
+            // The only remaining value is successful (no need to do anything!)
           }
         }
       }, connection.eventLoop()).thenApply(Result::isSuccessful);

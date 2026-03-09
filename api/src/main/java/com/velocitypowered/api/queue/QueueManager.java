@@ -10,6 +10,7 @@ package com.velocitypowered.api.queue;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.util.Collection;
+import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,10 +64,32 @@ public interface QueueManager {
   /**
    * Returns {@code true} if the given player is present in any queue.
    *
+   * @param uniqueId the unique id of the player to check
+   * @return {@code true} if the player is queued
+   */
+  default boolean isQueued(@NotNull UUID uniqueId) {
+    return getQueueFor(uniqueId) != null;
+  }
+
+  /**
+   * Returns {@code true} if the given player is present in any queue.
+   *
    * @param player the player to check
    * @return {@code true} if the player is queued
    */
-  boolean isQueued(@NotNull Player player);
+  default boolean isQueued(@NotNull Player player) {
+    return getQueueFor(player) != null;
+  }
+
+  /**
+   * Returns the queue the given player is currently in, or {@code null} if the player
+   * is not queued in any queue.
+   *
+   * @param uniqueId the unique id of the player to look up
+   * @return the queue, or {@code null}
+   */
+  @Nullable
+  Queue getQueueFor(@NotNull UUID uniqueId);
 
   /**
    * Returns the queue the given player is currently in, or {@code null} if the player
@@ -76,7 +99,9 @@ public interface QueueManager {
    * @return the queue, or {@code null}
    */
   @Nullable
-  Queue getQueueFor(@NotNull Player player);
+  default Queue getQueueFor(@NotNull Player player) {
+    return getQueueFor(player.getUniqueId());
+  }
 
   /**
    * Validates eligibility and adds the given player to the queue for the specified server.
@@ -100,7 +125,16 @@ public interface QueueManager {
   /**
    * Immediately removes the given player from all queues they are currently in.
    *
+   * @param uniqueId the unique id of the player to remove
+   */
+  void removePlayerEntirely(@NotNull UUID uniqueId);
+
+  /**
+   * Immediately removes the given player from all queues they are currently in.
+   *
    * @param player the player to remove
    */
-  void removePlayerEntirely(@NotNull Player player);
+  default void removePlayerEntirely(@NotNull Player player) {
+    removePlayerEntirely(player.getUniqueId());
+  }
 }

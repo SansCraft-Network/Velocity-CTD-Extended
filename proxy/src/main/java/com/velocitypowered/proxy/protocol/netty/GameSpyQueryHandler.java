@@ -27,9 +27,9 @@ import com.velocitypowered.api.event.query.ProxyQueryEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.QueryResponse;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -140,7 +140,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
         .maxPlayers(server.getConfiguration().getShowMaxPlayers())
         .proxyPort(server.getConfiguration().getBind().getPort())
         .proxyHost(server.getConfiguration().getBind().getHostString())
-        .players(server.getAllPlayers().stream().map(Player::getUsername).collect(Collectors.toList()))
+        .players(server.getAllPlayers().stream().map(ConnectedPlayer::getUsername).collect(Collectors.toList()))
         .proxyVersion("Velocity")
         .plugins(server.getConfiguration().shouldQueryShowPlugins() ? getRealPluginInformation() : Collections.emptyList())
         .build();

@@ -25,16 +25,15 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.config.ProxyAddress;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.redis.impl.transaction.VelocityTransferRemote;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Optional;
@@ -79,12 +78,12 @@ public class TransferCommand implements BuiltinCommand {
                       }
 
                       if ("current".regionMatches(true, 0, argument, 0, argument.length())
-                              && ctx.getSource() instanceof Player) {
+                              && ctx.getSource() instanceof ConnectedPlayer) {
                         builder.suggest("current");
                       }
 
                       if (argument.isEmpty() || argument.startsWith("+")) {
-                        for (RegisteredServer server : server.getAllServers()) {
+                        for (VelocityRegisteredServer server : server.getAllServers()) {
                           String serverName = server.getServerInfo().getName();
 
                           if (serverName.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
@@ -103,7 +102,7 @@ public class TransferCommand implements BuiltinCommand {
                         return builder.buildFuture();
                       }
 
-                      for (Player player : server.getAllPlayers()) {
+                      for (ConnectedPlayer player : server.getAllPlayers()) {
                         String playerName = player.getUsername();
                         if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
                           builder.suggest(playerName);
@@ -168,15 +167,14 @@ public class TransferCommand implements BuiltinCommand {
               .arguments(Component.text(normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        for (Player p : this.server.getAllPlayers()) {
-          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
+        for (ConnectedPlayer connectedPlayer : this.server.getAllPlayers()) {
           if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
             connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
           }
         }
       }).delay(1, TimeUnit.SECONDS).schedule();
     } else if (player.startsWith("+")) {
-      RegisteredServer foundServer = findServer(player.substring(1)).orElse(null);
+      VelocityRegisteredServer foundServer = findServer(player.substring(1)).orElse(null);
       if (foundServer == null) {
         context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
                 .arguments(Component.text(player)));
@@ -189,35 +187,33 @@ public class TransferCommand implements BuiltinCommand {
                       Argument.string("proxy", normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        for (Player p : foundServer.getPlayersConnected()) {
-          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
+        for (ConnectedPlayer connectedPlayer : foundServer.getPlayersConnected()) {
           if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
             connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
           }
         }
       }).delay(1, TimeUnit.SECONDS).schedule();
     } else if (player.equalsIgnoreCase("current")) {
-      if (!(context.getSource() instanceof Player sender)) {
+      if (!(context.getSource() instanceof ConnectedPlayer sender)) {
         context.getSource().sendMessage(Component.translatable("velocity.command.players-only"));
         return -1;
       }
 
-      ServerConnection foundServerConn = sender.getCurrentServer().orElse(null);
+      VelocityServerConnection foundServerConn = sender.getCurrentServer().orElse(null);
       if (foundServerConn == null) {
         context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
                 .arguments(Component.text(player)));
         return -1;
       }
 
-      RegisteredServer foundServer = this.server.getServer(foundServerConn.getServerInfo().getName()).orElseThrow();
+      VelocityRegisteredServer foundServer = this.server.getServer(foundServerConn.getServerInfo().getName()).orElseThrow();
 
       context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.server")
               .arguments(Component.text(foundServer.getServerInfo().getName()),
                       Argument.string("proxy", normalizedProxyId)));
 
       this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        for (Player p : foundServer.getPlayersConnected()) {
-          ConnectedPlayer connectedPlayer = (ConnectedPlayer) p;
+        for (ConnectedPlayer connectedPlayer : foundServer.getPlayersConnected()) {
           if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
             connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
           }
@@ -240,14 +236,14 @@ public class TransferCommand implements BuiltinCommand {
         new VelocityTransferRemote(context.getSource(), playerEntry.getUniqueId(), proxyId, address.ip(), address.port())
                 .publish();
       } else {
-        Optional<Player> maybePlayer = this.server.getPlayer(player);
+        Optional<ConnectedPlayer> maybePlayer = this.server.getPlayer(player);
         if (maybePlayer.isEmpty()) {
           context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
                   .arguments(Argument.string("player", player)));
           return -1;
         }
 
-        ConnectedPlayer connectedPlayer = (ConnectedPlayer) maybePlayer.get();
+        ConnectedPlayer connectedPlayer = maybePlayer.get();
         if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
           context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
                   .arguments(Argument.string("player", connectedPlayer.getUsername()),
@@ -263,13 +259,13 @@ public class TransferCommand implements BuiltinCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private Optional<RegisteredServer> findServer(String serverName) {
-    Collection<RegisteredServer> servers = server.getAllServers();
+  private Optional<VelocityRegisteredServer> findServer(String serverName) {
+    Collection<VelocityRegisteredServer> servers = server.getAllServers();
     String lowerServerName = serverName.toLowerCase();
 
-    Optional<RegisteredServer> bestMatch = Optional.empty();
+    Optional<VelocityRegisteredServer> bestMatch = Optional.empty();
 
-    for (RegisteredServer server : servers) {
+    for (VelocityRegisteredServer server : servers) {
       String lowerName = server.getServerInfo().getName().toLowerCase();
 
       if (lowerName.equals(lowerServerName)) {

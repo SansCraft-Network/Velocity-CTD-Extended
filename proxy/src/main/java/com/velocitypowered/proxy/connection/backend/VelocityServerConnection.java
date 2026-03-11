@@ -27,7 +27,6 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.PluginMessageEncoder;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
@@ -275,7 +274,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
   }
 
   /**
-   * Gets the {@link RegisteredServer} this connection is targeting.
+   * Gets the {@link VelocityRegisteredServer} this connection is targeting.
    *
    * @return the registered server this connection points to
    */
@@ -290,7 +289,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    * @return an {@link Optional} containing the previous server or empty if not applicable
    */
   @Override
-  public Optional<RegisteredServer> getPreviousServer() {
+  public Optional<VelocityRegisteredServer> getPreviousServer() {
     return Optional.ofNullable(this.previousServer);
   }
 

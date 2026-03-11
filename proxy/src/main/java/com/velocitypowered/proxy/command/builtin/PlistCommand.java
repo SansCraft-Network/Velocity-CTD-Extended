@@ -27,10 +27,10 @@ import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -129,7 +129,7 @@ public class PlistCommand implements BuiltinCommand {
 
     if (serverName.equalsIgnoreCase(SERVER_ALL)) {
       int totalPlayers = 0;
-      for (RegisteredServer registeredServer : server.getAllServers()) {
+      for (VelocityRegisteredServer registeredServer : server.getAllServers()) {
         int serverTotalPlayers = sendServerPlayers(context.getSource(), validatedProxy, registeredServer, true);
         totalPlayers += serverTotalPlayers;
       }
@@ -138,7 +138,7 @@ public class PlistCommand implements BuiltinCommand {
       return Command.SINGLE_SUCCESS;
     }
 
-    RegisteredServer validatedServer = validateServer(serverName, context.getSource()).orElse(null);
+    VelocityRegisteredServer validatedServer = validateServer(serverName, context.getSource()).orElse(null);
     if (validatedServer == null) {
       return Command.SINGLE_SUCCESS;
     }
@@ -163,7 +163,7 @@ public class PlistCommand implements BuiltinCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private Optional<RegisteredServer> validateServer(String serverName, CommandSource source) {
+  private Optional<VelocityRegisteredServer> validateServer(String serverName, CommandSource source) {
     return server.getAllServers().stream()
             .filter(registeredServer -> registeredServer.getServerInfo().getName().equalsIgnoreCase(serverName))
             .findFirst()
@@ -203,7 +203,7 @@ public class PlistCommand implements BuiltinCommand {
   // Returns total player count
   private int sendServerPlayers(CommandSource target,
                                  @Nullable String proxyId,
-                                 RegisteredServer server,
+                                VelocityRegisteredServer server,
                                  boolean ignoreEmpty) {
     List<Component> players = new ArrayList<>();
     int totalPlayers = 0;

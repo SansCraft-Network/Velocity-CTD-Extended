@@ -90,7 +90,7 @@ public interface Player extends
    *
    * @return an {@link Optional} the server that the player is connected to, which may be empty
    */
-  Optional<ServerConnection> getCurrentServer();
+  Optional<? extends ServerConnection> getCurrentServer();
 
   /**
    * Returns the player's client settings.

@@ -18,7 +18,6 @@
 package com.velocitypowered.proxy.redis.impl;
 
 import com.velocitypowered.api.network.ProtocolVersion;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.VelocityCommand;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -52,7 +51,7 @@ public enum TransactionHandlerRegistry {
    * Handles the {@link VelocityGetPlayerPing} packet by replying with the player's ping if the player is on the proxy.
    */
   VELOCITY_GET_PLAYER_PING(VelocityGetPlayerPing.class, (server, packet) -> {
-    final Player player = server.getPlayer(packet.getPayload()).orElse(null);
+    final ConnectedPlayer player = server.getPlayer(packet.getPayload()).orElse(null);
     if (player == null) {
       return null;
     }
@@ -101,7 +100,7 @@ public enum TransactionHandlerRegistry {
    * Handles the {@link VelocityTransferRemote} packet by transferring a player to another remote/proxy.
    */
   VELOCITY_TRANSFER_REMOTE(VelocityTransferRemote.class, (server, packet) -> {
-    final ConnectedPlayer connectedPlayer = (ConnectedPlayer) server.getPlayer(packet.getPayload()).orElse(null);
+    final ConnectedPlayer connectedPlayer = server.getPlayer(packet.getPayload()).orElse(null);
     if (connectedPlayer == null) {
       return null;
     }

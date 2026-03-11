@@ -25,9 +25,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import net.kyori.adventure.text.Component;
@@ -75,7 +75,7 @@ public class GipCommand implements BuiltinCommand {
 
   private int executeIpLocal(final CommandContext<CommandSource> context) {
     final String playerName = context.getArgument("player", String.class);
-    final Player player = server.getPlayer(playerName).orElse(null);
+    final ConnectedPlayer player = server.getPlayer(playerName).orElse(null);
 
     if (player == null) {
       context.getSource().sendMessage(

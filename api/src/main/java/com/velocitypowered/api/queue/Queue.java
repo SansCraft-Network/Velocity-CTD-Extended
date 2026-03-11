@@ -12,8 +12,6 @@ import com.velocitypowered.api.proxy.server.RegisteredServer;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
-import net.kyori.adventure.text.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -105,7 +103,7 @@ public interface Queue {
    */
   @NotNull
   @Unmodifiable
-  Collection<QueueEntry> getEntries();
+  Collection<? extends QueueEntry> getEntries();
 
   /**
    * Returns the one-based position of the given player in the queue,
@@ -133,14 +131,6 @@ public interface Queue {
    * @return the queue size
    */
   int size();
-
-  /**
-   * Sends a message to every player in the given queue, with the message content
-   * generated per-player by the provided function.
-   *
-   * @param componentFn a function producing a {@link Component} for each {@link QueueEntry}
-   */
-  void broadcastMessage(@NotNull Function<QueueEntry, Component> componentFn);
 
   /**
    * Returns the current status of the backend server.

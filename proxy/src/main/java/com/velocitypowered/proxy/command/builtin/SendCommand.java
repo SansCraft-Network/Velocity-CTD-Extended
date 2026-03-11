@@ -26,15 +26,15 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.redis.impl.packet.VelocitySwitchServer;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -104,7 +104,7 @@ public class SendCommand implements BuiltinCommand {
         }
       }
     } else {
-      for (Player p : server.getAllPlayers()) {
+      for (ConnectedPlayer p : server.getAllPlayers()) {
         String name = p.getUsername();
         if (startsWithIgnoreCase(name, input)) {
           builder.suggest(name);
@@ -116,13 +116,13 @@ public class SendCommand implements BuiltinCommand {
       builder.suggest(ALL);
     }
 
-    if (ctx.getSource() instanceof Player && startsWithIgnoreCase(CURRENT, input)) {
+    if (ctx.getSource() instanceof ConnectedPlayer && startsWithIgnoreCase(CURRENT, input)) {
       builder.suggest(CURRENT);
     }
 
     if (input.isEmpty() || input.charAt(0) == SERVER_PREFIX) {
       String serverPart = input.isEmpty() ? "" : input.substring(1);
-      for (RegisteredServer rs : server.getAllServers()) {
+      for (VelocityRegisteredServer rs : server.getAllServers()) {
         String name = rs.getServerInfo().getName();
         if (startsWithIgnoreCase(name, serverPart)) {
           builder.suggest(SERVER_PREFIX + name);
@@ -135,7 +135,7 @@ public class SendCommand implements BuiltinCommand {
 
   private CompletableFuture<Suggestions> suggestServers(CommandContext<CommandSource> ctx, SuggestionsBuilder builder) {
     String input = builder.getRemaining();
-    for (RegisteredServer rs : server.getAllServers()) {
+    for (VelocityRegisteredServer rs : server.getAllServers()) {
       String name = rs.getServerInfo().getName();
       if (startsWithIgnoreCase(name, input)) {
         builder.suggest(name);
@@ -149,7 +149,7 @@ public class SendCommand implements BuiltinCommand {
     String selector = ctx.getArgument(SELECTOR_ARG, String.class);
     String targetName = ctx.getArgument(TARGET_ARG, String.class);
 
-    Optional<RegisteredServer> maybeTarget = server.getServer(targetName);
+    Optional<VelocityRegisteredServer> maybeTarget = server.getServer(targetName);
     if (maybeTarget.isEmpty()) {
       ctx.getSource().sendMessage(
           CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Component.text(targetName))
@@ -160,7 +160,7 @@ public class SendCommand implements BuiltinCommand {
 
     MoveBackend backend = server.isRedisEnabled() ? new RedisBackend() : new LocalBackend();
 
-    RegisteredServer target = maybeTarget.get();
+    VelocityRegisteredServer target = maybeTarget.get();
 
     // all
     if (equalsIgnoreCase(selector, ALL)) {
@@ -169,12 +169,12 @@ public class SendCommand implements BuiltinCommand {
 
     // current
     if (equalsIgnoreCase(selector, CURRENT)) {
-      if (!(ctx.getSource() instanceof Player source)) {
+      if (!(ctx.getSource() instanceof ConnectedPlayer source)) {
         ctx.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);
         return 0;
       }
 
-      Collection<RegisteredServer> fromServers = lookupServers(selector, source);
+      Collection<VelocityRegisteredServer> fromServers = lookupServers(selector, source);
       if (fromServers.isEmpty()) {
         return 0; // caller has no current server
       }
@@ -192,7 +192,7 @@ public class SendCommand implements BuiltinCommand {
     // +pattern
     if (!selector.isEmpty() && selector.charAt(0) == SERVER_PREFIX) {
       String pattern = selector.substring(1);
-      Collection<RegisteredServer> fromServers = lookupServers(selector, null);
+      Collection<VelocityRegisteredServer> fromServers = lookupServers(selector, null);
       if (fromServers.isEmpty()) {
         ctx.getSource().sendMessage(
             CommandMessages.SERVER_DOES_NOT_EXIST.arguments(Component.text(pattern))
@@ -207,14 +207,14 @@ public class SendCommand implements BuiltinCommand {
     return sendSinglePlayer(ctx, backend, selector, target);
   }
 
-  private Collection<RegisteredServer> lookupServers(String selector, @Nullable Player sourcePlayer) {
+  private Collection<VelocityRegisteredServer> lookupServers(String selector, @Nullable ConnectedPlayer sourcePlayer) {
     if (equalsIgnoreCase(selector, CURRENT)) {
       if (sourcePlayer == null) {
         return Collections.emptySet();
       }
 
       return sourcePlayer.getCurrentServer()
-          .map(ServerConnection::getServer)
+          .map(VelocityServerConnection::getServer)
           .map(Collections::singleton)
           .orElseGet(Collections::emptySet);
     }
@@ -226,17 +226,17 @@ public class SendCommand implements BuiltinCommand {
     return Collections.emptySet();
   }
 
-  private Collection<RegisteredServer> lookupServersByName(String input) {
+  private Collection<VelocityRegisteredServer> lookupServersByName(String input) {
     String needle = input.toLowerCase();
     if (needle.isEmpty()) {
       return Collections.emptySet();
     }
 
-    RegisteredServer exact = null;
-    List<RegisteredServer> prefix = new ArrayList<>();
-    List<RegisteredServer> contains = new ArrayList<>();
+    VelocityRegisteredServer exact = null;
+    List<VelocityRegisteredServer> prefix = new ArrayList<>();
+    List<VelocityRegisteredServer> contains = new ArrayList<>();
 
-    for (RegisteredServer rs : server.getAllServers()) {
+    for (VelocityRegisteredServer rs : server.getAllServers()) {
       String name = rs.getServerInfo().getName();
       String lower = name.toLowerCase();
 
@@ -261,7 +261,7 @@ public class SendCommand implements BuiltinCommand {
     }
   }
 
-  private int sendAll(CommandContext<CommandSource> ctx, MoveBackend backend, RegisteredServer target) {
+  private int sendAll(CommandContext<CommandSource> ctx, MoveBackend backend, VelocityRegisteredServer target) {
     String toName = target.getServerInfo().getName();
     List<String> players = backend.allPlayers();
 
@@ -283,13 +283,13 @@ public class SendCommand implements BuiltinCommand {
 
   private int sendFromServers(CommandContext<CommandSource> ctx,
                               MoveBackend backend,
-                              Collection<RegisteredServer> fromServers,
-                              RegisteredServer target) {
+                              Collection<VelocityRegisteredServer> fromServers,
+                              VelocityRegisteredServer target) {
     String toName = target.getServerInfo().getName();
     boolean anyMessage = false;
     int skippedSameTarget = 0;
 
-    for (RegisteredServer from : fromServers) {
+    for (VelocityRegisteredServer from : fromServers) {
       String fromName = from.getServerInfo().getName();
 
       // If +pattern matches the target server too, just skip that one (unless it's the only match)
@@ -333,7 +333,7 @@ public class SendCommand implements BuiltinCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private int sendSinglePlayer(CommandContext<CommandSource> ctx, MoveBackend backend, String playerInput, RegisteredServer target) {
+  private int sendSinglePlayer(CommandContext<CommandSource> ctx, MoveBackend backend, String playerInput, VelocityRegisteredServer target) {
     String toName = target.getServerInfo().getName();
 
     String canonical = backend.canonicalName(playerInput).orElse(null);
@@ -385,7 +385,7 @@ public class SendCommand implements BuiltinCommand {
     @Override
     public List<String> allPlayers() {
       List<String> out = new ArrayList<>();
-      for (Player p : server.getAllPlayers()) {
+      for (ConnectedPlayer p : server.getAllPlayers()) {
         out.add(p.getUsername());
       }
       return out;
@@ -393,12 +393,12 @@ public class SendCommand implements BuiltinCommand {
 
     @Override
     public List<String> playersOnServer(String backendServerName) {
-      Optional<RegisteredServer> rs = server.getServer(backendServerName);
+      Optional<VelocityRegisteredServer> rs = server.getServer(backendServerName);
       if (rs.isEmpty()) {
         return Collections.emptyList();
       }
       List<String> out = new ArrayList<>();
-      for (Player p : rs.get().getPlayersConnected()) {
+      for (ConnectedPlayer p : rs.get().getPlayersConnected()) {
         out.add(p.getUsername());
       }
       return out;
@@ -406,20 +406,20 @@ public class SendCommand implements BuiltinCommand {
 
     @Override
     public Optional<String> canonicalName(String playerInput) {
-      return server.getPlayer(playerInput).map(Player::getUsername);
+      return server.getPlayer(playerInput).map(ConnectedPlayer::getUsername);
     }
 
     @Override
     public Optional<String> serverOf(String canonicalName) {
       return server.getPlayer(canonicalName)
-          .flatMap(Player::getCurrentServer)
-          .map(ServerConnection::getServerInfo)
+          .flatMap(ConnectedPlayer::getCurrentServer)
+          .map(VelocityServerConnection::getServerInfo)
           .map(ServerInfo::getName);
     }
 
     @Override
     public void move(String canonicalName, String targetServerName) {
-      Optional<Player> p = server.getPlayer(canonicalName);
+      Optional<ConnectedPlayer> p = server.getPlayer(canonicalName);
       if (p.isEmpty()) {
         return;
       }

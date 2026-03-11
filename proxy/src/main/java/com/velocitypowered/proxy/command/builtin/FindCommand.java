@@ -25,13 +25,13 @@ import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -75,7 +75,7 @@ public class FindCommand implements BuiltinCommand {
     }
 
     String player = context.getArgument("player", String.class);
-    Optional<Player> maybePlayer = server.getPlayer(player);
+    Optional<ConnectedPlayer> maybePlayer = server.getPlayer(player);
     if (maybePlayer.isEmpty()) {
       context.getSource().sendMessage(
               CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
@@ -85,8 +85,8 @@ public class FindCommand implements BuiltinCommand {
     }
 
     // Can't be null, already checking if it's empty before
-    Player p = maybePlayer.get();
-    ServerConnection connection = p.getCurrentServer().orElse(null);
+    ConnectedPlayer p = maybePlayer.get();
+    VelocityServerConnection connection = p.getCurrentServer().orElse(null);
     if (connection == null) {
       context.getSource().sendMessage(
               Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
@@ -95,7 +95,7 @@ public class FindCommand implements BuiltinCommand {
       return 0;
     }
 
-    RegisteredServer server = connection.getServer();
+    VelocityRegisteredServer server = connection.getServer();
     if (server == null) {
       context.getSource().sendMessage(
               Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
@@ -134,7 +134,7 @@ public class FindCommand implements BuiltinCommand {
       return 0;
     }
 
-    RegisteredServer server = this.server.getServer(playerEntry.getServerName()).orElse(null);
+    VelocityRegisteredServer server = this.server.getServer(playerEntry.getServerName()).orElse(null);
     if (server == null) {
       context.getSource().sendMessage(
               Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)

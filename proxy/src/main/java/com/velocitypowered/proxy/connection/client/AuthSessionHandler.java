@@ -33,7 +33,6 @@ import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
 import com.velocitypowered.proxy.VelocityServer;
@@ -47,6 +46,7 @@ import com.velocitypowered.proxy.protocol.packet.LoginAcknowledgedPacket;
 import com.velocitypowered.proxy.protocol.packet.ServerLoginSuccessPacket;
 import com.velocitypowered.proxy.protocol.packet.ServerboundCookieResponsePacket;
 import com.velocitypowered.proxy.protocol.packet.SetCompressionPacket;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import io.netty.buffer.ByteBuf;
 import java.util.Objects;
 import java.util.Optional;
@@ -386,13 +386,14 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   }
 
   private CompletableFuture<Void> connectToInitialServer(final ConnectedPlayer player) {
-    Optional<RegisteredServer> initialFromConfig = player.currentServerRetrySession().getNextServerToTry();
+    Optional<VelocityRegisteredServer> initialFromConfig = player.currentServerRetrySession().getNextServerToTry();
     PlayerChooseInitialServerEvent event =
         new PlayerChooseInitialServerEvent(player, initialFromConfig.orElse(null));
 
     return server.getEventManager().fire(event).thenRunAsync(() -> {
-      Optional<RegisteredServer> toTry = event.getInitialServer();
-      if (toTry.isEmpty()) {
+      // cast required (api event class)
+      VelocityRegisteredServer toTry = (VelocityRegisteredServer) event.getInitialServer().orElse(null);
+      if (toTry == null) {
         if (event.getReason().isPresent()) {
           player.disconnect0(event.getReason().get(), true);
         } else {
@@ -402,7 +403,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
         return;
       }
-      player.createConnectionRequest(toTry.get()).fireAndForget();
+      player.createConnectionRequest(toTry).fireAndForget();
     }, mcConnection.eventLoop());
   }
 

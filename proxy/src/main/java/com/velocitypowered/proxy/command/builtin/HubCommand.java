@@ -24,10 +24,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.util.FallbackServerResolver;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
@@ -63,15 +62,15 @@ public class HubCommand implements BuiltinCommand {
   }
 
   private int hub(CommandContext<CommandSource> context) {
-    if (!(context.getSource() instanceof Player player)) {
+    if (!(context.getSource() instanceof ConnectedPlayer player)) {
       context.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);
       return 0;
     }
 
-    ServerConnection con = player.getCurrentServer().orElse(null);
+    VelocityServerConnection con = player.getCurrentServer().orElse(null);
     requireNonNull(con);
 
-    VelocityRegisteredServer currentServer = (VelocityRegisteredServer) con.getServer();
+    VelocityRegisteredServer currentServer = con.getServer();
     requireNonNull(currentServer);
 
     List<String> serversToTry = FallbackServerResolver.resolveServersToTry(server, player);
@@ -84,7 +83,7 @@ public class HubCommand implements BuiltinCommand {
     ConnectedPlayer connectedPlayer = currentServer.getPlayer(player.getUniqueId());
     requireNonNull(connectedPlayer);
 
-    VelocityRegisteredServer nextServer = (VelocityRegisteredServer) connectedPlayer.currentServerRetrySession().getNextServerToTry().orElse(null);
+    VelocityRegisteredServer nextServer = connectedPlayer.currentServerRetrySession().getNextServerToTry().orElse(null);
     if (nextServer == null) {
       player.sendMessage(Component.translatable("velocity.command.no-fallbacks"));
       return 0;
@@ -100,7 +99,7 @@ public class HubCommand implements BuiltinCommand {
     return Command.SINGLE_SUCCESS;
   }
 
-  private static boolean fallbackConnectingTranslationExists(Player player) {
+  private static boolean fallbackConnectingTranslationExists(ConnectedPlayer player) {
     Locale locale = player.getEffectiveLocale();
 
     if (locale == null) {

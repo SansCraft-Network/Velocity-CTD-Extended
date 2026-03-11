@@ -20,7 +20,6 @@ package com.velocitypowered.proxy.connection.util;
 import com.spotify.futures.CompletableFutures;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.PingOptions;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.proxy.VelocityServer;
@@ -146,12 +145,12 @@ public class ServerListPingHandler {
     ServerPing fallback = constructLocalPing(connection.getProtocolVersion());
     List<CompletableFuture<ServerPing>> pings = new ArrayList<>();
     for (String s : servers) {
-      Optional<RegisteredServer> rs = server.getServer(s);
+      Optional<VelocityRegisteredServer> rs = server.getServer(s);
       if (rs.isEmpty()) {
         continue;
       }
 
-      VelocityRegisteredServer vrs = (VelocityRegisteredServer) rs.get();
+      VelocityRegisteredServer vrs = rs.get();
       pings.add(vrs.ping(connection.getConnection().eventLoop(), PingOptions.builder()
               .version(responseProtocolVersion).virtualHost(virtualHostStr).build()));
     }

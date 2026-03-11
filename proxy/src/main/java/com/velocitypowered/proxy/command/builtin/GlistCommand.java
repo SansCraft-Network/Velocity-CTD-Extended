@@ -28,12 +28,12 @@ import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -93,12 +93,12 @@ public class GlistCommand implements BuiltinCommand {
     CommandSource source = context.getSource();
     String serverName = getString(context, SERVER_ARG);
     if (serverName.equalsIgnoreCase(SERVER_ALL)) {
-      for (RegisteredServer server : VelocityCommands.sortedServerList(server)) {
+      for (VelocityRegisteredServer server : VelocityCommands.sortedServerList(server)) {
         sendServerPlayers(source, true, server);
       }
       sendTotalProxyCount(source);
     } else {
-      Optional<RegisteredServer> registeredServer = server.getServer(serverName);
+      Optional<VelocityRegisteredServer> registeredServer = server.getServer(serverName);
       if (registeredServer.isEmpty()) {
         source.sendMessage(
                 CommandMessages.SERVER_DOES_NOT_EXIST
@@ -132,7 +132,7 @@ public class GlistCommand implements BuiltinCommand {
     target.sendMessage(msg.build());
   }
 
-  private void sendServerPlayers(CommandSource target, boolean fromAll, RegisteredServer server) {
+  private void sendServerPlayers(CommandSource target, boolean fromAll, VelocityRegisteredServer server) {
     int totalPlayers = 0;
     List<Component> players = new ArrayList<>();
     VelocityRedis redis = this.server.getRedis();
@@ -152,10 +152,10 @@ public class GlistCommand implements BuiltinCommand {
         }
       }
     } else {
-      List<Player> onServer = ImmutableList.copyOf(server.getPlayersConnected());
+      List<ConnectedPlayer> onServer = ImmutableList.copyOf(server.getPlayersConnected());
       totalPlayers = onServer.size();
 
-      for (Player player : onServer) {
+      for (ConnectedPlayer player : onServer) {
         Component hover = Component.translatable("velocity.command.glist.proxy-self");
         players.add(Component.text(player.getUsername()).hoverEvent(HoverEvent.showText(hover)));
       }

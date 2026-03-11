@@ -17,11 +17,10 @@
 
 package com.velocitypowered.proxy.redis.impl;
 
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.queue.RedisVelocityQueueManager;
+import com.velocitypowered.proxy.queue.VelocityQueue;
 import com.velocitypowered.proxy.queue.VelocityQueueEntry;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueSync;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueTransfer;
@@ -55,7 +54,7 @@ public enum RouteRegistry {
    * Handles the {@link VelocitySwitchServer} packet by switching the player to the specified server.
    */
   VELOCITY_SWITCH_SERVER(VelocitySwitchServer.class, (server, packet) -> {
-    final Player player = server.getPlayer(packet.getUsername()).orElse(null);
+    final ConnectedPlayer player = server.getPlayer(packet.getUsername()).orElse(null);
     if (player == null) {
       return;
     }
@@ -85,7 +84,7 @@ public enum RouteRegistry {
    * Handles the {@link VelocitySudo} packet by letting the specified player execute a command or chat message.
    */
   VELOCITY_SUDO(VelocitySudo.class, (server, packet) -> {
-    final Player player = server.getPlayer(packet.getPayload()).orElse(null);
+    final ConnectedPlayer player = server.getPlayer(packet.getPayload()).orElse(null);
     if (player == null) {
       return;
     }
@@ -107,7 +106,7 @@ public enum RouteRegistry {
    * Handles the {@link VelocityKick} packet by kicking the specified player with a reason.
    */
   VELOCITY_KICK(VelocityKick.class, (server, packet) -> {
-    final ConnectedPlayer player = (ConnectedPlayer)  server.getPlayer(packet.getUniqueId()).orElse(null);
+    final ConnectedPlayer player = server.getPlayer(packet.getUniqueId()).orElse(null);
     if (player == null) {
       return;
     }
@@ -134,17 +133,17 @@ public enum RouteRegistry {
    * Handles the {@link VelocityQueueTransfer} packet by transferring the player to their target server.
    */
   VELOCITY_QUEUE(VelocityQueueTransfer.class, (server, packet) -> {
-    final Queue queue;
+    final VelocityQueue queue;
     try {
       queue = server.getQueueManager().getQueue(packet.getQueueName());
     } catch (IllegalArgumentException ignored) {
       return; // unknown server - stale or malformed packet
     }
 
-    final Player player = server.getPlayer(packet.getPayload()).orElse(null);
+    final ConnectedPlayer player = server.getPlayer(packet.getPayload()).orElse(null);
     if (player == null) {
       if (!server.getRedis().getPlayerService().isPlayerOnline(packet.getPayload())) {
-        final VelocityQueueEntry entry = (VelocityQueueEntry) queue.getEntry(packet.getPayload());
+        final VelocityQueueEntry entry = queue.getEntry(packet.getPayload());
         if (entry != null) {
           entry.abortTransfer();
         }
@@ -152,7 +151,7 @@ public enum RouteRegistry {
       return;
     }
 
-    final VelocityQueueEntry entry = (VelocityQueueEntry) queue.getEntry(packet.getPayload());
+    final VelocityQueueEntry entry = queue.getEntry(packet.getPayload());
     if (entry == null) {
       return;
     }

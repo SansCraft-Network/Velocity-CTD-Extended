@@ -22,10 +22,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.function.Function;
 import net.kyori.adventure.text.Component;
@@ -45,7 +45,7 @@ public class SlashServerCommand implements BuiltinCommand {
 
   public SlashServerCommand(VelocityServer server, String targetServerName, String commandLabel) {
     this.server = server;
-    this.registeredServer = (VelocityRegisteredServer) this.server.getServer(targetServerName)
+    this.registeredServer = this.server.getServer(targetServerName)
             .orElseThrow(() -> new IllegalArgumentException("Target server '" + targetServerName + "' does not exist."));
     this.commandLabel = commandLabel;
   }
@@ -66,9 +66,9 @@ public class SlashServerCommand implements BuiltinCommand {
   }
 
   private int send(CommandContext<CommandSource> ctx) {
-    Player player = (Player) ctx.getSource();
+    ConnectedPlayer player = (ConnectedPlayer) ctx.getSource();
 
-    ServerConnection connection = player.getCurrentServer().orElse(null);
+    VelocityServerConnection connection = player.getCurrentServer().orElse(null);
     if (connection != null && connection.getServer() == registeredServer) {
       player.sendMessage(Component.translatable("velocity.command.slashserver.already-connected"));
       return -1;

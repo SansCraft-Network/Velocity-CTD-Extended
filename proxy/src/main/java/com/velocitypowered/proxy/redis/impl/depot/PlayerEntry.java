@@ -17,8 +17,8 @@
 
 package com.velocitypowered.proxy.redis.impl.depot;
 
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ServerConnection;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.depot.DepotEntry;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,12 +84,12 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
   }
 
   /**
-   * Constructs a new {@link PlayerEntry} from a {@link Player}.
+   * Constructs a new {@link PlayerEntry} from a {@link ConnectedPlayer}.
    *
    * @param player the player to construct from
    * @param proxyId the ID of the proxy the player is on
    */
-  public PlayerEntry(final @NotNull Player player, final String proxyId) {
+  public PlayerEntry(final @NotNull ConnectedPlayer player, final String proxyId) {
     this(player.getUniqueId(), player.getUsername(), proxyId);
 
     this.setServer(player.getCurrentServer().orElse(null));
@@ -104,7 +104,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    *
    * @param connection the server connection the player is on
    */
-  public void setServer(final @Nullable ServerConnection connection) {
+  public void setServer(final @Nullable VelocityServerConnection connection) {
     if (connection == null) {
       this.serverName = null;
       return;

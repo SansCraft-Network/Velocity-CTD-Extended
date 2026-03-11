@@ -33,13 +33,10 @@ import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.plugin.PluginManager;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.proxy.config.BackendServerConfig;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
-import com.velocitypowered.api.queue.QueueManager;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ProxyVersion;
@@ -87,6 +84,7 @@ import com.velocitypowered.proxy.queue.VelocityQueueManager;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.scheduler.VelocityScheduler;
 import com.velocitypowered.proxy.server.ServerMap;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.util.AddressUtil;
 import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
 import com.velocitypowered.proxy.util.ResourceUtils;
@@ -372,7 +370,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Returns the queue manager currently in use.
    * Will throw when the queue is not enabled. Please check this beforehand with {@link #isQueueEnabled()}.
    *
-   * @return the {@link QueueManager}, or throws {@link IllegalStateException} if not initialized
+   * @return the {@link VelocityQueueManager}, or throws {@link IllegalStateException} if not initialized
    */
   @Override
   public VelocityQueueManager getQueueManager() {
@@ -800,18 +798,11 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     Collection<ConnectedPlayer> evacuate = new ArrayList<>();
     for (Map.Entry<String, BackendServerConfig> entry : newConfiguration.getBackendServers().entrySet()) {
       ServerInfo newInfo = new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue().address()), entry.getValue().forwardingMode());
-      Optional<RegisteredServer> rs = servers.getServer(entry.getKey());
+      Optional<VelocityRegisteredServer> rs = servers.getServer(entry.getKey());
       if (rs.isEmpty()) {
         servers.register(newInfo);
       } else if (!rs.get().getServerInfo().equals(newInfo)) {
-        for (Player player : rs.get().getPlayersConnected()) {
-          if (!(player instanceof ConnectedPlayer)) {
-            throw new IllegalStateException("ConnectedPlayer not found for player " + player
-                + " in server " + rs.get().getServerInfo().getName());
-          }
-
-          evacuate.add((ConnectedPlayer) player);
-        }
+        evacuate.addAll(rs.get().getPlayersConnected());
 
         servers.unregister(rs.get().getServerInfo());
         servers.register(newInfo);
@@ -822,7 +813,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     if (!evacuate.isEmpty()) {
       CountDownLatch latch = new CountDownLatch(evacuate.size());
       for (ConnectedPlayer player : evacuate) {
-        Optional<RegisteredServer> next = player.currentServerRetrySession().getNextServerToTry();
+        Optional<VelocityRegisteredServer> next = player.currentServerRetrySession().getNextServerToTry();
         if (next.isPresent()) {
           player.createConnectionRequest(next.get()).connectWithIndication()
               .whenComplete((success, ex) -> {
@@ -874,7 +865,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     if (!this.getConfiguration().getServerLinks().isEmpty()) {
-      for (Player player : this.getAllPlayers()) {
+      for (ConnectedPlayer player : this.getAllPlayers()) {
         if (player.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_21)) {
           try {
             if (player.getProtocolState() == ProtocolState.CONFIGURATION || player.getProtocolState() == ProtocolState.PLAY) {
@@ -1450,10 +1441,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Attempts to locate a player by their username (case-insensitive).
    *
    * @param username the player's username to search for
-   * @return an {@link Optional} containing the {@link Player} if found, otherwise empty
+   * @return an {@link Optional} containing the {@link ConnectedPlayer} if found, otherwise empty
    */
   @Override
-  public Optional<Player> getPlayer(final String username) {
+  public Optional<ConnectedPlayer> getPlayer(final String username) {
     Preconditions.checkNotNull(username, "username");
     return Optional.ofNullable(connectionsByName.get(username.toLowerCase(Locale.US)));
   }
@@ -1462,10 +1453,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Attempts to locate a player by their unique UUID.
    *
    * @param uuid the UUID of the player
-   * @return an {@link Optional} containing the {@link Player} if found, otherwise empty
+   * @return an {@link Optional} containing the {@link ConnectedPlayer} if found, otherwise empty
    */
   @Override
-  public Optional<Player> getPlayer(final UUID uuid) {
+  public Optional<ConnectedPlayer> getPlayer(final UUID uuid) {
     Preconditions.checkNotNull(uuid, "uuid");
     return Optional.ofNullable(connectionsByUuid.get(uuid));
   }
@@ -1474,10 +1465,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Returns a collection of players whose usernames match the given partial input.
    *
    * @param partialName the partial name to match
-   * @return a collection of matching {@link Player}s
+   * @return a collection of matching {@link ConnectedPlayer}s
    */
   @Override
-  public Collection<Player> matchPlayer(final String partialName) {
+  public Collection<ConnectedPlayer> matchPlayer(final String partialName) {
     Objects.requireNonNull(partialName);
 
     return getAllPlayers().stream().filter(p -> p.getUsername()
@@ -1489,10 +1480,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Returns a collection of servers whose names match the given partial input.
    *
    * @param partialName the partial server name
-   * @return a collection of matching {@link RegisteredServer}s
+   * @return a collection of matching {@link VelocityRegisteredServer}s
    */
   @Override
-  public Collection<RegisteredServer> matchServer(final String partialName) {
+  public Collection<VelocityRegisteredServer> matchServer(final String partialName) {
     Objects.requireNonNull(partialName);
 
     return getAllServers().stream().filter(s -> s.getServerInfo().getName()
@@ -1506,7 +1497,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return all connected players
    */
   @Override
-  public Collection<Player> getAllPlayers() {
+  public Collection<ConnectedPlayer> getAllPlayers() {
     return ImmutableList.copyOf(connectionsByUuid.values());
   }
 
@@ -1530,10 +1521,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * Attempts to retrieve a server by its registered name.
    *
    * @param name the name of the server
-   * @return an {@link Optional} containing the {@link RegisteredServer}, if present
+   * @return an {@link Optional} containing the {@link VelocityRegisteredServer}, if present
    */
   @Override
-  public Optional<RegisteredServer> getServer(final String name) {
+  public Optional<VelocityRegisteredServer> getServer(final String name) {
     return servers.getServer(name);
   }
 
@@ -1543,18 +1534,18 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return a collection of all registered servers
    */
   @Override
-  public Collection<RegisteredServer> getAllServers() {
+  public Collection<VelocityRegisteredServer> getAllServers() {
     return servers.getAllServers();
   }
 
   /**
-   * Creates a {@link RegisteredServer} from the specified {@link ServerInfo} without registering it.
+   * Creates a {@link VelocityRegisteredServer} from the specified {@link ServerInfo} without registering it.
    *
    * @param server the server info to wrap
-   * @return a {@link RegisteredServer} representing the server
+   * @return a {@link VelocityRegisteredServer} representing the server
    */
   @Override
-  public RegisteredServer createRawRegisteredServer(final ServerInfo server) {
+  public VelocityRegisteredServer createRawRegisteredServer(final ServerInfo server) {
     return servers.createRawRegisteredServer(server);
   }
 
@@ -1565,7 +1556,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return the registered server instance
    */
   @Override
-  public RegisteredServer registerServer(final ServerInfo server) {
+  public VelocityRegisteredServer registerServer(final ServerInfo server) {
     return servers.register(server);
   }
 

@@ -17,16 +17,13 @@
 
 package com.velocitypowered.proxy.queue;
 
-import static java.util.Collections.unmodifiableCollection;
-
 import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.queue.Queue;
-import com.velocitypowered.api.queue.QueueEntry;
 import com.velocitypowered.api.queue.QueueEntryData;
 import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.queue.ServerStatus;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Collection;
 import java.util.List;
@@ -71,12 +68,16 @@ public class VelocityQueue implements Queue {
   }
 
   @Override
-  public RegisteredServer getServer() {
+  public VelocityRegisteredServer getServer() {
     return backend;
   }
 
   @Override
   public void enqueue(final @NotNull Player player) {
+    enqueue((ConnectedPlayer) player);
+  }
+
+  public void enqueue(ConnectedPlayer player) {
     enqueue(createQueueEntryData(player));
   }
 
@@ -96,27 +97,19 @@ public class VelocityQueue implements Queue {
   }
 
   @Override
-  public @Nullable QueueEntry getEntry(final @NotNull UUID uniqueId) {
+  public @Nullable VelocityQueueEntry getEntry(final @NotNull UUID uniqueId) {
     return playerList.get(uniqueId);
   }
 
   @Override
-  public @NotNull @Unmodifiable Collection<QueueEntry> getEntries() {
-    return unmodifiableCollection(playerList.snapshot());
+  public @NotNull @Unmodifiable Collection<VelocityQueueEntry> getEntries() {
+    return playerList.snapshot();
   }
 
   @Override
   public Optional<Integer> getPosition(final @NotNull UUID uniqueId) {
     return Optional.ofNullable(playerList.get(uniqueId))
         .map(VelocityQueueEntry::getPosition);
-  }
-
-  @Override
-  public void broadcastMessage(final @NotNull Function<QueueEntry, Component> componentFn) {
-    for (QueueEntry entry : getEntries()) {
-      final Component msg = componentFn.apply(entry);
-      server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendMessage(msg));
-    }
   }
 
   @Override
@@ -155,6 +148,13 @@ public class VelocityQueue implements Queue {
     playerList.clear();
   }
 
+  public void broadcastMessage(final @NotNull Function<VelocityQueueEntry, Component> componentFn) {
+    for (VelocityQueueEntry entry : getEntries()) {
+      final Component msg = componentFn.apply(entry);
+      server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendMessage(msg));
+    }
+  }
+
   /**
    * Initiates the transfer of the given entry to the backend server, unless they are
    * already waiting for a connection.
@@ -189,7 +189,7 @@ public class VelocityQueue implements Queue {
    * {@link com.velocitypowered.proxy.queue.redis.depot.VelocityQueueDepotEntry} for snapshotting.
    */
   @ApiStatus.Internal
-  public List<VelocityQueueEntry> getInternalEntries() {
+  public List<? extends VelocityQueueEntry> getInternalEntries() {
     return playerList.snapshot();
   }
 
@@ -218,7 +218,7 @@ public class VelocityQueue implements Queue {
    * @param player the online player
    * @return a populated {@link QueueEntryData}
    */
-  private @NotNull QueueEntryData createQueueEntryData(final @NotNull Player player) {
+  private @NotNull QueueEntryData createQueueEntryData(final @NotNull ConnectedPlayer player) {
     return new QueueEntryData(
         player.getUniqueId(),
         player.getUsername(),

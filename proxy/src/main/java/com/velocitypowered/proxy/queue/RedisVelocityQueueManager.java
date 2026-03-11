@@ -93,7 +93,7 @@ public final class RedisVelocityQueueManager extends VelocityQueueManager {
   }
 
   @Override
-  protected VelocityQueue createQueue(final VelocityRegisteredServer rs, final QueueState state) {
+  protected RedisVelocityQueue createQueue(final VelocityRegisteredServer rs, final QueueState state) {
     return new RedisVelocityQueue(server, this, rs, state);
   }
 
@@ -141,8 +141,7 @@ public final class RedisVelocityQueueManager extends VelocityQueueManager {
   private void loadFromRedis() {
     final VelocityQueueDepotService service = server.getRedis().getQueueService();
     for (VelocityQueueDepotEntry entry : service.getAll()) {
-      final VelocityRegisteredServer rs = (VelocityRegisteredServer) server
-          .getServer(entry.getUniqueId()).orElse(null);
+      final VelocityRegisteredServer rs = server.getServer(entry.getUniqueId()).orElse(null);
       if (rs != null) {
         queues.put(entry.getUniqueId(), new RedisVelocityQueue(server, this, rs, entry));
 

@@ -25,7 +25,6 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.plugin.ap.SerializedPluginDescription;
 import com.velocitypowered.api.plugin.meta.PluginDependency;
-import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.plugin.PluginClassLoader;
 import com.velocitypowered.proxy.plugin.loader.PluginLoader;
@@ -60,7 +59,7 @@ public class JavaPluginLoader implements PluginLoader {
    * @param ignoredServer  the proxy server instance (unused)
    * @param baseDirectory  the base directory for plugins
    */
-  public JavaPluginLoader(final ProxyServer ignoredServer, final Path baseDirectory) {
+  public JavaPluginLoader(final VelocityServer ignoredServer, final Path baseDirectory) {
     this.baseDirectory = baseDirectory;
   }
 

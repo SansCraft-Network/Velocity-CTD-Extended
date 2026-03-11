@@ -35,7 +35,7 @@ public interface RegisteredServer extends ChannelMessageSink, Audience {
    *
    * @return the players on this proxy
    */
-  Collection<Player> getPlayersConnected();
+  Collection<? extends Player> getPlayersConnected();
 
   /**
    * Get the total player count of the server (redis support).

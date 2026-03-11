@@ -17,7 +17,6 @@
 
 package com.velocitypowered.proxy.queue;
 
-import com.velocitypowered.api.queue.QueueEntry;
 import com.velocitypowered.api.queue.QueueEntryData;
 import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.queue.ServerStatus;
@@ -26,6 +25,7 @@ import com.velocitypowered.proxy.queue.redis.depot.VelocityQueueDepotEntry;
 import com.velocitypowered.proxy.queue.redis.packet.VelocityQueueSync;
 import com.velocitypowered.proxy.redis.impl.packet.VelocityMessage;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
@@ -92,14 +92,6 @@ public final class RedisVelocityQueue extends VelocityQueue {
   }
 
   @Override
-  public void broadcastMessage(final @NotNull Function<QueueEntry, Component> componentFn) {
-    for (QueueEntry entry : getEntries()) {
-      final Component msg = componentFn.apply(entry);
-      new VelocityMessage(entry.getUniqueId(), msg).publish();
-    }
-  }
-
-  @Override
   public void setServerStatus(final @NotNull ServerStatus status) {
     final ServerStatus prev = getServerStatus();
     super.setServerStatus(status);
@@ -134,6 +126,21 @@ public final class RedisVelocityQueue extends VelocityQueue {
 
     new VelocityQueueSync(VelocityQueueSync.Payload.dequeue(getName(), entry.getUniqueId())).publish();
     persistAsync();
+  }
+
+  @Override
+  public void broadcastMessage(final @NotNull Function<VelocityQueueEntry, Component> componentFn) {
+    for (VelocityQueueEntry entry : getEntries()) {
+      final Component msg = componentFn.apply(entry);
+      new VelocityMessage(entry.getUniqueId(), msg).publish();
+    }
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public List<RedisVelocityQueueEntry> getInternalEntries() {
+    //noinspection unchecked
+    return (List<RedisVelocityQueueEntry>) super.getInternalEntries();
   }
 
   /**
@@ -178,10 +185,9 @@ public final class RedisVelocityQueue extends VelocityQueue {
    */
   @ApiStatus.Internal
   void applyWaitingChange(final VelocityQueueSync.Payload p) {
-    for (VelocityQueueEntry entry : getInternalEntries()) {
+    for (RedisVelocityQueueEntry entry : getInternalEntries()) {
       if (entry.getUniqueId().equals(p.playerUuid())) {
-        RedisVelocityQueueEntry redisEntry = ((RedisVelocityQueueEntry) entry);
-        redisEntry.applyWaitingChangeFromPacket(
+        entry.applyWaitingChangeFromPacket(
             p.waitingForConnection(), p.connectionAttempts(),
             p.updatedPriority(), p.updatedFullBypass(), p.updatedQueueBypass()
         );

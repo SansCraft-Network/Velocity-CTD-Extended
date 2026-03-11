@@ -35,19 +35,18 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.util.ProxyVersion;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.config.ConfigDetector;
 import com.velocitypowered.proxy.config.ConfigDetector.ConfigAnalysis;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.VelocityRedis;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.redis.impl.packet.VelocitySudo;
 import com.velocitypowered.proxy.redis.impl.transaction.VelocityReload;
 import com.velocitypowered.proxy.redis.impl.transaction.VelocityUptime;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.util.InformationUtils;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -160,7 +159,7 @@ public class VelocityCommand implements BuiltinCommand {
                       }
 
                       if (argument.isEmpty() || argument.startsWith("+")) {
-                        for (RegisteredServer registeredServer : server.getAllServers()) {
+                        for (VelocityRegisteredServer registeredServer : server.getAllServers()) {
                           String serverName = registeredServer.getServerInfo().getName();
 
                           if (serverName.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
@@ -187,7 +186,7 @@ public class VelocityCommand implements BuiltinCommand {
                         return builder.buildFuture();
                       }
 
-                      for (Player player : server.getAllPlayers()) {
+                      for (ConnectedPlayer player : server.getAllPlayers()) {
                         String playerName = player.getUsername();
                         if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
                           builder.suggest(playerName);
@@ -345,7 +344,7 @@ public class VelocityCommand implements BuiltinCommand {
           }
           return Command.SINGLE_SUCCESS;
         } else {
-          for (Player player : server.getAllPlayers()) {
+          for (ConnectedPlayer player : server.getAllPlayers()) {
             if (this.server.getCommandManager().hasCommand(messageOrCommand)) {
               this.server.getCommandManager().executeAsync(player, messageOrCommand);
             } else {
@@ -393,7 +392,7 @@ public class VelocityCommand implements BuiltinCommand {
                   .arguments(Component.text(sudoTarget)));
           return Command.SINGLE_SUCCESS;
         }
-        RegisteredServer registeredServer = this.server.getServer(sudoTarget.substring(1)).orElse(null);
+        VelocityRegisteredServer registeredServer = this.server.getServer(sudoTarget.substring(1)).orElse(null);
         if (registeredServer == null) {
           source.sendMessage(Component.translatable("velocity.command.sudo.invalid-server")
                   .arguments(Component.text(sudoTarget.substring(1))));
@@ -419,7 +418,7 @@ public class VelocityCommand implements BuiltinCommand {
           }
           return Command.SINGLE_SUCCESS;
         } else {
-          for (Player player : registeredServer.getPlayersConnected()) {
+          for (ConnectedPlayer player : registeredServer.getPlayersConnected()) {
             if (this.server.getCommandManager().hasCommand(messageOrCommand)) {
               this.server.getCommandManager().executeAsync(player, messageOrCommand);
             } else {
@@ -456,7 +455,7 @@ public class VelocityCommand implements BuiltinCommand {
                           Argument.string("message", messageOrCommand)));
           return Command.SINGLE_SUCCESS;
         } else {
-          Player player = this.server.getPlayer(sudoTarget).orElse(null);
+          ConnectedPlayer player = this.server.getPlayer(sudoTarget).orElse(null);
 
           if (player == null) {
             context.getSource().sendMessage(Component.translatable("velocity.command.sudo.invalid-player")
@@ -562,7 +561,7 @@ public class VelocityCommand implements BuiltinCommand {
      */
     private final Supplier<Component> infoSupplier;
 
-    private Info(ProxyServer server) {
+    private Info(VelocityServer server) {
       ProxyVersion version = server.getVersion();
       this.infoSupplier = Suppliers.memoize(() -> {
         TextComponent.Builder infoBuilder = Component.text();
@@ -655,7 +654,7 @@ public class VelocityCommand implements BuiltinCommand {
     }
   }
 
-  private record Plugins(ProxyServer server) implements Command<CommandSource> {
+  private record Plugins(VelocityServer server) implements Command<CommandSource> {
 
     @Override
     public int run(CommandContext<CommandSource> context) {
@@ -727,7 +726,7 @@ public class VelocityCommand implements BuiltinCommand {
     }
   }
 
-  private record Dump(ProxyServer server) implements Command<CommandSource> {
+  private record Dump(VelocityServer server) implements Command<CommandSource> {
 
     /**
      * Logger instance for logging errors and output related to the dump command.
@@ -738,9 +737,9 @@ public class VelocityCommand implements BuiltinCommand {
     public int run(CommandContext<CommandSource> context) {
       CommandSource source = context.getSource();
 
-      Collection<RegisteredServer> allServers = Set.copyOf(server.getAllServers());
+      Collection<VelocityRegisteredServer> allServers = Set.copyOf(server.getAllServers());
       JsonObject servers = new JsonObject();
-      for (RegisteredServer iter : allServers) {
+      for (VelocityRegisteredServer iter : allServers) {
         servers.add(iter.getServerInfo().getName(),
                 InformationUtils.collectServerInfo(iter));
       }

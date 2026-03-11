@@ -24,11 +24,10 @@ import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.queue.VelocityQueue;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.List;
 import net.kyori.adventure.text.Component;
@@ -75,10 +74,10 @@ public class LeaveQueueCommand implements BuiltinCommand {
   }
 
   private int leaveAllQueues(CommandContext<CommandSource> ctx) {
-    if (ctx.getSource() instanceof Player player) {
+    if (ctx.getSource() instanceof ConnectedPlayer player) {
       int amountDone = 0;
-      for (RegisteredServer registeredServer : this.server.getAllServers()) {
-        Queue queue = this.server.getQueueManager().getQueue(registeredServer.getServerInfo().getName());
+      for (VelocityRegisteredServer registeredServer : this.server.getAllServers()) {
+        VelocityQueue queue = this.server.getQueueManager().getQueue(registeredServer.getServerInfo().getName());
         if (!queue.contains(player)) {
           continue;
         }
@@ -104,8 +103,8 @@ public class LeaveQueueCommand implements BuiltinCommand {
       return -1;
     }
 
-    if (ctx.getSource() instanceof Player player) {
-      Queue queue = this.server.getQueueManager().getQueue(registeredServer.getServerInfo().getName());
+    if (ctx.getSource() instanceof ConnectedPlayer player) {
+      VelocityQueue queue = this.server.getQueueManager().getQueue(registeredServer.getServerInfo().getName());
       if (queue.contains(player)) {
         queue.dequeue(player);
         player.sendMessage(

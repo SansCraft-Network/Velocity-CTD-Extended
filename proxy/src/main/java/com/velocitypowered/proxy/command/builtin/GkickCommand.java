@@ -25,7 +25,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -89,7 +88,7 @@ public class GkickCommand implements BuiltinCommand {
 
   private int executeKickLocal(final CommandContext<CommandSource> context) {
     final String playerName = context.getArgument("player", String.class);
-    final Player player = server.getPlayer(playerName).orElse(null);
+    final ConnectedPlayer player = server.getPlayer(playerName).orElse(null);
 
     if (player == null) {
       context.getSource().sendMessage(
@@ -98,7 +97,7 @@ public class GkickCommand implements BuiltinCommand {
       return 0;
     }
 
-    ((ConnectedPlayer) player).disconnect0(parseReason(context), true);
+    player.disconnect0(parseReason(context), true);
 
     context.getSource().sendMessage(
         Component.translatable("velocity.command.gkick.message")

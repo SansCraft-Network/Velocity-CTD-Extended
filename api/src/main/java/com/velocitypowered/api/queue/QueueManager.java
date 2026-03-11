@@ -59,7 +59,7 @@ public interface QueueManager {
    * @return all queues
    */
   @NotNull
-  Collection<Queue> getQueues();
+  Collection<? extends Queue> getQueues();
 
   /**
    * Returns {@code true} if the given player is present in any queue.
@@ -78,7 +78,7 @@ public interface QueueManager {
    * @return {@code true} if the player is queued
    */
   default boolean isQueued(@NotNull Player player) {
-    return getQueueFor(player) != null;
+    return isQueued(player.getUniqueId());
   }
 
   /**
@@ -113,14 +113,6 @@ public interface QueueManager {
    * @param server the target server
    */
   void queue(@NotNull Player player, @NotNull RegisteredServer server);
-
-  /**
-   * Called when a player disconnects from the proxy. Removes the player from all queues
-   * after an optional grace period determined by their permissions.
-   *
-   * @param player the player who disconnected
-   */
-  void onPlayerDisconnect(@NotNull Player player);
 
   /**
    * Immediately removes the given player from all queues they are currently in.

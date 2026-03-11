@@ -20,7 +20,6 @@ package com.velocitypowered.proxy.tablist;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.velocitypowered.api.network.ProtocolVersion;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.player.ChatSession;
 import com.velocitypowered.api.proxy.player.TabListEntry;
 import com.velocitypowered.api.util.GameProfile;
@@ -81,12 +80,12 @@ public class VelocityTabList implements InternalTabList {
   }
 
   /**
-   * Returns the {@link Player} instance that owns this tab list.
+   * Returns the {@link ConnectedPlayer} instance that owns this tab list.
    *
    * @return the player associated with this tab list
    */
   @Override
-  public Player getPlayer() {
+  public ConnectedPlayer getPlayer() {
     return player;
   }
 

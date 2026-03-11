@@ -24,9 +24,9 @@ import com.mojang.brigadier.context.CommandContext;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.impl.transaction.VelocityGetPlayerPing;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -62,7 +62,7 @@ public class PingCommand implements BuiltinCommand {
                             })
             )
             .executes(context -> {
-              if (context.getSource() instanceof Player player) {
+              if (context.getSource() instanceof ConnectedPlayer player) {
                 return this.getPing(context, player.getUsername());
               } else {
                 context.getSource().sendMessage(CommandMessages.PLAYERS_ONLY);
@@ -75,9 +75,9 @@ public class PingCommand implements BuiltinCommand {
 
   private int getPing(CommandContext<CommandSource> context, String username) {
     boolean matchesSender = false;
-    Player player = this.server.getPlayer(username).orElse(null);
+    ConnectedPlayer player = this.server.getPlayer(username).orElse(null);
 
-    if (context.getSource() instanceof Player sendingPlayer) {
+    if (context.getSource() instanceof ConnectedPlayer sendingPlayer) {
       if (player != null && player.getUniqueId().equals(sendingPlayer.getUniqueId())) {
         matchesSender = true;
       }

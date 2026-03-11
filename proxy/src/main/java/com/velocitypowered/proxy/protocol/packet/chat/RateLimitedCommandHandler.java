@@ -17,8 +17,8 @@
 
 package com.velocitypowered.proxy.protocol.packet.chat;
 
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.proxy.VelocityServer;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import net.kyori.adventure.text.Component;
 
@@ -35,7 +35,7 @@ public abstract class RateLimitedCommandHandler<T extends MinecraftPacket> imple
   /**
    * The player who issued the command.
    */
-  private final Player player;
+  private final ConnectedPlayer player;
 
   /**
    * The Velocity server instance, used to retrieve configuration and rate limiter state.
@@ -53,7 +53,7 @@ public abstract class RateLimitedCommandHandler<T extends MinecraftPacket> imple
    * @param player the player sending the command
    * @param velocityServer the Velocity server managing command processing and rate limiting
    */
-  protected RateLimitedCommandHandler(final Player player, final VelocityServer velocityServer) {
+  protected RateLimitedCommandHandler(final ConnectedPlayer player, final VelocityServer velocityServer) {
     this.player = player;
     this.velocityServer = velocityServer;
   }

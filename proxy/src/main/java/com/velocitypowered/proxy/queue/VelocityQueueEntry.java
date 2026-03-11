@@ -18,12 +18,12 @@
 package com.velocitypowered.proxy.queue;
 
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.queue.QueueEntry;
 import com.velocitypowered.api.queue.QueueEntryData;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
+import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -166,7 +166,7 @@ public class VelocityQueueEntry implements QueueEntry {
     final String targetServerName = this.queue.getName();
 
     this.server.getPlayer(this.uniqueId).ifPresentOrElse(player -> {
-      final RegisteredServer foundServer = this.server.getServer(targetServerName).orElse(null);
+      final VelocityRegisteredServer foundServer = this.server.getServer(targetServerName).orElse(null);
       if (foundServer == null) {
         queue.dequeue(this.uniqueId);
         return;

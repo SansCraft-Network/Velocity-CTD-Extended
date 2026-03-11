@@ -39,7 +39,7 @@ public final class RedisVelocityQueueEntry extends VelocityQueueEntry {
    * @param data   the player data
    */
   public RedisVelocityQueueEntry(final @NotNull VelocityServer server,
-                                 final @NotNull VelocityQueue queue,
+                                 final @NotNull RedisVelocityQueue queue,
                                  final @NotNull QueueEntryData data) {
     super(server, queue, data);
   }

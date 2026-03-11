@@ -20,7 +20,7 @@ package com.velocitypowered.proxy.command.builtin;
 import com.mojang.brigadier.tree.CommandNode;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
-import com.velocitypowered.api.proxy.ProxyServer;
+import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
 import java.util.List;
 import java.util.Optional;
@@ -35,13 +35,13 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  */
 public class ProxyAliasCommand implements SimpleCommand {
 
-  private final ProxyServer server;
+  private final VelocityServer server;
 
   private final String alias;
 
   private final List<String> commands;
 
-  public ProxyAliasCommand(ProxyServer server, String alias, List<String> commands) {
+  public ProxyAliasCommand(VelocityServer server, String alias, List<String> commands) {
     this.server = server;
     this.alias = alias;
     this.commands = commands;

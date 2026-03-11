@@ -27,7 +27,6 @@ import static com.velocitypowered.proxy.util.PermissionUtils.findHighestPermissi
 
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.queue.Queue;
 import com.velocitypowered.api.queue.QueueManager;
 import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.queue.ServerStatus;
@@ -106,12 +105,12 @@ public class VelocityQueueManager implements QueueManager {
     preInitialize();
 
     // Ensure every registered server has a queue (fills gaps not covered by preInitialize).
-    for (RegisteredServer rs : server.getAllServers()) {
+    for (VelocityRegisteredServer rs : server.getAllServers()) {
       final String name = rs.getServerInfo().getName();
       queues.computeIfAbsent(name, n -> {
         final boolean inactive = server.getConfiguration().getQueue()
             .getNoQueueServers().contains(n);
-        return createQueue((VelocityRegisteredServer) rs, inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
+        return createQueue(rs, inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
       });
     }
 
@@ -179,8 +178,8 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public @NotNull Queue getQueue(final @NotNull String serverName) {
-    final VelocityRegisteredServer rs = (VelocityRegisteredServer) server.getServer(serverName)
+  public @NotNull VelocityQueue getQueue(final @NotNull String serverName) {
+    final VelocityRegisteredServer rs = server.getServer(serverName)
         .orElseThrow(() -> new IllegalArgumentException("Unknown server: " + serverName));
 
     return queues.computeIfAbsent(serverName, n -> {
@@ -190,12 +189,12 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public @NotNull Collection<Queue> getQueues() {
+  public @NotNull Collection<VelocityQueue> getQueues() {
     return Collections.unmodifiableCollection(queues.values());
   }
 
   @Override
-  public @Nullable Queue getQueueFor(final @NotNull UUID uniqueId) {
+  public @Nullable VelocityQueue getQueueFor(final @NotNull UUID uniqueId) {
     for (VelocityQueue q : queues.values()) {
       if (q.contains(uniqueId)) {
         return q;
@@ -206,8 +205,12 @@ public class VelocityQueueManager implements QueueManager {
 
   @Override
   public void queue(final @NotNull Player player, final @NotNull RegisteredServer targetServer) {
+    queue((ConnectedPlayer) player, (VelocityRegisteredServer) targetServer);
+  }
+
+  public void queue(final @NotNull ConnectedPlayer player, final @NotNull VelocityRegisteredServer targetServer) {
     final String targetName = targetServer.getServerInfo().getName();
-    final VelocityQueue queue = (VelocityQueue) getQueue(targetName);
+    final VelocityQueue queue = getQueue(targetName);
 
     final VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
     if (!config.isEnabled() || player.hasPermission("velocity.queue.bypass")) {
@@ -240,7 +243,7 @@ public class VelocityQueueManager implements QueueManager {
       return;
     }
 
-    if (player instanceof ConnectedPlayer cp && !cp.checkVersionCompatibility(targetServer)) {
+    if (!player.checkVersionCompatibility(targetServer)) {
       return;
     }
 
@@ -250,7 +253,21 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public void onPlayerDisconnect(final @NotNull Player player) {
+  public void removePlayerEntirely(final @NotNull UUID uniqueId) {
+    for (VelocityQueue queue : queues.values()) {
+      if (queue.contains(uniqueId)) {
+        queue.dequeue(uniqueId);
+      }
+    }
+  }
+
+  /**
+   * Called when a player disconnects from the proxy. Removes the player from all queues
+   * after an optional grace period determined by their permissions.
+   *
+   * @param player the player who disconnected
+   */
+  public void onPlayerDisconnect(final @NotNull ConnectedPlayer player) {
     if (server.isShuttingDown()) {
       removePlayerEntirely(player);
       return;
@@ -267,15 +284,6 @@ public class VelocityQueueManager implements QueueManager {
           .buildTask(VelocityVirtualPlugin.INSTANCE, () -> removePlayerEntirely(playerUniqueId))
           .delay(timeout, TimeUnit.SECONDS)
           .schedule();
-    }
-  }
-
-  @Override
-  public void removePlayerEntirely(final @NotNull UUID uniqueId) {
-    for (VelocityQueue queue : queues.values()) {
-      if (queue.contains(uniqueId)) {
-        queue.dequeue(uniqueId);
-      }
     }
   }
 
@@ -367,7 +375,7 @@ public class VelocityQueueManager implements QueueManager {
     }
 
     for (VelocityQueue queue : queues.values()) {
-      final RegisteredServer rs = server.getServer(queue.getName()).orElse(null);
+      final VelocityRegisteredServer rs = server.getServer(queue.getName()).orElse(null);
       if (rs == null) {
         continue;
       }
@@ -434,7 +442,7 @@ public class VelocityQueueManager implements QueueManager {
     actionBarTick++;
   }
 
-  private int getTimeoutInSeconds(final Player player) {
+  private int getTimeoutInSeconds(final ConnectedPlayer player) {
     if (player.hasPermission("velocity.queue.timeout.exempt")) {
       return 0;
     }

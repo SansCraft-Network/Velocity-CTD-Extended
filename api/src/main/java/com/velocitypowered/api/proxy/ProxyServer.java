@@ -63,7 +63,7 @@ public interface ProxyServer extends Audience {
    * @param username the username to search for
    * @return an {@link Optional} with the player, which may be empty
    */
-  Optional<Player> getPlayer(String username);
+  Optional<? extends Player> getPlayer(String username);
 
   /**
    * Retrieves the player currently connected to this proxy by their Minecraft UUID.
@@ -71,7 +71,7 @@ public interface ProxyServer extends Audience {
    * @param uuid the UUID
    * @return an {@link Optional} with the player, which may be empty
    */
-  Optional<Player> getPlayer(UUID uuid);
+  Optional<? extends Player> getPlayer(UUID uuid);
 
   /**
    * Retrieves all players currently connected to this proxy. This call may or may not be a snapshot
@@ -79,7 +79,7 @@ public interface ProxyServer extends Audience {
    *
    * @return the players online on this proxy
    */
-  Collection<Player> getAllPlayers();
+  Collection<? extends Player> getAllPlayers();
 
   /**
    * Returns the number of players currently connected to this proxy.
@@ -95,14 +95,14 @@ public interface ProxyServer extends Audience {
    * @param name the name of the server
    * @return the registered server, which may be empty
    */
-  Optional<RegisteredServer> getServer(String name);
+  Optional<? extends RegisteredServer> getServer(String name);
 
   /**
    * Retrieves all {@link RegisteredServer}s registered with this proxy.
    *
    * @return the servers registered with this proxy
    */
-  Collection<RegisteredServer> getAllServers();
+  Collection<? extends RegisteredServer> getAllServers();
 
   /**
    * Matches all {@link Player}s whose names start with the provided partial name.
@@ -110,7 +110,7 @@ public interface ProxyServer extends Audience {
    * @param partialName the partial name to check for
    * @return a collection of matched {@link Player}s
    */
-  Collection<Player> matchPlayer(String partialName);
+  Collection<? extends Player> matchPlayer(String partialName);
 
   /**
    * Matches all {@link RegisteredServer}s whose names start with the provided partial name.
@@ -118,7 +118,7 @@ public interface ProxyServer extends Audience {
    * @param partialName the partial name to check for
    * @return a collection of matched {@link RegisteredServer}s
    */
-  Collection<RegisteredServer> matchServer(String partialName);
+  Collection<? extends RegisteredServer> matchServer(String partialName);
 
   /**
    * Creates a raw {@link RegisteredServer} without tying it into the internal server map.

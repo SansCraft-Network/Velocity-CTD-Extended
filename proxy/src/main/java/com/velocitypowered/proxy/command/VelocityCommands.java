@@ -38,16 +38,14 @@ import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.InvocableCommand;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.ServerConnection;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.brigadier.VelocityArgumentCommandNode;
 import com.velocitypowered.proxy.command.brigadier.VelocityBrigadierCommandWrapper;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
@@ -307,9 +305,9 @@ public final class VelocityCommands {
    * @param ctx the command context
    * @return the found player, or {@code null} if the player couldn't be found
    */
-  public static Player getPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx) {
+  public static ConnectedPlayer getPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx) {
     String playerName = ctx.getArgument("player", String.class);
-    Optional<Player> playerOptional = server.getPlayer(playerName);
+    Optional<ConnectedPlayer> playerOptional = server.getPlayer(playerName);
 
     if (playerOptional.isEmpty()) {
       ctx.getSource().sendMessage(CommandMessages.PLAYER_NOT_FOUND
@@ -375,7 +373,7 @@ public final class VelocityCommands {
   public static VelocityRegisteredServer getServer(final VelocityServer server, final CommandContext<CommandSource> ctx,
                                                    final String argName, final boolean allowNonQueueable) {
     String serverName = ctx.getArgument(argName, String.class);
-    Optional<RegisteredServer> serverOptional = server.getServer(serverName);
+    Optional<VelocityRegisteredServer> serverOptional = server.getServer(serverName);
 
     if (serverOptional.isEmpty()) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
@@ -383,7 +381,7 @@ public final class VelocityCommands {
       return null;
     }
 
-    VelocityRegisteredServer registeredServer = (VelocityRegisteredServer) serverOptional.get();
+    VelocityRegisteredServer registeredServer = serverOptional.get();
 
     if (!checkServerPermissions(registeredServer, ctx.getSource())) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
@@ -407,7 +405,7 @@ public final class VelocityCommands {
    * @param source the command source to be checked
    * @return whether the command source has permission to join
    */
-  public static boolean checkServerPermissions(final RegisteredServer server, final CommandSource source) {
+  public static boolean checkServerPermissions(final VelocityRegisteredServer server, final CommandSource source) {
     String serverName = server.getServerInfo().getName();
     return source.getPermissionValue("velocity.command.server." + serverName) != Tristate.FALSE;
   }
@@ -484,7 +482,7 @@ public final class VelocityCommands {
       return builder.buildFuture();
     }
 
-    for (final Player player : server.getAllPlayers()) {
+    for (final ConnectedPlayer player : server.getAllPlayers()) {
       final String playerName = player.getUsername();
       if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
         builder.suggest(playerName);
@@ -500,9 +498,9 @@ public final class VelocityCommands {
    * @param proxy the proxy server instance
    * @return a list of all registered servers, sorted by name
    */
-  public static List<RegisteredServer> sortedServerList(final ProxyServer proxy) {
-    List<RegisteredServer> servers = new ArrayList<>(proxy.getAllServers());
-    servers.sort(Comparator.comparing(RegisteredServer::getServerInfo));
+  public static List<VelocityRegisteredServer> sortedServerList(final VelocityServer proxy) {
+    List<VelocityRegisteredServer> servers = new ArrayList<>(proxy.getAllServers());
+    servers.sort(Comparator.comparing(VelocityRegisteredServer::getServerInfo));
     return Collections.unmodifiableList(servers);
   }
 
@@ -515,12 +513,12 @@ public final class VelocityCommands {
    * @param player The player to send or enqueue to `target`
    * @param target The target server to send or enqueue `player` to
    */
-  public static void sendOrQueue(VelocityServer proxyServer, Player player, RegisteredServer target) {
+  public static void sendOrQueue(VelocityServer proxyServer, ConnectedPlayer player, VelocityRegisteredServer target) {
     Objects.requireNonNull(proxyServer, "proxyServer");
     Objects.requireNonNull(player, "player");
     Objects.requireNonNull(target, "target");
 
-    ServerConnection connection = player.getCurrentServer().orElse(null);
+    VelocityServerConnection connection = player.getCurrentServer().orElse(null);
     if (connection != null && connection.getServerInfo().getName().equalsIgnoreCase(target.getServerInfo().getName())) {
       throw new IllegalArgumentException("Player is already on target server.");
     }

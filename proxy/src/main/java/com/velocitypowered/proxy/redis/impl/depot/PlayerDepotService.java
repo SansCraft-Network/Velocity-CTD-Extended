@@ -17,7 +17,6 @@
 
 package com.velocitypowered.proxy.redis.impl.depot;
 
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -90,7 +89,7 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
 
   @Override
   public void teardown() {
-    for (Player player : this.server.getAllPlayers()) {
+    for (ConnectedPlayer player : this.server.getAllPlayers()) {
       this.depot.remove(player.getUniqueId());
     }
 
@@ -245,10 +244,10 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
    * Upserts a player's entry in the depot. If an entry for the given player already exists,
    * it is updated with the latest details. If it doesn't exist, a new entry is created.
    *
-   * @param player the {@link Player} object representing the player for whom the entry is to be upserted; must not be null
+   * @param player the {@link ConnectedPlayer} object representing the player for whom the entry is to be upserted; must not be null
    * @return the {@link PlayerEntry} object representing the player's entry; never null
    */
-  public @NotNull PlayerEntry upsertPlayerEntry(final @NotNull Player player) {
+  public @NotNull PlayerEntry upsertPlayerEntry(final @NotNull ConnectedPlayer player) {
     final PlayerEntry playerEntry = new PlayerEntry(player, this.redis.getProxyId());
     playerEntry.setDepot(this.depot);
 
@@ -277,7 +276,7 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
       return;
     }
 
-    for (Player player : this.server.getAllPlayers()) {
+    for (ConnectedPlayer player : this.server.getAllPlayers()) {
       if (this.depot.contains(player.getUniqueId())) {
         continue;
       }

@@ -27,7 +27,6 @@ import static java.util.Objects.requireNonNull;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
 import com.velocitypowered.api.proxy.messages.PluginMessageEncoder;
 import com.velocitypowered.api.proxy.player.PlayerInfo;
@@ -35,8 +34,6 @@ import com.velocitypowered.api.proxy.server.PingOptions;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.api.proxy.server.ServerPing;
-import com.velocitypowered.api.queue.Queue;
-import com.velocitypowered.api.queue.QueueManager;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PlayerInfoForwarding;
 import com.velocitypowered.proxy.connection.MinecraftConnection;
@@ -49,6 +46,8 @@ import com.velocitypowered.proxy.protocol.netty.MinecraftEncoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintFrameDecoder;
 import com.velocitypowered.proxy.protocol.netty.MinecraftVarintLengthEncoder;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
+import com.velocitypowered.proxy.queue.VelocityQueue;
+import com.velocitypowered.proxy.queue.VelocityQueueManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -144,7 +143,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @return the connected players on this server from this proxy instance
    */
   @Override
-  public Collection<Player> getPlayersConnected() {
+  public Collection<ConnectedPlayer> getPlayersConnected() {
     return ImmutableList.copyOf(players.values());
   }
 
@@ -389,8 +388,8 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @return The queue of the server
    */
   @Override
-  public Queue getQueue() {
-    final QueueManager queueManager = requireNonNull(this.server).getQueueManager();
+  public VelocityQueue getQueue() {
+    final VelocityQueueManager queueManager = requireNonNull(server).getQueueManager();
     if (queueManager == null) {
       throw new IllegalStateException("No QueueManager available on the server");
     }

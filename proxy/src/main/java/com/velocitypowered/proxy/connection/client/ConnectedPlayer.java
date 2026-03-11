@@ -2470,8 +2470,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                     .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
             handleConnectionException(toConnect, DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()), status.isSafe());
 
-            TextComponent textComponent = (TextComponent) reason;
-            if (server.isQueueEnabled()) {
+            if (server.isQueueEnabled() && reason instanceof TextComponent textComponent) {
               for (String r : server.getConfiguration().getQueue().getBannedReason()) {
                 if (containsString(textComponent, r)) {
                   server.getQueueManager().removePlayerEntirely(ConnectedPlayer.this);

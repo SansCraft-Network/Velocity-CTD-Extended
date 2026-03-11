@@ -524,14 +524,18 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   /**
-   * Called when the backend server connection is closed during configuration.
+   * Called when the backend server connection is closed unexpectedly during configuration.
    *
-   * <p>This shuts down the player's connection.</p>
+   * <p>Completes the result future with a {@link com.velocitypowered.api.proxy.ConnectionRequestBuilder.Status#SERVER_DISCONNECTED}
+   * result so the connection attempt fails cleanly without throwing an exception. This leaves the
+   * player tracked by the proxy and allows fallback handling (e.g. try-next) to proceed normally.
+   * If the future is already complete (e.g. a {@link DisconnectPacket} was already handled),
+   * this call is a no-op.</p>
    */
   @Override
   public void disconnected() {
-    final ConnectedPlayer player = serverConn.getPlayer();
-    player.teardown();
+    resultFuture.complete(ConnectionRequestResults.forDisconnect(
+        ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR, serverConn.getServer()));
   }
 
   /**

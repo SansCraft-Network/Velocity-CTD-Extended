@@ -86,8 +86,6 @@ import com.velocitypowered.proxy.scheduler.VelocityScheduler;
 import com.velocitypowered.proxy.server.ServerMap;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.util.AddressUtil;
-import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
-import com.velocitypowered.proxy.util.ResourceUtils;
 import com.velocitypowered.proxy.util.VelocityChannelRegistrar;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiter;
 import com.velocitypowered.proxy.util.ratelimit.Ratelimiters;
@@ -97,7 +95,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.http.HttpClient;
@@ -124,14 +121,10 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
-import net.kyori.adventure.translation.GlobalTranslator;
-import net.kyori.adventure.translation.Translator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -329,9 +322,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   private final long startTime;
 
   /**
-   * The {@link Key} used to register Velocity's translation source in the Adventure global translator.
+   * The {@link TranslationRegistryManager} instance that manages (registers and unregisters)
+   * Velocity's Adventure translations.
    */
-  private final Key translationRegistryKey = Key.key("velocity", "translations");
+  private final TranslationRegistryManager translationRegistryManager = new TranslationRegistryManager();
 
   /**
    * Coordinates server queues and handles queue assignment logic.
@@ -538,7 +532,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     registerCommands();
 
-    registerTranslations(true);
+    translationRegistryManager.registerTranslations();
 
     ipAttemptLimiter = Ratelimiters.createWithMilliseconds(configuration.getLoginRatelimit());
     commandRateLimiter = Ratelimiters.createWithMilliseconds(configuration.getCommandRatelimit());
@@ -576,84 +570,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     } else {
       LOGGER.warn("debug environment, metrics is disabled!");
     }
-  }
-
-  private void unregisterTranslations() {
-    for (final Translator source : GlobalTranslator.translator().sources()) {
-      if (source.name().equals(this.translationRegistryKey)) {
-        GlobalTranslator.translator().removeSource(source);
-      }
-    }
-  }
-
-  private void registerTranslations(final boolean log) {
-    final MiniMessageTranslationStore translationRegistry =
-            MiniMessageTranslationStore.create(this.translationRegistryKey);
-    translationRegistry.defaultLocale(Locale.US);
-
-    try {
-      ResourceUtils.visitResources(VelocityServer.class, path -> {
-        if (log) {
-          LOGGER.info("Loading localizations...");
-        }
-
-        final Path langPath = Path.of("lang");
-
-        try {
-          if (!Files.exists(langPath)) {
-            Files.createDirectories(langPath);
-          }
-
-          try (Stream<Path> files = Files.walk(path)) {
-            files.filter(Files::isRegularFile).forEach(src -> {
-              final Path target = langPath.resolve(src.getFileName().toString());
-              if (Files.notExists(target)) {
-                try (InputStream is = Files.newInputStream(src)) {
-                  Files.copy(is, target);
-                  if (log) {
-                    LOGGER.info("Restored missing translation file {}", target.getFileName());
-                  }
-                } catch (IOException e) {
-                  LOGGER.error("Failed copying translation file {}", target.getFileName(), e);
-                }
-              }
-            });
-          }
-
-          try (Stream<Path> langFiles = Files.walk(langPath)) {
-            langFiles.filter(Files::isRegularFile).forEach(file -> {
-              try {
-                String localePart = com.google.common.io.Files
-                      .getNameWithoutExtension(file.getFileName().toString());
-                if (localePart.startsWith("messages")) {
-                  localePart = localePart.substring("messages".length());
-                }
-
-                if (localePart.startsWith("_")) {
-                  localePart = localePart.substring(1);
-                }
-
-                final Locale locale = localePart.isBlank()
-                    ? Locale.US
-                    : Locale.forLanguageTag(localePart.replace('_', '-'));
-
-                translationRegistry.registerAll(locale, file, false);
-                ClosestLocaleMatcher.INSTANCE.registerKnown(locale);
-              } catch (Exception e) {
-                LOGGER.error("Failed registering translations from {}", file, e);
-              }
-            });
-          }
-        } catch (Exception e) {
-          LOGGER.error("Encountered an error whilst loading translations", e);
-        }
-      }, "com", "velocitypowered", "proxy", "l10n");
-    } catch (IOException e) {
-      LOGGER.error("Encountered an I/O error whilst loading translations", e);
-      return;
-    }
-
-    GlobalTranslator.translator().addSource(translationRegistry);
   }
 
   @SuppressFBWarnings("DM_EXIT")
@@ -789,9 +705,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     registerCommands();
 
-    unregisterTranslations();
-
-    registerTranslations(false);
+    translationRegistryManager.noLogging();
+    translationRegistryManager.unregisterTranslations();
+    translationRegistryManager.registerTranslations();
 
     // Re-register servers. If a server is being replaced, make sure to note what players need to
     // move back to a fallback server.

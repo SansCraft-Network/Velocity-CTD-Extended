@@ -7,10 +7,10 @@
 
 package com.velocitypowered.api.proxy.server;
 
+import com.velocityctd.api.queue.Queue;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.ChannelMessageSink;
 import com.velocitypowered.api.proxy.player.PlayerInfo;
-import com.velocitypowered.api.queue.Queue;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;

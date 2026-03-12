@@ -17,13 +17,13 @@
 
 package com.velocitypowered.proxy.console;
 
-import static com.velocitypowered.proxy.permission.AdvancedPermissionResolverAdapterFactory.createPermissionResolverAdapter;
+import static com.velocityctd.proxy.permission.PermissionResolverAdapterFactory.createPermissionResolverAdapter;
 
+import com.velocityctd.api.permission.PermissionResolver;
 import com.velocitypowered.api.event.permission.PermissionsSetupEvent;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
@@ -62,10 +62,10 @@ import org.jline.reader.LineReaderBuilder;
 public final class VelocityConsole extends SimpleTerminalConsole implements ConsoleCommandSource {
 
   /**
-   * The default {@link AdvancedPermissionResolver} to use when no other resolver is provided
+   * The default {@link PermissionResolver} to use when no other resolver is provided
    * by plugins through the {@link PermissionsSetupEvent}.
    */
-  private static final AdvancedPermissionResolver DEFAULT_PERMISSION_RESOLVER = AdvancedPermissionResolver.ALWAYS_TRUE;
+  private static final PermissionResolver DEFAULT_PERMISSION_RESOLVER = PermissionResolver.ALWAYS_TRUE;
 
   /**
    * The logger used for standard logging output.
@@ -83,9 +83,9 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   private final VelocityServer server;
 
   /**
-   * The permission resolver applied to the console. Defaults to {@link AdvancedPermissionResolver#ALWAYS_TRUE}.
+   * The permission resolver applied to the console. Defaults to {@link PermissionResolver#ALWAYS_TRUE}.
    */
-  private AdvancedPermissionResolver permissionResolver = DEFAULT_PERMISSION_RESOLVER;
+  private PermissionResolver permissionResolver = DEFAULT_PERMISSION_RESOLVER;
 
   /**
    * The pointer registry for this console instance.
@@ -148,8 +148,8 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
               + " back to the default permission function.",
           permissionProvider.getClass().getName());
       this.permissionResolver = DEFAULT_PERMISSION_RESOLVER;
-    } else if (permissionFunction instanceof AdvancedPermissionResolver) {
-      this.permissionResolver = (AdvancedPermissionResolver) permissionFunction;
+    } else if (permissionFunction instanceof PermissionResolver) {
+      this.permissionResolver = (PermissionResolver) permissionFunction;
     } else {
       this.permissionResolver = createPermissionResolverAdapter(this, permissionFunction);
     }

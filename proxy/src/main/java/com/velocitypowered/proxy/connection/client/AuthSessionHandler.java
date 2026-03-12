@@ -17,10 +17,11 @@
 
 package com.velocitypowered.proxy.connection.client;
 
+import static com.velocityctd.proxy.permission.PermissionResolverAdapterFactory.createPermissionResolverAdapter;
 import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_8;
-import static com.velocitypowered.proxy.permission.AdvancedPermissionResolverAdapterFactory.createPermissionResolverAdapter;
 
 import com.google.common.base.Preconditions;
+import com.velocityctd.api.permission.PermissionResolver;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.connection.PostLoginEvent;
@@ -31,7 +32,6 @@ import com.velocitypowered.api.event.player.PlayerChooseInitialServerEvent;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
-import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.UuidUtils;
@@ -205,8 +205,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
                   permissionProvider.getClass().getName(),
                   player.getUsername());
               player.setPermissionResolver(ConnectedPlayer.DEFAULT_PERMISSION_RESOLVER);
-            } else if (permissionFunction instanceof AdvancedPermissionResolver) {
-              player.setPermissionResolver((AdvancedPermissionResolver) permissionFunction);
+            } else if (permissionFunction instanceof PermissionResolver) {
+              player.setPermissionResolver((PermissionResolver) permissionFunction);
             } else {
               player.setPermissionResolver(createPermissionResolverAdapter(player, permissionFunction));
             }

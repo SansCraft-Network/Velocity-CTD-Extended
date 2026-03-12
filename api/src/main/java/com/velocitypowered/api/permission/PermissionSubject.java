@@ -7,7 +7,7 @@
 
 package com.velocitypowered.api.permission;
 
-import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
+import com.velocityctd.api.permission.PermissionResolver;
 import java.util.Map;
 import net.kyori.adventure.permission.PermissionChecker;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -42,7 +42,7 @@ public interface PermissionSubject {
   /**
    * Gets the subjects permission map.
    * Should return null when the permission map is unavailable.
-   * Used as a delegate for {@link AdvancedPermissionResolver#getPermissionMap()}
+   * Used as a delegate for {@link PermissionResolver#getPermissionMap()}
    *
    * @return the permission map or {@code null if unavailable}
    */

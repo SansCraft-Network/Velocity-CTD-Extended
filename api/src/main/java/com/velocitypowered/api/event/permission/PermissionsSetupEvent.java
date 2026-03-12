@@ -8,6 +8,7 @@
 package com.velocitypowered.api.event.permission;
 
 import com.google.common.base.Preconditions;
+import com.velocityctd.api.permission.PermissionResolver;
 import com.velocitypowered.api.event.annotation.AwaitingEvent;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionProvider;
@@ -67,7 +68,7 @@ public final class PermissionsSetupEvent {
 
   /**
    * Uses the provider function to obtain a {@link PermissionFunction} for the subject.
-   * Implementation may return a {@link com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver} instead.
+   * Implementation may return a {@link PermissionResolver} instead.
    * The caller may check for this to use the more advanced permission operations.
    *
    * @param subject the subject
@@ -88,7 +89,7 @@ public final class PermissionsSetupEvent {
 
   /**
    * Sets the {@link PermissionProvider} that should provide the {@link PermissionFunction} for this subject.
-   * This may be a {@link com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver} instead.
+   * This may be a {@link PermissionResolver} instead.
    *
    * <p>Specifying <code>null</code> will reset the provider to the default
    * instance given when the event was posted.</p>

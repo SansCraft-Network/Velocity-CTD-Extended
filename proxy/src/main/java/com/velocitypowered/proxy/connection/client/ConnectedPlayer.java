@@ -17,15 +17,19 @@
 
 package com.velocitypowered.proxy.connection.client;
 
+import static com.velocityctd.proxy.permission.PermissionResolverAdapterFactory.createPermissionResolverAdapter;
 import static com.velocitypowered.api.proxy.ConnectionRequestBuilder.Status.ALREADY_CONNECTED;
 import static com.velocitypowered.proxy.connection.util.ConnectionRequestResults.plainResult;
-import static com.velocitypowered.proxy.permission.AdvancedPermissionResolverAdapterFactory.createPermissionResolverAdapter;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
+import com.velocityctd.api.permission.PermissionResolver;
+import com.velocityctd.api.queue.QueueState;
+import com.velocityctd.proxy.permission.PermissionUtils;
+import com.velocityctd.proxy.queue.VelocityQueue;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.DisconnectEvent.LoginStatus;
 import com.velocitypowered.api.event.connection.PreTransferEvent;
@@ -45,7 +49,6 @@ import com.velocitypowered.api.network.ProtocolState;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.permission.advanced.AdvancedPermissionResolver;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
@@ -55,7 +58,6 @@ import com.velocitypowered.api.proxy.messages.PluginMessageEncoder;
 import com.velocitypowered.api.proxy.player.PlayerSettings;
 import com.velocitypowered.api.proxy.player.ResourcePackInfo;
 import com.velocitypowered.api.proxy.server.RegisteredServer;
-import com.velocitypowered.api.queue.QueueState;
 import com.velocitypowered.api.scheduler.ScheduledTask;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ModInfo;
@@ -101,7 +103,6 @@ import com.velocitypowered.proxy.protocol.packet.config.ClientboundServerLinksPa
 import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
-import com.velocitypowered.proxy.queue.VelocityQueue;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import com.velocitypowered.proxy.tablist.InternalTabList;
 import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
@@ -109,7 +110,6 @@ import com.velocitypowered.proxy.tablist.VelocityTabList;
 import com.velocitypowered.proxy.tablist.VelocityTabListLegacy;
 import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
 import com.velocitypowered.proxy.util.DurationUtils;
-import com.velocitypowered.proxy.util.PermissionUtils;
 import com.velocitypowered.proxy.util.TranslatableMapper;
 import com.velocitypowered.proxy.util.collect.CappedSet;
 import io.netty.buffer.ByteBuf;
@@ -191,7 +191,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    *
    * <p>Always returns {@link Tristate#UNDEFINED} for any permission query.</p>
    */
-  protected static final AdvancedPermissionResolver DEFAULT_PERMISSION_RESOLVER = AdvancedPermissionResolver.ALWAYS_UNDEFINED;
+  protected static final PermissionResolver DEFAULT_PERMISSION_RESOLVER = PermissionResolver.ALWAYS_UNDEFINED;
 
   /**
    * A structured Adventure component logger instance for logging player-related messages.
@@ -239,7 +239,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   /**
    * The permission resolver used to evaluate permission checks for this player.
    */
-  private AdvancedPermissionResolver permissionResolver;
+  private PermissionResolver permissionResolver;
 
   /**
    * The current round-trip ping in milliseconds.
@@ -763,7 +763,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    *
    * @param permissionResolver the new permission resolver
    */
-  protected void setPermissionResolver(final AdvancedPermissionResolver permissionResolver) {
+  protected void setPermissionResolver(final PermissionResolver permissionResolver) {
     this.permissionResolver = permissionResolver;
   }
 

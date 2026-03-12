@@ -360,7 +360,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           return;
         }
 
-        player.setFullyConnected();
+        player.fullyConnected();
 
         ServerLoginSuccessPacket success = new ServerLoginSuccessPacket();
         success.setUsername(player.getUsername());

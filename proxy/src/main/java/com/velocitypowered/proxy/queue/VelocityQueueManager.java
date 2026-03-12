@@ -78,7 +78,13 @@ public class VelocityQueueManager implements QueueManager {
   /**
    * Local in-memory queues keyed by server name.
    */
-  protected final ConcurrentHashMap<String, VelocityQueue> queues = new ConcurrentHashMap<>();
+  protected final Map<String, VelocityQueue> queues = new ConcurrentHashMap<>();
+
+  /**
+   * Holds all scheduled tasks to remove players from all queues (after a player's timeout).
+   * Stored such that they can be cancelled on join.
+   */
+  private final Map<UUID, ScheduledTask> pendingTimeoutTasks = new ConcurrentHashMap<>();
 
   private @Nullable ScheduledTask transferTask;
   private @Nullable ScheduledTask actionBarTask;
@@ -261,6 +267,13 @@ public class VelocityQueueManager implements QueueManager {
     }
   }
 
+  public void onPlayerConnect(final @NotNull ConnectedPlayer player) {
+    ScheduledTask timeoutTask = pendingTimeoutTasks.remove(player.getUniqueId());
+    if (timeoutTask != null) {
+      timeoutTask.cancel();
+    }
+  }
+
   /**
    * Called when a player disconnects from the proxy. Removes the player from all queues
    * after an optional grace period determined by their permissions.
@@ -268,6 +281,10 @@ public class VelocityQueueManager implements QueueManager {
    * @param player the player who disconnected
    */
   public void onPlayerDisconnect(final @NotNull ConnectedPlayer player) {
+    if (!isQueued(player)) {
+      return;
+    }
+
     if (server.isShuttingDown()) {
       removePlayerEntirely(player);
       return;
@@ -280,10 +297,12 @@ public class VelocityQueueManager implements QueueManager {
     } else {
       LOGGER.debug("Removing player {} from all queues in {} second(s) (has timeout).", player.getUsername(), timeout);
       UUID playerUniqueId = player.getUniqueId();
-      server.getScheduler()
+      ScheduledTask task = server.getScheduler()
           .buildTask(VelocityVirtualPlugin.INSTANCE, () -> removePlayerEntirely(playerUniqueId))
           .delay(timeout, TimeUnit.SECONDS)
           .schedule();
+
+      pendingTimeoutTasks.put(playerUniqueId, task);
     }
   }
 

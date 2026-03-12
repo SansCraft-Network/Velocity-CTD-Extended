@@ -1163,11 +1163,15 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   /**
-   * Marks this player as fully connected, meaning the login success packet has been sent
+   * Executed when this player is fully connected, meaning the login success packet has been sent
    * and the player is considered truly online on this proxy.
    */
-  public void setFullyConnected() {
+  public void fullyConnected() {
     this.fullyConnected = true;
+
+    if (this.server.isQueueEnabled()) {
+      this.server.getQueueManager().onPlayerConnect(this);
+    }
   }
 
   /**

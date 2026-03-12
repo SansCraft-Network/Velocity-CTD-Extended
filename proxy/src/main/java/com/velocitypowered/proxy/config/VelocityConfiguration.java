@@ -29,14 +29,13 @@ import com.velocitypowered.api.proxy.config.ProxyConfig;
 import com.velocitypowered.api.proxy.server.ServerInfoForwardingMode;
 import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.ServerLink;
-import com.velocitypowered.proxy.config.migration.AutoQueueServersMigration;
 import com.velocitypowered.proxy.config.migration.ConfigurationMigration;
-import com.velocitypowered.proxy.config.migration.ForcedHostAsFallbackMigration;
 import com.velocitypowered.proxy.config.migration.ForwardingMigration;
 import com.velocitypowered.proxy.config.migration.KeyAuthenticationMigration;
 import com.velocitypowered.proxy.config.migration.MiniMessageTranslationsMigration;
 import com.velocitypowered.proxy.config.migration.MotdMigration;
 import com.velocitypowered.proxy.config.migration.TransferIntegrationMigration;
+import com.velocitypowered.proxy.config.migration.ctd.CtdConfigMigrations;
 import com.velocitypowered.proxy.util.AddressUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -1241,15 +1240,15 @@ public final class VelocityConfiguration implements ProxyConfig {
         LOGGER.debug("Could not perform configuration check during configuration loading", e);
       }
 
-      final ConfigurationMigration[] migrations = {
+      final List<ConfigurationMigration> migrations = new ArrayList<>(List.of(
           new ForwardingMigration(),
           new KeyAuthenticationMigration(),
           new MotdMigration(),
           new MiniMessageTranslationsMigration(),
-          new TransferIntegrationMigration(),
-          new ForcedHostAsFallbackMigration(),
-          new AutoQueueServersMigration()
-      };
+          new TransferIntegrationMigration()
+      ));
+
+      migrations.addAll(CtdConfigMigrations.createCtdMigrations());
 
       for (final ConfigurationMigration migration : migrations) {
         if (migration.shouldMigrate(config)) {

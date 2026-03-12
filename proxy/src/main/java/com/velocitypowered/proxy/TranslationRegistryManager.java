@@ -1,12 +1,39 @@
+/*
+ * Copyright (C) 2018-2026 Velocity Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.velocitypowered.proxy;
+
+import static java.util.function.Function.identity;
 
 import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
 import com.velocitypowered.proxy.util.ResourceUtils;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Properties;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.minimessage.translation.MiniMessageTranslationStore;
@@ -23,11 +50,6 @@ public class TranslationRegistryManager {
    * The {@link Key} used to register Velocity's translation source in the Adventure global translator.
    */
   private final Key translationRegistryKey;
-
-  /**
-   * Whether to log when registering translations.
-   */
-  private boolean log = true;
 
   TranslationRegistryManager(Key translationRegistryKey) {
     this.translationRegistryKey = translationRegistryKey;
@@ -52,10 +74,6 @@ public class TranslationRegistryManager {
 
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
-        if (log) {
-          LOGGER.info("Loading localizations...");
-        }
-
         final Path langPath = Path.of("lang");
 
         try {
@@ -67,13 +85,16 @@ public class TranslationRegistryManager {
             files.filter(Files::isRegularFile).forEach(src -> {
               final Path target = langPath.resolve(src.getFileName().toString());
               if (Files.notExists(target)) {
-                try (InputStream is = Files.newInputStream(src)) {
-                  Files.copy(is, target);
-                  if (log) {
-                    LOGGER.info("Restored missing translation file {}", target.getFileName());
-                  }
+                try {
+                  saveMissingFile(src, target);
                 } catch (IOException e) {
                   LOGGER.error("Failed copying translation file {}", target.getFileName(), e);
+                }
+              } else {
+                try {
+                  migrateIfNeeded(src, target);
+                } catch (IOException e) {
+                  LOGGER.error("Failed migrating translation file {}", target.getFileName(), e);
                 }
               }
             });
@@ -82,22 +103,7 @@ public class TranslationRegistryManager {
           try (Stream<Path> langFiles = Files.walk(langPath)) {
             langFiles.filter(Files::isRegularFile).forEach(file -> {
               try {
-                String localePart = com.google.common.io.Files
-                    .getNameWithoutExtension(file.getFileName().toString());
-                if (localePart.startsWith("messages")) {
-                  localePart = localePart.substring("messages".length());
-                }
-
-                if (localePart.startsWith("_")) {
-                  localePart = localePart.substring(1);
-                }
-
-                final Locale locale = localePart.isBlank()
-                    ? Locale.US
-                    : Locale.forLanguageTag(localePart.replace('_', '-'));
-
-                translationRegistry.registerAll(locale, file, false);
-                ClosestLocaleMatcher.INSTANCE.registerKnown(locale);
+                registerTranslation(file, translationRegistry);
               } catch (Exception e) {
                 LOGGER.error("Failed registering translations from {}", file, e);
               }
@@ -115,10 +121,70 @@ public class TranslationRegistryManager {
     GlobalTranslator.translator().addSource(translationRegistry);
   }
 
-  /**
-   * Disables logging (logging can't be turned on after this).
-   */
-  void noLogging() {
-    log = false;
+  private void registerTranslation(Path file, MiniMessageTranslationStore translationRegistry) throws IOException {
+    String localePart = com.google.common.io.Files
+        .getNameWithoutExtension(file.getFileName().toString());
+    if (localePart.startsWith("messages")) {
+      localePart = localePart.substring("messages".length());
+    }
+
+    if (localePart.startsWith("_")) {
+      localePart = localePart.substring(1);
+    }
+
+    final Locale locale = localePart.isBlank()
+        ? Locale.US
+        : Locale.forLanguageTag(localePart.replace('_', '-'));
+
+    translationRegistry.registerAll(locale, file, false);
+    ClosestLocaleMatcher.INSTANCE.registerKnown(locale);
+  }
+
+  private void saveMissingFile(Path src, Path target) throws IOException {
+    try (InputStream is = Files.newInputStream(src)) {
+      Files.copy(is, target);
+      LOGGER.info("Restored missing translation file {}", target.getFileName());
+    }
+  }
+
+  private void migrateIfNeeded(Path src, Path target) throws IOException {
+    Properties srcProperties = new Properties();
+    try (InputStream is = Files.newInputStream(src)) {
+      srcProperties.load(is);
+    }
+
+    Properties targetProperties = new Properties();
+    try (InputStream is = Files.newInputStream(target)) {
+      targetProperties.load(is);
+    }
+
+    Map<String, String> missingProperties = srcProperties.keySet()
+        .stream()
+        .filter(key -> !targetProperties.containsKey(key))
+        .map(k -> (String) k)
+        .collect(Collectors.toMap(identity(), srcProperties::getProperty));
+
+    if (!missingProperties.isEmpty()) {
+      migrate(target, missingProperties);
+    }
+  }
+
+  private void migrate(Path target, Map<String, String> missingProperties) throws IOException {
+    String timestamp = ZonedDateTime.now().format(DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss z"));
+    List<String> lines = Stream.concat(
+        Stream.of("# Messages below have been added by a migration of this file at " + timestamp + "."),
+        missingProperties.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey())
+            .map(e -> e.getKey() + "=" + e.getValue())
+    ).toList();
+
+    Files.write(
+        target,
+        lines,
+        StandardCharsets.ISO_8859_1, // Properties#load uses ISO 8859-1
+        StandardOpenOption.APPEND
+    );
+
+    LOGGER.info("Migrated {} with a total of {} missing messages.", target.toString(), missingProperties.size());
   }
 }

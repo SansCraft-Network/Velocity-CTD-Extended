@@ -123,7 +123,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.audience.ForwardingAudience;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -532,6 +531,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     registerCommands();
 
+    LOGGER.info("Loading localizations...");
     translationRegistryManager.registerTranslations();
 
     ipAttemptLimiter = Ratelimiters.createWithMilliseconds(configuration.getLoginRatelimit());
@@ -705,8 +705,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     registerCommands();
 
-    translationRegistryManager.noLogging();
     translationRegistryManager.unregisterTranslations();
+
     translationRegistryManager.registerTranslations();
 
     // Re-register servers. If a server is being replaced, make sure to note what players need to

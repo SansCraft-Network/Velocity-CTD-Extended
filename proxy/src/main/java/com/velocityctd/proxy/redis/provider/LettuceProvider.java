@@ -65,6 +65,12 @@ public final class LettuceProvider extends AbstractRedisProvider {
   private RedisPubSubAsyncCommands<String, String> publisher;
 
   /**
+   * A synchronous pub/sub connection used for raw key operations such as setting keys with expiry,
+   * checking key existence, and deleting keys.
+   */
+  private RedisPubSubCommands<String, String> syncPublisher;
+
+  /**
    * Constructs a new {@link LettuceProvider}.
    *
    * @param config the {@link VelocityConfiguration.Redis} instance to use for connection credentials
@@ -89,6 +95,10 @@ public final class LettuceProvider extends AbstractRedisProvider {
   public void restart() {
     if (this.publisher != null) {
       this.publisher.getStatefulConnection().close();
+    }
+
+    if (this.syncPublisher != null) {
+      this.syncPublisher.getStatefulConnection().close();
     }
 
     final StatefulRedisPubSubConnection<String, String> connection = this.client.connectPubSub();
@@ -152,6 +162,8 @@ public final class LettuceProvider extends AbstractRedisProvider {
     this.publisher = connection.async();
     this.publisher.subscribe(CHANNEL);
 
+    this.syncPublisher = connection.sync();
+
     LOGGER.info("Connected to Lettuce Redis Server on channel '{}'", CHANNEL);
   }
 
@@ -169,6 +181,10 @@ public final class LettuceProvider extends AbstractRedisProvider {
 
     this.publisher.getStatefulConnection().close();
     this.publisher = null;
+
+    this.syncPublisher.getStatefulConnection().close();
+    this.syncPublisher = null;
+
     this.client.shutdown();
 
     LOGGER.info("Disconnected from Lettuce Redis Server on channel '{}'", CHANNEL);
@@ -242,6 +258,54 @@ public final class LettuceProvider extends AbstractRedisProvider {
     } catch (Throwable ignored) {
       LOGGER.warn("Failed to handle one way packet of type '{}', ignoring", redisPacket.getType());
     }
+  }
+
+  /**
+   * Sets a key with an expiry time in seconds using the regular (non-pub/sub) connection.
+   *
+   * @param key        the key to set
+   * @param value      the value to store
+   * @param ttlSeconds the time-to-live in seconds
+   */
+  @Override
+  public void setWithExpiry(final @NotNull String key, final @NotNull String value, final long ttlSeconds) {
+    if (this.syncPublisher == null) {
+      LOGGER.warn("Attempted to set key '{}' with expiry but the sync connection is not initialized", key);
+      return;
+    }
+
+    this.syncPublisher.setex(key, ttlSeconds, value);
+  }
+
+  /**
+   * Checks whether a key exists in Redis using the regular (non-pub/sub) connection.
+   *
+   * @param key the key to check
+   * @return {@code true} if the key exists, otherwise {@code false}
+   */
+  @Override
+  public boolean existsKey(final @NotNull String key) {
+    if (this.syncPublisher == null) {
+      LOGGER.warn("Attempted to check existence of key '{}' but the sync connection is not initialized", key);
+      return false;
+    }
+
+    return this.syncPublisher.exists(key) > 0;
+  }
+
+  /**
+   * Deletes a key from Redis using the regular (non-pub/sub) connection.
+   *
+   * @param key the key to delete
+   */
+  @Override
+  public void deleteKey(final @NotNull String key) {
+    if (this.syncPublisher == null) {
+      LOGGER.warn("Attempted to delete key '{}' but the sync connection is not initialized", key);
+      return;
+    }
+
+    this.syncPublisher.del(key);
   }
 
   /**

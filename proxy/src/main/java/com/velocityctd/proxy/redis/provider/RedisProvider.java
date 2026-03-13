@@ -124,6 +124,30 @@ public sealed interface RedisProvider permits AbstractRedisProvider {
   <K, V extends DepotEntry<K, V>> @NotNull Depot<K, V> createDepot(Class<V> valueClass);
 
   /**
+   * Sets a key with an expiry time in seconds.
+   *
+   * @param key        the key to set
+   * @param value      the value to store
+   * @param ttlSeconds the time-to-live in seconds
+   */
+  void setWithExpiry(@NotNull String key, @NotNull String value, long ttlSeconds);
+
+  /**
+   * Checks whether a key exists in Redis.
+   *
+   * @param key the key to check
+   * @return {@code true} if the key exists, otherwise {@code false}
+   */
+  boolean existsKey(@NotNull String key);
+
+  /**
+   * Deletes a key from Redis.
+   *
+   * @param key the key to delete
+   */
+  void deleteKey(@NotNull String key);
+
+  /**
    * Check if the Redis provider is connected.
    *
    * @return true if the Redis provider is connected, false otherwise

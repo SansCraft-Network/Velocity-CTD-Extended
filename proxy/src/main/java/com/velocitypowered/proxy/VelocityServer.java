@@ -993,11 +993,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       }
 
       ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
-
-      if (this.queueManager != null) {
-        players.forEach(p -> this.queueManager.removePlayerEntirely(p));
-        this.queueManager.teardown();
-      }
+      ImmutableList<@NotNull UUID> playerUuids = ImmutableList.copyOf(connectionsByUuid.keySet());
 
       if (!getConfiguration().isAcceptTransfers()) {
         for (ConnectedPlayer player : players) {
@@ -1025,11 +1021,6 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
             }
           }
         }
-      }
-
-      // Disable Redis if we have it enabled
-      if (this.configuration.getRedis().isEnabled()) {
-        this.redis.shutdown();
       }
 
       try {
@@ -1061,6 +1052,16 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       } catch (InterruptedException e) {
         // Not much we can do about this...
         Thread.currentThread().interrupt();
+      }
+
+      if (this.queueManager != null) {
+        playerUuids.forEach(u -> this.queueManager.removePlayerEntirely(u));
+        this.queueManager.teardown();
+      }
+
+      // Disable Redis if we have it enabled
+      if (this.configuration.getRedis().isEnabled()) {
+        this.redis.shutdown();
       }
 
       // Since we manually removed the shutdown hook, we need to handle the shutdown ourselves.

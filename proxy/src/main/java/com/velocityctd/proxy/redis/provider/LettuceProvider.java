@@ -179,11 +179,15 @@ public final class LettuceProvider extends AbstractRedisProvider {
       return;
     }
 
-    this.publisher.getStatefulConnection().close();
-    this.publisher = null;
+    if (publisher.getStatefulConnection().isOpen()) {
+      publisher.getStatefulConnection().close();
+    }
+    publisher = null;
 
-    this.syncPublisher.getStatefulConnection().close();
-    this.syncPublisher = null;
+    if (syncPublisher.getStatefulConnection().isOpen()) {
+      syncPublisher.getStatefulConnection().close();
+    }
+    syncPublisher = null;
 
     this.client.shutdown();
 

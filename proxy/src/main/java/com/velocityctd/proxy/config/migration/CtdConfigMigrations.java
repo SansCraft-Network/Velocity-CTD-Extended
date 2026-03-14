@@ -60,6 +60,16 @@ public class CtdConfigMigrations {
             false
         ),
         migration(
+            "If enabled (default is false), kick-existing-players will only kick the existing session when\n"
+                + "the new connection originates from the same IP address. A duplicate UUID from a different IP\n"
+                + "is denied instead of displacing the existing player. This makes kick-existing-players safe for\n"
+                + "offline mode by restricting it to reconnect-after-drop scenarios.\n"
+                + "It is recommended to set kick-existing-players-check-ip to true when enabling kick-existing-players\n"
+                + "in offline mode.",
+            "kick-existing-players-check-ip",
+            false
+        ),
+        migration(
             "If false, disables logging for offline player connections.",
             "log-offline-connections",
             true

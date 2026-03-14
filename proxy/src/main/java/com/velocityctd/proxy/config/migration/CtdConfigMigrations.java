@@ -19,6 +19,8 @@ package com.velocityctd.proxy.config.migration;
 
 import com.velocitypowered.proxy.config.migration.ConfigurationMigration;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CtdConfigMigrations {
 
@@ -319,8 +321,10 @@ public class CtdConfigMigrations {
   }
 
   private static ConfigurationMigration migration(String comment, String key, Object defaultValue) {
-    if (comment != null && !comment.startsWith(" ")) {
-      comment = " " + comment;
+    if (comment != null) {
+      comment = Stream.of(comment.split("\n"))
+          .map(line -> !line.startsWith(" ") ? (" " + line) : line)
+          .collect(Collectors.joining("\n"));
     }
 
     return new CtdSimpleMigration(key, defaultValue, comment);

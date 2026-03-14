@@ -19,6 +19,7 @@ package com.velocityctd.proxy.queue;
 
 import com.velocityctd.api.queue.QueueEntry;
 import com.velocityctd.api.queue.QueueEntryData;
+import com.velocityctd.api.queue.ServerStatus;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
@@ -208,6 +209,23 @@ public class VelocityQueueEntry implements QueueEntry {
   }
 
   private void resetAfterFailedTransfer(final VelocityConfiguration.Queue config) {
+    final VelocityRegisteredServer targetServer = this.server.getServer(this.queue.getName()).orElseThrow();
+
+    targetServer.ping().orTimeout(3, TimeUnit.SECONDS).whenComplete((result, th) -> {
+      if (th != null) {
+        // Backend is offline. Mark it and silently reset this entry without counting the attempt,
+        // so the player sees no error and stays in the queue.
+        this.queue.setServerStatus(ServerStatus.OFFLINE);
+        this.waitingForConnection = false;
+        publishWaitingChange();
+      } else {
+        // Backend is reachable. The connection failure was legitimate.
+        applyFailedAttempt(config);
+      }
+    });
+  }
+
+  private void applyFailedAttempt(final VelocityConfiguration.Queue config) {
     this.waitingForConnection = false;
     this.connectionAttempts++;
     refreshPermissions();

@@ -2886,7 +2886,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       this.sendDelay = config.getOrElse("send-delay", 1.0);
       this.queueDelay = config.getOrElse("queue-delay", 0.0);
       this.messageDelay = config.getOrElse("message-delay", 1.0);
-      this.backendPingInterval = config.getOrElse("backend-ping-interval", 1.0);
+      this.backendPingInterval = config.getOrElse("backend-ping-interval", 5.0);
       this.maxSendRetries = config.getOrElse("max-send-retries", 10);
       this.removePlayerOnServerSwitch = config.getOrElse("remove-player-on-server-switch", true);
       this.forwardKickReason = config.getOrElse("forward-kick-reason", true);

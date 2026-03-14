@@ -114,11 +114,17 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
     }
 
     if (this.depot.contains(player.getUniqueId())) {
-      final Component component = Component.translatable("velocity.error.already-connected-proxy.remote");
-      if (this.server.getConfiguration().isOnlineModeKickExistingPlayers()) {
-        new VelocityKick(player.getUniqueId(), component)
-                .publish();
+      if (this.server.getConfiguration().isKickExistingPlayers()) {
+        final Component component = Component.translatable("multiplayer.disconnect.duplicate_login");
+        final PlayerEntry existingEntry = this.depot.get(player.getUniqueId());
+        // Only send a VelocityKick if the existing player is on a DIFFERENT proxy.
+        // If they are on this proxy, registerConnection() already kicked them locally.
+        if (existingEntry != null && !existingEntry.getProxyId().equalsIgnoreCase(this.redis.getProxyId())) {
+          new VelocityKick(player.getUniqueId(), component, existingEntry.getProxyId())
+                  .publish();
+        }
       } else {
+        final Component component = Component.translatable("velocity.error.already-connected-proxy.remote");
         player.disconnect0(component, true);
         return false;
       }
@@ -135,6 +141,20 @@ public final class PlayerDepotService extends AbstractDepotService<UUID, PlayerE
    */
   public void onPlayerDisconnect(final ConnectedPlayer player) {
     if (this.redis.isShutdown()) {
+      return;
+    }
+
+    final PlayerEntry existing = this.depot.get(player.getUniqueId());
+    if (existing == null) {
+      return;
+    }
+
+    if (!existing.getProxyId().equalsIgnoreCase(this.redis.getProxyId())) {
+      return;
+    }
+
+    final ConnectedPlayer currentPlayer = this.server.getPlayer(player.getUniqueId()).orElse(null);
+    if (currentPlayer != null && currentPlayer != player) {
       return;
     }
 

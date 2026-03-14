@@ -106,6 +106,11 @@ public enum RouteRegistry {
    * Handles the {@link VelocityKick} packet by kicking the specified player with a reason.
    */
   VELOCITY_KICK(VelocityKick.class, (server, packet) -> {
+    final String targetProxyId = packet.getTargetProxyId();
+    if (targetProxyId != null && !targetProxyId.equalsIgnoreCase(server.getRedis().getProxyId())) {
+      return;
+    }
+
     final ConnectedPlayer player = server.getPlayer(packet.getUniqueId()).orElse(null);
     if (player == null) {
       return;

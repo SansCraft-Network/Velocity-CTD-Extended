@@ -139,14 +139,17 @@ public final class VelocityConfiguration implements ProxyConfig {
   private boolean announceForge = false;
 
   /**
-   * If {@code true}, kicking an authenticated player causes other connections using the same UUID to be dropped.
+   * If {@code true}, when a new connection arrives with the same UUID as an already-online player,
+   * the existing session is kicked and the new connection is allowed in. Works in both online and
+   * offline mode.
    */
   @Expose
-  private boolean onlineModeKickExistingPlayers = false;
+  private boolean kickExistingPlayers = false;
 
   /**
-   * If {@code true}, when kick-existing-players is enabled, also check for duplicate connections
-   * from the same IP address in addition to username and UUID checks.
+   * If {@code true}, kick-existing-players will only kick the existing session when the new
+   * connection originates from the same IP address. Connections from a different IP with a
+   * duplicate UUID are denied instead of displacing the existing player.
    */
   @Expose
   private boolean kickExistingPlayersCheckIp = false;
@@ -327,7 +330,7 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 final int showMaxPlayers, final boolean onlineMode,
                                 final boolean preventClientProxyConnections, final boolean announceForge,
                                 final PlayerInfoForwarding playerInfoForwardingMode, final byte[] forwardingSecret,
-                                final boolean onlineModeKickExistingPlayers, final boolean kickExistingPlayersCheckIp,
+                                final boolean kickExistingPlayers, final boolean kickExistingPlayersCheckIp,
                                 final PingPassthroughMode pingPassthrough,
                                 final boolean samplePlayersInPing, final boolean enablePlayerAddressLogging,
                                 final Servers servers, final ForcedHosts forcedHosts, final CommandAliases commandAliases,
@@ -349,7 +352,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     this.announceForge = announceForge;
     this.playerInfoForwardingMode = playerInfoForwardingMode;
     this.forwardingSecret = forwardingSecret;
-    this.onlineModeKickExistingPlayers = onlineModeKickExistingPlayers;
+    this.kickExistingPlayers = kickExistingPlayers;
     this.kickExistingPlayersCheckIp = kickExistingPlayersCheckIp;
     this.pingPassthrough = pingPassthrough;
     this.samplePlayersInPing = samplePlayersInPing;
@@ -1464,25 +1467,29 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   /**
-   * Determines whether Velocity should kick any other existing player sessions
-   * that use the same UUID when a new authenticated player connects.
+   * Determines whether Velocity should kick any existing player session that shares a UUID with
+   * an incoming connection, allowing the new connection to take over.
    *
-   * <p>This is useful for protecting against session hijacking in online-mode.
+   * <p>Works in both online and offline mode. In offline mode the UUID is derived from the
+   * username, so this setting is unsafe unless {@link #isKickExistingPlayersCheckIp()} is also
+   * enabled to restrict kicks to same-IP reconnects.
    *
    * @return true if existing players with matching UUIDs should be kicked
    */
-  public boolean isOnlineModeKickExistingPlayers() {
-    return onlineModeKickExistingPlayers;
+  public boolean isKickExistingPlayers() {
+    return kickExistingPlayers;
   }
 
   /**
-   * Determines whether Velocity should also check for duplicate connections from the same IP address
-   * when kick-existing-players is enabled.
+   * Determines whether kick-existing-players should only fire when the new connection comes from
+   * the same IP address as the existing session.
    *
-   * <p>This provides additional protection against connection loss scenarios where a player
-   * might reconnect from the same IP address with a different username or UUID.
+   * <p>When {@code true}: a duplicate UUID from the same IP kicks the existing session. A duplicate
+   * UUID from a different IP is denied instead, leaving the existing player unaffected.
    *
-   * @return true if IP address checking should be performed for duplicate connections
+   * <p>When {@code false}: any duplicate UUID kicks the existing session unconditionally.
+   *
+   * @return true if the kick is restricted to same-IP connections
    */
   public boolean isKickExistingPlayersCheckIp() {
     return kickExistingPlayersCheckIp;

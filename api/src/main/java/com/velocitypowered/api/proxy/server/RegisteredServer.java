@@ -7,6 +7,7 @@
 
 package com.velocitypowered.api.proxy.server;
 
+import com.velocityctd.api.queue.Queue;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.messages.ChannelMessageSink;
 import com.velocitypowered.api.proxy.player.PlayerInfo;
@@ -34,7 +35,7 @@ public interface RegisteredServer extends ChannelMessageSink, Audience {
    *
    * @return the players on this proxy
    */
-  Collection<Player> getPlayersConnected();
+  Collection<? extends Player> getPlayersConnected();
 
   /**
    * Get the total player count of the server (redis support).
@@ -67,4 +68,11 @@ public interface RegisteredServer extends ChannelMessageSink, Audience {
    * @since 3.2.0
    */
   CompletableFuture<ServerPing> ping(PingOptions pingOptions);
+
+  /**
+   * Gets the queue for this server.
+   *
+   * @return The queue of the server
+   */
+  Queue getQueue();
 }

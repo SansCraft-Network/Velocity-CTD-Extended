@@ -24,12 +24,7 @@ import org.apache.logging.log4j.Logger;
 /**
  * Configuration Migration interface.
  */
-public sealed interface ConfigurationMigration permits
-        ForwardingMigration,
-        KeyAuthenticationMigration,
-        MiniMessageTranslationsMigration,
-        MotdMigration,
-        TransferIntegrationMigration {
+public interface ConfigurationMigration {
 
   /**
    * Determines whether this migration should be applied to the given config.

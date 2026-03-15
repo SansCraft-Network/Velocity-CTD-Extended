@@ -20,19 +20,15 @@ package com.velocitypowered.proxy.connection.util;
 import com.spotify.futures.CompletableFutures;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.PingOptions;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.api.proxy.server.ServerPing;
 import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PingPassthroughMode;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -88,9 +84,9 @@ public class ServerListPingHandler {
     List<ServerPing.SamplePlayer> samplePlayers;
     if (configuration.getSamplePlayersInPing()) {
       List<ServerPing.SamplePlayer> unshuffledPlayers;
-      if (server.getMultiProxyHandler().isRedisEnabled()) {
-        unshuffledPlayers = server.getMultiProxyHandler().getAllPlayers().stream()
-            .map(player -> new ServerPing.SamplePlayer(player.getUsername(), player.getUuid()))
+      if (server.isRedisEnabled()) {
+        unshuffledPlayers = server.getRedis().getPlayerService().getAll().stream()
+            .map(entry -> new ServerPing.SamplePlayer(entry.getUsername(), entry.getUniqueId()))
             .collect(Collectors.toList());
       } else {
         unshuffledPlayers = server.getAllPlayers().stream()
@@ -113,20 +109,13 @@ public class ServerListPingHandler {
 
     String serverPingVersion = configuration.getFallbackVersionPing();
 
-    final int online;
-    if (server.getMultiProxyHandler().isRedisEnabled()) {
-      online = server.getMultiProxyHandler().getTotalPlayerCount();
-    } else {
-      online = server.getPlayerCount();
-    }
-
     for (Component s : server.getConfiguration().getMotdHover()) {
       samplePlayers.add(new ServerPing.SamplePlayer(s, UUID.randomUUID()));
     }
 
     return new ServerPing(
         new ServerPing.Version(version.getProtocol(), formatVersionString(serverPingVersion, version)),
-        new ServerPing.Players(online, configuration.getShowMaxPlayers(), samplePlayers),
+        new ServerPing.Players(server.getPlayerCount(), configuration.getShowMaxPlayers(), samplePlayers),
         configuration.getMotd(),
         configuration.getFavicon().orElse(null),
         configuration.isAnnounceForge() ? ModInfo.DEFAULT : null,
@@ -145,9 +134,7 @@ public class ServerListPingHandler {
         .replaceAll("\\{proxy-brand-custom}", this.server.getConfiguration().getProxyBrandCustom())
         .replaceAll("\\{proxy-version}", this.server.getVersion().getVersion())
         .replaceAll("\\{proxy-vendor}", this.server.getVersion().getVendor())
-        .replaceAll("\\{player-count}", this.server.getMultiProxyHandler().isRedisEnabled()
-            ? String.valueOf(this.server.getMultiProxyHandler().getTotalPlayerCount())
-            : String.valueOf(this.server.getPlayerCount()))
+        .replaceAll("\\{player-count}", String.valueOf(this.server.getPlayerCount()))
         .replaceAll("\\{max-players}", String.valueOf(this.server.getConfiguration().getShowMaxPlayers()));
   }
 
@@ -158,12 +145,12 @@ public class ServerListPingHandler {
     ServerPing fallback = constructLocalPing(connection.getProtocolVersion());
     List<CompletableFuture<ServerPing>> pings = new ArrayList<>();
     for (String s : servers) {
-      Optional<RegisteredServer> rs = server.getServer(s);
+      Optional<VelocityRegisteredServer> rs = server.getServer(s);
       if (rs.isEmpty()) {
         continue;
       }
 
-      VelocityRegisteredServer vrs = (VelocityRegisteredServer) rs.get();
+      VelocityRegisteredServer vrs = rs.get();
       pings.add(vrs.ping(connection.getConnection().eventLoop(), PingOptions.builder()
               .version(responseProtocolVersion).virtualHost(virtualHostStr).build()));
     }
@@ -250,26 +237,10 @@ public class ServerListPingHandler {
     if (passthroughMode == PingPassthroughMode.DISABLED) {
       return CompletableFuture.completedFuture(constructLocalPing(shownVersion));
     } else {
-      String virtualHostStr = connection.getVirtualHost().map(InetSocketAddress::getHostString)
-          .map(str -> str.toLowerCase(Locale.ROOT))
-          .orElse("");
+      List<String> serversToTry = FallbackServerResolver.resolveServersToTry(server, connection);
+      String virtualHost = FallbackServerResolver.normalizeHostString(connection.getVirtualHost().orElse(null));
 
-      List<String> serversToTry = server.getConfiguration().getForcedHosts().get(virtualHostStr);
-      if (serversToTry == null || serversToTry.isEmpty()) {
-        for (Map.Entry<String, List<String>> entry : server.getConfiguration().getForcedHosts().entrySet()) {
-          String pattern = entry.getKey().toLowerCase(Locale.ROOT);
-          if (pattern.startsWith("*.") && virtualHostStr.endsWith(pattern.substring(1))) {
-            serversToTry = entry.getValue();
-            break;
-          }
-        }
-      }
-
-      if (serversToTry == null || serversToTry.isEmpty()) {
-        serversToTry = server.getConfiguration().getAttemptConnectionOrder();
-      }
-
-      return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHostStr);
+      return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHost);
     }
   }
 }

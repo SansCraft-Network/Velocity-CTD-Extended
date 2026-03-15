@@ -18,6 +18,7 @@
 package com.velocitypowered.proxy.command;
 
 import com.google.common.base.Preconditions;
+import com.google.gson.JsonSyntaxException;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -32,32 +33,38 @@ import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
+import com.velocityctd.api.queue.QueueState;
+import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.InvocableCommand;
 import com.velocitypowered.api.permission.Tristate;
-import com.velocitypowered.api.proxy.Player;
-import com.velocitypowered.api.proxy.ProxyServer;
-import com.velocitypowered.api.proxy.server.RegisteredServer;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.brigadier.VelocityArgumentCommandNode;
 import com.velocitypowered.proxy.command.brigadier.VelocityBrigadierCommandWrapper;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
-import com.velocitypowered.proxy.redis.multiproxy.RemotePlayerInfo;
+import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
+import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -80,7 +87,7 @@ public final class VelocityCommands {
                                                 final @Nullable Object registrant) {
     Preconditions.checkNotNull(delegate, "delegate");
     if (registrant == null) {
-      // the registrant is null if the `plugin` was absent when we try to register the command
+      // The registrant is null if the `plugin` was absent when we try to register the command
       return delegate;
     }
 
@@ -93,7 +100,7 @@ public final class VelocityCommands {
       case LiteralCommandNode<CommandSource> lcn -> {
         var literalBuilder = shallowCopyAsBuilder(lcn, delegate.getName(), true);
         literalBuilder.executes(maybeCommand);
-        // we also need to wrap any children
+        // We also need to wrap any children
         for (final CommandNode<CommandSource> child : delegate.getChildren()) {
           literalBuilder.then(wrap(child, registrant));
         }
@@ -106,7 +113,7 @@ public final class VelocityCommands {
               .withRedirect(delegate.getRedirect() != null ? wrap(delegate.getRedirect(), registrant) : null);
       case ArgumentCommandNode<CommandSource, ?> node -> {
         var argBuilder = node.createBuilder().executes(maybeCommand);
-        // we also need to wrap any children
+        // We also need to wrap any children
         for (final CommandNode<CommandSource> child : delegate.getChildren()) {
           argBuilder.then(wrap(child, registrant));
         }
@@ -177,7 +184,7 @@ public final class VelocityCommands {
                                     final Class<V> type, final V fallback) {
     final ParsedArgument<?, ?> argument = arguments.get(ARGS_NODE_NAME);
     if (argument == null) {
-      return fallback; // either no arguments were given or this isn't an InvocableCommand
+      return fallback; // Either no arguments were given or this isn't an InvocableCommand
     }
     final Object result = argument.getResult();
     try {
@@ -187,8 +194,6 @@ public final class VelocityCommands {
           + ", expected " + type, e);
     }
   }
-
-  // Alias nodes
 
   /**
    * Returns whether a literal node with the given name can be added to the {@link RootCommandNode}
@@ -262,8 +267,6 @@ public final class VelocityCommands {
     return builder;
   }
 
-  // Arguments node
-
   /**
    * Returns the argument's node for the command represented by the given alias node, if present;
    * otherwise returns {@code null}.
@@ -302,9 +305,9 @@ public final class VelocityCommands {
    * @param ctx the command context
    * @return the found player, or {@code null} if the player couldn't be found
    */
-  public static Player getPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx) {
+  public static ConnectedPlayer getPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx) {
     String playerName = ctx.getArgument("player", String.class);
-    Optional<Player> playerOptional = server.getPlayer(playerName);
+    Optional<ConnectedPlayer> playerOptional = server.getPlayer(playerName);
 
     if (playerOptional.isEmpty()) {
       ctx.getSource().sendMessage(CommandMessages.PLAYER_NOT_FOUND
@@ -321,32 +324,36 @@ public final class VelocityCommands {
    * @param server the proxy server
    * @param argName the name of the string argument to complete
    * @param allowNonQueueable whether to suggest a server if the server has queueing disabled
+   * @param performPermissionCheck whether to perform permission checks before including a server as a suggestion.
+   *                               {@code magicServers}, if any, will also be included in this permission check.
+   *                               {@code "velocity.command.server.<name>"} will be used as the permission.
+   * @param magicServers "magic servers" to add, if any. useful for including an "all" argument option.
    * @return a suggestion provider that completes a server name
    */
   public static SuggestionProvider<CommandSource> suggestServer(final VelocityServer server, final String argName,
-                                                                final boolean allowNonQueueable) {
+                                                                final boolean allowNonQueueable, final boolean performPermissionCheck,
+                                                                final String... magicServers) {
     return (ctx, builder) -> {
-      boolean allowNonQueueable0 = allowNonQueueable;
       final String argument = ctx.getArguments().containsKey(argName)
           ? StringArgumentType.getString(ctx, argName)
           : "";
 
       VelocityConfiguration.Queue queueConfig = server.getConfiguration().getQueue();
 
-      if (!queueConfig.isEnabled()) {
-        allowNonQueueable0 = true;
-      }
+      List<String> possibilities = server.getAllServers().stream()
+          .map(s -> s.getServerInfo().getName())
+          .filter(s -> allowNonQueueable || !queueConfig.isEnabled() || !queueConfig.getNoQueueServers().contains(s))
+          .collect(Collectors.toList());
 
-      for (final RegisteredServer sv : server.getAllServers()) {
-        final String serverName = sv.getServerInfo().getName();
-        if (!allowNonQueueable0 && queueConfig.getNoQueueServers().contains(serverName)) {
-          continue;
-        }
+      possibilities.addAll(Arrays.asList(magicServers));
 
-        if (serverName.regionMatches(true, 0, argument, 0, argument.length())) {
-          if (ctx.getSource().getPermissionValue("velocity.command.server." + serverName) != Tristate.FALSE) {
-            builder.suggest(serverName);
+      for (String possibility : possibilities) {
+        if (possibility.regionMatches(true, 0, argument, 0, argument.length())) {
+          if (performPermissionCheck && ctx.getSource().getPermissionValue("velocity.command.server." + possibility) == Tristate.FALSE) {
+            continue;
           }
+
+          builder.suggest(possibility);
         }
       }
 
@@ -366,25 +373,25 @@ public final class VelocityCommands {
   public static VelocityRegisteredServer getServer(final VelocityServer server, final CommandContext<CommandSource> ctx,
                                                    final String argName, final boolean allowNonQueueable) {
     String serverName = ctx.getArgument(argName, String.class);
-    Optional<RegisteredServer> serverOptional = server.getServer(serverName);
+    Optional<VelocityRegisteredServer> serverOptional = server.getServer(serverName);
 
     if (serverOptional.isEmpty()) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
-          .arguments(Argument.string("server", serverName)));
+          .arguments(Component.text(serverName)));
       return null;
     }
 
-    VelocityRegisteredServer registeredServer = (VelocityRegisteredServer) serverOptional.get();
+    VelocityRegisteredServer registeredServer = serverOptional.get();
 
     if (!checkServerPermissions(registeredServer, ctx.getSource())) {
       ctx.getSource().sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
-          .arguments(Argument.string("server", serverName)));
+          .arguments(Component.text(serverName)));
       return null;
     }
 
-    if (!allowNonQueueable && !registeredServer.getQueueStatus().hasQueue()) {
+    if (!allowNonQueueable && registeredServer.getQueue().getState() == QueueState.INACTIVE) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.server-has-no-queue")
-          .arguments(Argument.string("server", serverName)));
+          .arguments(Component.text(serverName)));
       return null;
     }
 
@@ -398,7 +405,7 @@ public final class VelocityCommands {
    * @param source the command source to be checked
    * @return whether the command source has permission to join
    */
-  public static boolean checkServerPermissions(final RegisteredServer server, final CommandSource source) {
+  public static boolean checkServerPermissions(final VelocityRegisteredServer server, final CommandSource source) {
     String serverName = server.getServerInfo().getName();
     return source.getPermissionValue("velocity.command.server." + serverName) != Tristate.FALSE;
   }
@@ -425,25 +432,30 @@ public final class VelocityCommands {
   }
 
   /**
-   * Suggests the name of a connected proxy.
+   * Generates a suggestion provider to complete the name of a proxy.
    *
-   * @param server the proxy server instance
-   * @param context the context passed to the {@code suggests} callback
-   * @param builder the builder passed to the {@code builder} callback
+   * @param server the proxy server
+   * @param magicProxies "magic proxies" to add, if any. useful for including an "all" argument option.
    * @return a future that resolves to the suggestions
    */
-  public static CompletableFuture<Suggestions> suggestProxy(final VelocityServer server, final CommandContext<CommandSource> context,
-                                                            final SuggestionsBuilder builder) {
-    final String argument = context.getArguments().containsKey("proxy")
-        ? context.getArgument("proxy", String.class)
-        : "";
-    for (String proxyId : server.getMultiProxyHandler().getAllProxyIds()) {
-      if (proxyId.toLowerCase().regionMatches(true, 0, argument.toLowerCase(), 0, argument.length())) {
-        builder.suggest(proxyId);
-      }
-    }
+  public static SuggestionProvider<CommandSource> suggestProxy(final VelocityServer server, final String argName,
+                                                               final String... magicProxies) {
+    return (ctx, builder) -> {
+      final String argument = ctx.getArguments().containsKey(argName)
+          ? ctx.getArgument(argName, String.class)
+          : "";
 
-    return builder.buildFuture();
+      List<String> possibilities = new ArrayList<>(server.getRedis().getProxyService().getAllProxyIds());
+      possibilities.addAll(Arrays.asList(magicProxies));
+
+      for (String possibility : possibilities) {
+        if (possibility.toLowerCase().regionMatches(true, 0, argument.toLowerCase(), 0, argument.length())) {
+          builder.suggest(possibility);
+        }
+      }
+
+      return builder.buildFuture();
+    };
   }
 
   /**
@@ -460,17 +472,17 @@ public final class VelocityCommands {
     final String argument = ctx.getArguments().containsKey("player")
         ? ctx.getArgument("player", String.class)
         : "";
-    if (includeRemote && server.getMultiProxyHandler().isRedisEnabled()) {
-      for (RemotePlayerInfo info : server.getMultiProxyHandler().getAllPlayers()) {
-        if (info.getName().regionMatches(true, 0, argument, 0, argument.length())) {
-          builder.suggest(info.getName());
+    if (includeRemote && server.isRedisEnabled()) {
+      for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
+        if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
+          builder.suggest(playerEntry.getUsername());
         }
       }
 
       return builder.buildFuture();
     }
 
-    for (final Player player : server.getAllPlayers()) {
+    for (final ConnectedPlayer player : server.getAllPlayers()) {
       final String playerName = player.getUsername();
       if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
         builder.suggest(playerName);
@@ -486,9 +498,57 @@ public final class VelocityCommands {
    * @param proxy the proxy server instance
    * @return a list of all registered servers, sorted by name
    */
-  public static List<RegisteredServer> sortedServerList(final ProxyServer proxy) {
-    List<RegisteredServer> servers = new ArrayList<>(proxy.getAllServers());
-    servers.sort(Comparator.comparing(RegisteredServer::getServerInfo));
+  public static List<VelocityRegisteredServer> sortedServerList(final VelocityServer proxy) {
+    List<VelocityRegisteredServer> servers = new ArrayList<>(proxy.getAllServers());
+    servers.sort(Comparator.comparing(VelocityRegisteredServer::getServerInfo));
     return Collections.unmodifiableList(servers);
+  }
+
+  /**
+   * Sends or enqueues a player to a target server. Will throw if the player is already on the target server,
+   * the caller must check this first.
+   * Assumes `player` is connected to this proxy instance.
+   *
+   * @param proxyServer The VelocityServer instance
+   * @param player The player to send or enqueue to `target`
+   * @param target The target server to send or enqueue `player` to
+   */
+  public static void sendOrQueue(VelocityServer proxyServer, ConnectedPlayer player, VelocityRegisteredServer target) {
+    Objects.requireNonNull(proxyServer, "proxyServer");
+    Objects.requireNonNull(player, "player");
+    Objects.requireNonNull(target, "target");
+
+    VelocityServerConnection connection = player.getCurrentServer().orElse(null);
+    if (connection != null && connection.getServerInfo().getName().equalsIgnoreCase(target.getServerInfo().getName())) {
+      throw new IllegalArgumentException("Player is already on target server.");
+    }
+
+    if (proxyServer.getConfiguration().getQueue().getNoQueueServers().contains(target.getServerInfo().getName())
+            || !proxyServer.isQueueEnabled()
+            || player.hasPermission("velocity.queue.bypass")) {
+      player.createConnectionRequest(target).connectWithIndication();
+    } else {
+      proxyServer.getQueueManager().queue(player, target);
+    }
+  }
+
+  /**
+   * Deserializes a raw string into a {@link Component}, trying JSON first and falling back to
+   * MiniMessage. Strings that start with <code>{</code>, <code>[</code>, or <code>"</code>
+   * are attempted as JSON; everything else goes straight to MiniMessage.
+   *
+   * @param raw the raw string to deserialize
+   * @return the deserialized component
+   */
+  public static Component deserializeComponent(final @NonNull String raw) {
+    if (raw.startsWith("{") || raw.startsWith("[") || raw.startsWith("\"")) {
+      try {
+        return GsonComponentSerializer.gson().deserializeOrNull(raw);
+      } catch (JsonSyntaxException ignored) {
+        // fall through to MiniMessage
+      }
+    }
+
+    return MiniMessage.miniMessage().deserialize(raw);
   }
 }

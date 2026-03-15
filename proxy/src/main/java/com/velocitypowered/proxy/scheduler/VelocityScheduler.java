@@ -186,13 +186,13 @@ public class VelocityScheduler implements Scheduler {
       try {
         if (!service.awaitTermination(10, TimeUnit.SECONDS)) {
           service.shutdownNow();
-          Log.logger.warn("Executor for plugin {} did not shut down within 10 seconds. "
+          Log.LOGGER.warn("Executor for plugin {} did not shut down within 10 seconds. "
               + "Continuing with shutdown...", id);
           allShutdown = false;
         }
 
       } catch (final InterruptedException e) {
-        Log.logger.warn("Executor for plugin {} did not shut down within 10 seconds. "
+        Log.LOGGER.warn("Executor for plugin {} did not shut down within 10 seconds. "
             + "Continuing with shutdown...", id);
       }
     }
@@ -387,7 +387,7 @@ public class VelocityScheduler implements Scheduler {
             String friendlyPluginName = container.getDescription().getName()
                 .orElse(container.getDescription().getId());
             Object unit = consumer == null ? runnable : consumer;
-            Log.logger.error("Exception in task {} by plugin {}", unit, friendlyPluginName,
+            Log.LOGGER.error("Exception in task {} by plugin {}", unit, friendlyPluginName,
                 e);
           }
         } finally {
@@ -419,6 +419,6 @@ public class VelocityScheduler implements Scheduler {
     /**
      * The Log4j logger instance used for reporting task-related exceptions and shutdown warnings.
      */
-    private static final Logger logger = LogManager.getLogger(VelocityTask.class);
+    private static final Logger LOGGER = LogManager.getLogger(VelocityTask.class);
   }
 }

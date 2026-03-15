@@ -75,7 +75,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
   /**
    * The logger for reporting configuration session events and errors.
    */
-  private static final Logger logger = LogManager.getLogger(ConfigSessionHandler.class);
+  private static final Logger LOGGER = LogManager.getLogger(ConfigSessionHandler.class);
 
   /**
    * The Velocity server instance.
@@ -253,7 +253,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
           }
 
           if (modifiedPack) {
-            logger.warn("A plugin has tried to modify a ResourcePack provided by the backend server "
+            LOGGER.warn("A plugin has tried to modify a ResourcePack provided by the backend server "
                     + "with a ResourcePack already applied, the applying of the resource pack will be skipped.");
           }
         } else {
@@ -269,7 +269,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
         serverConn.getConnection().write(new ResourcePackResponsePacket(
                 packet.getId(), packet.getHash(), PlayerResourcePackStatusEvent.Status.DECLINED));
       }
-      logger.error("Exception while handling resource pack send for {}", playerConnection, ex);
+      LOGGER.error("Exception while handling resource pack send for {}", playerConnection, ex);
       return null;
     });
 
@@ -304,7 +304,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
         playerConnection.write(packet);
       }
     }, playerConnection.eventLoop()).exceptionally((ex) -> {
-      logger.error("Exception while handling resource pack remove for {}", playerConnection, ex);
+      LOGGER.error("Exception while handling resource pack remove for {}", playerConnection, ex);
       return null;
     });
 
@@ -412,7 +412,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
             }
             this.serverConn.getConnection().setAutoReading(true);
           }, serverConn.ensureConnected().eventLoop()).exceptionally((ex) -> {
-            logger.error("Exception while handling plugin message {}", packet, ex);
+            LOGGER.error("Exception while handling plugin message {}", packet, ex);
             return null;
           });
     }
@@ -443,7 +443,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
   public boolean handle(final TransferPacket packet) {
     final InetSocketAddress originalAddress = packet.address();
     if (originalAddress == null) {
-      logger.error("""
+      LOGGER.error("""
           Unexpected nullable address received in TransferPacket \
           from Backend Server in Configuration State""");
       return true;
@@ -524,14 +524,18 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   /**
-   * Called when the backend server connection is closed during configuration.
+   * Called when the backend server connection is closed unexpectedly during configuration.
    *
-   * <p>This shuts down the player's connection.</p>
+   * <p>Completes the result future with a {@link com.velocitypowered.api.proxy.ConnectionRequestBuilder.Status#SERVER_DISCONNECTED}
+   * result so the connection attempt fails cleanly without throwing an exception. This leaves the
+   * player tracked by the proxy and allows fallback handling (e.g. try-next) to proceed normally.
+   * If the future is already complete (e.g. a {@link DisconnectPacket} was already handled),
+   * this call is a no-op.</p>
    */
   @Override
   public void disconnected() {
-    final ConnectedPlayer player = serverConn.getPlayer();
-    player.teardown();
+    resultFuture.complete(ConnectionRequestResults.forDisconnect(
+        ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR, serverConn.getServer()));
   }
 
   /**
@@ -545,7 +549,7 @@ public class ConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   private void switchFailure(final Throwable cause) {
-    logger.error("Unable to switch to new server {} for {}", serverConn.getServerInfo().getName(),
+    LOGGER.error("Unable to switch to new server {} for {}", serverConn.getServerInfo().getName(),
         serverConn.getPlayer().getUsername(), cause);
     serverConn.getPlayer().disconnect(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
     resultFuture.completeExceptionally(cause);

@@ -54,13 +54,16 @@ import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles authenticating the player to Mojang's servers.
@@ -70,12 +73,12 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   /**
    * Logger instance for logging authentication-related events during the initial login session.
    */
-  private static final Logger logger = LogManager.getLogger(InitialLoginSessionHandler.class);
+  private static final Logger LOGGER = LogManager.getLogger(InitialLoginSessionHandler.class);
 
   /**
    * Shared {@link ThreadLocalRandom} instance for generating secure values like verify tokens.
    */
-  private static final ThreadLocalRandom random = ThreadLocalRandom.current();
+  private static final ThreadLocalRandom RANDOM = ThreadLocalRandom.current();
 
   /**
    * The URL used to verify that a player has joined using Mojang's session server.
@@ -123,7 +126,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   /**
    * Caffeine-backed profile result cache used to avoid excessive Mojang API calls.
    */
-  private final Cache<String, GameProfile> profileResultCache;
+  private final Cache<@NotNull UUID, GameProfile> profileResultCache;
 
   InitialLoginSessionHandler(final VelocityServer server, final MinecraftConnection mcConnection,
                              final LoginInboundConnection inbound) {
@@ -230,7 +233,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
         });
       });
     }, mcConnection.eventLoop()).exceptionally((ex) -> {
-      logger.error("Exception in pre-login stage", ex);
+      LOGGER.error("Exception in pre-login stage", ex);
       return null;
     });
 
@@ -294,10 +297,10 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       byte[] decryptedSharedSecret = decryptRsa(serverKeyPair, packet.getSharedSecret());
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
-      String username = login.getUsername();
+      UUID holderUuid = Objects.requireNonNull(login.getHolderUuid(), "holderUuid");
       GameProfile cachedProfile = null;
       if (profileResultCache != null) {
-        cachedProfile = profileResultCache.getIfPresent(username);
+        cachedProfile = profileResultCache.getIfPresent(holderUuid);
       }
 
       if (cachedProfile != null) {
@@ -308,7 +311,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       }
 
       String playerIp = ((InetSocketAddress) mcConnection.getRemoteAddress()).getHostString();
-      String url = String.format(MOJANG_HASJOINED_URL, urlFormParameterEscaper().escape(username), serverId);
+      String url = String.format(MOJANG_HASJOINED_URL, urlFormParameterEscaper().escape(login.getUsername()), serverId);
 
       if (server.getConfiguration().shouldPreventClientProxyConnections()) {
         url += "&ip=" + urlFormParameterEscaper().escape(playerIp);
@@ -329,7 +332,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             }
 
             if (throwable != null) {
-              logger.error("Unable to authenticate player", throwable);
+              LOGGER.error("Unable to authenticate player", throwable);
               inbound.disconnect(Component.translatable("multiplayer.disconnect.authservers_down"));
               return;
             }
@@ -339,7 +342,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             try {
               mcConnection.enableEncryption(decryptedSharedSecret);
             } catch (GeneralSecurityException e) {
-              logger.error("Unable to enable encryption for connection", e);
+              LOGGER.error("Unable to enable encryption for connection", e);
               // At this point, the connection is encrypted, but something's wrong on our side, and
               // we can't do anything about it.
               mcConnection.close(true);
@@ -349,7 +352,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             if (response.statusCode() == 200) {
               final GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
               if (profileResultCache != null) {
-                profileResultCache.put(username, profile);
+                profileResultCache.put(holderUuid, profile);
               }
 
               // Not so fast, now we verify the public key for 1.19.1+
@@ -369,7 +372,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                   Component.translatable("velocity.error.online-mode-only", NamedTextColor.RED));
             } else {
               // Something else went wrong
-              logger.error(
+              LOGGER.error(
                   "Got an unexpected error code {} whilst contacting Mojang to log in {} ({})",
                   response.statusCode(), login.getUsername(), playerIp);
               inbound.disconnect(Component.translatable("multiplayer.disconnect.authservers_down"));
@@ -381,11 +384,11 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             } catch (Exception e) {
               // In Java 21, the HttpClient does not throw any Exception
               // when trying to clean its resources, so this should not happen
-              logger.error("An unknown error occurred while trying to close an HttpClient", e);
+              LOGGER.error("An unknown error occurred while trying to close an HttpClient", e);
             }
           });
     } catch (GeneralSecurityException e) {
-      logger.error("Unable to enable encryption", e);
+      LOGGER.error("Unable to enable encryption", e);
       mcConnection.close(true);
     }
 
@@ -394,7 +397,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
   private EncryptionRequestPacket generateEncryptionRequest() {
     byte[] verify = new byte[4];
-    random.nextBytes(verify);
+    RANDOM.nextBytes(verify);
 
     EncryptionRequestPacket request = new EncryptionRequestPacket();
     request.setPublicKey(server.getServerKeyPair().getPublic().getEncoded());
@@ -428,7 +431,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   private void assertState(final LoginState expectedState) {
     if (this.currentState != expectedState) {
       if (MinecraftDecoder.DEBUG) {
-        logger.error("{} Received an unexpected packet requiring state {}, but we are in {}",
+        LOGGER.error("{} Received an unexpected packet requiring state {}, but we are in {}",
             inbound,
             expectedState, this.currentState);
       }

@@ -6,7 +6,7 @@ on:
   push:
     branches:
       - libdeflate
-      - xcd-merge
+      - dev
 
 jobs:
   build:

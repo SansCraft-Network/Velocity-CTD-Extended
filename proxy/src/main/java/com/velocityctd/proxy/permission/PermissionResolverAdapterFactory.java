@@ -114,7 +114,7 @@ public final class PermissionResolverAdapterFactory {
   }
 
   private static Optional<PermissionResolverProvider> tryLoadProvider(String resourceName) {
-    Path jarPath = extractEmbeddedJarToTempUrl(resourceName);
+    Path jarPath = extractEmbeddedJarToTempFile(resourceName);
     if (jarPath == null) {
       return Optional.empty();
     }
@@ -156,7 +156,7 @@ public final class PermissionResolverAdapterFactory {
     return Optional.of(provider);
   }
 
-  private static Path extractEmbeddedJarToTempUrl(String resourcePath) {
+  private static Path extractEmbeddedJarToTempFile(String resourcePath) {
     ClassLoader cl = PermissionResolverAdapterFactory.class.getClassLoader();
     if (cl == null) {
       cl = ClassLoader.getSystemClassLoader();

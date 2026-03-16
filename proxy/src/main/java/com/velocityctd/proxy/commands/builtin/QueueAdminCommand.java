@@ -17,9 +17,9 @@
 
 package com.velocityctd.proxy.commands.builtin;
 
+import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static com.velocityctd.api.queue.QueueState.PAUSED;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -182,7 +182,7 @@ public class QueueAdminCommand implements BuiltinCommand {
                                               .collect(Collectors.joining("|"));
                                       String commandText = "/queueadmin <%s>".formatted(availableCommands);
                                       source.sendMessage(Component.text(commandText, NamedTextColor.RED));
-                                      return Command.SINGLE_SUCCESS;
+                                      return SINGLE_SUCCESS;
                                     })
                                     .requires(commands.stream()
                                             .map(CommandNode::getRequirement)
@@ -206,7 +206,7 @@ public class QueueAdminCommand implements BuiltinCommand {
       source.sendMessage(createListComponent(queue));
     }
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private Component createListComponent(VelocityQueue queue) {
@@ -234,13 +234,13 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (serverName.equalsIgnoreCase("current")) {
       if (!(ctx.getSource() instanceof ConnectedPlayer p)) {
         ctx.getSource().sendMessage(Component.translatable("velocity.command.players-only"));
-        return -1;
+        return SINGLE_SUCCESS;
       }
 
       VelocityServerConnection connection = p.getCurrentServer().orElse(null);
       if (connection == null) {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.current-not-connected"));
-        return -1;
+        return SINGLE_SUCCESS;
       }
 
       server = this.server.getServer(connection.getServerInfo().getName()).orElse(null);
@@ -288,11 +288,11 @@ public class QueueAdminCommand implements BuiltinCommand {
                   ctx.getSource().sendMessage(builder.build());
                 });
       }
-      return Command.SINGLE_SUCCESS;
+      return SINGLE_SUCCESS;
     } else if (server == null) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
               .arguments(Component.text(serverName)));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     List<Component> players = new ArrayList<>();
@@ -308,7 +308,7 @@ public class QueueAdminCommand implements BuiltinCommand {
 
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.disabled-queue")
               .arguments(Component.text(newName)));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     for (VelocityQueueEntry queueEntry : server.getQueue().getEntries()) {
@@ -333,13 +333,13 @@ public class QueueAdminCommand implements BuiltinCommand {
               }
             });
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int pause(CommandContext<CommandSource> ctx) {
     VelocityRegisteredServer server = VelocityCommands.getServer(this.server, ctx, "server", false);
     if (server == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     VelocityQueue queue = server.getQueue();
@@ -347,7 +347,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (queue.getState() == QueueState.PAUSED) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-paused")
               .arguments(Component.text(serverName)));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     queue.setState(QueueState.PAUSED);
@@ -360,20 +360,20 @@ public class QueueAdminCommand implements BuiltinCommand {
             .arguments(Component.text(serverName))
     );
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int unpause(CommandContext<CommandSource> ctx) {
     VelocityRegisteredServer server = VelocityCommands.getServer(this.server, ctx, "server", false);
     if (server == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     VelocityQueue queue = server.getQueue();
     if (queue.getState() != QueueState.PAUSED) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-paused")
               .arguments(Component.text(server.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     queue.setState(QueueState.ACTIVE);
@@ -385,7 +385,7 @@ public class QueueAdminCommand implements BuiltinCommand {
         q -> Component.translatable("velocity.queue.command.unpaused")
             .arguments(Component.text(server.getServerInfo().getName()))
     );
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int add(CommandContext<CommandSource> ctx) {
@@ -397,14 +397,14 @@ public class QueueAdminCommand implements BuiltinCommand {
     String playerName = ctx.getArgument("player", String.class);
 
     if (server == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     ConnectedPlayer player = this.server.getPlayer(playerName).orElse(null);
     if (player == null) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
               .arguments(Argument.string("player", playerName)));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
@@ -414,7 +414,7 @@ public class QueueAdminCommand implements BuiltinCommand {
                   .arguments(
                           Argument.string("player", player.getUsername()),
                           Argument.string("server", queue.getName())));
-          return -1;
+          return SINGLE_SUCCESS;
         }
       }
     }
@@ -423,7 +423,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (conn != null && conn.getServerInfo().getName().equalsIgnoreCase(server.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-connected")
               .arguments(Argument.string("player", player.getUsername())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     if (server.getQueue().contains(player.getUniqueId())) {
@@ -431,7 +431,7 @@ public class QueueAdminCommand implements BuiltinCommand {
               .arguments(
                       Argument.string("player", player.getUsername()),
                       Argument.string("server", server.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     if (!player.checkVersionCompatibility(server)) {
@@ -439,7 +439,7 @@ public class QueueAdminCommand implements BuiltinCommand {
               .arguments(
                       Argument.string("player", player.getUsername()),
                       Argument.string("server", server.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     server.getQueue().enqueue(player);
@@ -449,7 +449,7 @@ public class QueueAdminCommand implements BuiltinCommand {
                     Argument.string("player", player.getUsername()),
                     Argument.string("server", server.getServerInfo().getName())));
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int addRedis(CommandContext<CommandSource> ctx) {
@@ -457,14 +457,14 @@ public class QueueAdminCommand implements BuiltinCommand {
     String playerName = ctx.getArgument("player", String.class);
 
     if (server == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(playerName);
     if (playerEntry == null) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
               .arguments(Argument.string("player", playerName)));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     if (!this.server.getConfiguration().getQueue().isAllowMultiQueue()) {
@@ -474,7 +474,7 @@ public class QueueAdminCommand implements BuiltinCommand {
                   .arguments(
                           Argument.string("player", playerEntry.getUsername()),
                           Argument.string("server", queue.getName())));
-          return -1;
+          return SINGLE_SUCCESS;
         }
       }
     }
@@ -483,7 +483,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (conn != null && conn.equalsIgnoreCase(server.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.already-connected")
               .arguments(Argument.string("player", playerEntry.getUsername())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     if (server.getQueue().contains(playerEntry.getUniqueId())) {
@@ -491,7 +491,7 @@ public class QueueAdminCommand implements BuiltinCommand {
               .arguments(
                       Argument.string("player", playerEntry.getUsername()),
                       Argument.string("server", server.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     server.getQueue().enqueue(new QueueEntryData(
@@ -506,7 +506,7 @@ public class QueueAdminCommand implements BuiltinCommand {
                     Argument.string("player", playerEntry.getUsername()),
                     Argument.string("server", server.getServerInfo().getName())));
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int addAll(CommandContext<CommandSource> ctx) {
@@ -516,17 +516,17 @@ public class QueueAdminCommand implements BuiltinCommand {
 
     VelocityRegisteredServer from = VelocityCommands.getServer(this.server, ctx, "from", true);
     if (from == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     VelocityRegisteredServer to = VelocityCommands.getServer(this.server, ctx, "to", false);
     if (to == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     if (to.getServerInfo().getName().equalsIgnoreCase(from.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.same-server-queue"));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     List<ConnectedPlayer> connected = new ArrayList<>();
@@ -551,7 +551,7 @@ public class QueueAdminCommand implements BuiltinCommand {
               .arguments(
                       Argument.string("from", from.getServerInfo().getName()),
                       Argument.string("to", to.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
     for (ConnectedPlayer player : connected) {
       to.getQueue().enqueue(player);
@@ -562,23 +562,23 @@ public class QueueAdminCommand implements BuiltinCommand {
                     Argument.numeric("count", connected.size()),
                     Argument.string("server", to.getServerInfo().getName())));
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int addAllRedis(CommandContext<CommandSource> ctx) {
     VelocityRegisteredServer from = VelocityCommands.getServer(this.server, ctx, "from", true);
     if (from == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     VelocityRegisteredServer to = VelocityCommands.getServer(this.server, ctx, "to", false);
     if (to == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     if (to.getServerInfo().getName().equalsIgnoreCase(from.getServerInfo().getName())) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.same-server-queue"));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     List<PlayerEntry> connected = new ArrayList<>();
@@ -603,7 +603,7 @@ public class QueueAdminCommand implements BuiltinCommand {
               .arguments(
                       Argument.string("from", from.getServerInfo().getName()),
                       Argument.string("to", to.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
     for (PlayerEntry playerEntry : connected) {
       to.getQueue().enqueue(new QueueEntryData(
@@ -619,7 +619,7 @@ public class QueueAdminCommand implements BuiltinCommand {
                     Argument.numeric("count", connected.size()),
                     Argument.string("server", to.getServerInfo().getName())));
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int remove(CommandContext<CommandSource> ctx) {
@@ -632,14 +632,14 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (this.server.getPlayer(playerName).isEmpty()) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
               .arguments(Argument.string("player", playerName)));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     List<VelocityRegisteredServer> servers;
     if (ctx.getArguments().containsKey("server")) {
       VelocityRegisteredServer registeredServer = VelocityCommands.getServer(server, ctx, "server", false);
       if (registeredServer == null) {
-        return -1;
+        return SINGLE_SUCCESS;
       }
       servers = List.of(registeredServer);
     } else {
@@ -648,7 +648,7 @@ public class QueueAdminCommand implements BuiltinCommand {
 
     ConnectedPlayer player = this.server.getPlayer(playerName).orElse(null);
     if (player == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     boolean handledSpecific = false;
@@ -676,7 +676,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (!handledSpecific && amountDone == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-in-queue.other")
               .arguments(Argument.string("player", player.getUsername())));
-      return Command.SINGLE_SUCCESS;
+      return SINGLE_SUCCESS;
     }
 
     if (servers.size() > 1) {
@@ -684,7 +684,7 @@ public class QueueAdminCommand implements BuiltinCommand {
               .arguments(Argument.string("player", player.getUsername())));
     }
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int removeRedis(CommandContext<CommandSource> ctx) {
@@ -693,14 +693,14 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (!this.server.getRedis().getPlayerService().isPlayerOnline(playerName)) {
       ctx.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
               .arguments(Argument.string("player", playerName)));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     List<VelocityRegisteredServer> servers;
     if (ctx.getArguments().containsKey("server")) {
       VelocityRegisteredServer registeredServer = VelocityCommands.getServer(server, ctx, "server", false);
       if (registeredServer == null) {
-        return -1;
+        return SINGLE_SUCCESS;
       }
 
       servers = List.of(registeredServer);
@@ -710,7 +710,7 @@ public class QueueAdminCommand implements BuiltinCommand {
 
     PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(playerName);
     if (playerEntry == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     boolean handledSpecific = false;
@@ -738,7 +738,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (!handledSpecific && amountDone == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.not-in-queue.other")
               .arguments(Argument.string("player", playerEntry.getUsername())));
-      return Command.SINGLE_SUCCESS;
+      return SINGLE_SUCCESS;
     }
 
     if (servers.size() > 1) {
@@ -746,7 +746,7 @@ public class QueueAdminCommand implements BuiltinCommand {
               .arguments(Argument.string("player", playerEntry.getUsername())));
     }
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int removeAll(CommandContext<CommandSource> ctx) {
@@ -756,7 +756,7 @@ public class QueueAdminCommand implements BuiltinCommand {
 
     VelocityRegisteredServer server = VelocityCommands.getServer(this.server, ctx, "server", true);
     if (server == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     int amount = 0;
@@ -771,20 +771,20 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (amount == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.removeall-no-players-queued")
               .arguments(Component.text(server.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.removedall-player" + (amount == 1 ? "" : "s"))
             .arguments(
                     Argument.numeric("count", amount),
                     Argument.string("server", server.getServerInfo().getName())));
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private int removeAllRedis(CommandContext<CommandSource> ctx) {
     VelocityRegisteredServer server = VelocityCommands.getServer(this.server, ctx, "server", true);
     if (server == null) {
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     int amount = 0;
@@ -799,7 +799,7 @@ public class QueueAdminCommand implements BuiltinCommand {
     if (amount == 0) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.removeall-no-players-queued")
               .arguments(Component.text(server.getServerInfo().getName())));
-      return -1;
+      return SINGLE_SUCCESS;
     }
 
     ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.removedall-player" + (amount == 1 ? "" : "s"))
@@ -807,7 +807,7 @@ public class QueueAdminCommand implements BuiltinCommand {
                     Argument.numeric("count", amount),
                     Argument.string("server", server.getServerInfo().getName())));
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
 }

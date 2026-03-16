@@ -64,7 +64,7 @@ public class LeaveQueueCommand implements BuiltinCommand {
   @Override
   public BrigadierCommand build() {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand.literalArgumentBuilder(label())
-            .requires(source -> source.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)
+            .requires(src -> src instanceof ConnectedPlayer && src.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)
             .then(BrigadierCommand
                     .requiredArgumentBuilder("server", StringArgumentType.word())
                     .suggests(VelocityCommands.suggestServer(server, "server", false, true))

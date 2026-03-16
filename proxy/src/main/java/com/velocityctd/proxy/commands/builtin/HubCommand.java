@@ -57,7 +57,7 @@ public class HubCommand implements BuiltinCommand {
   public BrigadierCommand build() {
     return new BrigadierCommand(BrigadierCommand
             .literalArgumentBuilder(label())
-            .requires(source -> source.getPermissionValue("velocity.command.hub") == Tristate.TRUE)
+            .requires(src -> src instanceof ConnectedPlayer && src.getPermissionValue("velocity.command.hub") == Tristate.TRUE)
             .executes(this::hub)
             .build()
     );

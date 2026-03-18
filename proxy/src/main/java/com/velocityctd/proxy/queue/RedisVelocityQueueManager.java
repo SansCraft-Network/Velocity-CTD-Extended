@@ -140,6 +140,8 @@ public final class RedisVelocityQueueManager extends VelocityQueueManager {
    */
   private void loadFromRedis() {
     final VelocityQueueDepotService service = server.getRedis().getQueueService();
+
+    queues.clear();
     for (VelocityQueueDepotEntry entry : service.getAll()) {
       final VelocityRegisteredServer rs = server.getServer(entry.getUniqueId()).orElse(null);
       if (rs != null) {

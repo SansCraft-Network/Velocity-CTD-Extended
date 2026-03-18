@@ -60,7 +60,7 @@ public class SlashServerCommand implements BuiltinCommand {
   public BrigadierCommand build() {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
             .literalArgumentBuilder(label())
-            .requires(src -> VelocityCommands.checkServerPermissions(registeredServer, src))
+            .requires(src -> src instanceof ConnectedPlayer && VelocityCommands.checkServerPermissions(registeredServer, src))
             .executes(this::send);
 
     return new BrigadierCommand(rootNode);

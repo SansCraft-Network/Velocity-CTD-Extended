@@ -25,12 +25,15 @@ import com.velocitypowered.api.permission.PermissionSubject;
 import com.velocitypowered.proxy.plugin.PluginClassLoader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -49,11 +52,14 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public final class PermissionResolverAdapterFactory {
 
-  private static final String INTEGRATION_JAR_RESOURCE =
-      "META-INF/velocityctd/integrations/velocity-luckperms-integration.jar";
+  private static final Logger LOGGER = LogManager.getLogger(PermissionResolverAdapterFactory.class);
+
+  private static final String[] INTEGRATION_RESOURCES = new String[] {
+      "META-INF/velocityctd/integrations/velocity-luckperms-integration.jar"
+  };
 
   private static volatile boolean hasLoadedProvider = false;
-  private static volatile @Nullable PermissionResolverProvider cachedProvider = null;
+  private static volatile @Nullable PermissionResolverProvider loadedProvider = null;
 
   private PermissionResolverAdapterFactory() {
   }
@@ -73,82 +79,84 @@ public final class PermissionResolverAdapterFactory {
       PermissionSubject permissionSubject,
       PermissionFunction delegate
   ) {
-    return getCachedProvider()
+    return getLoadedProvider()
         .map(provider -> provider.createResolver(permissionSubject, delegate))
         .orElseGet(() -> new PermissionResolverFunctionAdapter(delegate));
   }
 
-  /**
-   * Returns the cached {@link PermissionResolverProvider}, loading it once if necessary.
-   *
-   * <p>This method is thread-safe and caches both success and failure:
-   * once the initial lookup completes, subsequent calls will not repeat extraction, class loading,
-   * or {@link ServiceLoader} scanning. If no provider is available, {@link Optional#empty()} is returned.
-   *
-   * @return an {@link Optional} containing the cached provider if available; otherwise empty
-   */
-  private static Optional<PermissionResolverProvider> getCachedProvider() {
+  private static Optional<PermissionResolverProvider> getLoadedProvider() {
     if (hasLoadedProvider) {
-      return Optional.ofNullable(cachedProvider);
+      return Optional.ofNullable(loadedProvider);
     }
 
     synchronized (PermissionResolverAdapterFactory.class) {
       // Check again in lock
       if (hasLoadedProvider) {
-        return Optional.ofNullable(cachedProvider);
+        return Optional.ofNullable(loadedProvider);
       }
 
-      cachedProvider = loadProviderOnce().orElse(null);
+      loadedProvider = loadProviderOnce().orElse(null);
       hasLoadedProvider = true;
 
-      return Optional.ofNullable(cachedProvider);
+      return Optional.ofNullable(loadedProvider);
     }
   }
 
-  /**
-   * Attempts to load an {@link PermissionResolverProvider} from the embedded integration jar.
-   *
-   * <p>This method:
-   * <ol>
-   *   <li>Extracts the embedded jar resource to a temporary file,</li>
-   *   <li>Creates a {@link PluginClassLoader} for that jar,</li>
-   *   <li>Uses {@link ServiceLoader} to locate provider implementations,</li>
-   *   <li>Returns the first provider that reports {@link PermissionResolverProvider#isAvailable()}.</li>
-   * </ol>
-   *
-   * <p>The provider implementation is expected to be registered using Java's SPI mechanism
-   * (i.e., {@code META-INF/services/...}) inside the embedded jar.
-   *
-   * @return an {@link Optional} containing a usable provider, or empty if none can be loaded
-   */
   private static Optional<PermissionResolverProvider> loadProviderOnce() {
-    URL jarUrl = extractEmbeddedJarToTempUrl(INTEGRATION_JAR_RESOURCE);
-    if (jarUrl == null) {
+    for (String integrationResource : INTEGRATION_RESOURCES) {
+      Optional<PermissionResolverProvider> provider = tryLoadProvider(integrationResource);
+      if (provider.isPresent()) {
+        return provider;
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  private static Optional<PermissionResolverProvider> tryLoadProvider(String resourceName) {
+    Path jarPath = extractEmbeddedJarToTempFile(resourceName);
+    if (jarPath == null) {
       return Optional.empty();
     }
 
-    ClassLoader integrationLoader = new PluginClassLoader(new URL[] {jarUrl});
+    URL jarUrl;
+    try {
+      jarUrl = jarPath.toUri().toURL();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
 
-    return ServiceLoader.load(PermissionResolverProvider.class, integrationLoader)
+    PluginClassLoader integrationLoader = new PluginClassLoader(new URL[] {jarUrl});
+    PermissionResolverProvider provider = ServiceLoader.load(PermissionResolverProvider.class, integrationLoader)
         .stream()
         .map(ServiceLoader.Provider::get)
         .filter(PermissionResolverProvider::isAvailable)
-        .findFirst();
+        .findFirst()
+        .orElse(null);
+
+    if (provider == null) {
+      // The jar didn't provide a valid provider, or the provider isn't available. Close the class loader and delete the file.
+      try {
+        integrationLoader.close();
+      } catch (IOException e) {
+        LOGGER.error("Could not close class loader for {}. Resource will be kept "
+            + "open until proxy shutdown.", jarPath.getFileName(), e);
+        return Optional.empty();
+      }
+
+      try {
+        Files.delete(jarPath);
+      } catch (IOException e) {
+        LOGGER.error("Could not delete temporary file {}.", jarPath.getFileName(), e);
+      }
+
+      return Optional.empty();
+    }
+
+    return Optional.of(provider);
   }
 
-  /**
-   * Extracts an embedded jar resource from the proxy jar to a temporary file and returns its {@link URL}.
-   *
-   * <p>The extracted file is marked for deletion on JVM exit via {@link java.io.File#deleteOnExit()}.
-   * If the resource cannot be found or cannot be written to the temp directory, this method returns {@code null}.
-   *
-   * <p>The returned URL is suitable for constructing a class loader (e.g., {@link PluginClassLoader})
-   * that can load classes and resources from the extracted jar.
-   *
-   * @param resourcePath the classpath resource path to the embedded jar within the proxy jar
-   * @return a {@link URL} to the extracted temporary jar file, or {@code null} if extraction fails
-   */
-  private static URL extractEmbeddedJarToTempUrl(String resourcePath) {
+  private static Path extractEmbeddedJarToTempFile(String resourcePath) {
     ClassLoader cl = PermissionResolverAdapterFactory.class.getClassLoader();
     if (cl == null) {
       cl = ClassLoader.getSystemClassLoader();
@@ -163,7 +171,7 @@ public final class PermissionResolverAdapterFactory {
       tmp.toFile().deleteOnExit();
 
       Files.copy(in, tmp, StandardCopyOption.REPLACE_EXISTING);
-      return tmp.toUri().toURL();
+      return tmp;
     } catch (IOException e) {
       return null;
     }

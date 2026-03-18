@@ -57,7 +57,7 @@ public class HubCommand implements BuiltinCommand {
   public BrigadierCommand build() {
     return new BrigadierCommand(BrigadierCommand
             .literalArgumentBuilder(label())
-            .requires(source -> source.getPermissionValue("velocity.command.hub") == Tristate.TRUE)
+            .requires(src -> src instanceof ConnectedPlayer && src.getPermissionValue("velocity.command.hub") == Tristate.TRUE)
             .executes(this::hub)
             .build()
     );
@@ -82,10 +82,7 @@ public class HubCommand implements BuiltinCommand {
       return 0;
     }
 
-    ConnectedPlayer connectedPlayer = currentServer.getPlayer(player.getUniqueId());
-    requireNonNull(connectedPlayer);
-
-    VelocityRegisteredServer nextServer = connectedPlayer.currentServerRetrySession().getNextServerToTry().orElse(null);
+    VelocityRegisteredServer nextServer = player.currentServerRetrySession().getNextServerToTry().orElse(null);
     if (nextServer == null) {
       player.sendMessage(Component.translatable("velocity.command.no-fallbacks"));
       return 0;

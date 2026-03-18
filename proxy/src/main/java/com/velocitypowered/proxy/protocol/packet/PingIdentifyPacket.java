@@ -77,6 +77,16 @@ public class PingIdentifyPacket implements MinecraftPacket {
     buf.writeInt(id);
   }
 
+  @Override
+  public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return Integer.BYTES;
+  }
+
+  @Override
+  public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
+    return Integer.BYTES;
+  }
+
   /**
    * Handles this ping identify packet using the specified {@link MinecraftSessionHandler}.
    *

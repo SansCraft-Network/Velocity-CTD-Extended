@@ -56,6 +56,11 @@ public final class CodeOfConductAcceptPacket implements MinecraftPacket {
   public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
   }
 
+  @Override
+  public int decodeExpectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
+    return 0;
+  }
+
   /**
    * Dispatches this packet to the provided session handler.
    *

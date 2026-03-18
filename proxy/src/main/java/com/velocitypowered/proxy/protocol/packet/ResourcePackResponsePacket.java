@@ -147,6 +147,26 @@ public class ResourcePackResponsePacket implements MinecraftPacket {
     ProtocolUtils.writeVarInt(buf, status.ordinal());
   }
 
+  @Override
+  public int decodeExpectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
+      return Long.BYTES * 2 + 1;
+    } else if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_9_4)) {
+      return ProtocolUtils.DEFAULT_MAX_STRING_BYTES + 1;
+    }
+    return 1;
+  }
+
+  @Override
+  public int decodeExpectedMinLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
+      return Long.BYTES * 2 + 1;
+    } else if (version.noGreaterThan(ProtocolVersion.MINECRAFT_1_9_4)) {
+      return 1 + 0 + 1;
+    }
+    return 1;
+  }
+
   /**
    * Handles this resource pack response packet using the specified {@link MinecraftSessionHandler}.
    *

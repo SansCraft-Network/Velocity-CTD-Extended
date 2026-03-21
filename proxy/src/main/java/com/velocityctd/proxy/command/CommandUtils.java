@@ -57,26 +57,6 @@ public class CommandUtils {
   }
 
   /**
-   * Gets a player from a command argument named {@code player}.
-   *
-   * @param server the proxy server
-   * @param ctx the command context
-   * @return the found player, or {@code null} if the player couldn't be found
-   */
-  public static ConnectedPlayer getPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx) {
-    String playerName = ctx.getArgument("player", String.class);
-    Optional<ConnectedPlayer> playerOptional = server.getPlayer(playerName);
-
-    if (playerOptional.isEmpty()) {
-      ctx.getSource().sendMessage(CommandMessages.PLAYER_NOT_FOUND
-          .arguments(Argument.string("player", playerName)));
-      return null;
-    }
-
-    return playerOptional.get();
-  }
-
-  /**
    * Generates a suggestion provider to complete the name of a server.
    *
    * @param server the proxy server

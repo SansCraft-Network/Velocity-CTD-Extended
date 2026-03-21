@@ -31,6 +31,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -93,7 +94,7 @@ public class GkickCommand implements BuiltinCommand {
 
     if (player == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.gkick.no-server")
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", playerName))
       );
       return 0;
     }
@@ -114,7 +115,7 @@ public class GkickCommand implements BuiltinCommand {
 
     if (!redis.getPlayerService().isPlayerOnline(playerName)) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.gkick.no-server")
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", playerName))
       );
       return 0;
     }
@@ -122,7 +123,7 @@ public class GkickCommand implements BuiltinCommand {
     final PlayerEntry entry = redis.getPlayerService().getPlayerEntry(playerName);
     if (entry == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.gkick.no-server")
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", playerName))
       );
       return 0;
     }

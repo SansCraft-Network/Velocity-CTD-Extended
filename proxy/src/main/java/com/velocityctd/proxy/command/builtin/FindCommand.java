@@ -58,14 +58,13 @@ public class FindCommand implements BuiltinCommand {
   @Override
   public BrigadierCommand build() {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
-            .literalArgumentBuilder(label())
-            .requires(source ->
-                    source.getPermissionValue("velocity.command.find") == Tristate.TRUE)
-            .executes(ctx -> CommandUtils.emitUsage(ctx, label()));
+        .literalArgumentBuilder(label())
+        .requires(source -> source.getPermissionValue("velocity.command.find") == Tristate.TRUE)
+        .executes(ctx -> CommandUtils.emitUsage(ctx, label()));
     RequiredArgumentBuilder<CommandSource, String> playerNode = BrigadierCommand
-            .requiredArgumentBuilder("player", StringArgumentType.word())
-            .suggests((ctx, builder) -> CommandUtils.suggestPlayer(server, ctx, builder, true))
-            .executes(this::find);
+        .requiredArgumentBuilder("player", StringArgumentType.word())
+        .suggests((ctx, builder) -> CommandUtils.suggestPlayer(server, ctx, builder, true))
+        .executes(this::find);
 
     rootNode.then(playerNode);
     return new BrigadierCommand(rootNode);
@@ -80,7 +79,7 @@ public class FindCommand implements BuiltinCommand {
     Optional<ConnectedPlayer> maybePlayer = server.getPlayer(player);
     if (maybePlayer.isEmpty()) {
       context.getSource().sendMessage(
-              CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
@@ -91,7 +90,7 @@ public class FindCommand implements BuiltinCommand {
     VelocityServerConnection connection = p.getCurrentServer().orElse(null);
     if (connection == null) {
       context.getSource().sendMessage(
-              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
@@ -100,17 +99,17 @@ public class FindCommand implements BuiltinCommand {
     VelocityRegisteredServer server = connection.getServer();
     if (server == null) {
       context.getSource().sendMessage(
-              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
     }
 
     context.getSource().sendMessage(
-            Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
-                    .arguments(
-                            Argument.string("player", p.getUsername()),
-                            Argument.string("server", server.getServerInfo().getName())));
+        Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
+            .arguments(
+                Argument.string("player", p.getUsername()),
+                Argument.string("server", server.getServerInfo().getName())));
 
     return Command.SINGLE_SUCCESS;
   }
@@ -120,7 +119,7 @@ public class FindCommand implements BuiltinCommand {
     String player = context.getArgument("player", String.class);
     if (!redis.getPlayerService().isPlayerOnline(player)) {
       context.getSource().sendMessage(
-              CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
@@ -130,7 +129,7 @@ public class FindCommand implements BuiltinCommand {
 
     if (playerEntry == null || playerEntry.getServerName() == null) {
       context.getSource().sendMessage(
-              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
@@ -139,17 +138,17 @@ public class FindCommand implements BuiltinCommand {
     VelocityRegisteredServer server = this.server.getServer(playerEntry.getServerName()).orElse(null);
     if (server == null) {
       context.getSource().sendMessage(
-              Component.translatable("velocity.command.find.no-server", NamedTextColor.YELLOW)
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", player))
       );
 
       return 0;
     }
 
     context.getSource().sendMessage(
-            Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
-                    .arguments(
-                            Argument.string("player", playerEntry.getUsername()),
-                            Argument.string("server", server.getServerInfo().getName() + " (" + playerEntry.getProxyId() + ")")));
+        Component.translatable("velocity.command.find.message", NamedTextColor.YELLOW)
+            .arguments(
+                Argument.string("player", playerEntry.getUsername()),
+                Argument.string("server", server.getServerInfo().getName() + " (" + playerEntry.getProxyId() + ")")));
 
     return Command.SINGLE_SUCCESS;
   }

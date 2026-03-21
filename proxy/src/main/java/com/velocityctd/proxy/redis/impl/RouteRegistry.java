@@ -128,10 +128,8 @@ public enum RouteRegistry {
    * Handles the {@link VelocityQueueSync} packet by applying the state change to the local queue.
    */
   VELOCITY_QUEUE_SYNC(VelocityQueueSync.class, (server, packet) -> {
-    if (server.isQueueEnabled()) {
-      RedisVelocityQueueManager redisVelocityQueueManager = ((RedisVelocityQueueManager) server.getQueueManager());
-      redisVelocityQueueManager.handleSync(packet);
-    }
+    RedisVelocityQueueManager redisVelocityQueueManager = ((RedisVelocityQueueManager) server.getQueueManager());
+    redisVelocityQueueManager.handleSync(packet);
   }),
 
   /**

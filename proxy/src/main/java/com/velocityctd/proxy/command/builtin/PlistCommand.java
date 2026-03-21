@@ -24,6 +24,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
@@ -76,11 +77,11 @@ public class PlistCommand implements BuiltinCommand {
             .executes(this::totalCount);
     ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
             .requiredArgumentBuilder(PROXY_ARG, StringArgumentType.string())
-            .suggests(VelocityCommands.suggestProxy(server, PROXY_ARG, PROXY_ALL))
+            .suggests(CommandUtils.suggestProxy(server, PROXY_ARG, PROXY_ALL))
             .executes(this::proxyCount)
             .then(
                     BrigadierCommand.requiredArgumentBuilder(SERVER_ARG, StringArgumentType.string())
-                            .suggests(VelocityCommands.suggestServer(server, SERVER_ARG, true, false, SERVER_ALL))
+                            .suggests(CommandUtils.suggestServer(server, SERVER_ARG, true, false, SERVER_ALL))
                             .executes(this::serverCount)
                             .build()
             )

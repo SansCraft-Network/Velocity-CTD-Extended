@@ -30,6 +30,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.VelocityRedis;
 import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocityctd.proxy.redis.impl.packet.VelocitySudo;
@@ -42,7 +43,6 @@ import com.velocitypowered.api.plugin.PluginContainer;
 import com.velocitypowered.api.plugin.PluginDescription;
 import com.velocitypowered.api.util.ProxyVersion;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.config.ConfigDetector;
 import com.velocitypowered.proxy.config.ConfigDetector.ConfigAnalysis;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -214,13 +214,13 @@ public class VelocityCommand implements BuiltinCommand {
     if (server.isRedisEnabled()) {
       reload = reload.then(
               BrigadierCommand.requiredArgumentBuilder("proxy", StringArgumentType.string())
-                      .suggests(VelocityCommands.suggestProxy(server, "proxy"))
+                      .suggests(CommandUtils.suggestProxy(server, "proxy"))
                       .executes(new ReloadRemote(server))
       );
 
       uptime = uptime.then(
               BrigadierCommand.requiredArgumentBuilder("proxy", StringArgumentType.string())
-                      .suggests(VelocityCommands.suggestProxy(server, "proxy"))
+                      .suggests(CommandUtils.suggestProxy(server, "proxy"))
                       .executes(new UptimeRemote(server))
       );
     }

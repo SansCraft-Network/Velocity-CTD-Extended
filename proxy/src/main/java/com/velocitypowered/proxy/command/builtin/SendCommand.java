@@ -23,6 +23,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.VelocityRedis;
 import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocityctd.proxy.redis.impl.packet.VelocitySwitchServer;
@@ -31,7 +32,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
@@ -75,12 +75,12 @@ public class SendCommand implements BuiltinCommand {
     LiteralArgumentBuilder<CommandSource> command = BrigadierCommand
         .literalArgumentBuilder(label())
         .requires(src -> src.getPermissionValue("velocity.command.send") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+        .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
         .then(
             BrigadierCommand
                 .requiredArgumentBuilder(SELECTOR_ARG, StringArgumentType.word())
                 .suggests(this::suggestPlayers)
-                .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+                .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
                 .then(
                     BrigadierCommand
                         .requiredArgumentBuilder(TARGET_ARG, StringArgumentType.word())

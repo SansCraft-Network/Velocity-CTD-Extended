@@ -21,12 +21,12 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.queue.VelocityQueue;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -67,7 +67,7 @@ public class LeaveQueueCommand implements BuiltinCommand {
             .requires(src -> src instanceof ConnectedPlayer && src.getPermissionValue("velocity.queue.leave") == Tristate.TRUE)
             .then(BrigadierCommand
                     .requiredArgumentBuilder("server", StringArgumentType.word())
-                    .suggests(VelocityCommands.suggestServer(server, "server", false, true))
+                    .suggests(CommandUtils.suggestServer(server, "server", false, true))
                     .executes(this::leaveQueue)
             )
             .executes(this::leaveAllQueues);
@@ -100,7 +100,7 @@ public class LeaveQueueCommand implements BuiltinCommand {
   }
 
   private int leaveQueue(CommandContext<CommandSource> ctx) {
-    VelocityRegisteredServer registeredServer = VelocityCommands.getServer(this.server, ctx, "server", false);
+    VelocityRegisteredServer registeredServer = CommandUtils.getServer(this.server, ctx, "server", false);
     if (registeredServer == null) {
       return -1;
     }

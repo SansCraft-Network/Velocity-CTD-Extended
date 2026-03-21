@@ -21,11 +21,11 @@ import static java.util.Objects.requireNonNull;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.context.CommandContext;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
@@ -93,7 +93,7 @@ public class HubCommand implements BuiltinCommand {
               .arguments(Component.text(nextServer.getServerInfo().getName())));
     }
 
-    VelocityCommands.sendOrQueue(server, player, nextServer);
+    CommandUtils.sendOrQueue(server, player, nextServer);
 
     return Command.SINGLE_SUCCESS;
   }

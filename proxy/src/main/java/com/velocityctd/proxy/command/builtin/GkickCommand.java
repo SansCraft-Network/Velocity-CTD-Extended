@@ -22,6 +22,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.VelocityRedis;
 import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocityctd.proxy.redis.impl.packet.VelocityKick;
@@ -29,7 +30,6 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import net.kyori.adventure.text.Component;
@@ -55,7 +55,7 @@ public class GkickCommand implements BuiltinCommand {
   public BrigadierCommand build() {
     RequiredArgumentBuilder<CommandSource, String> playerNode = BrigadierCommand
         .requiredArgumentBuilder("player", StringArgumentType.word())
-        .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
+        .suggests((ctx, builder) -> CommandUtils.suggestPlayer(server, ctx, builder, true))
         .executes(this::executeKick)
         .then(BrigadierCommand
             .requiredArgumentBuilder("reason", StringArgumentType.greedyString())
@@ -65,7 +65,7 @@ public class GkickCommand implements BuiltinCommand {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
         .literalArgumentBuilder(label())
         .requires(source -> source.getPermissionValue("velocity.command.gkick") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+        .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
         .then(playerNode);
 
     return new BrigadierCommand(rootNode);
@@ -76,7 +76,7 @@ public class GkickCommand implements BuiltinCommand {
       return Component.translatable("velocity.command.gkick.reason");
     }
 
-    return VelocityCommands.deserializeComponent(context.getArgument("reason", String.class));
+    return CommandUtils.deserializeComponent(context.getArgument("reason", String.class));
   }
 
   private int executeKick(final CommandContext<CommandSource> context) {

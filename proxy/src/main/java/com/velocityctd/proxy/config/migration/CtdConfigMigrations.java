@@ -55,6 +55,12 @@ public class CtdConfigMigrations {
             "1.7.2"
         ),
         migration(
+            "Modify the maximum version, so the proxy blocks out users on the wrong version, rather than the backend server.\n"
+                + "Set to UNBOUNDED for no maximum version (default behavior).",
+            "maximum-version",
+            "UNBOUNDED"
+        ),
+        migration(
             "If true, disables handling of inbound Forge handshakes.",
             "disable-forge",
             false

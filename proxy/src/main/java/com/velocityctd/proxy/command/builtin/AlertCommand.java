@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.commands.builtin;
+package com.velocityctd.proxy.command.builtin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -34,19 +34,19 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
- * Implements Velocity-CTD's {@code /alertraw} command.
+ * Implements Velocity-CTD's {@code /alert} command.
  */
-public class AlertRawCommand implements BuiltinCommand {
+public class AlertCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public AlertRawCommand(VelocityServer server) {
+  public AlertCommand(VelocityServer server) {
     this.server = server;
   }
 
   @Override
   public String label() {
-    return "alertraw";
+    return "alert";
   }
 
   @Override
@@ -54,7 +54,7 @@ public class AlertRawCommand implements BuiltinCommand {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
             .literalArgumentBuilder(label())
             .requires(source ->
-                    source.getPermissionValue("velocity.command.alertraw") == Tristate.TRUE)
+                    source.getPermissionValue("velocity.command.alert") == Tristate.TRUE)
             .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
             .then(BrigadierCommand
                     .requiredArgumentBuilder("message", StringArgumentType.greedyString())
@@ -67,19 +67,19 @@ public class AlertRawCommand implements BuiltinCommand {
     String message = StringArgumentType.getString(context, "message");
     if (message.isEmpty()) {
       context.getSource().sendMessage(
-              Component.translatable("velocity.command.alertraw.no-message", NamedTextColor.YELLOW)
+              Component.translatable("velocity.command.alert.no-message", NamedTextColor.YELLOW)
       );
 
       return 0;
     }
 
-    TranslatableComponent alertRawComponent = Component.translatable("velocity.command.alertraw.message", NamedTextColor.WHITE,
-            ComponentUtils.colorify(message));
+    TranslatableComponent alertComponent = Component.translatable("velocity.command.alert.message",
+            NamedTextColor.WHITE, ComponentUtils.colorify(message));
 
     if (server.isRedisEnabled()) {
-      new VelocityAlert(alertRawComponent).publish();
+      new VelocityAlert(alertComponent).publish();
     } else {
-      server.sendMessage(alertRawComponent);
+      server.sendMessage(alertComponent);
     }
 
     return Command.SINGLE_SUCCESS;

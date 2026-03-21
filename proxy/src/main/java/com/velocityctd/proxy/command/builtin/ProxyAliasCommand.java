@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.commands.builtin;
+package com.velocityctd.proxy.command.builtin;
 
 import com.mojang.brigadier.tree.CommandNode;
 import com.velocitypowered.api.command.CommandSource;

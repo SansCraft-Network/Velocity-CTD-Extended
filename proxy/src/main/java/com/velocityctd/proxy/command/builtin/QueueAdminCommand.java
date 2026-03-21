@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.commands.builtin;
+package com.velocityctd.proxy.command.builtin;
 
 import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static com.velocityctd.api.queue.QueueState.PAUSED;

@@ -25,6 +25,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.VelocityRedis;
 import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -71,7 +72,7 @@ public class GlistCommand implements BuiltinCommand {
             .executes(this::totalCount);
     ArgumentCommandNode<CommandSource, String> serverNode = BrigadierCommand
             .requiredArgumentBuilder(SERVER_ARG, StringArgumentType.string())
-            .suggests(VelocityCommands.suggestServer(server, SERVER_ARG, true, false, SERVER_ALL))
+            .suggests(CommandUtils.suggestServer(server, SERVER_ARG, true, false, SERVER_ALL))
             .executes(this::serverCount)
             .build();
 
@@ -93,7 +94,7 @@ public class GlistCommand implements BuiltinCommand {
     CommandSource source = context.getSource();
     String serverName = getString(context, SERVER_ARG);
     if (serverName.equalsIgnoreCase(SERVER_ALL)) {
-      for (VelocityRegisteredServer server : VelocityCommands.sortedServerList(server)) {
+      for (VelocityRegisteredServer server : CommandUtils.sortedServerList(server)) {
         sendServerPlayers(source, true, server);
       }
       sendTotalProxyCount(source);

@@ -119,9 +119,13 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
   /**
    * The minimum Minecraft version allowed to connect.
-   * Was implemented in Minecraft 1.20.2.
    */
   private final String minimumVersion;
+
+  /**
+   * The maximum Minecraft version allowed to connect.
+   */
+  private final String maximumVersion;
 
   AuthSessionHandler(final VelocityServer server, final LoginInboundConnection inbound,
                      final GameProfile profile, final boolean onlineMode, final String serverIdHash) {
@@ -132,6 +136,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     this.mcConnection = inbound.delegatedConnection();
     this.serverIdHash = serverIdHash;
     this.minimumVersion = server.getConfiguration().getMinimumVersion();
+    this.maximumVersion = server.getConfiguration().getMaximumVersion()
+        .orElse(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion());
   }
 
   /**
@@ -162,7 +168,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
               .arguments(
                   Argument.string("min", minimumVersion),
-                  Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion()))));
+                  Argument.string("max", maximumVersion))));
       return;
     }
 
@@ -221,17 +227,16 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
 
   private boolean versionCheck(final MinecraftConnection connection) {
     final ProtocolVersion minimumProtocolVersion = ProtocolVersion.getVersionByName(minimumVersion);
-    final ProtocolVersion maximumProtocolVersion = ProtocolVersion.MAXIMUM_VERSION;
+    final ProtocolVersion maximumProtocolVersion = ProtocolVersion.getVersionByName(maximumVersion);
     final String clientProtocolVersion = connection.getProtocolVersion().getVersionIntroducedIn();
 
-    // Compare the client's protocol version with the minimum required version
+    // Compare the client's protocol version with the minimum and maximum required versions
     if (ProtocolVersion.getVersionByName(clientProtocolVersion).lessThan(minimumProtocolVersion)
         || ProtocolVersion.getVersionByName(clientProtocolVersion).greaterThan(maximumProtocolVersion)) {
-      // Disconnect the player with an error message if their client version is too low
       this.inbound.disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
           .arguments(
               Argument.string("min", minimumVersion),
-              Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+              Argument.string("max", maximumVersion)));
       return false;
     }
 

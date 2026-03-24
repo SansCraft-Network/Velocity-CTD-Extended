@@ -74,6 +74,8 @@ public final class VelocityConfiguration implements ProxyConfig {
    */
   private static final Logger LOGGER = LogManager.getLogger(VelocityConfiguration.class);
 
+  private static final String UNBOUNDED = "UNBOUNDED";
+
   /**
    * The IP address and port the proxy binds to.
    * Format: {@code ip:port}, e.g., {@code 0.0.0.0:25565}.
@@ -297,6 +299,13 @@ public final class VelocityConfiguration implements ProxyConfig {
   private String minimumVersion = "1.7.2";
 
   /**
+   * The highest allowed Minecraft client version that can connect to the proxy.
+   * Set to "UNBOUNDED" to allow any version up to the protocol maximum.
+   */
+  @Expose
+  private String maximumVersion = UNBOUNDED;
+
+  /**
    * Slash-command shortcuts for routing players to specific servers.
    */
   @Expose
@@ -340,6 +349,7 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 final boolean logOfflineConnections, final boolean disableForge,
                                 final boolean enforceChatSigning, final boolean preventsChatReports, final boolean translateHeaderFooter,
                                 final boolean logMinimumVersion, final String minimumVersion,
+                                final String maximumVersion,
                                 final Redis redis, final Queue queue, final Map<String, List<String>> slashServers,
                                 final Map<String, List<ServerLink>> serverLinks, final List<ProxyAddress> proxyAddresses,
                                 final DynamicProxyFilterMode dynamicProxyFilter, final Map<String, Integer> playerCaps) {
@@ -375,6 +385,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     this.translateHeaderFooter = translateHeaderFooter;
     this.logMinimumVersion = logMinimumVersion;
     this.minimumVersion = minimumVersion;
+    this.maximumVersion = maximumVersion;
     this.redis = redis;
     this.queue = queue;
     this.slashServers = slashServers;
@@ -581,6 +592,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   public List<Component> getMotdHover() {
     if (motdHoverComponents == null) {
       motdHoverComponents = motdHover.stream()
+          .map(s -> s.isEmpty() ? " " : s)
           .map(MiniMessage.miniMessage()::deserialize)
           .toList();
     }
@@ -1330,6 +1342,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       final boolean logMinimumVersion = config.getOrElse(
               "log-minimum-version", false);
       final String minimumVersion = config.getOrElse("minimum-version", "1.7.2");
+      final String maximumVersion = config.getOrElse("maximum-version", UNBOUNDED);
       final CommentedConfig slashServersConfig = config.getOrElse("slash-servers", (CommentedConfig) null);
       final Map<String, List<String>> slashServers = new HashMap<>();
       if (slashServersConfig != null) {
@@ -1438,6 +1451,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           translateHeaderFooter,
           logMinimumVersion,
           minimumVersion,
+          maximumVersion,
           new Redis(redisConfig),
           new Queue(queueConfig),
           slashServers,
@@ -1593,6 +1607,37 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   /**
+   * Gets the maximum allowed Minecraft version that can connect to the proxy.
+   *
+   * <p>Clients connecting with a higher version than this will be rejected.
+   * Returns an empty optional if no maximum version limit is configured (UNBOUNDED).
+   *
+   * @return the maximum supported version string (e.g., {@code "1.21.10"}), or empty if unbounded
+   */
+  public Optional<String> getMaximumVersion() {
+    return isUnbounded(maximumVersion) ? Optional.empty() : Optional.of(maximumVersion);
+  }
+
+  /**
+   * Gets the maximum allowed Minecraft version for a specific server.
+   *
+   * <p>If the server has a specific maximum version configured, that value is returned.
+   * Otherwise, the global maximum version is used.
+   * Returns an empty optional if the effective maximum version is UNBOUNDED.
+   *
+   * @param serverName the name of the server to check
+   * @return the maximum supported version string for the server, or empty if unbounded
+   */
+  public Optional<String> getMaximumVersionForServer(final String serverName) {
+    final String effective = servers.getServerMaximumVersions().getOrDefault(serverName, maximumVersion);
+    return isUnbounded(effective) ? Optional.empty() : Optional.of(effective);
+  }
+
+  private static boolean isUnbounded(final String version) {
+    return UNBOUNDED.equalsIgnoreCase(version);
+  }
+
+  /**
    * Gets a list of aliases that invoke the {@code /server} command or its variations.
    *
    * <p>These aliases are registered for convenience (e.g. {@code /queue}, {@code /joinqueue}).
@@ -1639,6 +1684,14 @@ public final class VelocityConfiguration implements ProxyConfig {
     private Map<String, String> serverMinimumVersions = ImmutableMap.of();
 
     /**
+     * Per-server overrides for maximum version requirements.
+     *
+     * <p>If a server is listed here, it uses the specified maximum version
+     * instead of the global configuration.
+     */
+    private Map<String, String> serverMaximumVersions = ImmutableMap.of();
+
+    /**
      * The strategy used for choosing a fallback server when {@code attemptConnectionOrder}
      * fails or is bypassed (e.g., in multi-proxy setups).
      *
@@ -1666,6 +1719,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       if (config != null) {
         Map<String, BackendServerConfig> servers = new HashMap<>();
         Map<String, String> serverMinimumVersions = new HashMap<>();
+        Map<String, String> serverMaximumVersions = new HashMap<>();
         for (UnmodifiableConfig.Entry entry : config.entrySet()) {
           if (entry.getKey().equalsIgnoreCase("dynamic-fallbacks-filter")) {
             continue;
@@ -1684,7 +1738,11 @@ public final class VelocityConfiguration implements ProxyConfig {
               }
 
               if (entry2.getKey().equalsIgnoreCase("minimum-version")) {
-                serverMinimumVersions.put(cleanServerName(entry.getKey()), entry2.getValue());
+                serverMinimumVersions.put(cleanValue(entry.getKey()), entry2.getValue());
+              }
+
+              if (entry2.getKey().equalsIgnoreCase("maximum-version")) {
+                serverMaximumVersions.put(cleanValue(entry.getKey()), entry2.getValue());
               }
             }
 
@@ -1692,10 +1750,10 @@ public final class VelocityConfiguration implements ProxyConfig {
               throw new IllegalArgumentException("Server entry " + entry.getKey() + " is missing address!");
             }
 
-            servers.put(cleanServerName(entry.getKey()), new BackendServerConfig(address, forwardingMode));
+            servers.put(cleanValue(entry.getKey()), new BackendServerConfig(address, forwardingMode));
             // Support for old server config system (forwarding mode will be null)
           } else if (entry.getValue() instanceof String v) {
-            servers.put(cleanServerName(entry.getKey()), new BackendServerConfig(v));
+            servers.put(cleanValue(entry.getKey()), new BackendServerConfig(v));
           } else {
             if (!entry.getKey().equalsIgnoreCase("try")
                 && !entry.getKey().equalsIgnoreCase("dynamic-fallbacks-filter")
@@ -1708,6 +1766,7 @@ public final class VelocityConfiguration implements ProxyConfig {
 
         this.servers = ImmutableMap.copyOf(servers);
         this.serverMinimumVersions = ImmutableMap.copyOf(serverMinimumVersions);
+        this.serverMaximumVersions = ImmutableMap.copyOf(serverMaximumVersions);
         this.attemptConnectionOrder = config.getOrElse("try", attemptConnectionOrder).stream().toList();
         this.dynamicFallbackFilter = config.getEnumOrElse("dynamic-fallbacks-filter", DynamicFallbackFilter.FIRST_AVAILABLE);
         this.serverAliases = config.getOrElse("server-aliases", List.of("joinqueue", "queue", "server"));
@@ -1746,16 +1805,23 @@ public final class VelocityConfiguration implements ProxyConfig {
       this.serverMinimumVersions = serverMinimumVersions;
     }
 
+    public Map<String, String> getServerMaximumVersions() {
+      return serverMaximumVersions;
+    }
+
+    public void setServerMaximumVersions(final Map<String, String> serverMaximumVersions) {
+      this.serverMaximumVersions = serverMaximumVersions;
+    }
+
     /**
      * TOML requires keys to match a regex of {@code [A-Za-z0-9_-]} unless it is wrapped in quotes;
-     * however, the TOML parser returns the key with the quotes so we need to clean the server name
-     * before we pass it onto server registration to keep proper server name behavior.
+     * however, the TOML parser returns the key with the quotes so we need to clean the value.
      *
-     * @param name the server name to clean
-     * @return the cleaned server name
+     * @param value the value to clean
+     * @return the cleaned value
      */
-    private String cleanServerName(final String name) {
-      return name.replace("\"", "");
+    private String cleanValue(final String value) {
+      return value.replace("\"", "");
     }
 
     @Override
@@ -1764,6 +1830,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           + "servers=" + servers
           + ", attemptConnectionOrder=" + attemptConnectionOrder
           + ", serverMinimumVersions=" + serverMinimumVersions
+          + ", serverMaximumVersions=" + serverMaximumVersions
           + '}';
     }
   }

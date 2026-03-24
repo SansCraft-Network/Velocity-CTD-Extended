@@ -21,6 +21,7 @@ import com.velocityctd.proxy.redis.depot.DepotEntry;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -70,6 +71,13 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
   private final String ipAddress;
 
   /**
+   * Whether this player entry may be listed in the server list ping MOTD hover, generated in
+   * {@link com.velocitypowered.proxy.connection.util.ServerListPingHandler}.
+   * Reflects {@link ClientSettingsPacket#isClientListingAllowed()}.
+   */
+  private boolean clientListingAllowed;
+
+  /**
    * Constructs a new {@link PlayerEntry} from a {@link ConnectedPlayer}.
    *
    * @param player the player to construct from
@@ -88,6 +96,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
         .map(ServerInfo::getName)
         .orElse(null);
     this.ipAddress = player.getRemoteAddress().getAddress().getHostAddress();
+    this.clientListingAllowed = player.getPlayerSettings().isClientListingAllowed();
   }
 
   /**
@@ -160,5 +169,25 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    */
   public @Nullable String getIpAddress() {
     return ipAddress;
+  }
+
+  /**
+   * Whether this player entry may be listed in the server list ping MOTD hover, generated in
+   * {@link com.velocitypowered.proxy.connection.util.ServerListPingHandler}.
+   * Reflects {@link ClientSettingsPacket#isClientListingAllowed()}.
+   *
+   * @return true if the client listing is allowed
+   */
+  public boolean isClientListingAllowed() {
+    return clientListingAllowed;
+  }
+
+  /**
+   * Sets clientListingAllowed. Should reflect {@link ClientSettingsPacket#isClientListingAllowed()}.
+   *
+   * @param clientListingAllowed whether this player may be listed in the server list ping MOTD hover
+   */
+  public void setClientListingAllowed(boolean clientListingAllowed) {
+    this.clientListingAllowed = clientListingAllowed;
   }
 }

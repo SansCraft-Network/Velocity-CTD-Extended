@@ -90,7 +90,13 @@ public class ServerListPingHandler {
       List<ServerPing.SamplePlayer> unshuffledPlayers;
       if (server.isRedisEnabled()) {
         unshuffledPlayers = server.getRedis().getPlayerService().getAll().stream()
-            .map(entry -> new ServerPing.SamplePlayer(entry.getUsername(), entry.getUniqueId()))
+            .map(entry -> {
+              if (entry.isClientListingAllowed()) {
+                return new ServerPing.SamplePlayer(entry.getUsername(), entry.getUniqueId());
+              } else {
+                return ServerPing.SamplePlayer.ANONYMOUS;
+              }
+            })
             .collect(Collectors.toList());
       } else {
         unshuffledPlayers = server.getAllPlayers().stream()

@@ -54,7 +54,6 @@ import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -297,17 +296,14 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       byte[] decryptedSharedSecret = decryptRsa(serverKeyPair, packet.getSharedSecret());
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
-      GameProfile cachedProfile = null;
-      if (profileResultCache != null) {
-        UUID holderUuid = Objects.requireNonNull(login.getHolderUuid(), "holderUuid");
-        cachedProfile = profileResultCache.getIfPresent(holderUuid);
-      }
-
-      if (cachedProfile != null) {
-        mcConnection.enableEncryption(decryptedSharedSecret);
-        mcConnection.setActiveSessionHandler(StateRegistry.LOGIN,
-            new AuthSessionHandler(server, inbound, cachedProfile, true, serverId));
-        return true;
+      if (profileResultCache != null && login.getHolderUuid() != null) {
+        GameProfile cachedProfile = profileResultCache.getIfPresent(login.getHolderUuid());
+        if (cachedProfile != null) {
+          mcConnection.enableEncryption(decryptedSharedSecret);
+          mcConnection.setActiveSessionHandler(StateRegistry.LOGIN,
+              new AuthSessionHandler(server, inbound, cachedProfile, true, serverId));
+          return true;
+        }
       }
 
       String playerIp = ((InetSocketAddress) mcConnection.getRemoteAddress()).getHostString();
@@ -351,9 +347,8 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
             if (response.statusCode() == 200) {
               final GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
-              if (profileResultCache != null) {
-                UUID holderUuid = Objects.requireNonNull(login.getHolderUuid(), "holderUuid");
-                profileResultCache.put(holderUuid, profile);
+              if (profileResultCache != null && login.getHolderUuid() != null) {
+                profileResultCache.put(login.getHolderUuid(), profile);
               }
 
               // Not so fast, now we verify the public key for 1.19.1+

@@ -34,12 +34,16 @@ prevents-chat-reports = false
 translate-header-footer = true
 
 # If true, a message is pasted in console displaying whether a user joined on an unsupported version.
-# This corresponds with the "minimum-version" and "modern-forwarding-needs-new-client" values.
+# This corresponds with the "minimum-version", "maximum-version", and "modern-forwarding-needs-new-client" values.
 log-minimum-version = false
 
 # Modify the minimum version, so the proxy blocks out users on the wrong version, rather than the backend server.
 # Modern forwarding supports 1.13, at minimum. Set this to 1.13 or above if you are using modern forwarding.
 minimum-version = "1.7.2"
+
+# Modify the maximum version, so the proxy blocks out users on the wrong version, rather than the backend server.
+# Set to "unbounded" for no maximum version (default behavior).
+maximum-version = "unbounded"
 
 # Should the proxy enforce the new public key security standard? By default, this is on.
 force-key-authentication = true
@@ -162,7 +166,7 @@ override-server-command-usage = false
 # represents the IP address of the server to connect to.
 lobby = "127.0.0.1:30066"
 factions  = { address = "127.0.0.1:30067", forwarding-mode = "MODERN", minimum-version = "1.13" }
-minigames = { address = "127.0.0.1:30068", forwarding-mode = "LEGACY", minimum-version = "1.7.2" }
+minigames = { address = "127.0.0.1:30068", forwarding-mode = "LEGACY", minimum-version = "1.7.2", maximum-version = "1.21.10" }
 
 # In what order, we should try servers when a player logs in or is kicked from a server.
 try = [

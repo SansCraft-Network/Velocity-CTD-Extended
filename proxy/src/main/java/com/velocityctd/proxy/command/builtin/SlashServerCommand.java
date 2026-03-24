@@ -15,15 +15,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.commands.builtin;
+package com.velocityctd.proxy.command.builtin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -47,7 +47,7 @@ public class SlashServerCommand implements BuiltinCommand {
   public SlashServerCommand(VelocityServer server, String targetServerName, String commandLabel) {
     this.server = server;
     this.registeredServer = this.server.getServer(targetServerName)
-            .orElseThrow(() -> new IllegalArgumentException("Target server '" + targetServerName + "' does not exist."));
+        .orElseThrow(() -> new IllegalArgumentException("Target server '" + targetServerName + "' does not exist."));
     this.commandLabel = commandLabel;
   }
 
@@ -59,9 +59,9 @@ public class SlashServerCommand implements BuiltinCommand {
   @Override
   public BrigadierCommand build() {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
-            .literalArgumentBuilder(label())
-            .requires(src -> src instanceof ConnectedPlayer && VelocityCommands.checkServerPermissions(registeredServer, src))
-            .executes(this::send);
+        .literalArgumentBuilder(label())
+        .requires(src -> src instanceof ConnectedPlayer && CommandUtils.checkServerPermissions(registeredServer, src))
+        .executes(this::send);
 
     return new BrigadierCommand(rootNode);
   }
@@ -75,7 +75,7 @@ public class SlashServerCommand implements BuiltinCommand {
       return -1;
     }
 
-    VelocityCommands.sendOrQueue(server, player, registeredServer);
+    CommandUtils.sendOrQueue(server, player, registeredServer);
     return Command.SINGLE_SUCCESS;
   }
 }

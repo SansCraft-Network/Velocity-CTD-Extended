@@ -2641,19 +2641,21 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   public boolean checkVersionCompatibility(final VelocityRegisteredServer server) {
     String serverName = server.getServerInfo().getName();
     String serverMinimumVersion = this.server.getConfiguration().getMinimumVersionForServer(serverName);
-    
+    String serverMaximumVersion = this.server.getConfiguration().getMaximumVersionForServer(serverName)
+        .orElse(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion());
+
     ProtocolVersion minimumProtocolVersion = ProtocolVersion.getVersionByName(serverMinimumVersion);
-    ProtocolVersion maximumProtocolVersion = ProtocolVersion.MAXIMUM_VERSION;
+    ProtocolVersion maximumProtocolVersion = ProtocolVersion.getVersionByName(serverMaximumVersion);
     ProtocolVersion clientProtocolVersion = getProtocolVersion();
 
-    // Compare the client's protocol version with the server's minimum required version
+    // Compare the client's protocol version with the server's minimum and maximum required versions
     if (clientProtocolVersion.lessThan(minimumProtocolVersion)
         || clientProtocolVersion.greaterThan(maximumProtocolVersion)) {
       // Send a message to the player instead of disconnecting them from the proxy
       sendMessage(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
           .arguments(
               Argument.string("min", serverMinimumVersion),
-              Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+              Argument.string("max", serverMaximumVersion)));
       return false;
     }
 
@@ -2664,7 +2666,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
           .arguments(
               Argument.string("min", "1.13"),
-              Argument.string("max", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())));
+              Argument.string("max", serverMaximumVersion)));
       return false;
     }
 

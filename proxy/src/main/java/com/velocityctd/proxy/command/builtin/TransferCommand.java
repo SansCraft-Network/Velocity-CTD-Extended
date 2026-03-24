@@ -15,12 +15,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.commands.builtin;
+package com.velocityctd.proxy.command.builtin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocityctd.proxy.redis.impl.transaction.VelocityTransferRemote;
 import com.velocitypowered.api.command.BrigadierCommand;
@@ -28,7 +29,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
 import com.velocitypowered.proxy.config.ProxyAddress;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
@@ -67,7 +67,7 @@ public class TransferCommand implements BuiltinCommand {
 
     LiteralCommandNode<CommandSource> transfer = BrigadierCommand.literalArgumentBuilder(label())
             .requires(source -> source.getPermissionValue("velocity.command.transfer") == Tristate.TRUE)
-            .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+            .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
             .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
                     .suggests((ctx, builder) -> {
                       String argument = ctx.getArguments().containsKey("player")
@@ -112,9 +112,9 @@ public class TransferCommand implements BuiltinCommand {
 
                       return builder.buildFuture();
                     })
-                    .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+                    .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
                     .then(BrigadierCommand.requiredArgumentBuilder("proxy-id", StringArgumentType.word())
-                            .suggests(VelocityCommands.suggestProxy(server, "proxy-id"))
+                            .suggests(CommandUtils.suggestProxy(server, "proxy-id"))
                             .executes(this::transfer)))
             .build();
 

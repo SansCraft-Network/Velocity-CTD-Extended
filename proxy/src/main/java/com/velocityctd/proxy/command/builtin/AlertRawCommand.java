@@ -15,18 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.commands.builtin;
+package com.velocityctd.proxy.command.builtin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.impl.packet.VelocityAlert;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
 import com.velocitypowered.proxy.util.ComponentUtils;
 import net.kyori.adventure.text.Component;
@@ -34,19 +34,19 @@ import net.kyori.adventure.text.TranslatableComponent;
 import net.kyori.adventure.text.format.NamedTextColor;
 
 /**
- * Implements Velocity-CTD's {@code /alert} command.
+ * Implements Velocity-CTD's {@code /alertraw} command.
  */
-public class AlertCommand implements BuiltinCommand {
+public class AlertRawCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public AlertCommand(VelocityServer server) {
+  public AlertRawCommand(VelocityServer server) {
     this.server = server;
   }
 
   @Override
   public String label() {
-    return "alert";
+    return "alertraw";
   }
 
   @Override
@@ -54,8 +54,8 @@ public class AlertCommand implements BuiltinCommand {
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
             .literalArgumentBuilder(label())
             .requires(source ->
-                    source.getPermissionValue("velocity.command.alert") == Tristate.TRUE)
-            .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+                    source.getPermissionValue("velocity.command.alertraw") == Tristate.TRUE)
+            .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
             .then(BrigadierCommand
                     .requiredArgumentBuilder("message", StringArgumentType.greedyString())
                     .executes(this::alert));
@@ -67,19 +67,19 @@ public class AlertCommand implements BuiltinCommand {
     String message = StringArgumentType.getString(context, "message");
     if (message.isEmpty()) {
       context.getSource().sendMessage(
-              Component.translatable("velocity.command.alert.no-message", NamedTextColor.YELLOW)
+              Component.translatable("velocity.command.alertraw.no-message", NamedTextColor.YELLOW)
       );
 
       return 0;
     }
 
-    TranslatableComponent alertComponent = Component.translatable("velocity.command.alert.message",
-            NamedTextColor.WHITE, ComponentUtils.colorify(message));
+    TranslatableComponent alertRawComponent = Component.translatable("velocity.command.alertraw.message", NamedTextColor.WHITE,
+            ComponentUtils.colorify(message));
 
     if (server.isRedisEnabled()) {
-      new VelocityAlert(alertComponent).publish();
+      new VelocityAlert(alertRawComponent).publish();
     } else {
-      server.sendMessage(alertComponent);
+      server.sendMessage(alertRawComponent);
     }
 
     return Command.SINGLE_SUCCESS;

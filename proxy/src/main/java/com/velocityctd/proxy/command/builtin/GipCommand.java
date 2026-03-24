@@ -15,21 +15,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.commands.builtin;
+package com.velocityctd.proxy.command.builtin;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocityctd.proxy.redis.VelocityRedis;
 import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
@@ -54,13 +55,13 @@ public class GipCommand implements BuiltinCommand {
   public BrigadierCommand build() {
     RequiredArgumentBuilder<CommandSource, String> playerNode = BrigadierCommand
         .requiredArgumentBuilder("player", StringArgumentType.word())
-        .suggests((ctx, builder) -> VelocityCommands.suggestPlayer(server, ctx, builder, true))
+        .suggests((ctx, builder) -> CommandUtils.suggestPlayer(server, ctx, builder, true))
         .executes(this::executeIp);
 
     LiteralArgumentBuilder<CommandSource> rootNode = BrigadierCommand
         .literalArgumentBuilder(label())
         .requires(source -> source.getPermissionValue("velocity.command.gip") == Tristate.TRUE)
-        .executes(ctx -> VelocityCommands.emitUsage(ctx, label()))
+        .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
         .then(playerNode);
 
     return new BrigadierCommand(rootNode);
@@ -80,7 +81,7 @@ public class GipCommand implements BuiltinCommand {
 
     if (player == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.gip.not-found")
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", playerName))
       );
       return 0;
     }
@@ -103,7 +104,7 @@ public class GipCommand implements BuiltinCommand {
 
     if (!redis.getPlayerService().isPlayerOnline(playerName)) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.gip.not-found")
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", playerName))
       );
       return 0;
     }
@@ -111,7 +112,7 @@ public class GipCommand implements BuiltinCommand {
     final PlayerEntry entry = redis.getPlayerService().getPlayerEntry(playerName);
     if (entry == null || entry.getIpAddress() == null) {
       context.getSource().sendMessage(
-          Component.translatable("velocity.command.gip.not-found")
+          CommandMessages.PLAYER_NOT_FOUND.arguments(Argument.string("player", playerName))
       );
       return 0;
     }

@@ -22,12 +22,12 @@ import static net.kyori.adventure.text.event.HoverEvent.showText;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.velocityctd.proxy.command.CommandUtils;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.VelocityCommands;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
@@ -76,7 +76,7 @@ public class ServerCommand implements BuiltinCommand {
         .requires(src -> src instanceof ConnectedPlayer && src.getPermissionValue("velocity.command.server") != Tristate.FALSE)
         .executes(ctx -> {
           if (server.getConfiguration().isOverrideServerCommandUsage()) {
-            return VelocityCommands.emitUsage(ctx, label());
+            return CommandUtils.emitUsage(ctx, label());
           }
 
           ConnectedPlayer player = (ConnectedPlayer) ctx.getSource();
@@ -84,10 +84,10 @@ public class ServerCommand implements BuiltinCommand {
           return Command.SINGLE_SUCCESS;
         })
         .then(BrigadierCommand.requiredArgumentBuilder(SERVER_ARG, StringArgumentType.word())
-            .suggests(VelocityCommands.suggestServer(server, SERVER_ARG, true, true))
+            .suggests(CommandUtils.suggestServer(server, SERVER_ARG, true, true))
             .executes(ctx -> {
               ConnectedPlayer player = (ConnectedPlayer) ctx.getSource();
-              VelocityRegisteredServer registeredServer = VelocityCommands.getServer(server, ctx, SERVER_ARG, true);
+              VelocityRegisteredServer registeredServer = CommandUtils.getServer(server, ctx, SERVER_ARG, true);
 
               if (registeredServer == null) {
                 return -1;
@@ -99,7 +99,7 @@ public class ServerCommand implements BuiltinCommand {
                 return -1;
               }
 
-              VelocityCommands.sendOrQueue(server, player, registeredServer);
+              CommandUtils.sendOrQueue(server, player, registeredServer);
               return Command.SINGLE_SUCCESS;
             })
         ).build();
@@ -116,7 +116,7 @@ public class ServerCommand implements BuiltinCommand {
         "velocity.command.server-current-server", NamedTextColor.YELLOW)
             .arguments(Component.text(currentServer)));
 
-    List<VelocityRegisteredServer> servers = VelocityCommands.sortedServerList(server);
+    List<VelocityRegisteredServer> servers = CommandUtils.sortedServerList(server);
     if (servers.size() > MAX_SERVERS_TO_LIST) {
       executor.sendMessage(Component.translatable(
           "velocity.command.server-too-many", NamedTextColor.RED));

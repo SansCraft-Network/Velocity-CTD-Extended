@@ -65,7 +65,11 @@ public class ServerListPingHandler {
   private boolean displayFallbackPing(final ProtocolVersion clientVersion) {
     String minVersion = server.getConfiguration().getMinimumVersion();
     ProtocolVersion minimumVersion = ProtocolVersion.getVersionByName(minVersion);
-    return clientVersion.lessThan(minimumVersion);
+    ProtocolVersion maximumVersion = server.getConfiguration().getMaximumVersion()
+        .map(ProtocolVersion::getVersionByName)
+        .orElse(ProtocolVersion.MAXIMUM_VERSION);
+
+    return clientVersion.lessThan(minimumVersion) || clientVersion.greaterThan(maximumVersion);
   }
 
   @SuppressWarnings("checkstyle:FinalParameters")
@@ -126,9 +130,11 @@ public class ServerListPingHandler {
   private String formatVersionString(final String raw, final ProtocolVersion version) {
     final String minVersionIntroducedIn =
         ProtocolVersion.getVersionByName(this.server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn();
+    final String maxVersionDisplay = this.server.getConfiguration().getMaximumVersion()
+        .orElse(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion());
     return raw
         .replaceAll("\\{protocol-min}", minVersionIntroducedIn)
-        .replaceAll("\\{protocol-max}", ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion())
+        .replaceAll("\\{protocol-max}", maxVersionDisplay)
         .replaceAll("\\{protocol}", version.getVersionIntroducedIn())
         .replaceAll("\\{proxy-brand}", this.server.getVersion().getName())
         .replaceAll("\\{proxy-brand-custom}", this.server.getConfiguration().getProxyBrandCustom())

@@ -297,9 +297,9 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       byte[] decryptedSharedSecret = decryptRsa(serverKeyPair, packet.getSharedSecret());
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
-      UUID holderUuid = Objects.requireNonNull(login.getHolderUuid(), "holderUuid");
       GameProfile cachedProfile = null;
       if (profileResultCache != null) {
+        UUID holderUuid = Objects.requireNonNull(login.getHolderUuid(), "holderUuid");
         cachedProfile = profileResultCache.getIfPresent(holderUuid);
       }
 
@@ -352,6 +352,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             if (response.statusCode() == 200) {
               final GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
               if (profileResultCache != null) {
+                UUID holderUuid = Objects.requireNonNull(login.getHolderUuid(), "holderUuid");
                 profileResultCache.put(holderUuid, profile);
               }
 

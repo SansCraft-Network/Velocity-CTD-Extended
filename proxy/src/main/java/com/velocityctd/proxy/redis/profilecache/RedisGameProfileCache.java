@@ -15,32 +15,37 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.connection.profile.cache;
+package com.velocityctd.proxy.redis.profilecache;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
+import static com.velocitypowered.proxy.VelocityServer.GENERAL_GSON;
+
+import com.velocityctd.proxy.connection.profile.cache.GameProfileCacheStrategy;
+import com.velocityctd.proxy.redis.provider.RedisProvider;
 import com.velocitypowered.api.util.GameProfile;
 import java.time.Duration;
 import java.util.Optional;
 
-public class MemoryGameProfileCache implements GameProfileCacheStrategy {
+public class RedisGameProfileCache implements GameProfileCacheStrategy {
 
-  private final Cache<String, GameProfile> cache;
+  private static final String KEY_PREFIX = "velocity:profile-cache:";
 
-  public MemoryGameProfileCache(Duration cacheExpiry, int maximumSize) {
-    this.cache = Caffeine.newBuilder()
-        .expireAfterWrite(cacheExpiry)
-        .maximumSize(maximumSize)
-        .build();
+  private final RedisProvider provider;
+  private final long ttlSeconds;
+
+  public RedisGameProfileCache(RedisProvider provider, Duration cacheExpiry) {
+    this.provider = provider;
+    this.ttlSeconds = cacheExpiry.toSeconds();
   }
 
   @Override
   public Optional<GameProfile> findByUsername(String username) {
-    return Optional.ofNullable(cache.getIfPresent(username));
+    return Optional.ofNullable(provider.get(KEY_PREFIX + username))
+        .map(json -> GENERAL_GSON.fromJson(json, GameProfile.class));
   }
 
   @Override
   public void insert(GameProfile profile) {
-    cache.put(profile.getName(), profile);
+    String json = GENERAL_GSON.toJson(profile);
+    provider.setWithExpiry(KEY_PREFIX + profile.getName(), json, ttlSeconds);
   }
 }

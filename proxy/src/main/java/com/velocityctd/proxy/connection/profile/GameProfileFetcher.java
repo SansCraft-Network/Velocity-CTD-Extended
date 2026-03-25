@@ -87,7 +87,7 @@ public class GameProfileFetcher {
           cacheLayers.get(j).insert(cachedProfile);
         }
 
-        LOGGER.debug("Fetched game profile from cache.");
+        LOGGER.debug("Fetched game profile from cache (hit from {})", layer.getClass().getSimpleName());
         return CompletableFuture.completedFuture(
             new GameProfileResponse(cachedProfile, GameProfileResponse.Status.SUCCESS_CACHED));
       }

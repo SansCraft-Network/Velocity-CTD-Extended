@@ -40,6 +40,7 @@ import com.velocityctd.proxy.connection.profile.cache.MemoryGameProfileCache;
 import com.velocityctd.proxy.queue.RedisVelocityQueueManager;
 import com.velocityctd.proxy.queue.VelocityQueueManager;
 import com.velocityctd.proxy.redis.VelocityRedis;
+import com.velocityctd.proxy.redis.profilecache.RedisGameProfileCache;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -528,7 +529,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     gameProfileFetcher = new GameProfileFetcher(this);
     if (configuration.isCachePlayerProfileResultEnabled()) {
-      LOGGER.debug("Adding memory profile cache");
+      LOGGER.debug("Registering memory profile cache");
       gameProfileFetcher.getCacheLayers().addFirst(new MemoryGameProfileCache(
           Duration.ofMinutes(configuration.getProfileCacheExpiryMinutes()),
           1_000
@@ -537,6 +538,14 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
     if (configuration.getRedis().isEnabled()) {
       redis = new VelocityRedis(this);
+
+      if (configuration.isCachePlayerProfileResultEnabled()) {
+        LOGGER.debug("Registering Redis profile cache");
+        gameProfileFetcher.getCacheLayers().addLast(new RedisGameProfileCache(
+            redis.getProvider(),
+            Duration.ofMinutes(configuration.getProfileCacheExpiryMinutes())
+        ));
+      }
     }
 
     if (configuration.getQueue().isEnabled()) {

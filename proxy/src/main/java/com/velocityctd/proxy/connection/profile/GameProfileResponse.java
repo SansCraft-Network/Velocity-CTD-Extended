@@ -1,3 +1,20 @@
+/*
+ * Copyright (C) 2018-2026 Velocity Contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package com.velocityctd.proxy.connection.profile;
 
 import com.velocitypowered.api.util.GameProfile;
@@ -7,25 +24,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 public final class GameProfileResponse {
 
-  static GameProfileResponse success(GameProfile gameProfile) {
-    return new GameProfileResponse(gameProfile, Status.SUCCESS);
-  }
-
-  static GameProfileResponse error(Status errorStatus) {
-    if (errorStatus.success()) {
-      throw new IllegalArgumentException("Expected a non-successful status.");
-    }
-
-    return new GameProfileResponse(null, errorStatus);
-  }
-
   @Nullable
   private final GameProfile gameProfile;
 
   @NonNull
   private final Status status;
 
-  private GameProfileResponse(@Nullable GameProfile gameProfile, @NonNull Status status) {
+  GameProfileResponse(@Nullable GameProfile gameProfile, @NonNull Status status) {
     if (status.success() && gameProfile == null) {
       throw new IllegalArgumentException("Expected a non-null GameProfile for a successful status.");
     }
@@ -54,11 +59,12 @@ public final class GameProfileResponse {
   public enum Status {
 
     SUCCESS,
+    SUCCESS_CACHED,
     ERROR_OFFLINE_USER,
     ERROR_AUTH_DOWN;
 
     public boolean success() {
-      return this == SUCCESS;
+      return this == SUCCESS || this == SUCCESS_CACHED;
     }
   }
 }

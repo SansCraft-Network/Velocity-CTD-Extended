@@ -21,12 +21,15 @@ import static com.google.common.net.UrlEscapers.urlFormParameterEscaper;
 import static com.velocitypowered.proxy.VelocityServer.GENERAL_GSON;
 
 import com.google.common.base.Stopwatch;
+import com.velocityctd.proxy.connection.profile.cache.GameProfileCacheStrategy;
 import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.proxy.VelocityServer;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,6 +54,8 @@ public class GameProfileFetcher {
    */
   private static final String HASJOINED_WITH_IP_URL = HASJOINED_BASE_URL.concat("?username=%s&serverId=%s&ip=%s");
 
+  private final List<GameProfileCacheStrategy> cacheLayers = new ArrayList<>();
+
   private final VelocityServer server;
   private final HttpClient httpClient;
 
@@ -60,7 +65,34 @@ public class GameProfileFetcher {
     httpClient = server.createHttpClient();
   }
 
+  /**
+   * Gets the mutable cache layer list. May be used to insert caching layers at specific tiers.
+   * The cache layers are queried from bottom (index=0) to top (index=len-1). Faster caching
+   * layers should be at the bottom of the list, slower layers should be at the top. This
+   * may be controlled using {@link List#addFirst} and {@link List#addLast}
+   *
+   * @return the mutable cache layer list
+   */
+  public List<GameProfileCacheStrategy> getCacheLayers() {
+    return cacheLayers;
+  }
+
   public CompletableFuture<GameProfileResponse> fetchProfile(String playerIp, String username, String serverId) {
+    for (int i = 0; i < cacheLayers.size(); i++) {
+      var layer = cacheLayers.get(i);
+      GameProfile cachedProfile = layer.findByUsername(username).orElse(null);
+      if (cachedProfile != null) {
+        // Insert to lower-tier cache layers
+        for (int j = 0; j < i; j++) {
+          cacheLayers.get(j).insert(cachedProfile);
+        }
+
+        LOGGER.debug("Fetched game profile from cache.");
+        return CompletableFuture.completedFuture(
+            new GameProfileResponse(cachedProfile, GameProfileResponse.Status.SUCCESS_CACHED));
+      }
+    }
+
     String url;
     if (server.getConfiguration().shouldPreventClientProxyConnections()) {
       url = String.format(HASJOINED_WITH_IP_URL,
@@ -85,7 +117,7 @@ public class GameProfileFetcher {
         .handle((response, throwable) -> {
           if (throwable != null) {
             LOGGER.error("Unable to authenticate player", throwable);
-            return GameProfileResponse.error(GameProfileResponse.Status.ERROR_AUTH_DOWN);
+            return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_AUTH_DOWN);
           }
 
           stopwatch.stop();
@@ -93,16 +125,22 @@ public class GameProfileFetcher {
 
           if (response.statusCode() == 200) {
             GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
-            return GameProfileResponse.success(profile);
+
+            // Insert profile into caches
+            for (var layer : cacheLayers) {
+              layer.insert(profile);
+            }
+
+            return new GameProfileResponse(profile, GameProfileResponse.Status.SUCCESS);
           } else if (response.statusCode() == 204) {
             // An offline-mode user logged onto this online-mode proxy.
-            return GameProfileResponse.error(GameProfileResponse.Status.ERROR_OFFLINE_USER);
+            return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_OFFLINE_USER);
           } else {
             // Something else went wrong
             LOGGER.error(
                 "Got an unexpected error code {} whilst contacting Mojang to log in {} ({})",
                 response.statusCode(), username, playerIp);
-            return GameProfileResponse.error(GameProfileResponse.Status.ERROR_AUTH_DOWN);
+            return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_AUTH_DOWN);
           }
         });
   }

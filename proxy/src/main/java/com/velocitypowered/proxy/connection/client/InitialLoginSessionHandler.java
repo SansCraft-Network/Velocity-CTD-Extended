@@ -17,15 +17,12 @@
 
 package com.velocitypowered.proxy.connection.client;
 
-import static com.google.common.net.UrlEscapers.urlFormParameterEscaper;
-import static com.velocitypowered.proxy.VelocityServer.GENERAL_GSON;
 import static com.velocitypowered.proxy.connection.VelocityConstants.EMPTY_BYTE_ARRAY;
 import static com.velocitypowered.proxy.crypto.EncryptionUtils.decryptRsa;
 import static com.velocitypowered.proxy.crypto.EncryptionUtils.generateServerId;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
-import com.velocityctd.proxy.connection.profile.GameProfileFetcher;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
 import com.velocitypowered.api.event.connection.PreLoginEvent.PreLoginComponentResult;
 import com.velocitypowered.api.network.ProtocolVersion;
@@ -44,10 +41,6 @@ import com.velocitypowered.proxy.protocol.packet.ServerLoginPacket;
 import com.velocitypowered.proxy.util.VelocityProperties;
 import io.netty.buffer.ByteBuf;
 import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
@@ -110,12 +103,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
    */
   private final boolean forceKeyAuthentication;
 
-  /**
-   * The {@link GameProfileFetcher} instance used to fetch {@link GameProfile}'s.
-   * A persistent instance is used for HTTP keepalive and caching.
-   */
-  private final GameProfileFetcher profileFetcher;
-
   InitialLoginSessionHandler(final VelocityServer server, final MinecraftConnection mcConnection,
                              final LoginInboundConnection inbound) {
     this.server = Preconditions.checkNotNull(server, "server");
@@ -123,7 +110,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
     this.forceKeyAuthentication = VelocityProperties.readBoolean(
             "auth.forceSecureProfiles", server.getConfiguration().isForceKeyAuthentication());
-    this.profileFetcher = new GameProfileFetcher(server);
   }
 
   /**
@@ -278,7 +264,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
       String playerIp = ((InetSocketAddress) mcConnection.getRemoteAddress()).getHostString();
 
-      profileFetcher.fetchProfile(playerIp, login.getUsername(), serverId)
+      server.getGameProfileFetcher().fetchProfile(playerIp, login.getUsername(), serverId)
               .whenCompleteAsync((response, throwable) -> {
                 if (mcConnection.isClosed()) {
                   // The player disconnected after we authenticated them.

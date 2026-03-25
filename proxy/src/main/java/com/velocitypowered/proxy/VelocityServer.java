@@ -35,6 +35,8 @@ import com.velocityctd.proxy.command.builtin.ProxyAliasCommand;
 import com.velocityctd.proxy.command.builtin.QueueAdminCommand;
 import com.velocityctd.proxy.command.builtin.SlashServerCommand;
 import com.velocityctd.proxy.command.builtin.TransferCommand;
+import com.velocityctd.proxy.connection.profile.GameProfileFetcher;
+import com.velocityctd.proxy.connection.profile.cache.MemoryGameProfileCache;
 import com.velocityctd.proxy.queue.RedisVelocityQueueManager;
 import com.velocityctd.proxy.queue.VelocityQueueManager;
 import com.velocityctd.proxy.redis.VelocityRedis;
@@ -101,6 +103,7 @@ import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -332,6 +335,11 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   private @MonotonicNonNull VelocityRedis redis;
 
+  /**
+   * The global {@link GameProfileFetcher} used by {@link com.velocitypowered.proxy.connection.client.InitialLoginSessionHandler}.
+   */
+  private @MonotonicNonNull GameProfileFetcher gameProfileFetcher;
+
   VelocityServer(final ProxyOptions options) {
     pluginManager = new VelocityPluginManager(this);
     eventManager = new VelocityEventManager(pluginManager);
@@ -376,6 +384,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   public VelocityRedis getRedis() {
     return redis;
+  }
+
+  public @MonotonicNonNull GameProfileFetcher getGameProfileFetcher() {
+    return gameProfileFetcher;
   }
 
   @Override
@@ -512,6 +524,15 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       for (Map.Entry<String, BackendServerConfig> entry : configuration.getBackendServers().entrySet()) {
         servers.register(new ServerInfo(entry.getKey(), AddressUtil.parseAddress(entry.getValue().address()), entry.getValue().forwardingMode()));
       }
+    }
+
+    gameProfileFetcher = new GameProfileFetcher(this);
+    if (configuration.isCachePlayerProfileResultEnabled()) {
+      LOGGER.debug("Adding memory profile cache");
+      gameProfileFetcher.getCacheLayers().addFirst(new MemoryGameProfileCache(
+          Duration.ofMinutes(configuration.getProfileCacheExpiryMinutes()),
+          1_000
+      ));
     }
 
     if (configuration.getRedis().isEnabled()) {

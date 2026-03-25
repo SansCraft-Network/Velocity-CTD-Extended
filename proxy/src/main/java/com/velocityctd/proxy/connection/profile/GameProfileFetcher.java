@@ -78,70 +78,76 @@ public class GameProfileFetcher {
   }
 
   public CompletableFuture<GameProfileResponse> fetchProfile(String playerIp, String username, String serverId) {
-    for (int i = 0; i < cacheLayers.size(); i++) {
-      var layer = cacheLayers.get(i);
-      GameProfile cachedProfile = layer.findByUsername(username).orElse(null);
-      if (cachedProfile != null) {
-        // Insert to lower-tier cache layers
-        for (int j = 0; j < i; j++) {
-          cacheLayers.get(j).insert(cachedProfile);
-        }
-
-        LOGGER.debug("Fetched game profile from cache (hit from {})", layer.getClass().getSimpleName());
-        return CompletableFuture.completedFuture(
-            new GameProfileResponse(cachedProfile, GameProfileResponse.Status.SUCCESS_CACHED));
-      }
-    }
-
-    String url;
-    if (server.getConfiguration().shouldPreventClientProxyConnections()) {
-      url = String.format(HASJOINED_WITH_IP_URL,
-          urlFormParameterEscaper().escape(username),
-          urlFormParameterEscaper().escape(serverId),
-          urlFormParameterEscaper().escape(playerIp));
-    } else {
-      url = String.format(HASJOINED_NO_IP_URL,
-          urlFormParameterEscaper().escape(username),
-          urlFormParameterEscaper().escape(serverId));
-    }
-
-    HttpRequest httpRequest = HttpRequest.newBuilder()
-        .setHeader("User-Agent",
-            server.getVersion().getName() + "/" + server.getVersion().getVersion())
-        .uri(URI.create(url))
-        .build();
-
-    Stopwatch stopwatch = Stopwatch.createStarted(); // For debug logging
-
-    return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
-        .handle((response, throwable) -> {
-          if (throwable != null) {
-            LOGGER.error("Unable to authenticate player", throwable);
-            return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_AUTH_DOWN);
+    return CompletableFuture.supplyAsync(() -> {
+      for (int i = 0; i < cacheLayers.size(); i++) {
+        var layer = cacheLayers.get(i);
+        GameProfile cachedProfile = layer.findByUsername(username).orElse(null);
+        if (cachedProfile != null) {
+          // Insert to lower-tier cache layers
+          for (int j = 0; j < i; j++) {
+            cacheLayers.get(j).insert(cachedProfile);
           }
 
-          stopwatch.stop();
-          LOGGER.debug("Fetched game profile in {}.", stopwatch);
+          LOGGER.debug("Fetched game profile from cache (hit from {})", layer.getClass().getSimpleName());
+          return new GameProfileResponse(cachedProfile, GameProfileResponse.Status.SUCCESS_CACHED);
+        }
+      }
+      return null;
+    }).thenCompose(cachedResponse -> {
+      if (cachedResponse != null) {
+        return CompletableFuture.completedFuture(cachedResponse);
+      }
 
-          if (response.statusCode() == 200) {
-            GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
+      String url;
+      if (server.getConfiguration().shouldPreventClientProxyConnections()) {
+        url = String.format(HASJOINED_WITH_IP_URL,
+            urlFormParameterEscaper().escape(username),
+            urlFormParameterEscaper().escape(serverId),
+            urlFormParameterEscaper().escape(playerIp));
+      } else {
+        url = String.format(HASJOINED_NO_IP_URL,
+            urlFormParameterEscaper().escape(username),
+            urlFormParameterEscaper().escape(serverId));
+      }
 
-            // Insert profile into caches
-            for (var layer : cacheLayers) {
-              layer.insert(profile);
+      HttpRequest httpRequest = HttpRequest.newBuilder()
+          .setHeader("User-Agent",
+              server.getVersion().getName() + "/" + server.getVersion().getVersion())
+          .uri(URI.create(url))
+          .build();
+
+      Stopwatch stopwatch = Stopwatch.createStarted(); // For debug logging
+
+      return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
+          .handle((response, throwable) -> {
+            if (throwable != null) {
+              LOGGER.error("Unable to authenticate player", throwable);
+              return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_AUTH_DOWN);
             }
 
-            return new GameProfileResponse(profile, GameProfileResponse.Status.SUCCESS);
-          } else if (response.statusCode() == 204) {
-            // An offline-mode user logged onto this online-mode proxy.
-            return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_OFFLINE_USER);
-          } else {
-            // Something else went wrong
-            LOGGER.error(
-                "Got an unexpected error code {} whilst contacting Mojang to log in {} ({})",
-                response.statusCode(), username, playerIp);
-            return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_AUTH_DOWN);
-          }
-        });
+            stopwatch.stop();
+            LOGGER.debug("Fetched game profile in {}.", stopwatch);
+
+            if (response.statusCode() == 200) {
+              GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
+
+              // Insert profile into caches
+              for (var layer : cacheLayers) {
+                layer.insert(profile);
+              }
+
+              return new GameProfileResponse(profile, GameProfileResponse.Status.SUCCESS);
+            } else if (response.statusCode() == 204) {
+              // An offline-mode user logged onto this online-mode proxy.
+              return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_OFFLINE_USER);
+            } else {
+              // Something else went wrong
+              LOGGER.error(
+                  "Got an unexpected error code {} whilst contacting Mojang to log in {} ({})",
+                  response.statusCode(), username, playerIp);
+              return new GameProfileResponse(null, GameProfileResponse.Status.ERROR_AUTH_DOWN);
+            }
+          });
+    });
   }
 }

@@ -23,8 +23,6 @@ import static com.velocitypowered.proxy.connection.VelocityConstants.EMPTY_BYTE_
 import static com.velocitypowered.proxy.crypto.EncryptionUtils.decryptRsa;
 import static com.velocitypowered.proxy.crypto.EncryptionUtils.generateServerId;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Longs;
 import com.velocitypowered.api.event.connection.PreLoginEvent;
@@ -52,17 +50,14 @@ import java.net.http.HttpResponse;
 import java.security.GeneralSecurityException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles authenticating the player to Mojang's servers.
@@ -122,11 +117,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
    */
   private final boolean forceKeyAuthentication;
 
-  /**
-   * Caffeine-backed profile result cache used to avoid excessive Mojang API calls.
-   */
-  private final Cache<@NotNull UUID, GameProfile> profileResultCache;
-
   InitialLoginSessionHandler(final VelocityServer server, final MinecraftConnection mcConnection,
                              final LoginInboundConnection inbound) {
     this.server = Preconditions.checkNotNull(server, "server");
@@ -134,20 +124,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
     this.forceKeyAuthentication = VelocityProperties.readBoolean(
             "auth.forceSecureProfiles", server.getConfiguration().isForceKeyAuthentication());
-
-    int expiration = server.getConfiguration().getProfileCacheExpiryMinutes();
-    if (!server.getConfiguration().isCachePlayerProfileResultEnabled()) {
-      this.profileResultCache = null;
-    } else {
-      if (expiration <= 0) {
-        expiration = 1;
-      }
-
-      this.profileResultCache = Caffeine.newBuilder()
-          .expireAfterWrite(Duration.ofMinutes(expiration))
-          .maximumSize(10_000) // To ensure invalid sessions cannot flood cache
-          .build();
-    }
   }
 
   /**
@@ -296,16 +272,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
       byte[] decryptedSharedSecret = decryptRsa(serverKeyPair, packet.getSharedSecret());
       String serverId = generateServerId(decryptedSharedSecret, serverKeyPair.getPublic());
 
-      if (profileResultCache != null && login.getHolderUuid() != null) {
-        GameProfile cachedProfile = profileResultCache.getIfPresent(login.getHolderUuid());
-        if (cachedProfile != null) {
-          mcConnection.enableEncryption(decryptedSharedSecret);
-          mcConnection.setActiveSessionHandler(StateRegistry.LOGIN,
-              new AuthSessionHandler(server, inbound, cachedProfile, true, serverId));
-          return true;
-        }
-      }
-
       String playerIp = ((InetSocketAddress) mcConnection.getRemoteAddress()).getHostString();
       String url = String.format(MOJANG_HASJOINED_URL, urlFormParameterEscaper().escape(login.getUsername()), serverId);
 
@@ -318,6 +284,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                       server.getVersion().getName() + "/" + server.getVersion().getVersion())
               .uri(URI.create(url))
               .build();
+
       // noinspection resource
       final HttpClient httpClient = server.createHttpClient();
       httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
@@ -347,9 +314,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
             if (response.statusCode() == 200) {
               final GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
-              if (profileResultCache != null && login.getHolderUuid() != null) {
-                profileResultCache.put(login.getHolderUuid(), profile);
-              }
 
               // Not so fast, now we verify the public key for 1.19.1+
               if (inbound.getIdentifiedKey() != null

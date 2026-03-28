@@ -528,24 +528,9 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
 
     gameProfileFetcher = new GameProfileFetcher(this);
-    if (configuration.isCachePlayerProfileResultEnabled() && configuration.isOnlineMode()) {
-      LOGGER.debug("Registering memory profile cache");
-      gameProfileFetcher.getCacheLayers().addFirst(new MemoryGameProfileCache(
-          Duration.ofMinutes(configuration.getProfileCacheExpiryMinutes()),
-          1_000
-      ));
-    }
 
     if (configuration.getRedis().isEnabled()) {
       redis = new VelocityRedis(this);
-
-      if (configuration.isCachePlayerProfileResultEnabled() && configuration.isOnlineMode()) {
-        LOGGER.debug("Registering Redis profile cache");
-        gameProfileFetcher.getCacheLayers().addLast(new RedisGameProfileCache(
-            redis.getProvider(),
-            Duration.ofMinutes(configuration.getProfileCacheExpiryMinutes())
-        ));
-      }
     }
 
     if (configuration.getQueue().isEnabled()) {

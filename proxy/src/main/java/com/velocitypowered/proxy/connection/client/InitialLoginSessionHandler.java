@@ -98,6 +98,12 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   private final LoginInboundConnection inbound;
 
   /**
+   * The {@link HttpClient} used to fetch {@link #MOJANG_HASJOINED_URL}.
+   * May be a shared instance.
+   */
+  private final HttpClient httpClient;
+
+  /**
    * The login packet sent by the client. May be {@code null} if not yet received.
    */
   private @MonotonicNonNull ServerLoginPacket login;
@@ -118,10 +124,11 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   private final boolean forceKeyAuthentication;
 
   InitialLoginSessionHandler(final VelocityServer server, final MinecraftConnection mcConnection,
-                             final LoginInboundConnection inbound) {
+                             final LoginInboundConnection inbound, final HttpClient httpClient) {
     this.server = Preconditions.checkNotNull(server, "server");
     this.mcConnection = Preconditions.checkNotNull(mcConnection, "mcConnection");
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
+    this.httpClient = Preconditions.checkNotNull(httpClient, "httpClient");
     this.forceKeyAuthentication = VelocityProperties.readBoolean(
         "auth.forceSecureProfiles", server.getConfiguration().isForceKeyAuthentication());
   }
@@ -285,8 +292,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
           .uri(URI.create(url))
           .build();
 
-      // noinspection resource
-      final HttpClient httpClient = server.createHttpClient();
       httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
           .whenCompleteAsync((response, throwable) -> {
             if (mcConnection.isClosed()) {
@@ -337,16 +342,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
                   response.statusCode(), login.getUsername(), playerIp);
               inbound.disconnect(Component.translatable("multiplayer.disconnect.authservers_down"));
             }
-          }, mcConnection.eventLoop())
-          .thenRun(() -> {
-            try {
-              httpClient.close();
-            } catch (Exception e) {
-              // In Java 21, the HttpClient does not throw any Exception
-              // when trying to clean its resources, so this should not happen
-              LOGGER.error("An unknown error occurred while trying to close an HttpClient", e);
-            }
-          });
+          }, mcConnection.eventLoop());
     } catch (GeneralSecurityException e) {
       LOGGER.error("Unable to enable encryption", e);
       mcConnection.close(true);

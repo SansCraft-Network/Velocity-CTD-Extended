@@ -150,7 +150,6 @@ import net.kyori.adventure.resource.ResourcePackRequestLike;
 import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.sound.SoundStop;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.TextReplacementConfig;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.logger.slf4j.ComponentLogger;
@@ -1327,9 +1326,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                   Argument.component("reason", disconnectReason)), safe);
     }
 
-    if (this.server.isQueueEnabled() && disconnectReason instanceof TextComponent text) {
+    if (this.server.isQueueEnabled()) {
       for (String reason : this.server.getConfiguration().getQueue().getBannedReason()) {
-        if (ComponentUtils.containsString(text, reason)) {
+        if (ComponentUtils.containsString(disconnectReason, reason)) {
           this.server.getQueueManager().removePlayerEntirely(this);
           break;
         }

@@ -1441,7 +1441,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                     String targetServerName = originalEvent.getServer().getServerInfo().getName();
 
                     if (!this.server.getConfiguration().getQueue().getNoQueueServers().contains(targetServerName)) {
-                      TextComponent kickMsg = (TextComponent) originalEvent.getServerKickReason().orElse(Component.empty());
+                      Component kickMsg = originalEvent.getServerKickReason().orElse(Component.empty());
                       final VelocityQueue queue = this.server.getQueueManager().getQueue(targetServerName);
 
                       // Checks if the kick reason is valid for a re-queue
@@ -2609,17 +2609,15 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     }
   }
 
-  private static boolean containsString(final TextComponent component, final String searchString) {
-    if (component.content().contains(searchString)) {
+  private static boolean containsString(final Component component, final String searchString) {
+    if (component instanceof TextComponent textComponent
+        && textComponent.content().contains(searchString)) {
       return true;
     }
 
-    // Recursively check children components
     for (Component child : component.children()) {
-      if (child instanceof TextComponent textChild) {
-        if (containsString(textChild, searchString)) {
-          return true;
-        }
+      if (containsString(child, searchString)) {
+        return true;
       }
     }
 

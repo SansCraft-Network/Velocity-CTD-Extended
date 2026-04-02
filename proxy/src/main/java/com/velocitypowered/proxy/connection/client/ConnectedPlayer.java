@@ -110,6 +110,7 @@ import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
 import com.velocitypowered.proxy.tablist.VelocityTabList;
 import com.velocitypowered.proxy.tablist.VelocityTabListLegacy;
 import com.velocitypowered.proxy.util.ClosestLocaleMatcher;
+import com.velocitypowered.proxy.util.ComponentUtils;
 import com.velocitypowered.proxy.util.DurationUtils;
 import com.velocitypowered.proxy.util.TranslatableMapper;
 import com.velocitypowered.proxy.util.collect.CappedSet;
@@ -1328,7 +1329,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
     if (this.server.isQueueEnabled() && disconnectReason instanceof TextComponent text) {
       for (String reason : this.server.getConfiguration().getQueue().getBannedReason()) {
-        if (containsString(text, reason)) {
+        if (ComponentUtils.containsString(text, reason)) {
           this.server.getQueueManager().removePlayerEntirely(this);
           break;
         }
@@ -1448,7 +1449,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                       // This is done to make sure players don't get constantly sent over and over again in a kick loop
                       boolean isValidReason = this.server.getConfiguration().getQueue().getBannedReason()
                           .stream()
-                          .noneMatch(text -> containsString(kickMsg, text));
+                          .noneMatch(text -> ComponentUtils.containsString(kickMsg, text));
 
                       if (isValidReason && (queue.getState() != QueueState.PAUSED
                           || this.server.getConfiguration().getQueue().isAllowPausedQueueJoining())) {
@@ -2476,9 +2477,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                     .orElse(ConnectionMessages.INTERNAL_SERVER_CONNECTION_ERROR);
             handleConnectionException(toConnect, DisconnectPacket.create(reason, getProtocolVersion(), connection.getState()), status.isSafe());
 
-            if (server.isQueueEnabled() && reason instanceof TextComponent textComponent) {
+            if (server.isQueueEnabled()) {
               for (String r : server.getConfiguration().getQueue().getBannedReason()) {
-                if (containsString(textComponent, r)) {
+                if (ComponentUtils.containsString(reason, r)) {
                   server.getQueueManager().removePlayerEntirely(ConnectedPlayer.this);
                 }
               }
@@ -2607,21 +2608,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     private boolean hasSameName(final VelocityRegisteredServer server, final String name) {
       return server.getServerInfo().getName().equalsIgnoreCase(name);
     }
-  }
-
-  private static boolean containsString(final Component component, final String searchString) {
-    if (component instanceof TextComponent textComponent
-        && textComponent.content().contains(searchString)) {
-      return true;
-    }
-
-    for (Component child : component.children()) {
-      if (containsString(child, searchString)) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   /**

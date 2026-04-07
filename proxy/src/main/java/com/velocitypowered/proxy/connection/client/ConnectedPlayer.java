@@ -1565,7 +1565,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     LOGGER.debug("Scheduling auto-queue for player {}.", getUsername());
 
     tryAutoQueueTask = server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-      // Safe-guard if this player is offline. Should never be reached because the task
+      // Safeguard if this player is offline. Should never be reached because the task
       // should be cancelled by ConnectedPlayer#disconnected.
       if (!server.getAllPlayers().contains(this)) {
         LOGGER.debug("Aborting auto-queueing player {} (now offline).", getUsername());
@@ -1591,6 +1591,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         VelocityRegisteredServer target = queueServers.getFirst();
         server.getQueueManager().queue(this, target);
       }
+
+      tryAutoQueueTask = null;
     })
         .delay(Duration.ofSeconds(2))
         .schedule();

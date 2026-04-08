@@ -74,7 +74,7 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
   private static final long UNKNOWN_PLAY_WINDOW_MILLIS =
       Long.getLong("velocity.serverbound-unknown-play-window-ms", 1000L);
 
-  private static final AttributeKey<long[]> UNKNOWN_PLAY_WINDOW =
+  private static final AttributeKey<UnknownPlayWindowState> UNKNOWN_PLAY_WINDOW =
       AttributeKey.valueOf("velocity:unknown_play_window");
 
   /**
@@ -231,16 +231,16 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
     }
 
     long now = System.currentTimeMillis();
-    long[] window = ctx.channel().attr(UNKNOWN_PLAY_WINDOW).get();
-    if (window == null || now - window[0] >= UNKNOWN_PLAY_WINDOW_MILLIS) {
-      window = new long[]{now, 0L};
+    UnknownPlayWindowState window = ctx.channel().attr(UNKNOWN_PLAY_WINDOW).get();
+    if (window == null || now - window.windowStartedAtMillis >= UNKNOWN_PLAY_WINDOW_MILLIS) {
+      window = new UnknownPlayWindowState(now, 0);
       ctx.channel().attr(UNKNOWN_PLAY_WINDOW).set(window);
     }
 
-    window[1] += frameSize;
-    if (window[1] > UNKNOWN_PLAY_MAX_BYTES_PER_WINDOW) {
+    window.bytes += frameSize;
+    if (window.bytes > UNKNOWN_PLAY_MAX_BYTES_PER_WINDOW) {
       LOGGER.warn("Disconnecting {} for unknown PLAY packet byte flood ({} bytes in window)",
-          ctx.channel().remoteAddress(), window[1]);
+          ctx.channel().remoteAddress(), window.bytes);
       buf.release();
       ctx.close();
       return true;
@@ -288,5 +288,16 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
    */
   public ProtocolUtils.Direction getDirection() {
     return direction;
+  }
+
+  private static final class UnknownPlayWindowState {
+
+    long windowStartedAtMillis;
+    int bytes;
+
+    UnknownPlayWindowState(final long windowStartedAtMillis, final int bytes) {
+      this.windowStartedAtMillis = windowStartedAtMillis;
+      this.bytes = bytes;
+    }
   }
 }

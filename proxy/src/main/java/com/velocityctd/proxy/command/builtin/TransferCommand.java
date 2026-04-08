@@ -21,32 +21,30 @@ import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.velocityctd.proxy.cluster.VelocityClusterPlayer;
 import com.velocityctd.proxy.command.CommandUtils;
-import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
-import com.velocityctd.proxy.redis.impl.transaction.VelocityTransferRemote;
+import com.velocityctd.proxy.command.PlayerIdentifier;
+import com.velocityctd.proxy.util.CompletableUtils;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
-import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.config.ProxyAddress;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
-import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
-import com.velocitypowered.proxy.plugin.virtual.VelocityVirtualPlugin;
-import com.velocitypowered.proxy.server.VelocityRegisteredServer;
-import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.translation.Argument;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements Velocity-CTD's {@code /transfer} command.
  * Sends players to another proxy if they're above 1.20.5.
  */
 public class TransferCommand implements BuiltinCommand {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(TransferCommand.class);
 
   private final VelocityServer server;
 
@@ -69,49 +67,7 @@ public class TransferCommand implements BuiltinCommand {
             .requires(source -> source.getPermissionValue("velocity.command.transfer") == Tristate.TRUE)
             .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
             .then(BrigadierCommand.requiredArgumentBuilder("player", StringArgumentType.word())
-                    .suggests((ctx, builder) -> {
-                      String argument = ctx.getArguments().containsKey("player")
-                              ? ctx.getArgument("player", String.class)
-                              : "";
-
-                      if ("all".regionMatches(true, 0, argument, 0, argument.length())) {
-                        builder.suggest("all");
-                      }
-
-                      if ("current".regionMatches(true, 0, argument, 0, argument.length())
-                              && ctx.getSource() instanceof ConnectedPlayer) {
-                        builder.suggest("current");
-                      }
-
-                      if (argument.isEmpty() || argument.startsWith("+")) {
-                        for (VelocityRegisteredServer server : server.getAllServers()) {
-                          String serverName = server.getServerInfo().getName();
-
-                          if (serverName.regionMatches(true, 0, argument, 1, argument.length() - 1)) {
-                            builder.suggest("+" + serverName);
-                          }
-                        }
-                      }
-
-                      if (server.isRedisEnabled()) {
-                        for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
-                          if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
-                            builder.suggest(playerEntry.getUsername());
-                          }
-                        }
-
-                        return builder.buildFuture();
-                      }
-
-                      for (ConnectedPlayer player : server.getAllPlayers()) {
-                        String playerName = player.getUsername();
-                        if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
-                          builder.suggest(playerName);
-                        }
-                      }
-
-                      return builder.buildFuture();
-                    })
+                    .suggests(PlayerIdentifier.suggest(server, "player"))
                     .executes(ctx -> CommandUtils.emitUsage(ctx, label()))
                     .then(BrigadierCommand.requiredArgumentBuilder("proxy-id", StringArgumentType.word())
                             .suggests(CommandUtils.suggestProxy(server, "proxy-id"))
@@ -131,149 +87,84 @@ public class TransferCommand implements BuiltinCommand {
             .findFirst()
             .orElse(null);
 
-    if (this.server.isRedisEnabled()) {
-      if (!this.server.getRedis().getPlayerService().isPlayerOnline(player) && !player.equalsIgnoreCase("all")
-              && !player.equalsIgnoreCase("current") && !player.startsWith("+")) {
-        context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-                .arguments(Argument.string("player", player)));
-        return -1;
-      }
-    } else {
-      if (this.server.getPlayer(player).isEmpty() && !player.equalsIgnoreCase("all") && !player.equalsIgnoreCase("current")
-              && !player.startsWith("+")) {
-        context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-                .arguments(Argument.string("player", player)));
-        return -1;
-      }
-    }
-
     if (address == null) {
       context.getSource().sendMessage(Component.translatable("velocity.command.error.transfer.invalid-proxy")
               .arguments(Component.text(proxyId)));
       return -1;
     }
 
-    if (player.equalsIgnoreCase("all")) {
-      context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.all")
-              .arguments(Component.text(normalizedProxyId)));
+    PlayerIdentifier.Result result = PlayerIdentifier.resolve(server, player, context.getSource());
+    if (!result.success()) {
+      sendResolveError(context.getSource(), result);
+      return -1;
+    }
 
-      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        for (ConnectedPlayer connectedPlayer : this.server.getAllPlayers()) {
-          if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
-          }
-        }
-      }).delay(1, TimeUnit.SECONDS).schedule();
-    } else if (player.startsWith("+")) {
-      VelocityRegisteredServer foundServer = findServer(player.substring(1)).orElse(null);
-      if (foundServer == null) {
-        context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-                .arguments(Component.text(player)));
-        return -1;
-      }
-
-      context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.server")
-              .arguments(
-                      Argument.string("server", foundServer.getServerInfo().getName()),
+    switch (result.type()) {
+      case PLAYER -> {
+        if (result.players().size() == 1) {
+          VelocityClusterPlayer clusterPlayer = result.players().iterator().next();
+          clusterPlayer.transfer(address.ip(), address.port()).thenAccept(success -> {
+            if (success) {
+              context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
+                  .arguments(Argument.string("player", clusterPlayer.getUsername()),
                       Argument.string("proxy", normalizedProxyId)));
-
-      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        for (ConnectedPlayer connectedPlayer : foundServer.getPlayersConnected()) {
-          if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
-          }
-        }
-      }).delay(1, TimeUnit.SECONDS).schedule();
-    } else if (player.equalsIgnoreCase("current")) {
-      if (!(context.getSource() instanceof ConnectedPlayer sender)) {
-        context.getSource().sendMessage(Component.translatable("velocity.command.players-only"));
-        return -1;
-      }
-
-      VelocityServerConnection foundServerConn = sender.getCurrentServer().orElse(null);
-      if (foundServerConn == null) {
-        context.getSource().sendMessage(Component.translatable("velocity.command.server-does-not-exist")
-                .arguments(Component.text(player)));
-        return -1;
-      }
-
-      VelocityRegisteredServer foundServer = this.server.getServer(foundServerConn.getServerInfo().getName()).orElseThrow();
-
-      context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.server")
-              .arguments(Component.text(foundServer.getServerInfo().getName()),
-                      Argument.string("proxy", normalizedProxyId)));
-
-      this.server.getScheduler().buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
-        for (ConnectedPlayer connectedPlayer : foundServer.getPlayersConnected()) {
-          if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-            connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
-          }
-        }
-      }).delay(1, TimeUnit.SECONDS).schedule();
-    } else {
-      if (this.server.isRedisEnabled()) {
-        PlayerEntry playerEntry = this.server.getRedis().getPlayerService().getPlayerEntry(player);
-
-        if (playerEntry == null || playerEntry.getUsername() == null || playerEntry.getProxyId() == null) {
-          context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-                  .arguments(Argument.string("player", player)));
-          return -1;
-        }
-
-        context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
-                .arguments(Argument.string("player", playerEntry.getUsername()),
-                        Argument.string("proxy", normalizedProxyId)));
-
-        new VelocityTransferRemote(context.getSource(), playerEntry.getUniqueId(), address.ip(), address.port())
-                .publish();
-      } else {
-        Optional<ConnectedPlayer> maybePlayer = this.server.getPlayer(player);
-        if (maybePlayer.isEmpty()) {
-          context.getSource().sendMessage(Component.translatable("velocity.command.player-not-found")
-                  .arguments(Argument.string("player", player)));
-          return -1;
-        }
-
-        ConnectedPlayer connectedPlayer = maybePlayer.get();
-        if (connectedPlayer.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-          context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.player")
-                  .arguments(Argument.string("player", connectedPlayer.getUsername()),
-                          Argument.string("proxy", normalizedProxyId)));
-          connectedPlayer.transferToHost(new InetSocketAddress(address.ip(), address.port()));
+            } else {
+              context.getSource().sendMessage(Component.translatable("velocity.command.transfer.invalid-version")
+                  .arguments(Argument.string("player", clusterPlayer.getUsername())));
+            }
+          }).exceptionally(ex -> {
+            handleTransferError(clusterPlayer, ex);
+            return null;
+          });
         } else {
-          context.getSource().sendMessage(Component.translatable("velocity.command.transfer.invalid-version")
-                  .arguments(Argument.string("player", connectedPlayer.getUsername())));
+          // Multiple comma-separated players
+          context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.all")
+                  .arguments(Component.text(normalizedProxyId)));
+          transferAll(result, address);
         }
+      }
+      case SERVER, CURRENT_SERVER -> {
+        context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.server")
+                .arguments(
+                    Argument.string("server", result.name()),
+                    Argument.string("proxy", normalizedProxyId)));
+        transferAll(result, address);
+      }
+      default -> {
+        context.getSource().sendMessage(Component.translatable("velocity.command.transfer.success.all")
+                .arguments(Component.text(normalizedProxyId)));
+        transferAll(result, address);
       }
     }
 
     return Command.SINGLE_SUCCESS;
   }
 
-  private Optional<VelocityRegisteredServer> findServer(String serverName) {
-    Collection<VelocityRegisteredServer> servers = server.getAllServers();
-    String lowerServerName = serverName.toLowerCase();
+  private void transferAll(PlayerIdentifier.Result result, ProxyAddress address) {
+    for (VelocityClusterPlayer clusterPlayer : result.players()) {
+      clusterPlayer.transfer(address.ip(), address.port()).exceptionally(ex -> {
+        handleTransferError(clusterPlayer, ex);
+        return null;
+      });
+    }
+  }
 
-    Optional<VelocityRegisteredServer> bestMatch = Optional.empty();
+  private void handleTransferError(VelocityClusterPlayer player, Throwable ex) {
+    if (!(CompletableUtils.cause(ex) instanceof TimeoutException)) {
+      LOGGER.error("Failed to transfer player {}", player.getUsername(), ex);
+    }
+  }
 
-    for (VelocityRegisteredServer server : servers) {
-      String lowerName = server.getServerInfo().getName().toLowerCase();
-
-      if (lowerName.equals(lowerServerName)) {
-        bestMatch = Optional.of(server);
-        break;
-      }
-
-      if (lowerName.contains(lowerServerName)) {
-        if (bestMatch.isPresent()) {
-          break;
-        }
-
-        bestMatch = Optional.of(server);
+  private void sendResolveError(CommandSource source, PlayerIdentifier.Result result) {
+    switch (result.type()) {
+      case PLAYER -> source.sendMessage(CommandMessages.PLAYER_NOT_FOUND
+          .arguments(Argument.string("player", result.name())));
+      case SERVER -> source.sendMessage(CommandMessages.SERVER_DOES_NOT_EXIST
+          .arguments(Component.text(result.name())));
+      case PLAYER_EXECUTOR_REQUIRED -> source.sendMessage(CommandMessages.PLAYERS_ONLY);
+      default -> {
       }
     }
-
-    return bestMatch;
   }
 
   private String normalizeProxyId(String inputProxyId) {

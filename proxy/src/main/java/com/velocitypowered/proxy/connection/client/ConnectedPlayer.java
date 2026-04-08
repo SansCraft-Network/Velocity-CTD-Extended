@@ -436,9 +436,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     }
 
     if (this.fullyConnected) {
-      if (this.server.isRedisEnabled()) {
-        this.server.getRedis().getPlayerService().onPlayerDisconnect(this);
-      }
+      this.server.getClusterPlayerService().onPlayerDisconnect(this);
 
       if (this.server.isQueueEnabled()) {
         this.server.getQueueManager().onPlayerDisconnect(this);
@@ -675,9 +673,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     this.settings = cs;
     server.getEventManager().fireAndForget(new PlayerSettingsChangedEvent(this, cs));
 
-    if (server.isRedisEnabled()) {
-      server.getRedis().getPlayerService().onPlayerSettingsChange(this, cs);
-    }
+    this.server.getClusterPlayerService().onPlayerSettingsChange(this, cs);
   }
 
   /**

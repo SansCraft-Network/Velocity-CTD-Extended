@@ -21,12 +21,12 @@ import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import com.velocityctd.proxy.redis.depot.Depot;
 import com.velocityctd.proxy.redis.depot.DepotEntry;
-import com.velocityctd.proxy.redis.packet.RedisPacket;
-import com.velocityctd.proxy.redis.packet.serialization.PacketSerializer;
-import com.velocityctd.proxy.redis.registration.ConsumerRouteRegistration;
-import com.velocityctd.proxy.redis.registration.RouteRegistration;
+import com.velocityctd.proxy.redis.handler.RouteHandler;
+import com.velocityctd.proxy.redis.packet.DataPacket;
+import com.velocityctd.proxy.redis.packet.PacketSerializer;
 import com.velocityctd.proxy.redis.transaction.Transaction;
 import com.velocityctd.proxy.redis.transaction.TransactionHandler;
+import com.velocitypowered.api.scheduler.Scheduler;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -37,6 +37,7 @@ import io.lettuce.core.pubsub.api.sync.RedisPubSubCommands;
 import java.util.Collection;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -74,9 +75,13 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * Constructs a new {@link LettuceProvider}.
    *
    * @param config the {@link VelocityConfiguration.Redis} instance to use for connection credentials
+   * @param scheduler the scheduler used for transaction timeout tasks
+   * @param packetSerializer the serializer for packet (de)serialization
    */
-  public LettuceProvider(final VelocityConfiguration.Redis config) {
-    super();
+  public LettuceProvider(final VelocityConfiguration.Redis config,
+                         final @NotNull Scheduler scheduler,
+                         final @NotNull PacketSerializer packetSerializer) {
+    super(scheduler, packetSerializer);
 
     this.client = RedisClient.create(RedisURI.Builder.redis(config.getHost(), config.getPort())
             .withAuthentication(Objects.requireNonNullElse(config.getUsername(), ""),
@@ -122,39 +127,21 @@ public final class LettuceProvider extends AbstractRedisProvider {
           return;
         }
 
-        final RedisPacket redisPacket = PacketSerializer.deserialize(message);
-        if (redisPacket == null) {
+        final DataPacket dataPacket = packetSerializer.deserialize(message);
+        if (dataPacket == null) {
           LOGGER.warn("Received a null packet from channel '{}', ignoring", channel);
           return;
         }
 
-        if (redisPacket.isOneWay()) {
-          handleOneWay(redisPacket);
+        if (dataPacket.isOneWay()) {
+          handleOneWay(dataPacket);
           return;
         }
 
-        if (!redisPacket.isReply()) {
-          final TransactionHandler<?, ?> transactionHandler = transactionHandlers.get(Preconditions.checkNotNull(
-                  redisPacket.getTransactionType(), "transactionType is null"));
-          if (transactionHandler == null) {
-            return;
-          }
-
-          final RedisPacket replyPacket = transactionHandler.getReplyPacket(redisPacket);
-          if (replyPacket == null) {
-            return;
-          }
-
-          LettuceProvider.this.publish(replyPacket);
+        if (!dataPacket.isReply()) {
+          handleTransactionRequest(dataPacket);
         } else {
-          final UUID transactionId = Preconditions.checkNotNull(redisPacket.getTransactionId());
-
-          final Transaction<?, ?> transaction = PENDING_TRANSACTIONS.remove(transactionId);
-          if (transaction == null) {
-            return;
-          }
-
-          transaction.complete(redisPacket);
+          handleTransactionReply(dataPacket);
         }
       }
     });
@@ -195,21 +182,20 @@ public final class LettuceProvider extends AbstractRedisProvider {
   }
 
   /**
-   * Publishes the given Redis packet to the configured Redis channel.
+   * Publishes the given {@link DataPacket} to the configured Redis channel.
    *
    * <p>If the publisher has not been initialized yet, a warning is logged and the packet is not sent.</p>
    *
    * @param packet the packet to publish
-   * @param <T> the type of the Redis packet
    */
   @Override
-  public <T extends RedisPacket> void publish(final @NotNull T packet) {
+  protected void publishRaw(final @NotNull DataPacket packet) {
     if (this.publisher == null) {
       LOGGER.warn("Attempted to publish a packet to channel '{}' but the publisher is not initialized", CHANNEL);
       return;
     }
 
-    this.publisher.publish(CHANNEL, PacketSerializer.serialize(packet)).whenComplete((received, throwable) -> {
+    this.publisher.publish(CHANNEL, packetSerializer.serialize(packet)).whenComplete((received, throwable) -> {
       if (throwable != null) {
         LOGGER.warn("Failed to publish packet to '{}' channel", CHANNEL, throwable);
       }
@@ -241,27 +227,75 @@ public final class LettuceProvider extends AbstractRedisProvider {
   }
 
   /**
-   * Handles a one-way {@link RedisPacket} by routing it through a registered {@link RouteRegistration}, if present.
+   * Handles a one-way {@link DataPacket} by routing it through a registered {@link RouteHandler}, if present.
    *
-   * @param redisPacket the one-way packet to handle
-   * @param <T> the type of Redis packet
+   * @param dataPacket the one-way packet to handle
    */
   @SuppressWarnings("unchecked")
-  private <T extends RedisPacket> void handleOneWay(final @NotNull T redisPacket) {
-    final RouteRegistration<T> routeRegistration = (RouteRegistration<T>) routeRegistrations.get(redisPacket.getType());
-    if (routeRegistration == null) {
+  private void handleOneWay(final @NotNull DataPacket dataPacket) {
+    final RouteHandler<Object> routeHandler = (RouteHandler<Object>) routeHandlers.get(dataPacket.getPayloadType());
+    if (routeHandler == null) {
       LOGGER.warn("Received a packet of type '{}' from channel '{}', but no route registration exists, ignoring",
-              redisPacket.getType(), CHANNEL);
+              dataPacket.getPayloadType(), CHANNEL);
       return;
     }
 
     try {
-      if (routeRegistration instanceof ConsumerRouteRegistration<T> consumerRegistration) {
-        consumerRegistration.getConsumer().accept(redisPacket);
-      }
-    } catch (Throwable ignored) {
-      LOGGER.warn("Failed to handle one way packet of type '{}', ignoring", redisPacket.getType());
+      routeHandler.getConsumer().accept(dataPacket.getPayload(packetSerializer));
+    } catch (Throwable t) {
+      LOGGER.warn("Failed to handle one way packet of type '{}'.", dataPacket.getPayloadType(), t);
     }
+  }
+
+  /**
+   * Handles an incoming transaction request by extracting the payload, delegating to the
+   * registered {@link TransactionHandler}, and wrapping the result in a reply {@link DataPacket}.
+   *
+   * @param dataPacket the incoming transaction request packet
+   */
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private void handleTransactionRequest(final @NotNull DataPacket dataPacket) {
+    final TransactionHandler transactionHandler = transactionHandlers.get(dataPacket.getPayloadType());
+    if (transactionHandler == null) {
+      return;
+    }
+
+    final CompletableFuture<?> future = transactionHandler.handleData(dataPacket.getPayload(packetSerializer));
+    if (future == null) {
+      return;
+    }
+
+    future.thenAccept(result -> {
+      if (result == null) {
+        return;
+      }
+
+      final DataPacket replyPacket = DataPacket.of(result, packetSerializer);
+      replyPacket.setTransactionId(Preconditions.checkNotNull(dataPacket.getTransactionId()));
+      replyPacket.setReply(true);
+
+      this.publishRaw(replyPacket);
+    }).exceptionally(throwable -> {
+      LOGGER.warn("Transaction handler for '{}' completed exceptionally", dataPacket.getPayloadType(), throwable);
+      return null;
+    });
+  }
+
+  /**
+   * Handles an incoming transaction reply by extracting the payload and completing
+   * the pending {@link Transaction}.
+   *
+   * @param dataPacket the incoming transaction reply packet
+   */
+  private void handleTransactionReply(final @NotNull DataPacket dataPacket) {
+    final UUID transactionId = Preconditions.checkNotNull(dataPacket.getTransactionId());
+
+    final Transaction<?, ?> transaction = pendingTransactions.remove(transactionId);
+    if (transaction == null) {
+      return;
+    }
+
+    transaction.complete(dataPacket.getPayload(packetSerializer));
   }
 
   /**
@@ -337,9 +371,9 @@ public final class LettuceProvider extends AbstractRedisProvider {
   public final class LettuceDepot<K, V extends DepotEntry<K, V>> implements Depot<K, V> {
 
     /**
-     * Shared {@link Gson} instance used for serializing and deserializing depot entries.
+     * {@link Gson} instance used for serializing and deserializing depot entries.
      */
-    private static final Gson GSON = PacketSerializer.GSON;
+    private final Gson gson = packetSerializer.gson();
 
     /**
      * The Redis hash key name used to store entries for this depot.
@@ -446,7 +480,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @return the JSON string representation of the entry
      */
     private @NotNull String serialize(final @NotNull V entry) {
-      return GSON.toJson(entry, this.valueClass);
+      return gson.toJson(entry, this.valueClass);
     }
 
     /**
@@ -456,7 +490,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @return the deserialized entry
      */
     private @NotNull V deserialize(final @NotNull String data) {
-      final V entry = GSON.fromJson(data, this.valueClass);
+      final V entry = gson.fromJson(data, this.valueClass);
       entry.setDepot(this);
 
       return entry;

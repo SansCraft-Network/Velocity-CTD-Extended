@@ -17,75 +17,51 @@
 
 package com.velocityctd.proxy.redis.transaction;
 
-import com.google.common.base.Preconditions;
-import com.velocityctd.proxy.redis.packet.RedisPacket;
+import java.util.concurrent.CompletableFuture;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a handler for a {@link Transaction}.
+ * Represents a handler for incoming {@link TransactionData}.
  *
- * <p>A {@code TransactionHandler} knows how to transform an incoming {@link RedisPacket}
- * into a reply packet of type {@code R}, and is associated with a specific
- * {@link Transaction} class.</p>
+ * <p>A {@code TransactionHandler} knows how to transform incoming data
+ * into a response of type {@code R}, and is associated with a specific
+ * {@link TransactionData} class.</p>
  *
- * @param <T> the type of the 'sent' {@link RedisPacket} handled by this transaction
- * @param <R> the type of the reply {@link RedisPacket} produced by this handler
+ * @param <T> the type of the data handled by this handler
+ * @param <R> the type of the response data produced by this handler
  */
-public abstract class TransactionHandler<T extends RedisPacket, R extends RedisPacket> {
+public abstract class TransactionHandler<T extends TransactionData<R>, R> {
 
   /**
-   * The transaction class that this handler is responsible for.
+   * The data class that this handler is responsible for.
    */
-  private final Class<? extends Transaction<T, R>> transactionClass;
+  private final Class<T> dataClass;
 
   /**
    * Constructs a new {@link TransactionHandler}.
    *
-   * @param transactionClass the class of the transaction
+   * @param dataClass the class of the data this handler processes
    */
-  public TransactionHandler(final @NotNull Class<? extends Transaction<T, R>> transactionClass) {
-    this.transactionClass = transactionClass;
+  public TransactionHandler(final @NotNull Class<T> dataClass) {
+    this.dataClass = dataClass;
   }
 
   /**
-   * Handles the given Redis packet and produces a reply packet, if needed.
+   * Handles the given data and produces a response asynchronously.
    *
-   * @param packet the incoming packet to handle
-   * @return a newly created reply packet, or {@code null} if no reply is required
+   * @param data the incoming data to handle
+   * @return a future containing the response data, or a future completing to {@code null}
+   *         if no reply is required
    */
-  public abstract @Nullable R handlePacket(T packet);
+  public abstract @Nullable CompletableFuture<R> handleData(T data);
 
   /**
-   * Creates the reply packet for the given incoming {@link RedisPacket}, if any.
+   * Gets the data class associated with this handler.
    *
-   * <p>This method delegates to {@link #handlePacket(RedisPacket)} and, if a reply packet
-   * is returned, propagates the transaction ID from the incoming packet and marks the
-   * reply as a transaction response.</p>
-   *
-   * @param redisPacket the packet to create the reply packet from
-   * @return {@code null} if no reply packet is needed, otherwise the reply packet
+   * @return the data class
    */
-  public @Nullable R getReplyPacket(final @NotNull RedisPacket redisPacket) {
-    // noinspection unchecked
-    final R replyPacket = this.handlePacket((T) redisPacket);
-    if (replyPacket == null) {
-      return null;
-    }
-
-    Preconditions.checkNotNull(redisPacket.getTransactionId());
-    replyPacket.setTransactionId(redisPacket.getTransactionId());
-    replyPacket.setReply(true);
-
-    return replyPacket;
-  }
-
-  /**
-   * Gets the class of the {@link Transaction} associated with this handler.
-   *
-   * @return the transaction class
-   */
-  public Class<? extends Transaction<T, R>> getTransactionClass() {
-    return transactionClass;
+  public Class<T> getDataClass() {
+    return dataClass;
   }
 }

@@ -25,7 +25,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.velocityctd.api.queue.QueueState;
-import com.velocityctd.proxy.redis.impl.depot.PlayerEntry;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
@@ -36,6 +35,7 @@ import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -183,7 +183,7 @@ public class CommandUtils {
           ? ctx.getArgument(argName, String.class)
           : "";
 
-      List<String> possibilities = new ArrayList<>(server.getRedis().getProxyService().getAllProxyIds());
+      List<String> possibilities = new ArrayList<>(server.getClusterProxyService().getAllProxyIds());
       possibilities.addAll(Arrays.asList(magicProxies));
 
       for (String possibility : possibilities) {
@@ -197,31 +197,24 @@ public class CommandUtils {
   }
 
   /**
-   * Suggests the name of an online player.
+   * Suggests the name of online cluster player(s).
+   * Will suggest {@link com.velocityctd.api.cluster.ClusterPlayer} names through
+   * {@link com.velocityctd.proxy.cluster.VelocityClusterPlayerService#getPlayerNames()},
+   * so the player names suggested by this method may be online on other proxies instead.
    *
    * @param server the proxy server instance
    * @param ctx the context passed to the {@code suggests} callback
    * @param builder the builder passed to the {@code builder} callback
-   * @param includeRemote whether to include remote (cross-proxy) players from Redis
    * @return a future that resolves to the suggestions
    */
   public static CompletableFuture<Suggestions> suggestPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx,
-                                                             final SuggestionsBuilder builder, final boolean includeRemote) {
+                                                             final SuggestionsBuilder builder) {
     final String argument = ctx.getArguments().containsKey("player")
         ? ctx.getArgument("player", String.class)
         : "";
-    if (includeRemote && server.isRedisEnabled()) {
-      for (PlayerEntry playerEntry : server.getRedis().getPlayerService().getAll()) {
-        if (playerEntry.getUsername().regionMatches(true, 0, argument, 0, argument.length())) {
-          builder.suggest(playerEntry.getUsername());
-        }
-      }
+    final Collection<String> playerNames = server.getClusterPlayerService().getPlayerNames();
 
-      return builder.buildFuture();
-    }
-
-    for (final ConnectedPlayer player : server.getAllPlayers()) {
-      final String playerName = player.getUsername();
+    for (final String playerName : playerNames) {
       if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
         builder.suggest(playerName);
       }

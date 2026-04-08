@@ -350,7 +350,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           return;
         }
 
-        if (this.server.isRedisEnabled() && !this.server.getRedis().getPlayerService().onPlayerConnect(player)) {
+        if (!this.server.getClusterPlayerService().onPlayerConnect(player)) {
           return;
         }
 

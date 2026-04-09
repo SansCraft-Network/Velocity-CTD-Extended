@@ -28,17 +28,12 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.CorruptedFrameException;
-import io.netty.util.AttributeKey;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Decodes Minecraft packets.
  */
 public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
-
-  private static final Logger LOGGER = LogManager.getLogger(MinecraftDecoder.class);
 
   /**
    * Enables debug logging for packet decode failures.
@@ -64,18 +59,6 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
   private static final boolean DIRECTION_VALIDATION = VelocityProperties.readBoolean(
         "velocity.packet-direction-validation", true
   );
-
-  private static final int UNKNOWN_PLAY_MAX_PACKET_SIZE =
-      Integer.getInteger("velocity.serverbound-unknown-play-max-packet-size", 204800);
-
-  private static final int UNKNOWN_PLAY_MAX_BYTES_PER_WINDOW =
-      Integer.getInteger("velocity.serverbound-unknown-play-max-bytes-per-window", 256000);
-
-  private static final long UNKNOWN_PLAY_WINDOW_MILLIS =
-      Long.getLong("velocity.serverbound-unknown-play-window-ms", 1000L);
-
-  private static final AttributeKey<UnknownPlayWindowState> UNKNOWN_PLAY_WINDOW =
-      AttributeKey.valueOf("velocity:unknown_play_window");
 
   /**
    * The direction of the packet flow this decoder is handling.
@@ -150,11 +133,6 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
         buf.release();
         throw this.handleInvalidPacketId(packetId);
       }
-      if (this.direction == ProtocolUtils.Direction.SERVERBOUND
-          && this.state == StateRegistry.PLAY
-          && rejectUnknownPlayPacket(ctx, buf)) {
-        return;
-      }
       ctx.fireChannelRead(buf);
     } else {
       try {
@@ -216,39 +194,6 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
     }
   }
 
-  /**
-   * Returns {@code true} and closes the channel if the unknown PLAY packet exceeds size or
-   * byte-rate limits. The caller must return immediately when this returns {@code true}.
-   */
-  private static boolean rejectUnknownPlayPacket(final ChannelHandlerContext ctx, final ByteBuf buf) {
-    int frameSize = buf.readableBytes();
-    if (frameSize > UNKNOWN_PLAY_MAX_PACKET_SIZE) {
-      LOGGER.warn("Disconnecting {} for oversized unknown PLAY packet ({} bytes)",
-          ctx.channel().remoteAddress(), frameSize);
-      buf.release();
-      ctx.close();
-      return true;
-    }
-
-    long now = System.currentTimeMillis();
-    UnknownPlayWindowState window = ctx.channel().attr(UNKNOWN_PLAY_WINDOW).get();
-    if (window == null || now - window.windowStartedAtMillis >= UNKNOWN_PLAY_WINDOW_MILLIS) {
-      window = new UnknownPlayWindowState(now, 0);
-      ctx.channel().attr(UNKNOWN_PLAY_WINDOW).set(window);
-    }
-
-    window.bytes += frameSize;
-    if (window.bytes > UNKNOWN_PLAY_MAX_BYTES_PER_WINDOW) {
-      LOGGER.warn("Disconnecting {} for unknown PLAY packet byte flood ({} bytes in window)",
-          ctx.channel().remoteAddress(), window.bytes);
-      buf.release();
-      ctx.close();
-      return true;
-    }
-
-    return false;
-  }
-
   private Exception handleInvalidPacketId(int packetId) {
     if (DEBUG) {
       return new CorruptedFrameException("Invalid packet " + getExtraConnectionDetail(packetId));
@@ -288,16 +233,5 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
    */
   public ProtocolUtils.Direction getDirection() {
     return direction;
-  }
-
-  private static final class UnknownPlayWindowState {
-
-    long windowStartedAtMillis;
-    int bytes;
-
-    UnknownPlayWindowState(final long windowStartedAtMillis, final int bytes) {
-      this.windowStartedAtMillis = windowStartedAtMillis;
-      this.bytes = bytes;
-    }
   }
 }

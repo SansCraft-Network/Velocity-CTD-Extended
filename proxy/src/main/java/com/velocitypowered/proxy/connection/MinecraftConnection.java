@@ -40,7 +40,6 @@ import com.velocitypowered.proxy.connection.client.InitialLoginSessionHandler;
 import com.velocitypowered.proxy.connection.client.StatusSessionHandler;
 import com.velocitypowered.proxy.network.Connections;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
-import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
 import com.velocitypowered.proxy.protocol.VelocityConnectionEvent;
 import com.velocitypowered.proxy.protocol.netty.MinecraftCipherDecoder;
@@ -752,11 +751,8 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
         int level = server.getConfiguration().getCompressionLevel();
         VelocityCompressor compressor = Natives.compress.get().create(level);
 
-        ProtocolUtils.Direction decoderDirection =
-            ((MinecraftDecoder) channel.pipeline().get(MINECRAFT_DECODER)).getDirection();
-
         encoder = new MinecraftCompressorAndLengthEncoder(threshold, compressor);
-        decoder = new MinecraftCompressDecoder(threshold, compressor, decoderDirection);
+        decoder = new MinecraftCompressDecoder(threshold, compressor);
 
         channel.pipeline().remove(FRAME_ENCODER);
         channel.pipeline().addBefore(MINECRAFT_DECODER, COMPRESSION_DECODER, decoder);

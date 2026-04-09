@@ -653,7 +653,11 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
     }
 
     MinecraftConnection smc = serverConnection.getConnection();
-    if (smc != null && serverConnection.getPhase().consideredComplete()) {
+    final boolean stateAllowsForward = smc != null
+        && !smc.isClosed()
+        && serverConnection.getPhase().consideredComplete()
+        && smc.getState() == StateRegistry.PLAY;
+    if (stateAllowsForward) {
       if (packet instanceof PluginMessagePacket) {
         ((PluginMessagePacket) packet).retain();
       }
@@ -675,7 +679,11 @@ public class ClientPlaySessionHandler implements MinecraftSessionHandler {
     }
 
     MinecraftConnection smc = serverConnection.getConnection();
-    if (smc != null && !smc.isClosed() && serverConnection.getPhase().consideredComplete()) {
+    final boolean stateAllowsForward = smc != null
+        && !smc.isClosed()
+        && serverConnection.getPhase().consideredComplete()
+        && smc.getState() == StateRegistry.PLAY;
+    if (stateAllowsForward) {
       smc.write(buf.retain());
     }
   }

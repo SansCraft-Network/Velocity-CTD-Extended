@@ -20,6 +20,7 @@ package com.velocitypowered.proxy.protocol.netty;
 import static io.netty.util.ByteProcessor.FIND_NON_NUL;
 
 import com.velocitypowered.api.network.ProtocolVersion;
+import com.velocitypowered.proxy.network.limiter.PacketLimiter;
 import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.StateRegistry;
@@ -32,6 +33,7 @@ import io.netty.handler.codec.CorruptedFrameException;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Frames Minecraft server packets which are prefixed by a 21-bit VarInt encoding.
@@ -94,6 +96,9 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
    * <p>This is updated externally when a state transition occurs.</p>
    */
   private StateRegistry state;
+
+  @Nullable
+  private PacketLimiter packetLimiter;
 
   /**
    * Creates a new {@code MinecraftVarintFrameDecoder} decoding packets from the specified {@code Direction}.
@@ -169,6 +174,14 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
         if (in.readableBytes() < length) {
           in.resetReaderIndex();
         } else {
+          // If enabled, rate-limit serverbound payload bytes based on frame length
+          if (packetLimiter != null) {
+            if (!packetLimiter.account(length)) {
+              throw new QuietDecoderException(
+                      "Rate limit exceeded while processing packets for %s".formatted(
+                              ctx.channel().remoteAddress()));
+            }
+          }
           out.add(in.readRetainedSlice(length));
         }
       }
@@ -339,27 +352,11 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     }
   }
 
-  /**
-   * Updates the current protocol {@link StateRegistry} used by this decoder.
-   *
-   * <p>This method is typically invoked when a protocol state transition occurs (e.g. from
-   * handshake to login), allowing the decoder to enforce correct packet validation.</p>
-   *
-   * @param stateRegistry the new protocol state to apply
-   */
   public void setState(final StateRegistry stateRegistry) {
     this.state = stateRegistry;
   }
 
-  /**
-   * Gets the current {@link StateRegistry.PacketRegistry.ProtocolRegistry} associated with this decoder.
-   *
-   * <p>This registry is used to validate and instantiate packets for the initial handshake state
-   * and should not be assumed to reflect the latest state unless updated manually.</p>
-   *
-   * @return the protocol registry used during decoding
-   */
-  public StateRegistry.PacketRegistry.ProtocolRegistry getRegistry() {
-    return registry;
+  public void setPacketLimiter(@Nullable PacketLimiter packetLimiter) {
+    this.packetLimiter = packetLimiter;
   }
 }

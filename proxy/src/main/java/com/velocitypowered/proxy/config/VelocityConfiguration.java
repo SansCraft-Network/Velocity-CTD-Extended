@@ -596,16 +596,6 @@ public final class VelocityConfiguration implements ProxyConfig {
   }
 
   @Override
-  public boolean isCachePlayerProfileResultEnabled() {
-    return advanced.isCachePlayerProfileResultEnabled();
-  }
-
-  @Override
-  public int getProfileCacheExpiryMinutes() {
-    return advanced.getProfileCacheExpiryMinutes();
-  }
-
-  @Override
   public int getCompressionThreshold() {
     return advanced.getCompressionThreshold();
   }
@@ -1950,18 +1940,6 @@ public final class VelocityConfiguration implements ProxyConfig {
 
   private static final class Advanced {
 
-    /**
-     * Whether to cache player profile results retrieved from Mojang session servers.
-     */
-    @Expose
-    private boolean cachePlayerProfileResult = false;
-
-    /**
-     * How long (in minutes) cached player profiles are retained before expiring.
-     */
-    @Expose
-    private int profileCacheExpiryMinutes = 1440;
-
     @Expose
     private int compressionThreshold = 256;
 
@@ -2073,8 +2051,6 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     private Advanced(final CommentedConfig config) {
       if (config != null) {
-        this.cachePlayerProfileResult = config.getOrElse("cache-player-profile-result", false);
-        this.profileCacheExpiryMinutes = config.getOrElse("cache-profile-expiry-minutes", 1440);
         this.compressionThreshold = config.getIntOrElse("compression-threshold", 256);
         this.compressionLevel = config.getIntOrElse("compression-level", -1);
         this.loginRatelimit = config.getIntOrElse("login-ratelimit", 3000);
@@ -2111,14 +2087,6 @@ public final class VelocityConfiguration implements ProxyConfig {
           .serialize(MiniMessage.miniMessage().deserialize(this.serverBrand));
       this.fallbackVersionPingAsString = LegacyComponentSerializer.legacySection()
           .serialize(MiniMessage.miniMessage().deserialize(this.fallbackVersionPing));
-    }
-
-    public boolean isCachePlayerProfileResultEnabled() {
-      return this.cachePlayerProfileResult;
-    }
-
-    public int getProfileCacheExpiryMinutes() {
-      return this.profileCacheExpiryMinutes;
     }
 
     public int getCompressionThreshold() {
@@ -2228,9 +2196,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     @Override
     public String toString() {
       return "Advanced{"
-          + "cachePlayerProfileResult=" + cachePlayerProfileResult
-          + ", profileCacheExpiryMinutes=" + profileCacheExpiryMinutes
-          + ", compressionThreshold=" + compressionThreshold
+          + "compressionThreshold=" + compressionThreshold
           + ", compressionLevel=" + compressionLevel
           + ", loginRatelimit=" + loginRatelimit
           + ", connectionTimeout=" + connectionTimeout

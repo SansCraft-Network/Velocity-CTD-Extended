@@ -45,6 +45,8 @@ import com.velocityctd.proxy.queue.RedisVelocityQueueManager;
 import com.velocityctd.proxy.queue.VelocityQueueManager;
 import com.velocityctd.proxy.redis.VelocityRedis;
 import com.velocitypowered.api.command.BrigadierCommand;
+import com.velocitypowered.api.command.Command;
+import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.event.proxy.ProxyPreShutdownEvent;
 import com.velocitypowered.api.event.proxy.ProxyReloadEvent;
@@ -698,9 +700,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void unregisterCommand(final String command) {
-    if (commandManager.getCommandMeta(command) != null
-        && Objects.requireNonNull(commandManager.getCommandMeta(command)).getPlugin() instanceof VelocityCommandManager) {
-      commandManager.unregister(command);
+    CommandMeta meta = commandManager.getCommandMeta(command);
+    if (meta != null) {
+      if (meta.getPlugin() == VelocityVirtualPlugin.INSTANCE) {
+        commandManager.unregister(meta);
+      } else {
+        LOGGER.debug("Could not unregister command /{}, command not registered by Velocity.", command);
+      }
     }
   }
 

@@ -3,6 +3,10 @@ plugins {
     `maven-publish`
 }
 
+extensions.configure<JavaPluginExtension> {
+    withSourcesJar()
+}
+
 extensions.configure<PublishingExtension> {
     repositories {
         maven {

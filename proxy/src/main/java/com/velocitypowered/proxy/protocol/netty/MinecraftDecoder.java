@@ -60,7 +60,11 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
   @Override
   public void channelRead(final @NotNull ChannelHandlerContext ctx, final @NotNull Object msg) throws Exception {
     if (msg instanceof ByteBuf buf) {
-      tryDecode(ctx, buf);
+      try {
+        tryDecode(ctx, buf);
+      } finally {
+        buf.release();
+      }
     } else {
       ctx.fireChannelRead(msg);
     }
@@ -68,7 +72,6 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
 
   private void tryDecode(final ChannelHandlerContext ctx, final ByteBuf buf) throws Exception {
     if (!ctx.channel().isActive() || !buf.isReadable()) {
-      buf.release();
       return;
     }
 
@@ -78,28 +81,24 @@ public class MinecraftDecoder extends ChannelInboundHandlerAdapter {
     if (packet == null) {
       buf.readerIndex(originalReaderIndex);
       if (this.direction == ProtocolUtils.Direction.SERVERBOUND && this.state != StateRegistry.PLAY) {
-        buf.release();
         throw this.handleInvalidPacketId(packetId);
       }
-      ctx.fireChannelRead(buf);
+
+      ctx.fireChannelRead(buf.retain());
     } else {
+      doLengthSanityChecks(buf, packet);
+
       try {
-        doLengthSanityChecks(buf, packet);
-
-        try {
-          packet.decode(buf, direction, registry.version);
-        } catch (Exception e) {
-          throw handleDecodeFailure(e, packet, packetId);
-        }
-
-        if (buf.isReadable()) {
-          throw handleOverflow(packet, buf.readerIndex(), buf.writerIndex());
-        }
-
-        ctx.fireChannelRead(packet);
-      } finally {
-        buf.release();
+        packet.decode(buf, direction, registry.version);
+      } catch (Exception e) {
+        throw handleDecodeFailure(e, packet, packetId);
       }
+
+      if (buf.isReadable()) {
+        throw handleOverflow(packet, buf.readerIndex(), buf.writerIndex());
+      }
+
+      ctx.fireChannelRead(packet);
     }
   }
 

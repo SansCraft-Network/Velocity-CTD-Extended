@@ -71,7 +71,7 @@ import io.netty.util.ReferenceCountUtil;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.security.GeneralSecurityException;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -135,7 +135,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     this.server = server;
     this.state = StateRegistry.HANDSHAKE;
 
-    this.sessionHandlers = new HashMap<>();
+    this.sessionHandlers = new EnumMap<>(StateRegistry.class);
   }
 
   @Override

@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    id("velocity-ctd-publish")
 }
 
 dependencies {

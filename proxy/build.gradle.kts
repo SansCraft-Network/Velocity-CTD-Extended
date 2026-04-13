@@ -2,6 +2,7 @@ import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCach
 
 plugins {
     application
+    id("velocity-ctd-publish")
     id("velocity-init-manifest")
     alias(libs.plugins.shadow)
 }

@@ -2292,7 +2292,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     /**
      * The password to authenticate with the Redis server, if required.
      */
-    @Expose
     private String password;
 
     /**

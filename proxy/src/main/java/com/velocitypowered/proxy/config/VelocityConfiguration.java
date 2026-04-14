@@ -2301,12 +2301,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     private boolean useSsl;
 
     /**
-     * The maximum number of concurrent connections allowed to the Redis server.
-     */
-    @Expose
-    private int maxConcurrentConnections;
-
-    /**
      * The proxy ID to use when identifying this proxy to Redis.
      * If null, the proxy will operate anonymously.
      */
@@ -2329,7 +2323,6 @@ public final class VelocityConfiguration implements ProxyConfig {
 
       this.password = config.get("password");
       this.useSsl = config.getOrElse("use-ssl", true);
-      this.maxConcurrentConnections = config.getOrElse("max-concurrent-connections", 10);
       this.proxyId = config.get("proxy-id");
 
       if (this.proxyId == null || this.proxyId.isEmpty()) {
@@ -2387,16 +2380,6 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     /**
-     * Gets the maximum number of concurrent Redis connections allowed.
-     *
-     * @return the maximum number of connections
-     */
-    @Deprecated(forRemoval = true)
-    public int getMaxConcurrentConnections() {
-      return maxConcurrentConnections;
-    }
-
-    /**
      * Gets the proxy ID used to uniquely identify this instance in Redis,
      * or {@code null} if not explicitly configured.
      *
@@ -2415,7 +2398,6 @@ public final class VelocityConfiguration implements ProxyConfig {
           + ", username=" + username
           // password excluded for security
           + ", useSsl=" + useSsl
-          + ", maxConcurrentConnections=" + maxConcurrentConnections
           + '}';
     }
   }

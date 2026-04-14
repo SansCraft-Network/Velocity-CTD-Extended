@@ -990,17 +990,23 @@ public final class VelocityConfiguration implements ProxyConfig {
         .add("motdHover", motdHover)
         .add("showMaxPlayers", showMaxPlayers)
         .add("onlineMode", onlineMode)
+        .add("preventClientProxyConnections", preventClientProxyConnections)
         .add("playerInfoForwardingMode", playerInfoForwardingMode)
-        .add("forwardingSecret", forwardingSecret)
         .add("announceForge", announceForge)
+        .add("kickExistingPlayers", kickExistingPlayers)
+        .add("kickExistingPlayersCheckIp", kickExistingPlayersCheckIp)
+        .add("pingPassthrough", pingPassthrough)
+        .add("samplePlayersInPing", samplePlayersInPing)
         .add("servers", servers)
         .add("forcedHosts", forcedHosts)
         .add("commands", commands)
+        .add("commandAliases", commandAliases)
+        .add("proxyCommandAliases", proxyCommandAliases)
         .add("advanced", advanced)
         .add("query", query)
+        .add("metrics", metrics)
         .add("redis", redis)
         .add("queue", queue)
-        .add("favicon", favicon)
         .add("enablePlayerAddressLogging", enablePlayerAddressLogging)
         .add("forceKeyAuthentication", forceKeyAuthentication)
         .add("packetLimiterConfig", packetLimiterConfig)
@@ -1013,7 +1019,11 @@ public final class VelocityConfiguration implements ProxyConfig {
         .add("translateHeaderFooter", translateHeaderFooter)
         .add("logMinimumVersion", logMinimumVersion)
         .add("minimumVersion", minimumVersion)
+        .add("maximumVersion", maximumVersion)
         .add("slashServers", slashServers)
+        .add("serverLinks", serverLinks)
+        .add("proxyAddresses", proxyAddresses)
+        .add("dynamicProxyFilter", dynamicProxyFilter)
         .add("playerCaps", playerCaps)
         .toString();
   }
@@ -1637,12 +1647,14 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "Servers{"
-          + "servers=" + servers
-          + ", attemptConnectionOrder=" + attemptConnectionOrder
-          + ", serverMinimumVersions=" + serverMinimumVersions
-          + ", serverMaximumVersions=" + serverMaximumVersions
-          + '}';
+      return MoreObjects.toStringHelper(this)
+          .add("servers", servers)
+          .add("attemptConnectionOrder", attemptConnectionOrder)
+          .add("serverMinimumVersions", serverMinimumVersions)
+          .add("serverMaximumVersions", serverMaximumVersions)
+          .add("dynamicFallbackFilter", dynamicFallbackFilter)
+          .add("serverAliases", serverAliases)
+          .toString();
     }
   }
 
@@ -1691,9 +1703,10 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "ForcedHosts{"
-          + "forcedHosts=" + forcedHosts
-          + '}';
+      return MoreObjects.toStringHelper(this)
+          .add("forcedHosts", forcedHosts)
+          .add("forcedHostAsFallback", forcedHostAsFallback)
+          .toString();
     }
   }
 
@@ -1864,18 +1877,21 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "Commands{"
-          + "serverCommand=" + serverCommand
-          + ", alertCommand=" + alertCommand
-          + ", alertRawCommand=" + alertRawCommand
-          + ", findCommand=" + findCommand
-          + ", glistCommand=" + glistCommand
-          + ", plistCommand=" + plistCommand
-          + ", hubCommand=" + hubCommand
-          + ", pingCommand=" + pingCommand
-          + ", sendCommand=" + sendCommand
-          + ", overrideServerCommandUsage=" + overrideServerCommandUsage
-          + '}';
+      return MoreObjects.toStringHelper(this)
+          .add("serverCommand", serverCommand)
+          .add("alertCommand", alertCommand)
+          .add("alertRawCommand", alertRawCommand)
+          .add("findCommand", findCommand)
+          .add("gkickCommand", gkickCommand)
+          .add("gipCommand", gipCommand)
+          .add("glistCommand", glistCommand)
+          .add("plistCommand", plistCommand)
+          .add("hubCommand", hubCommand)
+          .add("pingCommand", pingCommand)
+          .add("sendCommand", sendCommand)
+          .add("overrideServerCommandUsage", overrideServerCommandUsage)
+          .add("transferEnabled", transferEnabled)
+          .toString();
     }
   }
 
@@ -2136,28 +2152,33 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "Advanced{"
-          + "compressionThreshold=" + compressionThreshold
-          + ", compressionLevel=" + compressionLevel
-          + ", loginRatelimit=" + loginRatelimit
-          + ", connectionTimeout=" + connectionTimeout
-          + ", readTimeout=" + readTimeout
-          + ", proxyProtocol=" + proxyProtocol
-          + ", tcpFastOpen=" + tcpFastOpen
-          + ", bungeePluginMessageChannel=" + bungeePluginMessageChannel
-          + ", showPingRequests=" + showPingRequests
-          + ", failoverOnUnexpectedServerDisconnect=" + failoverOnUnexpectedServerDisconnect
-          + ", announceProxyCommands=" + announceProxyCommands
-          + ", logCommandExecutions=" + logCommandExecutions
-          + ", acceptTransfers=" + acceptTransfers
-          + ", enableReusePort=" + enableReusePort
-          + ", commandRateLimit=" + commandRateLimit
-          + ", forwardCommandsIfRateLimited=" + forwardCommandsIfRateLimited
-          + ", kickAfterRateLimitedCommands=" + kickAfterRateLimitedCommands
-          + ", tabCompleteRateLimit=" + tabCompleteRateLimit
-          + ", kickAfterRateLimitedTabCompletes=" + kickAfterRateLimitedTabCompletes
-          + ", allowIllegalCharactersInChat=" + allowIllegalCharactersInChat
-          + '}';
+      return MoreObjects.toStringHelper(this)
+          .add("compressionThreshold", compressionThreshold)
+          .add("compressionLevel", compressionLevel)
+          .add("loginRatelimit", loginRatelimit)
+          .add("connectionTimeout", connectionTimeout)
+          .add("readTimeout", readTimeout)
+          .add("proxyProtocol", proxyProtocol)
+          .add("tcpFastOpen", tcpFastOpen)
+          .add("bungeePluginMessageChannel", bungeePluginMessageChannel)
+          .add("showPingRequests", showPingRequests)
+          .add("failoverOnUnexpectedServerDisconnect", failoverOnUnexpectedServerDisconnect)
+          .add("announceProxyCommands", announceProxyCommands)
+          .add("logCommandExecutions", logCommandExecutions)
+          .add("acceptTransfers", acceptTransfers)
+          .add("enableReusePort", enableReusePort)
+          .add("commandRateLimit", commandRateLimit)
+          .add("forwardCommandsIfRateLimited", forwardCommandsIfRateLimited)
+          .add("kickAfterRateLimitedCommands", kickAfterRateLimitedCommands)
+          .add("tabCompleteRateLimit", tabCompleteRateLimit)
+          .add("kickAfterRateLimitedTabCompletes", kickAfterRateLimitedTabCompletes)
+          .add("allowIllegalCharactersInChat", allowIllegalCharactersInChat)
+          .add("serverBrand", serverBrand)
+          .add("fallbackVersionPing", fallbackVersionPing)
+          .add("alwaysFallBackPing", alwaysFallBackPing)
+          .add("proxyBrandCustom", proxyBrandCustom)
+          .add("backendBrandCustom", backendBrandCustom)
+          .toString();
     }
   }
 
@@ -2205,12 +2226,12 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "Query{"
-          + "queryEnabled=" + queryEnabled
-          + ", queryPort=" + queryPort
-          + ", queryMap='" + queryMap + '\''
-          + ", showPlugins=" + showPlugins
-          + '}';
+      return MoreObjects.toStringHelper(this)
+          .add("queryEnabled", queryEnabled)
+          .add("queryPort", queryPort)
+          .add("queryMap", queryMap)
+          .add("showPlugins", showPlugins)
+          .toString();
     }
   }
 
@@ -2230,6 +2251,13 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     public boolean isEnabled() {
       return enabled;
+    }
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+          .add("enabled", enabled)
+          .toString();
     }
   }
 
@@ -2391,14 +2419,14 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "Redis{"
-          + "enabled=" + enabled
-          + ", host=" + host
-          + ", port=" + port
-          + ", username=" + username
-          // password excluded for security
-          + ", useSsl=" + useSsl
-          + '}';
+      return MoreObjects.toStringHelper(this)
+          .add("enabled", enabled)
+          .add("host", host)
+          .add("port", port)
+          .add("username", username)
+          .add("useSsl", useSsl)
+          .add("proxyId", proxyId)
+          .toString();
     }
   }
 
@@ -2776,27 +2804,28 @@ public final class VelocityConfiguration implements ProxyConfig {
 
     @Override
     public String toString() {
-      return "Queue{"
-          + "enabled=" + enabled
-          + ", allowPausedQueueJoining=" + allowPausedQueueJoining
-          + ", forwardKickReason=" + forwardKickReason
-          + ", removePlayerOnServerSwitch=" + removePlayerOnServerSwitch
-          + ", maxSendRetries=" + maxSendRetries
-          + ", messageDelay=" + messageDelay
-          + ", backendPingInterval=" + backendPingInterval
-          + ", sendDelay=" + sendDelay
-          + ", queueDelay=" + queueDelay
-          + ", allowMultiQueue=" + allowMultiQueue
-          + ", noQueueServers=" + noQueueServers
-          + ", overrideBungeeMessaging=" + overrideBungeeMessaging
-          + ", leaveQueueAliases=" + leaveQueueAliases
-          + ", autoQueueServers=" + autoQueueServers
-          + ", queueServer=" + queueServer
-          + ", queueOnJoinServers=" + queueOnJoinServers
-          + ", queueAdminAliases=" + queueAdminAliases
-          + ", masterProxyIds=" + masterProxyIds
-          + ", bannedReason=" + bannedReason
-          + '}';
+      return MoreObjects.toStringHelper(this)
+          .add("enabled", enabled)
+          .add("noQueueServers", noQueueServers)
+          .add("allowMultiQueue", allowMultiQueue)
+          .add("sendDelay", sendDelay)
+          .add("queueDelay", queueDelay)
+          .add("messageDelay", messageDelay)
+          .add("backendPingInterval", backendPingInterval)
+          .add("maxSendRetries", maxSendRetries)
+          .add("removePlayerOnServerSwitch", removePlayerOnServerSwitch)
+          .add("forwardKickReason", forwardKickReason)
+          .add("allowPausedQueueJoining", allowPausedQueueJoining)
+          .add("queueOnShutdown", queueOnShutdown)
+          .add("overrideBungeeMessaging", overrideBungeeMessaging)
+          .add("leaveQueueAliases", leaveQueueAliases)
+          .add("queueAdminAliases", queueAdminAliases)
+          .add("masterProxyIds", masterProxyIds)
+          .add("bannedReason", bannedReason)
+          .add("autoQueueServers", autoQueueServers)
+          .add("queueServer", queueServer)
+          .add("queueOnJoinServers", queueOnJoinServers)
+          .toString();
     }
   }
 }

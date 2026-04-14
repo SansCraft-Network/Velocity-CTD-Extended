@@ -99,9 +99,7 @@ public interface ProxyConfig {
    * does. For a view of all registered servers, see {@link ProxyServer#getAllServers()}.
    *
    * @return registered servers map
-   * @deprecated use {@link #getBackendServers()} instead.
    */
-  @Deprecated(forRemoval = true, since = "3.4.0")
   Map<String, String> getServers();
 
   /**

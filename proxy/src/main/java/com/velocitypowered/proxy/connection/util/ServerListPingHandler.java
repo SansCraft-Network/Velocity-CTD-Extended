@@ -65,7 +65,7 @@ public class ServerListPingHandler {
       version = ProtocolVersion.MAXIMUM_VERSION;
     }
 
-    if (configuration.getAlwaysFallBackPing()) {
+    if (configuration.isAlwaysFallBackPing()) {
       version = ProtocolVersion.LEGACY;
     }
 

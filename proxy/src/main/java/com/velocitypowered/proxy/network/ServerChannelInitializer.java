@@ -42,10 +42,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.handler.codec.haproxy.HAProxyMessageDecoder;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import java.net.http.HttpClient;
 import java.util.concurrent.TimeUnit;
-import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
-import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
 /**
  * Server channel initializer.
@@ -54,26 +51,12 @@ public class ServerChannelInitializer extends ChannelInitializer<Channel> {
 
   private final VelocityServer server;
 
-  /**
-   * The shared {@link HttpClient} amongst all {@link HandshakeSessionHandler}s this class creates.
-   */
-  private volatile @MonotonicNonNull HttpClient httpClient;
-
   public ServerChannelInitializer(final VelocityServer server) {
     this.server = server;
   }
 
   @Override
-  @EnsuresNonNull("httpClient")
   protected void initChannel(final Channel ch) {
-    if (this.httpClient == null) {
-      synchronized (this) {
-        if (this.httpClient == null) {
-          this.httpClient = server.createHttpClient();
-        }
-      }
-    }
-
     ch.pipeline()
         .addLast(LEGACY_PING_DECODER, new LegacyPingDecoder())
         .addLast(FRAME_DECODER, new MinecraftVarintFrameDecoder(ProtocolUtils.Direction.SERVERBOUND))
@@ -85,7 +68,7 @@ public class ServerChannelInitializer extends ChannelInitializer<Channel> {
 
     final MinecraftConnection connection = new MinecraftConnection(ch, this.server);
     connection.setActiveSessionHandler(StateRegistry.HANDSHAKE,
-        new HandshakeSessionHandler(connection, this.server, this.httpClient));
+        new HandshakeSessionHandler(connection, this.server));
     ch.pipeline().addLast(Connections.HANDLER, connection);
 
     VelocityConfiguration.PacketLimiterConfig packetLimiterConfig =

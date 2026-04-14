@@ -45,6 +45,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.ParameterizedMessageFactory;
+import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
+import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -71,6 +73,11 @@ public final class ConnectionManager {
   public final BackendChannelInitializerHolder backendChannelInitializer;
 
   private final SeparatePoolInetNameResolver resolver;
+
+  /**
+   * Shared {@link HttpClient} for pooled http connections.
+   */
+  private volatile @MonotonicNonNull HttpClient sharedHttpClient;
 
   /**
    * Initializes the {@code ConnectionManager}.
@@ -281,6 +288,18 @@ public final class ConnectionManager {
     return HttpClient.newBuilder()
         .executor(this.workerGroup)
         .build();
+  }
+
+  @EnsuresNonNull("sharedHttpClient")
+  public HttpClient getSharedHttpClient() {
+    if (sharedHttpClient == null) {
+      synchronized (this) {
+        if (sharedHttpClient == null) { // check again in lock
+          sharedHttpClient = createHttpClient();
+        }
+      }
+    }
+    return sharedHttpClient;
   }
 
   public BackendChannelInitializerHolder getBackendChannelInitializer() {

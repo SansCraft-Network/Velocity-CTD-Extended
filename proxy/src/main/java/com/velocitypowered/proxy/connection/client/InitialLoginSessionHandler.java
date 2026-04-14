@@ -79,12 +79,6 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
   private final LoginInboundConnection inbound;
 
-  /**
-   * The {@link HttpClient} used to fetch {@link #MOJANG_HASJOINED_URL}.
-   * May be a shared instance.
-   */
-  private final HttpClient httpClient;
-
   private @MonotonicNonNull ServerLoginPacket login;
 
   private byte[] verify = EMPTY_BYTE_ARRAY;
@@ -94,11 +88,10 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   private final boolean forceKeyAuthentication;
 
   InitialLoginSessionHandler(final VelocityServer server, final MinecraftConnection mcConnection,
-                             final LoginInboundConnection inbound, final HttpClient httpClient) {
+                             final LoginInboundConnection inbound) {
     this.server = Preconditions.checkNotNull(server, "server");
     this.mcConnection = Preconditions.checkNotNull(mcConnection, "mcConnection");
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
-    this.httpClient = Preconditions.checkNotNull(httpClient, "httpClient");
     this.forceKeyAuthentication = VelocityProperties.readBoolean(
         "auth.forceSecureProfiles", server.getConfiguration().isForceKeyAuthentication());
   }
@@ -235,6 +228,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
           .uri(URI.create(url))
           .build();
 
+      HttpClient httpClient = server.getSharedHttpClient();
       httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
           .whenCompleteAsync((response, throwable) -> {
             if (mcConnection.isClosed()) {

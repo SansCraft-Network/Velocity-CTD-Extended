@@ -27,7 +27,7 @@ import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.adventure.ClickCallbackManager;
 import java.util.UUID;
 
-public class CallbackCommand implements BuiltinCommand {
+public class CallbackCommand implements BuiltinCommandDefinition {
 
   public CallbackCommand(VelocityServer server) {
   }

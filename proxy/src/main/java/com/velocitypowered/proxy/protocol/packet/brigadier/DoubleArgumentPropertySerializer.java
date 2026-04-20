@@ -33,7 +33,7 @@ final class DoubleArgumentPropertySerializer implements ArgumentPropertySerializ
   }
 
   @Override
-  public DoubleArgumentType deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public DoubleArgumentType deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
     byte flags = buf.readByte();
     double minimum = (flags & HAS_MINIMUM) != 0 ? buf.readDouble() : Double.MIN_VALUE;
     double maximum = (flags & HAS_MAXIMUM) != 0 ? buf.readDouble() : Double.MAX_VALUE;
@@ -41,7 +41,7 @@ final class DoubleArgumentPropertySerializer implements ArgumentPropertySerializ
   }
 
   @Override
-  public void serialize(final DoubleArgumentType object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void serialize(DoubleArgumentType object, ByteBuf buf, ProtocolVersion protocolVersion) {
     boolean hasMinimum = Double.compare(object.getMinimum(), Double.MIN_VALUE) != 0;
     boolean hasMaximum = Double.compare(object.getMaximum(), Double.MAX_VALUE) != 0;
     byte flag = getFlags(hasMinimum, hasMaximum);

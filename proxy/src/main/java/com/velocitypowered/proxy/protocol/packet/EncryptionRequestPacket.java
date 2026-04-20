@@ -40,7 +40,7 @@ public class EncryptionRequestPacket implements MinecraftPacket {
     return publicKey.clone();
   }
 
-  public void setPublicKey(final byte[] publicKey) {
+  public void setPublicKey(byte[] publicKey) {
     this.publicKey = publicKey.clone();
   }
 
@@ -48,7 +48,7 @@ public class EncryptionRequestPacket implements MinecraftPacket {
     return verifyToken.clone();
   }
 
-  public void setVerifyToken(final byte[] verifyToken) {
+  public void setVerifyToken(byte[] verifyToken) {
     this.verifyToken = verifyToken.clone();
   }
 
@@ -61,7 +61,7 @@ public class EncryptionRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     this.serverId = ProtocolUtils.readString(buf, 20);
 
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -77,7 +77,7 @@ public class EncryptionRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     ProtocolUtils.writeString(buf, this.serverId);
 
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_8)) {
@@ -93,7 +93,7 @@ public class EncryptionRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

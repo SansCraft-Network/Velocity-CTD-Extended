@@ -30,13 +30,13 @@ public abstract class RateLimitedCommandHandler<T extends MinecraftPacket> imple
 
   private int failedAttempts;
 
-  protected RateLimitedCommandHandler(final ConnectedPlayer player, final VelocityServer velocityServer) {
+  protected RateLimitedCommandHandler(ConnectedPlayer player, VelocityServer velocityServer) {
     this.player = player;
     this.velocityServer = velocityServer;
   }
 
   @Override
-  public boolean handlePlayerCommand(final MinecraftPacket packet) {
+  public boolean handlePlayerCommand(MinecraftPacket packet) {
     if (packetClass().isInstance(packet)) {
       if (!velocityServer.getCommandRateLimiter().attempt(player.getUniqueId())) {
         if (velocityServer.getConfiguration().isKickOnCommandRateLimit()

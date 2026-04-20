@@ -33,17 +33,17 @@ public final class RawCommandInvocation extends AbstractCommandInvocation<String
   public static class Factory implements CommandInvocationFactory<RawCommand.Invocation> {
 
     @Override
-    public RawCommand.Invocation create(final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
-                                        final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
-      final String alias = VelocityCommands.readAlias(nodes);
-      final String args = VelocityCommands.readArguments(arguments, String.class, "");
+    public RawCommand.Invocation create(CommandSource source, List<? extends ParsedCommandNode<?>> nodes,
+                                        Map<String, ? extends ParsedArgument<?, ?>> arguments) {
+      String alias = VelocityCommands.readAlias(nodes);
+      String args = VelocityCommands.readArguments(arguments, String.class, "");
       return new RawCommandInvocation(source, alias, args);
     }
   }
 
   private final String alias;
 
-  private RawCommandInvocation(final CommandSource source, final String alias, final String arguments) {
+  private RawCommandInvocation(CommandSource source, String alias, String arguments) {
     super(source, arguments);
     this.alias = Preconditions.checkNotNull(alias, "alias");
   }
@@ -54,7 +54,7 @@ public final class RawCommandInvocation extends AbstractCommandInvocation<String
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
@@ -67,7 +67,7 @@ public final class RawCommandInvocation extends AbstractCommandInvocation<String
       return false;
     }
 
-    final RawCommandInvocation that = (RawCommandInvocation) o;
+    RawCommandInvocation that = (RawCommandInvocation) o;
     return this.alias.equals(that.alias);
   }
 

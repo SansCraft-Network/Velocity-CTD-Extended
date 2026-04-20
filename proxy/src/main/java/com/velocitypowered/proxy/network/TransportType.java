@@ -86,11 +86,11 @@ public enum TransportType {
 
   final Supplier<IoHandlerFactory> ioHandlerFactorySupplier;
 
-  TransportType(final String name,
-                final ChannelFactory<? extends ServerSocketChannel> serverSocketChannelFactory,
-                final ChannelFactory<? extends SocketChannel> socketChannelFactory,
-                final ChannelFactory<? extends DatagramChannel> datagramChannelFactory,
-                final Supplier<IoHandlerFactory> ioHandlerFactorySupplier) {
+  TransportType(String name,
+                ChannelFactory<? extends ServerSocketChannel> serverSocketChannelFactory,
+                ChannelFactory<? extends SocketChannel> socketChannelFactory,
+                ChannelFactory<? extends DatagramChannel> datagramChannelFactory,
+                Supplier<IoHandlerFactory> ioHandlerFactorySupplier) {
     this.name = name;
     this.serverSocketChannelFactory = serverSocketChannelFactory;
     this.socketChannelFactory = socketChannelFactory;
@@ -109,11 +109,11 @@ public enum TransportType {
    * @param type the type of event loop group to create
    * @return the event loop group
    */
-  public EventLoopGroup createEventLoopGroup(final Type type) {
+  public EventLoopGroup createEventLoopGroup(Type type) {
     return new MultiThreadIoEventLoopGroup(0, createThreadFactory(this.name, type), this.ioHandlerFactorySupplier.get());
   }
 
-  private static ThreadFactory createThreadFactory(final String name, final Type type) {
+  private static ThreadFactory createThreadFactory(String name, Type type) {
     return new VelocityNettyThreadFactory("Netty " + name + ' ' + type.toString() + " #%d");
   }
 
@@ -159,7 +159,7 @@ public enum TransportType {
 
     private final String name;
 
-    Type(final String name) {
+    Type(String name) {
       this.name = name;
     }
 

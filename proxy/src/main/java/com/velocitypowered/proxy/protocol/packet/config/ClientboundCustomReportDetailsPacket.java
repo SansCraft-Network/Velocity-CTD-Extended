@@ -31,12 +31,12 @@ public class ClientboundCustomReportDetailsPacket implements MinecraftPacket {
   public ClientboundCustomReportDetailsPacket() {
   }
 
-  public ClientboundCustomReportDetailsPacket(final Map<String, String> details) {
+  public ClientboundCustomReportDetailsPacket(Map<String, String> details) {
     this.details = details;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     int detailsCount = ProtocolUtils.readVarInt(buf);
 
     this.details = ProtocolUtils.newMap(detailsCount);
@@ -46,7 +46,7 @@ public class ClientboundCustomReportDetailsPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, details.size());
 
     details.forEach((key, detail) -> {
@@ -56,7 +56,7 @@ public class ClientboundCustomReportDetailsPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

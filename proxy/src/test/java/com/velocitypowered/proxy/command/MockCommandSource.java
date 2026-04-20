@@ -39,7 +39,7 @@ public class MockCommandSource implements CommandSource {
    * @return {@link Tristate#UNDEFINED}
    */
   @Override
-  public Tristate getPermissionValue(final String permission) {
+  public Tristate getPermissionValue(String permission) {
     return Tristate.UNDEFINED;
   }
 

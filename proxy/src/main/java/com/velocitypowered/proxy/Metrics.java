@@ -45,7 +45,7 @@ public final class Metrics {
 
   private MetricsBase metricsBase;
 
-  private Metrics(final Logger logger, final int serviceId, final boolean defaultEnabled) {
+  private Metrics(Logger logger, int serviceId, boolean defaultEnabled) {
     File configFile = Path.of("plugins", "bStats", "config.txt").toFile();
     MetricsConfig config;
     try {
@@ -91,11 +91,11 @@ public final class Metrics {
    *
    * @param chart The chart to add.
    */
-  public void addCustomChart(final CustomChart chart) {
+  public void addCustomChart(CustomChart chart) {
     metricsBase.addCustomChart(chart);
   }
 
-  private void appendPlatformData(final JsonObjectBuilder builder) {
+  private void appendPlatformData(JsonObjectBuilder builder) {
     builder.appendField("osName", System.getProperty("os.name"));
     builder.appendField("osArch", System.getProperty("os.arch"));
     builder.appendField("osVersion", System.getProperty("os.version"));
@@ -106,7 +106,7 @@ public final class Metrics {
 
     private static final Logger LOGGER = LogManager.getLogger(Metrics.class);
 
-    static void startMetrics(final VelocityServer server, final VelocityConfiguration.Metrics metricsConfig) {
+    static void startMetrics(VelocityServer server, VelocityConfiguration.Metrics metricsConfig) {
       Metrics metrics = new Metrics(LOGGER, 4752, metricsConfig.isEnabled());
 
       metrics.addCustomChart(

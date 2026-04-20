@@ -65,17 +65,17 @@ public class ComponentHolder {
 
   private @MonotonicNonNull BinaryTag binaryTag;
 
-  public ComponentHolder(final ProtocolVersion version, final Component component) {
+  public ComponentHolder(ProtocolVersion version, Component component) {
     this.version = version;
     this.component = component;
   }
 
-  public ComponentHolder(final ProtocolVersion version, final String json) {
+  public ComponentHolder(ProtocolVersion version, String json) {
     this.version = version;
     this.json = json;
   }
 
-  public ComponentHolder(final ProtocolVersion version, final BinaryTag binaryTag) {
+  public ComponentHolder(ProtocolVersion version, BinaryTag binaryTag) {
     this.version = version;
     this.binaryTag = binaryTag;
   }
@@ -116,10 +116,10 @@ public class ComponentHolder {
     return binaryTag;
   }
 
-  public static BinaryTag serialize(final JsonElement json) {
+  public static BinaryTag serialize(JsonElement json) {
     if (json instanceof JsonPrimitive jsonPrimitive) {
       if (jsonPrimitive.isNumber()) {
-        final Number number = json.getAsNumber();
+        Number number = json.getAsNumber();
 
         return switch (number) {
           case Byte b -> ByteBinaryTag.byteBinaryTag(b);
@@ -211,7 +211,7 @@ public class ComponentHolder {
     return EndBinaryTag.endBinaryTag();
   }
 
-  public static JsonElement deserialize(final BinaryTag tag) {
+  public static JsonElement deserialize(BinaryTag tag) {
     return switch (tag.type().id()) {
       // BinaryTagTypes.BYTE
       case 1 -> new JsonPrimitive(((ByteBinaryTag) tag).value());
@@ -291,7 +291,7 @@ public class ComponentHolder {
     };
   }
 
-  public static ComponentHolder read(final ByteBuf buf, final ProtocolVersion version) {
+  public static ComponentHolder read(ByteBuf buf, ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       return new ComponentHolder(version,
           ProtocolUtils.readBinaryTag(buf, version, BinaryTagIO.reader()));
@@ -302,7 +302,7 @@ public class ComponentHolder {
     }
   }
 
-  public void write(final ByteBuf buf) {
+  public void write(ByteBuf buf) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       ProtocolUtils.writeBinaryTag(buf, version, getBinaryTag());
     } else {

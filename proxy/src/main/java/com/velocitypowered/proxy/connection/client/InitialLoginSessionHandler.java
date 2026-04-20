@@ -87,8 +87,8 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
   private final boolean forceKeyAuthentication;
 
-  InitialLoginSessionHandler(final VelocityServer server, final MinecraftConnection mcConnection,
-                             final LoginInboundConnection inbound) {
+  InitialLoginSessionHandler(VelocityServer server, MinecraftConnection mcConnection,
+                             LoginInboundConnection inbound) {
     this.server = Preconditions.checkNotNull(server, "server");
     this.mcConnection = Preconditions.checkNotNull(mcConnection, "mcConnection");
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
@@ -97,7 +97,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final ServerLoginPacket packet) {
+  public boolean handle(ServerLoginPacket packet) {
     assertState(LoginState.LOGIN_PACKET_EXPECTED);
     this.currentState = LoginState.LOGIN_PACKET_RECEIVED;
     IdentifiedKey playerKey = packet.getPlayerKey();
@@ -110,7 +110,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
 
       boolean isKeyValid;
       if (playerKey.getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
-          && playerKey instanceof final IdentifiedKeyImpl keyImpl) {
+          && playerKey instanceof IdentifiedKeyImpl keyImpl) {
         isKeyValid = keyImpl.internalAddHolder(packet.getHolderUuid());
       } else {
         isKeyValid = playerKey.isSignatureValid();
@@ -130,7 +130,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     inbound.setPlayerKey(playerKey);
     this.login = packet;
 
-    final PreLoginEvent event = new PreLoginEvent(inbound, login.getUsername(), login.getHolderUuid());
+    PreLoginEvent event = new PreLoginEvent(inbound, login.getUsername(), login.getHolderUuid());
     server.getEventManager().fire(event).thenRunAsync(() -> {
       if (mcConnection.isClosed()) {
         // The player was disconnected
@@ -175,13 +175,13 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final LoginPluginResponsePacket packet) {
+  public boolean handle(LoginPluginResponsePacket packet) {
     this.inbound.handleLoginPluginResponse(packet);
     return true;
   }
 
   @Override
-  public boolean handle(final EncryptionResponsePacket packet) {
+  public boolean handle(EncryptionResponsePacket packet) {
     assertState(LoginState.ENCRYPTION_REQUEST_SENT);
     this.currentState = LoginState.ENCRYPTION_RESPONSE_RECEIVED;
     ServerLoginPacket login = this.login;
@@ -222,7 +222,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
         url += "&ip=" + urlFormParameterEscaper().escape(playerIp);
       }
 
-      final HttpRequest httpRequest = HttpRequest.newBuilder()
+      HttpRequest httpRequest = HttpRequest.newBuilder()
           .setHeader("User-Agent",
               server.getVersion().getName() + "/" + server.getVersion().getVersion())
           .uri(URI.create(url))
@@ -243,12 +243,12 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
             }
 
             if (response.statusCode() == 200) {
-              final GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
+              GameProfile profile = GENERAL_GSON.fromJson(response.body(), GameProfile.class);
 
               // Not so fast, now we verify the public key for 1.19.1+
               if (inbound.getIdentifiedKey() != null
                   && inbound.getIdentifiedKey().getKeyRevision() == IdentifiedKey.Revision.LINKED_V2
-                  && inbound.getIdentifiedKey() instanceof final IdentifiedKeyImpl key) {
+                  && inbound.getIdentifiedKey() instanceof IdentifiedKeyImpl key) {
                 if (!key.internalAddHolder(profile.getId())) {
                   inbound.disconnect(
                       Component.translatable("multiplayer.disconnect.invalid_public_key"));
@@ -287,7 +287,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(ByteBuf buf) {
     mcConnection.close(true);
   }
 
@@ -296,7 +296,7 @@ public class InitialLoginSessionHandler implements MinecraftSessionHandler {
     this.inbound.cleanup();
   }
 
-  private void assertState(final LoginState expectedState) {
+  private void assertState(LoginState expectedState) {
     if (this.currentState != expectedState) {
       if (MinecraftDecoder.DEBUG) {
         LOGGER.error("{} Received an unexpected packet requiring state {}, but we are in {}",

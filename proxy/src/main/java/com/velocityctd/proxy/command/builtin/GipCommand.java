@@ -28,7 +28,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -37,11 +37,11 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity-CTD's {@code /gip} command.
  */
-public class GipCommand implements BuiltinCommand {
+public class GipCommand implements BuiltinCommandDefinition {
 
   private final VelocityServer server;
 
-  public GipCommand(final VelocityServer server) {
+  public GipCommand(VelocityServer server) {
     this.server = server;
   }
 
@@ -66,8 +66,8 @@ public class GipCommand implements BuiltinCommand {
     return new BrigadierCommand(rootNode);
   }
 
-  private int executeIp(final CommandContext<CommandSource> context) {
-    final String playerName = context.getArgument("player", String.class);
+  private int executeIp(CommandContext<CommandSource> context) {
+    String playerName = context.getArgument("player", String.class);
     Optional<VelocityClusterPlayer> maybePlayer = server.getClusterPlayerService().getPlayer(playerName);
 
     if (maybePlayer.isEmpty()) {

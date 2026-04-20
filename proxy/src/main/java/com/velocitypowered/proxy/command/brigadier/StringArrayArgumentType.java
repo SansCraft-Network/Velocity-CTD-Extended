@@ -45,8 +45,8 @@ public final class StringArrayArgumentType implements ArgumentType<String[]> {
   }
 
   @Override
-  public String[] parse(final StringReader reader) throws CommandSyntaxException {
-    final String text = reader.getRemaining();
+  public String[] parse(StringReader reader) throws CommandSyntaxException {
+    String text = reader.getRemaining();
     reader.setCursor(reader.getTotalLength());
     if (text.isEmpty()) {
       return EMPTY;

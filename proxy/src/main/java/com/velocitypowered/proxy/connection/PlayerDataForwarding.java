@@ -58,11 +58,11 @@ public final class PlayerDataForwarding {
   private PlayerDataForwarding() {
   }
 
-  public static ByteBuf createForwardingData(final byte[] secret, final String address, final ProtocolVersion protocol,
-                                             final GameProfile profile, final @Nullable IdentifiedKey key, final int requestedVersion) {
-    final ByteBuf forwarded = Unpooled.buffer(2048);
+  public static ByteBuf createForwardingData(byte[] secret, String address, ProtocolVersion protocol,
+                                             GameProfile profile, @Nullable IdentifiedKey key, int requestedVersion) {
+    ByteBuf forwarded = Unpooled.buffer(2048);
     try {
-      final int actualVersion = findForwardingVersion(requestedVersion, protocol, key);
+      int actualVersion = findForwardingVersion(requestedVersion, protocol, key);
 
       ProtocolUtils.writeVarInt(forwarded, actualVersion);
       ProtocolUtils.writeString(forwarded, address);
@@ -92,16 +92,16 @@ public final class PlayerDataForwarding {
         }
       }
 
-      final Mac mac = Mac.getInstance(ALGORITHM);
+      Mac mac = Mac.getInstance(ALGORITHM);
       mac.init(new SecretKeySpec(secret, ALGORITHM));
       mac.update(forwarded.array(), forwarded.arrayOffset(), forwarded.readableBytes());
-      final byte[] sig = mac.doFinal();
+      byte[] sig = mac.doFinal();
 
       return Unpooled.wrappedBuffer(Unpooled.wrappedBuffer(sig), forwarded);
-    } catch (final InvalidKeyException e) {
+    } catch (InvalidKeyException e) {
       forwarded.release();
       throw new RuntimeException("Unable to authenticate data", e);
-    } catch (final NoSuchAlgorithmException e) {
+    } catch (NoSuchAlgorithmException e) {
       // Should never happen
       forwarded.release();
       throw new AssertionError(e);
@@ -110,8 +110,8 @@ public final class PlayerDataForwarding {
 
   private static int findForwardingVersion(
       int requested,
-      final ProtocolVersion protocol,
-      final @Nullable IdentifiedKey key) {
+      ProtocolVersion protocol,
+      @Nullable IdentifiedKey key) {
     // Ensure we are in range
     requested = Math.min(requested, MODERN_MAX_VERSION);
     if (requested > MODERN_DEFAULT) {
@@ -136,8 +136,8 @@ public final class PlayerDataForwarding {
     return MODERN_DEFAULT;
   }
 
-  public static String createLegacyForwardingAddress(final String serverAddress, final String playerAddress,
-                                                     final GameProfile profile) {
+  public static String createLegacyForwardingAddress(String serverAddress, String playerAddress,
+                                                     GameProfile profile) {
     return createLegacyForwardingAddress(
         serverAddress,
         playerAddress,
@@ -146,12 +146,12 @@ public final class PlayerDataForwarding {
     );
   }
 
-  private static String createLegacyForwardingAddress(final String serverAddress, final String playerAddress, final GameProfile profile,
-                                                      final UnaryOperator<List<GameProfile.Property>> propertiesTransform) {
+  private static String createLegacyForwardingAddress(String serverAddress, String playerAddress, GameProfile profile,
+                                                      UnaryOperator<List<GameProfile.Property>> propertiesTransform) {
     // BungeeCord IP forwarding is simply a special injection after the "address" in the handshake,
     // separated by \0 (the null byte). In order, you send the original host, the player's IP, their
     // UUID (undashed), and if you are in online-mode, their login properties (from Mojang).
-    final StringBuilder data = new StringBuilder()
+    StringBuilder data = new StringBuilder()
         .append(serverAddress)
         .append(LEGACY_SEPARATOR)
         .append(playerAddress)
@@ -162,10 +162,10 @@ public final class PlayerDataForwarding {
     return data.toString();
   }
 
-  public static String createBungeeGuardForwardingAddress(final String serverAddress, final String playerAddress,
-                                                          final GameProfile profile, final byte[] forwardingSecret) {
+  public static String createBungeeGuardForwardingAddress(String serverAddress, String playerAddress,
+                                                          GameProfile profile, byte[] forwardingSecret) {
     // Append forwarding secret as a BungeeGuard token.
-    final GameProfile.Property property = new GameProfile.Property(
+    GameProfile.Property property = new GameProfile.Property(
         BUNGEE_GUARD_TOKEN_PROPERTY_NAME,
         new String(forwardingSecret, StandardCharsets.UTF_8),
         "");

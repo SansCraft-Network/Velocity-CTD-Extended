@@ -35,7 +35,7 @@ public class TitleTimesPacket extends GenericTitlePacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     buf.writeInt(fadeIn);
     buf.writeInt(stay);
     buf.writeInt(fadeOut);
@@ -47,7 +47,7 @@ public class TitleTimesPacket extends GenericTitlePacket {
   }
 
   @Override
-  public void setFadeIn(final int fadeIn) {
+  public void setFadeIn(int fadeIn) {
     this.fadeIn = fadeIn;
   }
 
@@ -57,7 +57,7 @@ public class TitleTimesPacket extends GenericTitlePacket {
   }
 
   @Override
-  public void setStay(final int stay) {
+  public void setStay(int stay) {
     this.stay = stay;
   }
 
@@ -67,7 +67,7 @@ public class TitleTimesPacket extends GenericTitlePacket {
   }
 
   @Override
-  public void setFadeOut(final int fadeOut) {
+  public void setFadeOut(int fadeOut) {
     this.fadeOut = fadeOut;
   }
 
@@ -81,7 +81,7 @@ public class TitleTimesPacket extends GenericTitlePacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

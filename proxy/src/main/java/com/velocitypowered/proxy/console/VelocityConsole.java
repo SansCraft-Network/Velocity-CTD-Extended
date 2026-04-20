@@ -84,19 +84,19 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
       .resolving(FacetPointers.TYPE, (console) -> Type.CONSOLE)
       .build();
 
-  public VelocityConsole(final VelocityServer server) {
+  public VelocityConsole(VelocityServer server) {
     this.server = server;
   }
 
   @SuppressWarnings("deprecation")
   @Override
-  public void sendMessage(final @NonNull Identity identity, final @NonNull Component message,
-                          final @NonNull MessageType messageType) {
+  public void sendMessage(@NonNull Identity identity, @NonNull Component message,
+                          @NonNull MessageType messageType) {
     COMPONENT_LOGGER.info(message);
   }
 
   @Override
-  public @NonNull Tristate getPermissionValue(final @NonNull String permission) {
+  public @NonNull Tristate getPermissionValue(@NonNull String permission) {
     return permissionResolver.getPermissionValue(permission);
   }
 
@@ -139,9 +139,9 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   }
 
   @Override
-  protected LineReader buildReader(final LineReaderBuilder builder) {
+  protected LineReader buildReader(LineReaderBuilder builder) {
     return super.buildReader(builder
-        .appName("Velocity")
+        .appName("Velocity-CTD")
         // Explicitly disable mouse support on the builder
         .option(LineReader.Option.MOUSE, false)
         .completer((reader, parsedLine, list) -> {
@@ -165,7 +165,7 @@ public final class VelocityConsole extends SimpleTerminalConsole implements Cons
   }
 
   @Override
-  protected void runCommand(final String command) {
+  protected void runCommand(String command) {
     try {
       if (!this.server.getCommandManager().executeAsync(this, command).join()) {
         sendMessage(Component.translatable("velocity.command.command-does-not-exist",

@@ -49,7 +49,7 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     return uuid;
   }
 
-  public void setUuid(final @Nullable UUID uuid) {
+  public void setUuid(@Nullable UUID uuid) {
     this.uuid = uuid;
   }
 
@@ -61,7 +61,7 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     return username;
   }
 
-  public void setUsername(final @Nullable String username) {
+  public void setUsername(@Nullable String username) {
     this.username = username;
   }
 
@@ -69,7 +69,7 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
     return properties;
   }
 
-  public void setProperties(final @Nullable List<GameProfile.Property> properties) {
+  public void setProperties(@Nullable List<GameProfile.Property> properties) {
     this.properties = properties;
   }
 
@@ -83,7 +83,7 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19)) {
       uuid = ProtocolUtils.readUuid(buf);
     } else if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
@@ -106,7 +106,7 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (uuid == null) {
       throw new IllegalStateException("No UUID specified!");
     }
@@ -141,12 +141,12 @@ public class ServerLoginSuccessPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
     // We could compute an exact size, but 4KiB ought to be enough to encode all reasonable
     // sizes of this packet.
     return 4 * 1024;

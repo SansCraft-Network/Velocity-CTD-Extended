@@ -129,7 +129,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @param channel the channel on the connection
    * @param server  the Velocity instance
    */
-  public MinecraftConnection(final Channel channel, final VelocityServer server) {
+  public MinecraftConnection(Channel channel, VelocityServer server) {
     this.channel = channel;
     this.remoteAddress = channel.remoteAddress();
     this.server = server;
@@ -139,7 +139,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
   }
 
   @Override
-  public void channelActive(final @NotNull ChannelHandlerContext ctx) {
+  public void channelActive(@NotNull ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.connected();
     }
@@ -150,7 +150,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
   }
 
   @Override
-  public void channelInactive(final @NotNull ChannelHandlerContext ctx) {
+  public void channelInactive(@NotNull ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.disconnected();
     }
@@ -167,7 +167,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
   }
 
   @Override
-  public void channelRead(final @NotNull ChannelHandlerContext ctx, final @NotNull Object msg) {
+  public void channelRead(@NotNull ChannelHandlerContext ctx, @NotNull Object msg) {
     try {
       if (activeSessionHandler == null) {
         // No session handler available, do nothing
@@ -213,14 +213,14 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
   }
 
   @Override
-  public void channelReadComplete(final ChannelHandlerContext ctx) {
+  public void channelReadComplete(ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.readCompleted();
     }
   }
 
   @Override
-  public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) {
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     if (ctx.channel().isActive()) {
       if (activeSessionHandler != null) {
         try {
@@ -257,7 +257,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
   }
 
   @Override
-  public void channelWritabilityChanged(final ChannelHandlerContext ctx) {
+  public void channelWritabilityChanged(ChannelHandlerContext ctx) {
     if (activeSessionHandler != null) {
       activeSessionHandler.writabilityChanged();
     }
@@ -278,7 +278,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @return A {@link ChannelFuture} that will complete when a packet is successfully sent
    */
   @Nullable
-  public ChannelFuture write(final Object msg) {
+  public ChannelFuture write(Object msg) {
     if (channel.isActive()) {
       return channel.writeAndFlush(msg, channel.newPromise());
     } else {
@@ -292,7 +292,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param msg the message to write
    */
-  public void delayedWrite(final Object msg) {
+  public void delayedWrite(Object msg) {
     if (channel.isActive()) {
       channel.write(msg, channel.voidPromise());
     } else {
@@ -314,7 +314,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param msg the message to write
    */
-  public void closeWith(final Object msg) {
+  public void closeWith(Object msg) {
     if (channel.isActive()) {
       boolean is17 = this.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_8)
           && this.getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_7_2);
@@ -344,7 +344,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param markKnown whether the disconnection is known
    */
-  public void close(final boolean markKnown) {
+  public void close(boolean markKnown) {
     if (channel.isActive()) {
       if (channel.eventLoop().inEventLoop()) {
         if (markKnown) {
@@ -392,7 +392,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param autoReading whether we should read data automatically
    */
-  public void setAutoReading(final boolean autoReading) {
+  public void setAutoReading(boolean autoReading) {
     ensureInEventLoop();
 
     channel.config().setAutoRead(autoReading);
@@ -413,23 +413,23 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param state the state to use
    */
-  public void setState(final StateRegistry state) {
+  public void setState(StateRegistry state) {
     ensureInEventLoop();
 
-    final StateRegistry previousState = this.state;
+    StateRegistry previousState = this.state;
     this.state = state;
-    final MinecraftVarintFrameDecoder frameDecoder = this.channel.pipeline()
+    MinecraftVarintFrameDecoder frameDecoder = this.channel.pipeline()
         .get(MinecraftVarintFrameDecoder.class);
     if (frameDecoder != null) {
       frameDecoder.setState(state);
     }
     // If the connection is LEGACY (<1.6), the decoder and encoder are not set.
-    final MinecraftEncoder minecraftEncoder = this.channel.pipeline()
+    MinecraftEncoder minecraftEncoder = this.channel.pipeline()
         .get(MinecraftEncoder.class);
     if (minecraftEncoder != null) {
       minecraftEncoder.setState(state);
     }
-    final MinecraftDecoder minecraftDecoder = this.channel.pipeline()
+    MinecraftDecoder minecraftDecoder = this.channel.pipeline()
         .get(MinecraftDecoder.class);
     if (minecraftDecoder != null) {
       minecraftDecoder.setState(state);
@@ -488,7 +488,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param protocolVersion the protocol version to use
    */
-  public void setProtocolVersion(final ProtocolVersion protocolVersion) {
+  public void setProtocolVersion(ProtocolVersion protocolVersion) {
     ensureInEventLoop();
 
     boolean changed = this.protocolVersion != protocolVersion;
@@ -511,7 +511,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     return activeSessionHandler;
   }
 
-  public @Nullable MinecraftSessionHandler getSessionHandlerForRegistry(final StateRegistry registry) {
+  public @Nullable MinecraftSessionHandler getSessionHandlerForRegistry(StateRegistry registry) {
     return this.sessionHandlers.getOrDefault(registry, null);
   }
 
@@ -521,8 +521,8 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @param registry       the registry of the handler
    * @param sessionHandler the handler to use
    */
-  public void setActiveSessionHandler(final StateRegistry registry,
-                                      final MinecraftSessionHandler sessionHandler) {
+  public void setActiveSessionHandler(StateRegistry registry,
+                                      MinecraftSessionHandler sessionHandler) {
     Preconditions.checkNotNull(registry);
     ensureInEventLoop();
 
@@ -542,7 +542,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @param registry the registry of the handler
    * @return true, if successful and handler is present
    */
-  public boolean setActiveSessionHandler(final StateRegistry registry) {
+  public boolean setActiveSessionHandler(StateRegistry registry) {
     Preconditions.checkNotNull(registry);
     ensureInEventLoop();
 
@@ -572,7 +572,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @param registry       the registry of the handler
    * @param sessionHandler the handler to use
    */
-  public void addSessionHandler(final StateRegistry registry, final MinecraftSessionHandler sessionHandler) {
+  public void addSessionHandler(StateRegistry registry, MinecraftSessionHandler sessionHandler) {
     Preconditions.checkNotNull(registry);
     Preconditions.checkArgument(registry != state, "Handler would overwrite handler");
     ensureInEventLoop();
@@ -590,13 +590,13 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param threshold the compression threshold to use
    */
-  public void setCompressionThreshold(final int threshold) {
+  public void setCompressionThreshold(int threshold) {
     ensureOpen();
     ensureInEventLoop();
 
     if (threshold == -1) {
-      final ChannelHandler removedDecoder = channel.pipeline().remove(COMPRESSION_DECODER);
-      final ChannelHandler removedEncoder = channel.pipeline().remove(COMPRESSION_ENCODER);
+      ChannelHandler removedDecoder = channel.pipeline().remove(COMPRESSION_DECODER);
+      ChannelHandler removedEncoder = channel.pipeline().remove(COMPRESSION_ENCODER);
 
       if (removedDecoder != null && removedEncoder != null) {
         channel.pipeline().addBefore(MINECRAFT_DECODER, FRAME_ENCODER,
@@ -614,7 +614,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
       } else {
         int level = server.getConfiguration().getCompressionLevel();
         VelocityCompressor compressor = Natives.compress.get().create(level);
-        final MinecraftDecoder minecraftDecoder = (MinecraftDecoder) channel.pipeline().get(MINECRAFT_DECODER);
+        MinecraftDecoder minecraftDecoder = (MinecraftDecoder) channel.pipeline().get(MINECRAFT_DECODER);
 
         encoder = new MinecraftCompressorAndLengthEncoder(threshold, compressor);
         decoder = new MinecraftCompressDecoder(threshold, compressor, minecraftDecoder.getDirection());
@@ -634,7 +634,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    * @param secret the secret key negotiated between the client and the server
    * @throws GeneralSecurityException if encryption can't be enabled
    */
-  public void enableEncryption(final byte[] secret) throws GeneralSecurityException {
+  public void enableEncryption(byte[] secret) throws GeneralSecurityException {
     ensureOpen();
     ensureInEventLoop();
 
@@ -653,7 +653,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
     return association;
   }
 
-  public void setAssociation(final MinecraftConnectionAssociation association) {
+  public void setAssociation(MinecraftConnectionAssociation association) {
     ensureInEventLoop();
     this.association = association;
   }
@@ -672,7 +672,7 @@ public class MinecraftConnection extends ChannelInboundHandlerAdapter {
    *
    * @param connectionType The {@link ConnectionType}
    */
-  public void setType(final ConnectionType connectionType) {
+  public void setType(ConnectionType connectionType) {
     this.connectionType = connectionType;
   }
 }

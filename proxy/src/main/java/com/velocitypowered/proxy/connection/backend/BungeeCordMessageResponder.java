@@ -65,16 +65,16 @@ public class BungeeCordMessageResponder {
 
   private final ConnectedPlayer player;
 
-  BungeeCordMessageResponder(final VelocityServer proxy, final ConnectedPlayer player) {
+  BungeeCordMessageResponder(VelocityServer proxy, ConnectedPlayer player) {
     this.proxy = proxy;
     this.player = player;
   }
 
-  public static boolean isBungeeCordMessage(final PluginMessagePacket message) {
+  public static boolean isBungeeCordMessage(PluginMessagePacket message) {
     return MODERN_CHANNEL.getId().equals(message.getChannel()) || LEGACY_CHANNEL.getId().equals(message.getChannel());
   }
 
-  private void processConnect(final ByteBufDataInput in, final boolean queue) {
+  private void processConnect(ByteBufDataInput in, boolean queue) {
     String serverName = in.readUTF();
 
     if (player.getPermissionValue("velocity.command.server." + serverName) == Tristate.FALSE) {
@@ -101,7 +101,7 @@ public class BungeeCordMessageResponder {
     });
   }
 
-  private void processConnectOther(final ByteBufDataInput in, final boolean queue) {
+  private void processConnectOther(ByteBufDataInput in, boolean queue) {
     String playerName = in.readUTF();
     String serverName = in.readUTF();
 
@@ -131,7 +131,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void processIp(final ByteBufDataInput ignoredIn) {
+  private void processIp(ByteBufDataInput ignoredIn) {
     ByteBuf buf = Unpooled.buffer();
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
       out.writeUTF("IP");
@@ -142,7 +142,7 @@ public class BungeeCordMessageResponder {
     sendResponseOnConnection(buf);
   }
 
-  private void processPlayerCount(final ByteBufDataInput in) {
+  private void processPlayerCount(ByteBufDataInput in) {
     ByteBuf buf = Unpooled.buffer();
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
 
@@ -168,7 +168,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void processPing(final ByteBufDataInput in) {
+  private void processPing(ByteBufDataInput in) {
     UUID playerUuid = UUID.fromString(in.readUTF());
 
     ByteBuf buf = Unpooled.buffer();
@@ -191,7 +191,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void queuedServer(final ByteBufDataInput in) {
+  private void queuedServer(ByteBufDataInput in) {
     UUID playerUuid = UUID.fromString(in.readUTF());
 
     ByteBuf buf = Unpooled.buffer();
@@ -220,7 +220,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void queuedPosition(final ByteBufDataInput in) {
+  private void queuedPosition(ByteBufDataInput in) {
     UUID playerUuid = UUID.fromString(in.readUTF());
 
     ByteBuf buf = Unpooled.buffer();
@@ -250,7 +250,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void queuedMaxPosition(final ByteBufDataInput in) {
+  private void queuedMaxPosition(ByteBufDataInput in) {
     UUID playerUuid = UUID.fromString(in.readUTF());
 
     ByteBuf buf = Unpooled.buffer();
@@ -279,7 +279,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void queuedPaused(final ByteBufDataInput in) {
+  private void queuedPaused(ByteBufDataInput in) {
     UUID playerUuid = UUID.fromString(in.readUTF());
 
     ByteBuf buf = Unpooled.buffer();
@@ -308,7 +308,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void processPlayerList(final ByteBufDataInput in) {
+  private void processPlayerList(ByteBufDataInput in) {
     ByteBuf buf = Unpooled.buffer();
 
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
@@ -318,7 +318,7 @@ public class BungeeCordMessageResponder {
         out.writeUTF("PlayerList");
         out.writeUTF("ALL");
 
-        final StringJoiner joiner = new StringJoiner(", ");
+        StringJoiner joiner = new StringJoiner(", ");
         for (ConnectedPlayer online : proxy.getAllPlayers()) {
           joiner.add(online.getUsername());
         }
@@ -329,7 +329,7 @@ public class BungeeCordMessageResponder {
           out.writeUTF("PlayerList");
           out.writeUTF(info.getServerInfo().getName());
 
-          final StringJoiner joiner = new StringJoiner(", ");
+          StringJoiner joiner = new StringJoiner(", ");
           for (ConnectedPlayer online : info.getPlayersConnected()) {
             joiner.add(online.getUsername());
           }
@@ -362,16 +362,16 @@ public class BungeeCordMessageResponder {
     sendResponseOnConnection(buf);
   }
 
-  private void processMessage(final ByteBufDataInput in) {
+  private void processMessage(ByteBufDataInput in) {
     processMessage0(in, LegacyComponentSerializer.legacySection());
   }
 
-  private void processMessageRaw(final ByteBufDataInput in) {
+  private void processMessageRaw(ByteBufDataInput in) {
     processMessage0(in, GsonComponentSerializer.gson());
   }
 
-  private void processMessage0(final ByteBufDataInput in,
-                               final ComponentSerializer<Component, ?, String> serializer) {
+  private void processMessage0(ByteBufDataInput in,
+                               ComponentSerializer<Component, ?, String> serializer) {
     String target = in.readUTF();
     String message = in.readUTF();
 
@@ -405,7 +405,7 @@ public class BungeeCordMessageResponder {
     sendResponseOnConnection(buf);
   }
 
-  private void processUuidOther(final ByteBufDataInput in) {
+  private void processUuidOther(ByteBufDataInput in) {
     proxy.getPlayer(in.readUTF()).ifPresent(player -> {
       ByteBuf buf = Unpooled.buffer();
       try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
@@ -418,7 +418,7 @@ public class BungeeCordMessageResponder {
     });
   }
 
-  private void processIpOther(final ByteBufDataInput in) {
+  private void processIpOther(ByteBufDataInput in) {
     proxy.getPlayer(in.readUTF()).ifPresent(player -> {
       ByteBuf buf = Unpooled.buffer();
       try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
@@ -432,7 +432,7 @@ public class BungeeCordMessageResponder {
     });
   }
 
-  private void processServerIp(final ByteBufDataInput in) {
+  private void processServerIp(ByteBufDataInput in) {
     proxy.getServer(in.readUTF()).ifPresent(info -> {
       ByteBuf buf = Unpooled.buffer();
       try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
@@ -446,21 +446,21 @@ public class BungeeCordMessageResponder {
     });
   }
 
-  private void processKick(final ByteBufDataInput in) {
+  private void processKick(ByteBufDataInput in) {
     proxy.getPlayer(in.readUTF()).ifPresent(player -> {
       String kickReason = in.readUTF();
       player.disconnect(LegacyComponentSerializer.legacySection().deserialize(kickReason));
     });
   }
 
-  private void processKickRaw(final ByteBufDataInput in) {
+  private void processKickRaw(ByteBufDataInput in) {
     proxy.getPlayer(in.readUTF()).ifPresent(player -> {
       String kickReason = in.readUTF();
       player.disconnect(GsonComponentSerializer.gson().deserialize(kickReason));
     });
   }
 
-  private void processForwardToPlayer(final ByteBufDataInput in) {
+  private void processForwardToPlayer(ByteBufDataInput in) {
     Optional<ConnectedPlayer> player = proxy.getPlayer(in.readUTF());
     if (player.isPresent()) {
       ByteBuf toForward = in.unwrap().copy();
@@ -468,10 +468,10 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void processForwardToServer(final ByteBufDataInput in) {
+  private void processForwardToServer(ByteBufDataInput in) {
     String target = in.readUTF();
     ByteBuf toForward = in.unwrap().copy();
-    final ServerInfo currentUserServer = player
+    ServerInfo currentUserServer = player
         .getCurrentServer()
         .map(VelocityServerConnection::getServerInfo)
         .orElse(null);
@@ -495,7 +495,7 @@ public class BungeeCordMessageResponder {
     }
   }
 
-  private void processGetPlayerServer(final ByteBufDataInput in) {
+  private void processGetPlayerServer(ByteBufDataInput in) {
     proxy.getPlayer(in.readUTF()).ifPresent(player -> player.getCurrentServer().ifPresent(server -> {
       ByteBuf buf = Unpooled.buffer();
       ByteBufDataOutput out = new ByteBufDataOutput(buf);
@@ -506,24 +506,24 @@ public class BungeeCordMessageResponder {
     }));
   }
 
-  static ChannelIdentifier getBungeeCordChannel(final ProtocolVersion version) {
+  static ChannelIdentifier getBungeeCordChannel(ProtocolVersion version) {
     return version.noLessThan(ProtocolVersion.MINECRAFT_1_13) ? MODERN_CHANNEL : LEGACY_CHANNEL;
   }
 
   // Note: this method will always release the buffer!
-  private void sendResponseOnConnection(final ByteBuf buf) {
+  private void sendResponseOnConnection(ByteBuf buf) {
     sendServerResponse(this.player, buf);
   }
 
   // Note: this method will always release the buffer!
-  private static void sendServerResponse(final ConnectedPlayer player, final ByteBuf buf) {
+  private static void sendServerResponse(ConnectedPlayer player, ByteBuf buf) {
     MinecraftConnection serverConnection = player.ensureAndGetCurrentServer().ensureConnected();
     ChannelIdentifier chan = getBungeeCordChannel(serverConnection.getProtocolVersion());
     PluginMessagePacket msg = new PluginMessagePacket(chan.getId(), buf);
     serverConnection.write(msg);
   }
 
-  final boolean process(final PluginMessagePacket message) {
+  final boolean process(PluginMessagePacket message) {
     if (!proxy.getConfiguration().isBungeePluginChannelEnabled()) {
       return false;
     }
@@ -532,8 +532,8 @@ public class BungeeCordMessageResponder {
       return false;
     }
 
-    final ByteBufDataInput in = new ByteBufDataInput(message.content());
-    final String subChannel = in.readUTF();
+    ByteBufDataInput in = new ByteBufDataInput(message.content());
+    String subChannel = in.readUTF();
     switch (subChannel) {
       case "GetPlayerServer" -> this.processGetPlayerServer(in);
       case "ForwardToPlayer" -> this.processForwardToPlayer(in);

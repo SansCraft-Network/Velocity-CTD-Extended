@@ -46,37 +46,37 @@ public abstract class ChatBuilderV2 {
 
   protected @Nullable LastSeenMessages lastSeenMessages;
 
-  protected ChatBuilderV2(final ProtocolVersion version) {
+  protected ChatBuilderV2(ProtocolVersion version) {
     this.version = version;
     this.timestamp = Instant.now();
   }
 
-  public ChatBuilderV2 component(final Component component) {
+  public ChatBuilderV2 component(Component component) {
     this.component = component;
     return this;
   }
 
-  public ChatBuilderV2 message(final String message) {
+  public ChatBuilderV2 message(String message) {
     this.message = message;
     return this;
   }
 
-  public ChatBuilderV2 setType(final ChatType chatType) {
+  public ChatBuilderV2 setType(ChatType chatType) {
     this.type = chatType;
     return this;
   }
 
-  public ChatBuilderV2 setTimestamp(final Instant timestamp) {
+  public ChatBuilderV2 setTimestamp(Instant timestamp) {
     this.timestamp = timestamp;
     return this;
   }
 
-  public ChatBuilderV2 forIdentity(final Identity identity) {
+  public ChatBuilderV2 forIdentity(Identity identity) {
     this.senderIdentity = identity;
     return this;
   }
 
-  public ChatBuilderV2 asPlayer(final @Nullable ConnectedPlayer player) {
+  public ChatBuilderV2 asPlayer(@Nullable ConnectedPlayer player) {
     this.sender = player;
     return this;
   }
@@ -86,7 +86,7 @@ public abstract class ChatBuilderV2 {
     return this;
   }
 
-  public ChatBuilderV2 setLastSeenMessages(final LastSeenMessages lastSeenMessages) {
+  public ChatBuilderV2 setLastSeenMessages(LastSeenMessages lastSeenMessages) {
     this.lastSeenMessages = lastSeenMessages;
     return this;
   }

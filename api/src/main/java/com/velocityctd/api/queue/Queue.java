@@ -65,7 +65,7 @@ public interface Queue {
    *
    * @param player the player to remove
    */
-  default void dequeue(final @NotNull Player player) {
+  default void dequeue(@NotNull Player player) {
     dequeue(player.getUniqueId());
   }
 
@@ -83,7 +83,7 @@ public interface Queue {
    * @param player the player to check
    * @return {@code true} if the player is queued
    */
-  default boolean contains(final @NotNull Player player) {
+  default boolean contains(@NotNull Player player) {
     return contains(player.getUniqueId());
   }
 
@@ -121,7 +121,7 @@ public interface Queue {
    * @param player the player
    * @return the 1-based position, or {@link Optional#empty()}
    */
-  default Optional<Integer> getPosition(final @NotNull Player player) {
+  default Optional<Integer> getPosition(@NotNull Player player) {
     return getPosition(player.getUniqueId());
   }
 

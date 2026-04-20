@@ -27,7 +27,7 @@ public class ChatAcknowledgementPacket implements MinecraftPacket {
 
   int offset;
 
-  public ChatAcknowledgementPacket(final int offset) {
+  public ChatAcknowledgementPacket(int offset) {
     this.offset = offset;
   }
 
@@ -35,19 +35,19 @@ public class ChatAcknowledgementPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     offset = ProtocolUtils.readVarInt(buf);
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, offset);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

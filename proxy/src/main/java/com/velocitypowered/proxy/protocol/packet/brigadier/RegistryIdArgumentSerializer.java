@@ -26,12 +26,12 @@ public class RegistryIdArgumentSerializer implements ArgumentPropertySerializer<
   static final RegistryIdArgumentSerializer REGISTRY_ID = new RegistryIdArgumentSerializer();
 
   @Override
-  public Integer deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public Integer deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
     return ProtocolUtils.readVarInt(buf);
   }
 
   @Override
-  public void serialize(final Integer object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void serialize(Integer object, ByteBuf buf, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, object);
   }
 }

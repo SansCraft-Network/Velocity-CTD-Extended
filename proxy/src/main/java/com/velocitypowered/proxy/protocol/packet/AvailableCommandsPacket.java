@@ -91,7 +91,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     int commands = ProtocolUtils.readVarInt(buf);
     List<WireNode> wireNodes = ProtocolUtils.newList(commands);
     for (int i = 0; i < commands; i++) {
@@ -124,7 +124,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     // Assign all the children an index.
     Deque<CommandNode<CommandSource>> childrenQueue = new ArrayDeque<>(ImmutableList.of(rootNode));
     Object2IntMap<CommandNode<CommandSource>> idMappings = new Object2IntLinkedOpenCustomHashMap<>(
@@ -148,8 +148,8 @@ public class AvailableCommandsPacket implements MinecraftPacket {
     ProtocolUtils.writeVarInt(buf, idMappings.getInt(rootNode));
   }
 
-  private static void serializeNode(final CommandNode<CommandSource> node, final ByteBuf buf,
-                                    final Object2IntMap<CommandNode<CommandSource>> idMappings, final ProtocolVersion protocolVersion) {
+  private static void serializeNode(CommandNode<CommandSource> node, ByteBuf buf,
+                                    Object2IntMap<CommandNode<CommandSource>> idMappings, ProtocolVersion protocolVersion) {
     byte flags = 0;
     if (node.getRedirect() != null) {
       flags |= FLAG_IS_REDIRECT;
@@ -205,11 +205,11 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
-  private static WireNode deserializeNode(final ByteBuf buf, final int idx, final ProtocolVersion version) {
+  private static WireNode deserializeNode(ByteBuf buf, int idx, ProtocolVersion version) {
     byte flags = buf.readByte();
     int[] children = ProtocolUtils.readIntegerArray(buf);
     int redirectTo = -1;
@@ -254,8 +254,8 @@ public class AvailableCommandsPacket implements MinecraftPacket {
 
     private boolean validated;
 
-    private WireNode(final int idx, final byte flags, final int[] children, final int redirectTo,
-                     final @Nullable ArgumentBuilder<CommandSource, ?> args) {
+    private WireNode(int idx, byte flags, int[] children, int redirectTo,
+                     @Nullable ArgumentBuilder<CommandSource, ?> args) {
       this.idx = idx;
       this.flags = flags;
       this.children = children;
@@ -264,7 +264,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
       this.validated = false;
     }
 
-    void validate(final List<WireNode> wireNodes) {
+    void validate(List<WireNode> wireNodes) {
       // Ensure all children exist. Note that we delay checking if the node has been built yet;
       // that needs to come after this node is built.
       for (int child : children) {
@@ -283,7 +283,7 @@ public class AvailableCommandsPacket implements MinecraftPacket {
       this.validated = true;
     }
 
-    boolean toNode(final List<WireNode> wireNodes) {
+    boolean toNode(List<WireNode> wireNodes) {
       if (!this.validated) {
         this.validate(wireNodes);
       }
@@ -370,14 +370,14 @@ public class AvailableCommandsPacket implements MinecraftPacket {
   public record ProtocolSuggestionProvider(String name) implements SuggestionProvider<CommandSource> {
 
     @Override
-    public CompletableFuture<Suggestions> getSuggestions(final CommandContext<CommandSource> context,
-                                                         final SuggestionsBuilder builder) {
+    public CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSource> context,
+                                                         SuggestionsBuilder builder) {
       return builder.buildFuture();
     }
   }
 
   @Override
-  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
     // This is a very complex packet to encode. Paper 1.21.10 + Velocity with Spark has a size of
     // 30,334, but this is likely on the lower side. We'll use 128KiB as a more realistically-sized
     // amount.

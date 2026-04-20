@@ -67,7 +67,7 @@ public final class PacketSerializer {
    * @return the JSON string representation of the packet
    */
   @NotNull
-  public String serialize(final @NotNull DataPacket packet) {
+  public String serialize(@NotNull DataPacket packet) {
     return gson.toJson(packet);
   }
 
@@ -78,7 +78,7 @@ public final class PacketSerializer {
    * @return the deserialized {@link DataPacket}, or {@code null} if deserialization fails
    */
   @Nullable
-  public DataPacket deserialize(final @NotNull String json) {
+  public DataPacket deserialize(@NotNull String json) {
     return gson.fromJson(json, DataPacket.class);
   }
 
@@ -88,7 +88,7 @@ public final class PacketSerializer {
   }
 
   @Nullable
-  <T> T deserializePayload(final @NotNull String json, Class<T> payloadClass) {
+  <T> T deserializePayload(@NotNull String json, Class<T> payloadClass) {
     return gson.fromJson(json, payloadClass);
   }
 }

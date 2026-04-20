@@ -65,9 +65,9 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
    * @param serverConn   the server connection
    * @param resultFuture the result future
    */
-  TransitionSessionHandler(final VelocityServer server,
-                           final VelocityServerConnection serverConn,
-                           final CompletableFuture<Impl> resultFuture) {
+  TransitionSessionHandler(VelocityServer server,
+                           VelocityServerConnection serverConn,
+                           CompletableFuture<Impl> resultFuture) {
     this.server = server;
     this.serverConn = serverConn;
     this.resultFuture = resultFuture;
@@ -86,17 +86,17 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final KeepAlivePacket packet) {
+  public boolean handle(KeepAlivePacket packet) {
     serverConn.ensureConnected().write(packet);
     return true;
   }
 
   @Override
-  public boolean handle(final JoinGamePacket packet) {
-    final MinecraftConnection smc = serverConn.ensureConnected();
-    final VelocityRegisteredServer previousServer = serverConn.getPreviousServer().orElse(null);
-    final ConnectedPlayer player = serverConn.getPlayer();
-    final VelocityServerConnection existingConnection = player.getConnectedServer();
+  public boolean handle(JoinGamePacket packet) {
+    MinecraftConnection smc = serverConn.ensureConnected();
+    VelocityRegisteredServer previousServer = serverConn.getPreviousServer().orElse(null);
+    ConnectedPlayer player = serverConn.getPlayer();
+    VelocityServerConnection existingConnection = player.getConnectedServer();
 
     if (existingConnection != null) {
       // Shut down the existing server connection.
@@ -155,7 +155,7 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
               serverConn.getServerInfo().getName());
 
           if (this.server.isQueueEnabled()) {
-            final VelocityQueue queue = this.server.getQueueManager().getQueue(serverConn.getServer()
+            VelocityQueue queue = this.server.getQueueManager().getQueue(serverConn.getServer()
                     .getServerInfo().getName());
             queue.dequeue(player.getUniqueId());
           }
@@ -176,8 +176,8 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final DisconnectPacket packet) {
-    final MinecraftConnection connection = serverConn.ensureConnected();
+  public boolean handle(DisconnectPacket packet) {
+    MinecraftConnection connection = serverConn.ensureConnected();
     serverConn.disconnect();
 
     // If we were in the middle of the Forge handshake, it is not safe to proceed. We must kick
@@ -192,7 +192,7 @@ public class TransitionSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final PluginMessagePacket packet) {
+  public boolean handle(PluginMessagePacket packet) {
     if (bungeecordMessageResponder.process(packet)) {
       return true;
     }

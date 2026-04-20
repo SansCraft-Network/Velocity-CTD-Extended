@@ -33,7 +33,7 @@ final class IntegerArgumentPropertySerializer implements ArgumentPropertySeriali
   }
 
   @Override
-  public IntegerArgumentType deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public IntegerArgumentType deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
     byte flags = buf.readByte();
     int minimum = (flags & HAS_MINIMUM) != 0 ? buf.readInt() : Integer.MIN_VALUE;
     int maximum = (flags & HAS_MAXIMUM) != 0 ? buf.readInt() : Integer.MAX_VALUE;
@@ -41,7 +41,7 @@ final class IntegerArgumentPropertySerializer implements ArgumentPropertySeriali
   }
 
   @Override
-  public void serialize(final IntegerArgumentType object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void serialize(IntegerArgumentType object, ByteBuf buf, ProtocolVersion protocolVersion) {
     boolean hasMinimum = object.getMinimum() != Integer.MIN_VALUE;
     boolean hasMaximum = object.getMaximum() != Integer.MAX_VALUE;
     byte flag = getFlags(hasMinimum, hasMaximum);
@@ -56,7 +56,7 @@ final class IntegerArgumentPropertySerializer implements ArgumentPropertySeriali
     }
   }
 
-  static byte getFlags(final boolean hasMinimum, final boolean hasMaximum) {
+  static byte getFlags(boolean hasMinimum, boolean hasMaximum) {
     byte flags = 0;
     if (hasMinimum) {
       flags |= HAS_MINIMUM;

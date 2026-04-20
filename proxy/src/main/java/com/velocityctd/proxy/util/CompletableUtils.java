@@ -29,7 +29,7 @@ public class CompletableUtils {
    * @param maybeCompletionException an exception, possibly an {@link CompletionException}
    * @return the first cause in the exception chain that is either {@code null} or not an {@link CompletionException}
    */
-  public static @Nullable Throwable cause(final @NonNull Throwable maybeCompletionException) {
+  public static @Nullable Throwable cause(@NonNull Throwable maybeCompletionException) {
     Throwable throwable = maybeCompletionException;
     while (throwable instanceof CompletionException) {
       throwable = throwable.getCause();

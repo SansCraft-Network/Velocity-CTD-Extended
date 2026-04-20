@@ -105,9 +105,9 @@ public final class PlayerIdentifier {
    * @param argName the name of the string argument to complete
    * @return a suggestion provider for player identifiers
    */
-  public static SuggestionProvider<CommandSource> suggest(final VelocityServer server, final String argName) {
+  public static SuggestionProvider<CommandSource> suggest(VelocityServer server, String argName) {
     return (ctx, builder) -> {
-      final String argument = ctx.getArguments().containsKey(argName)
+      String argument = ctx.getArguments().containsKey(argName)
           ? ctx.getArgument(argName, String.class)
           : "";
 
@@ -160,7 +160,7 @@ public final class PlayerIdentifier {
    * @param source the command source (used for {@code current} resolution)
    * @return the resolution result
    */
-  public static Result resolve(final VelocityServer server, final String identifier, final CommandSource source) {
+  public static Result resolve(VelocityServer server, String identifier, CommandSource source) {
     if (identifier.equalsIgnoreCase("all")) {
       return Result.success(Type.ALL, server.getClusterPlayerService().getAllPlayers(), null);
     }
@@ -216,7 +216,7 @@ public final class PlayerIdentifier {
    * Finds a server by name using fuzzy matching (exact &gt; contains).
    * Returns {@code null} if no match or if the match is ambiguous.
    */
-  private static @Nullable VelocityRegisteredServer findServer(final VelocityServer server, final String input) {
+  private static @Nullable VelocityRegisteredServer findServer(VelocityServer server, String input) {
     String lower = input.toLowerCase();
     VelocityRegisteredServer exact = null;
     VelocityRegisteredServer contains = null;

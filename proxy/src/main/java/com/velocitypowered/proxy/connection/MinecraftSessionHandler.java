@@ -96,10 +96,10 @@ public interface MinecraftSessionHandler {
     return false;
   }
 
-  default void handleGeneric(final MinecraftPacket packet) {
+  default void handleGeneric(MinecraftPacket packet) {
   }
 
-  default void handleUnknown(final ByteBuf buf) {
+  default void handleUnknown(ByteBuf buf) {
   }
 
   default void connected() {
@@ -114,7 +114,7 @@ public interface MinecraftSessionHandler {
   default void deactivated() {
   }
 
-  default void exception(final Throwable throwable) {
+  default void exception(Throwable throwable) {
   }
 
   default void writabilityChanged() {
@@ -123,271 +123,271 @@ public interface MinecraftSessionHandler {
   default void readCompleted() {
   }
 
-  default boolean handle(final AvailableCommandsPacket commands) {
+  default boolean handle(AvailableCommandsPacket commands) {
     return false;
   }
 
-  default boolean handle(final BossBarPacket packet) {
+  default boolean handle(BossBarPacket packet) {
     return false;
   }
 
-  default boolean handle(final LegacyChatPacket packet) {
+  default boolean handle(LegacyChatPacket packet) {
     return false;
   }
 
-  default boolean handle(final ClientSettingsPacket packet) {
+  default boolean handle(ClientSettingsPacket packet) {
     return false;
   }
 
-  default boolean handle(final DisconnectPacket packet) {
+  default boolean handle(DisconnectPacket packet) {
     return false;
   }
 
-  default boolean handle(final EncryptionRequestPacket packet) {
+  default boolean handle(EncryptionRequestPacket packet) {
     return false;
   }
 
-  default boolean handle(final EncryptionResponsePacket packet) {
+  default boolean handle(EncryptionResponsePacket packet) {
     return false;
   }
 
-  default boolean handle(final HandshakePacket packet) {
+  default boolean handle(HandshakePacket packet) {
     return false;
   }
 
-  default boolean handle(final HeaderAndFooterPacket packet) {
+  default boolean handle(HeaderAndFooterPacket packet) {
     return false;
   }
 
-  default boolean handle(final JoinGamePacket packet) {
+  default boolean handle(JoinGamePacket packet) {
     return false;
   }
 
-  default boolean handle(final KeepAlivePacket packet) {
+  default boolean handle(KeepAlivePacket packet) {
     return false;
   }
 
-  default boolean handle(final LegacyHandshakePacket packet) {
+  default boolean handle(LegacyHandshakePacket packet) {
     return false;
   }
 
-  default boolean handle(final LegacyPingPacket packet) {
+  default boolean handle(LegacyPingPacket packet) {
     return false;
   }
 
-  default boolean handle(final LoginPluginMessagePacket packet) {
+  default boolean handle(LoginPluginMessagePacket packet) {
     return false;
   }
 
-  default boolean handle(final LoginPluginResponsePacket packet) {
+  default boolean handle(LoginPluginResponsePacket packet) {
     return false;
   }
 
-  default boolean handle(final PluginMessagePacket packet) {
+  default boolean handle(PluginMessagePacket packet) {
     return false;
   }
 
-  default boolean handle(final RespawnPacket packet) {
+  default boolean handle(RespawnPacket packet) {
     return false;
   }
 
-  default boolean handle(final ServerLoginPacket packet) {
+  default boolean handle(ServerLoginPacket packet) {
     return false;
   }
 
-  default boolean handle(final ServerLoginSuccessPacket packet) {
+  default boolean handle(ServerLoginSuccessPacket packet) {
     return false;
   }
 
-  default boolean handle(final SetCompressionPacket packet) {
+  default boolean handle(SetCompressionPacket packet) {
     return false;
   }
 
-  default boolean handle(final StatusPingPacket packet) {
+  default boolean handle(StatusPingPacket packet) {
     return false;
   }
 
-  default boolean handle(final StatusRequestPacket packet) {
+  default boolean handle(StatusRequestPacket packet) {
     return false;
   }
 
-  default boolean handle(final StatusResponsePacket packet) {
+  default boolean handle(StatusResponsePacket packet) {
     return false;
   }
 
-  default boolean handle(final TabCompleteRequestPacket packet) {
+  default boolean handle(TabCompleteRequestPacket packet) {
     return false;
   }
 
-  default boolean handle(final TabCompleteResponsePacket packet) {
+  default boolean handle(TabCompleteResponsePacket packet) {
     return false;
   }
 
-  default boolean handle(final LegacyTitlePacket packet) {
+  default boolean handle(LegacyTitlePacket packet) {
     return false;
   }
 
-  default boolean handle(final TitleTextPacket packet) {
+  default boolean handle(TitleTextPacket packet) {
     return false;
   }
 
-  default boolean handle(final TitleSubtitlePacket packet) {
+  default boolean handle(TitleSubtitlePacket packet) {
     return false;
   }
 
-  default boolean handle(final TitleActionbarPacket packet) {
+  default boolean handle(TitleActionbarPacket packet) {
     return false;
   }
 
-  default boolean handle(final TitleTimesPacket packet) {
+  default boolean handle(TitleTimesPacket packet) {
     return false;
   }
 
-  default boolean handle(final TitleClearPacket packet) {
+  default boolean handle(TitleClearPacket packet) {
     return false;
   }
 
-  default boolean handle(final LegacyPlayerListItemPacket packet) {
+  default boolean handle(LegacyPlayerListItemPacket packet) {
     return false;
   }
 
-  default boolean handle(final ResourcePackRequestPacket packet) {
+  default boolean handle(ResourcePackRequestPacket packet) {
     return false;
   }
 
-  default boolean handle(final RemoveResourcePackPacket packet) {
+  default boolean handle(RemoveResourcePackPacket packet) {
     return false;
   }
 
-  default boolean handle(final ResourcePackResponsePacket packet) {
+  default boolean handle(ResourcePackResponsePacket packet) {
     return false;
   }
 
-  default boolean handle(final KeyedPlayerChatPacket packet) {
+  default boolean handle(KeyedPlayerChatPacket packet) {
     return false;
   }
 
-  default boolean handle(final SessionPlayerChatPacket packet) {
+  default boolean handle(SessionPlayerChatPacket packet) {
     return false;
   }
 
-  default boolean handle(final SystemChatPacket packet) {
+  default boolean handle(SystemChatPacket packet) {
     return false;
   }
 
-  default boolean handle(final KeyedPlayerCommandPacket packet) {
+  default boolean handle(KeyedPlayerCommandPacket packet) {
     return false;
   }
 
-  default boolean handle(final SessionPlayerCommandPacket packet) {
+  default boolean handle(SessionPlayerCommandPacket packet) {
     return false;
   }
 
-  default boolean handle(final PlayerChatCompletionPacket packet) {
+  default boolean handle(PlayerChatCompletionPacket packet) {
     return false;
   }
 
-  default boolean handle(final ServerDataPacket serverData) {
+  default boolean handle(ServerDataPacket serverData) {
     return false;
   }
 
-  default boolean handle(final RemovePlayerInfoPacket packet) {
+  default boolean handle(RemovePlayerInfoPacket packet) {
     return false;
   }
 
-  default boolean handle(final UpsertPlayerInfoPacket packet) {
+  default boolean handle(UpsertPlayerInfoPacket packet) {
     return false;
   }
 
-  default boolean handle(final LoginAcknowledgedPacket packet) {
+  default boolean handle(LoginAcknowledgedPacket packet) {
     return false;
   }
 
-  default boolean handle(final ActiveFeaturesPacket packet) {
+  default boolean handle(ActiveFeaturesPacket packet) {
     return false;
   }
 
-  default boolean handle(final FinishedUpdatePacket packet) {
+  default boolean handle(FinishedUpdatePacket packet) {
     return false;
   }
 
-  default boolean handle(final RegistrySyncPacket packet) {
+  default boolean handle(RegistrySyncPacket packet) {
     return false;
   }
 
-  default boolean handle(final TagsUpdatePacket packet) {
+  default boolean handle(TagsUpdatePacket packet) {
     return false;
   }
 
-  default boolean handle(final StartUpdatePacket packet) {
+  default boolean handle(StartUpdatePacket packet) {
     return false;
   }
 
-  default boolean handle(final PingIdentifyPacket pingIdentify) {
+  default boolean handle(PingIdentifyPacket pingIdentify) {
     return false;
   }
 
-  default boolean handle(final ChatAcknowledgementPacket chatAcknowledgement) {
+  default boolean handle(ChatAcknowledgementPacket chatAcknowledgement) {
     return false;
   }
 
-  default boolean handle(final BundleDelimiterPacket bundleDelimiterPacket) {
+  default boolean handle(BundleDelimiterPacket bundleDelimiterPacket) {
     return false;
   }
 
-  default boolean handle(final TransferPacket transfer) {
+  default boolean handle(TransferPacket transfer) {
     return false;
   }
 
-  default boolean handle(final KnownPacksPacket packet) {
+  default boolean handle(KnownPacksPacket packet) {
     return false;
   }
 
-  default boolean handle(final ClientboundStoreCookiePacket packet) {
+  default boolean handle(ClientboundStoreCookiePacket packet) {
     return false;
   }
 
-  default boolean handle(final ClientboundCookieRequestPacket packet) {
+  default boolean handle(ClientboundCookieRequestPacket packet) {
     return false;
   }
 
-  default boolean handle(final ServerboundCookieResponsePacket packet) {
+  default boolean handle(ServerboundCookieResponsePacket packet) {
     return false;
   }
 
-  default boolean handle(final ClientboundCustomReportDetailsPacket packet) {
+  default boolean handle(ClientboundCustomReportDetailsPacket packet) {
     return false;
   }
 
-  default boolean handle(final ClientboundServerLinksPacket packet) {
+  default boolean handle(ClientboundServerLinksPacket packet) {
     return false;
   }
 
-  default boolean handle(final DialogClearPacket packet) {
+  default boolean handle(DialogClearPacket packet) {
     return false;
   }
 
-  default boolean handle(final DialogShowPacket packet) {
+  default boolean handle(DialogShowPacket packet) {
     return false;
   }
 
-  default boolean handle(final ServerboundCustomClickActionPacket packet) {
+  default boolean handle(ServerboundCustomClickActionPacket packet) {
     return false;
   }
 
-  default boolean handle(final CodeOfConductPacket packet) {
+  default boolean handle(CodeOfConductPacket packet) {
     return false;
   }
 
-  default boolean handle(final CodeOfConductAcceptPacket packet) {
+  default boolean handle(CodeOfConductAcceptPacket packet) {
     return false;
   }
 
-  default boolean handle(final ClientboundSoundEntityPacket packet) {
+  default boolean handle(ClientboundSoundEntityPacket packet) {
     return false;
   }
 
-  default boolean handle(final ClientboundStopSoundPacket packet) {
+  default boolean handle(ClientboundStopSoundPacket packet) {
     return false;
   }
 }

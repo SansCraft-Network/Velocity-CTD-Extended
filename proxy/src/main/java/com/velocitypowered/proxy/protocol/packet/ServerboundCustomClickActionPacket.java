@@ -33,12 +33,12 @@ public class ServerboundCustomClickActionPacket extends DeferredByteBufHolder im
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     replace(buf.readRetainedSlice(buf.readableBytes()));
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     buf.writeBytes(content());
   }
 
@@ -53,12 +53,12 @@ public class ServerboundCustomClickActionPacket extends DeferredByteBufHolder im
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int encodeSizeHint(final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
     return content().readableBytes();
   }
 }

@@ -32,12 +32,12 @@ public final class StatusRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     // There is no additional data to decode.
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     // There is no data to decode.
   }
 
@@ -47,12 +47,12 @@ public final class StatusRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int decodeExpectedMaxLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public int decodeExpectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
     return 0;
   }
 }

@@ -37,14 +37,14 @@ public final class ComponentTypeAdapter implements JsonSerializer<Component>, Js
   private static final GsonComponentSerializer SERIALIZER = GsonComponentSerializer.gson();
 
   @Override
-  public JsonElement serialize(final Component src, final Type typeOfSrc,
-                               final JsonSerializationContext context) {
+  public JsonElement serialize(Component src, Type typeOfSrc,
+                               JsonSerializationContext context) {
     return SERIALIZER.serializeToTree(src);
   }
 
   @Override
-  public Component deserialize(final JsonElement json, final Type typeOfT,
-                               final JsonDeserializationContext context) throws JsonParseException {
+  public Component deserialize(JsonElement json, Type typeOfT,
+                               JsonDeserializationContext context) throws JsonParseException {
     return SERIALIZER.deserializeFromTree(json);
   }
 }

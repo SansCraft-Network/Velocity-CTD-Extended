@@ -82,8 +82,8 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    * @param scheduler the scheduler used for transaction timeout tasks
    * @param packetSerializer the serializer for packet (de)serialization
    */
-  public AbstractRedisProvider(final @NotNull Scheduler scheduler,
-                               final @NotNull PacketSerializer packetSerializer) {
+  public AbstractRedisProvider(@NotNull Scheduler scheduler,
+                               @NotNull PacketSerializer packetSerializer) {
     this.pendingTransactions = new PendingTransactions(scheduler);
     this.packetSerializer = packetSerializer;
     this.routeHandlers = new HashMap<>();
@@ -97,7 +97,7 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    * @param payload the payload to publish
    */
   @Override
-  public void publish(final @NotNull Object payload) {
+  public void publish(@NotNull Object payload) {
     this.publishRaw(DataPacket.of(payload, packetSerializer));
   }
 
@@ -110,8 +110,8 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    * @param timeUnit the time unit of the timeout
    */
   @Override
-  public void publish(final @NotNull Transaction<?, ?> transaction, final int timeout, final TimeUnit timeUnit) {
-    final DataPacket sentPacket = DataPacket.of(transaction.getSentData(), packetSerializer);
+  public void publish(@NotNull Transaction<?, ?> transaction, int timeout, TimeUnit timeUnit) {
+    DataPacket sentPacket = DataPacket.of(transaction.getSentData(), packetSerializer);
     sentPacket.setTransactionId(transaction.getTransactionId());
 
     pendingTransactions.put(transaction, timeout, timeUnit);
@@ -133,8 +133,8 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    * @param <T> the type of data handled by the route
    */
   @Override
-  public <T> void registerRoute(final @NotNull RouteHandler<T> routeHandler) {
-    final Class<T> dataClass = routeHandler.getDataClass();
+  public <T> void registerRoute(@NotNull RouteHandler<T> routeHandler) {
+    Class<T> dataClass = routeHandler.getDataClass();
 
     if (this.routeHandlers.containsKey(dataClass.getName())) {
       LOGGER.debug("Route registration for '{}' already exists, overwriting", dataClass.getSimpleName());
@@ -150,7 +150,7 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    * @param <T> the type of data handled by the route
    */
   @Override
-  public <T> void unregisterRoute(final @NotNull Class<T> dataClass) {
+  public <T> void unregisterRoute(@NotNull Class<T> dataClass) {
     if (this.routeHandlers.remove(dataClass.getName()) == null) {
       LOGGER.debug("Route registration for '{}' does not exist, ignoring", dataClass.getSimpleName());
     } else {
@@ -164,8 +164,8 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    * @param transactionHandler the handler to register
    */
   @Override
-  public void registerTransaction(final @NotNull TransactionHandler<?, ?> transactionHandler) {
-    final Class<?> dataClass = transactionHandler.getDataClass();
+  public void registerTransaction(@NotNull TransactionHandler<?, ?> transactionHandler) {
+    Class<?> dataClass = transactionHandler.getDataClass();
 
     if (this.transactionHandlers.containsKey(dataClass.getName())) {
       LOGGER.debug("Transaction handler for '{}' already exists, overwriting", dataClass.getSimpleName());
@@ -180,7 +180,7 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    * @param dataClass the data class whose handler should be removed
    */
   @Override
-  public void unregisterTransaction(final @NotNull Class<? extends TransactionData<?>> dataClass) {
+  public void unregisterTransaction(@NotNull Class<? extends TransactionData<?>> dataClass) {
     if (this.transactionHandlers.remove(dataClass.getName()) == null) {
       LOGGER.debug("Transaction handler for '{}' does not exist, ignoring", dataClass.getSimpleName());
     } else {
@@ -204,7 +204,7 @@ public abstract sealed class AbstractRedisProvider implements RedisProvider perm
    *
    * @param listener the callback to invoke on reconnect
    */
-  public void addReconnectListener(final @NotNull Runnable listener) {
+  public void addReconnectListener(@NotNull Runnable listener) {
     this.reconnectListeners.add(listener);
   }
 

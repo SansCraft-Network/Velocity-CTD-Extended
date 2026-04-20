@@ -37,7 +37,7 @@ public final class ComponentLoggerProviderImpl implements ComponentLoggerProvide
           .build();
 
   @Override
-  public @NotNull ComponentLogger logger(final @NotNull LoggerHelper helper, final @NotNull String name) {
+  public @NotNull ComponentLogger logger(@NotNull LoggerHelper helper, @NotNull String name) {
     return helper.delegating(LoggerFactory.getLogger(name), SERIALIZER::serialize);
   }
 }

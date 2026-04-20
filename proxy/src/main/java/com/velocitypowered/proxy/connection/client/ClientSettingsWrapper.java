@@ -38,7 +38,7 @@ public class ClientSettingsWrapper implements PlayerSettings {
 
   private @Nullable Locale locale;
 
-  ClientSettingsWrapper(final ClientSettingsPacket settings) {
+  ClientSettingsWrapper(ClientSettingsPacket settings) {
     this.settings = settings;
     this.parts = new SkinParts((byte) settings.getSkinParts());
   }
@@ -101,7 +101,7 @@ public class ClientSettingsWrapper implements PlayerSettings {
   }
 
   @Override
-  public boolean equals(final @Nullable Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) {
       return true;
     }

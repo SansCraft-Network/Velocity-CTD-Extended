@@ -46,11 +46,11 @@ public class LegacyChatPacket implements MinecraftPacket {
   private @Nullable UUID sender;
 
   private static int getMaxServerboundMessageLength() {
-    final String value = System.getProperty("velocity.legacyChatMaxServerboundLength");
+    String value = System.getProperty("velocity.legacyChatMaxServerboundLength");
     if (value != null) {
       try {
         return Integer.parseInt(value.trim());
-      } catch (final NumberFormatException ignored) {
+      } catch (NumberFormatException ignored) {
         // This instance is effectively voided
       }
     }
@@ -68,7 +68,7 @@ public class LegacyChatPacket implements MinecraftPacket {
    * @param type the message type byte (chat/system/info)
    * @param sender the sender UUID (nullable)
    */
-  public LegacyChatPacket(final @Nullable String message, final byte type, final @Nullable UUID sender) {
+  public LegacyChatPacket(@Nullable String message, byte type, @Nullable UUID sender) {
     this.message = message;
     this.type = type;
     this.sender = sender;
@@ -88,7 +88,7 @@ public class LegacyChatPacket implements MinecraftPacket {
     return message;
   }
 
-  public void setMessage(final @Nullable String message) {
+  public void setMessage(@Nullable String message) {
     this.message = message;
   }
 
@@ -96,7 +96,7 @@ public class LegacyChatPacket implements MinecraftPacket {
     return type;
   }
 
-  public void setType(final byte type) {
+  public void setType(byte type) {
     this.type = type;
   }
 
@@ -104,7 +104,7 @@ public class LegacyChatPacket implements MinecraftPacket {
     return sender;
   }
 
-  public void setSenderUuid(final UUID sender) {
+  public void setSenderUuid(UUID sender) {
     this.sender = sender;
   }
 
@@ -118,7 +118,7 @@ public class LegacyChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     message = ProtocolUtils.readString(buf, direction == ProtocolUtils.Direction.CLIENTBOUND
         ? 262144 : version.noLessThan(ProtocolVersion.MINECRAFT_1_11) ? MAX_SERVERBOUND_MESSAGE_LENGTH
           : MAX_SERVERBOUND_MESSAGE_LENGTH_LEGACY);
@@ -131,7 +131,7 @@ public class LegacyChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (message == null) {
       throw new IllegalStateException("Message is not specified");
     }
@@ -146,7 +146,7 @@ public class LegacyChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

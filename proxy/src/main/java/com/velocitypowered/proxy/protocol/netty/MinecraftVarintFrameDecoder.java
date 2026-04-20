@@ -72,14 +72,14 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
    *
    * @param direction the direction from which we decode from
    */
-  public MinecraftVarintFrameDecoder(final ProtocolUtils.Direction direction) {
+  public MinecraftVarintFrameDecoder(ProtocolUtils.Direction direction) {
     this.direction = direction;
     this.registry = StateRegistry.HANDSHAKE.getProtocolRegistry(direction, ProtocolVersion.MINIMUM_VERSION);
     this.state = StateRegistry.HANDSHAKE;
   }
 
   @Override
-  protected void decode(final ChannelHandlerContext ctx, final ByteBuf in, final List<Object> out) throws Exception {
+  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
     if (!ctx.channel().isActive()) {
       in.clear();
       return;
@@ -143,19 +143,19 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     }
   }
 
-  private boolean validateServerboundHandshakePacket(final ByteBuf in, final int length) throws Exception {
+  private boolean validateServerboundHandshakePacket(ByteBuf in, int length) throws Exception {
     StateRegistry.PacketRegistry.ProtocolRegistry registry =
         state.getProtocolRegistry(direction, ProtocolVersion.MINIMUM_VERSION);
 
-    final int index = in.readerIndex();
+    int index = in.readerIndex();
     // Index hasn't changed, we've read nothing
-    final int packetId = readRawVarInt21(in);
+    int packetId = readRawVarInt21(in);
     // Index hasn't changed, we've read nothing
     if (index == in.readerIndex()) {
       return true;
     }
 
-    final int payloadLength = length - ProtocolUtils.varIntBytes(packetId);
+    int payloadLength = length - ProtocolUtils.varIntBytes(packetId);
 
     MinecraftPacket packet = registry.createPacket(packetId);
 
@@ -181,7 +181,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
   }
 
   @Override
-  public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable cause) throws Exception {
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
     if (MinecraftDecoder.DEBUG) {
       LOGGER.atWarn()
           .withThrowable(cause)
@@ -198,7 +198,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
    * @return the VarInt decoded, {@code 0} if no varint could be read
    * @throws QuietDecoderException if the VarInt is too big to be decoded
    */
-  private static int readRawVarInt21(final ByteBuf buffer) {
+  private static int readRawVarInt21(ByteBuf buffer) {
     if (buffer.readableBytes() < 4) {
       // we don't have enough that we can read a potentially full varint, so fall back to
       // the slow path.
@@ -233,7 +233,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     return preservedBytes;
   }
 
-  private static int readRawVarintSmallBuf(final ByteBuf buffer) {
+  private static int readRawVarintSmallBuf(ByteBuf buffer) {
     if (!buffer.isReadable()) {
       return 0;
     }
@@ -268,7 +268,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     return result | (tmp & 0x7F) << 14;
   }
 
-  private Exception handleOverflow(final MinecraftPacket packet, final int expected, final int actual) {
+  private Exception handleOverflow(MinecraftPacket packet, int expected, int actual) {
     if (MinecraftDecoder.DEBUG) {
       return new CorruptedFrameException("Packet sent for " + packet.getClass() + " was too "
           + "big (expected " + expected + " bytes, got " + actual + " bytes)");
@@ -277,7 +277,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     }
   }
 
-  private Exception handleUnderflow(final MinecraftPacket packet, final int expected, final int actual) {
+  private Exception handleUnderflow(MinecraftPacket packet, int expected, int actual) {
     if (MinecraftDecoder.DEBUG) {
       return new CorruptedFrameException("Packet sent for " + packet.getClass() + " was too "
           + "small (expected " + expected + " bytes, got " + actual + " bytes)");
@@ -286,7 +286,7 @@ public class MinecraftVarintFrameDecoder extends ByteToMessageDecoder {
     }
   }
 
-  public void setState(final StateRegistry stateRegistry) {
+  public void setState(StateRegistry stateRegistry) {
     this.state = stateRegistry;
   }
 

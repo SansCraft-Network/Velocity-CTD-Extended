@@ -33,7 +33,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
 
   private final VelocityServer server;
 
-  public SessionCommandHandler(final ConnectedPlayer player, final VelocityServer server) {
+  public SessionCommandHandler(ConnectedPlayer player, VelocityServer server) {
     super(player, server);
     this.player = player;
     this.server = server;
@@ -45,7 +45,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
   }
 
   @Nullable
-  private MinecraftPacket consumeCommand(final SessionPlayerCommandPacket packet) {
+  private MinecraftPacket consumeCommand(SessionPlayerCommandPacket packet) {
     if (packet.lastSeenMessages == null) {
       return null;
     }
@@ -64,7 +64,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
 
     // An unsigned command with a 'last seen' update will not happen as of 1.20.5+, but for earlier versions - we still
     // need to pass through the acknowledgement
-    final int offset = packet.lastSeenMessages.getOffset();
+    int offset = packet.lastSeenMessages.getOffset();
     if (offset != 0) {
       return new ChatAcknowledgementPacket(offset);
     }
@@ -73,7 +73,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
   }
 
   @Nullable
-  private MinecraftPacket forwardCommand(final SessionPlayerCommandPacket packet, final String newCommand) {
+  private MinecraftPacket forwardCommand(SessionPlayerCommandPacket packet, String newCommand) {
     if (newCommand.equals(packet.command)) {
       return packet;
     }
@@ -82,7 +82,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
   }
 
   @Nullable
-  private MinecraftPacket modifyCommand(final SessionPlayerCommandPacket packet, final String newCommand) {
+  private MinecraftPacket modifyCommand(SessionPlayerCommandPacket packet, String newCommand) {
     if (server.getConfiguration().enforceChatSigning() && packet.isSigned()) {
       LOGGER.fatal("A plugin tried to change a command with signed component(s). "
           + "This is not supported. "
@@ -104,7 +104,7 @@ public class SessionCommandHandler extends RateLimitedCommandHandler<SessionPlay
   }
 
   @Override
-  public void handlePlayerCommandInternal(final SessionPlayerCommandPacket packet) {
+  public void handlePlayerCommandInternal(SessionPlayerCommandPacket packet) {
     queueCommandResult(this.server, this.player, (event, newLastSeenMessages) -> {
       SessionPlayerCommandPacket fixedPacket = packet.withLastSeenMessages(newLastSeenMessages);
 

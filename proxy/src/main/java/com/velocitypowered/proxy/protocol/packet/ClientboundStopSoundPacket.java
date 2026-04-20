@@ -36,17 +36,17 @@ public class ClientboundStopSoundPacket implements MinecraftPacket {
   public ClientboundStopSoundPacket() {
   }
 
-  public ClientboundStopSoundPacket(final SoundStop soundStop) {
+  public ClientboundStopSoundPacket(SoundStop soundStop) {
     this(soundStop.source(), soundStop.sound());
   }
 
-  public ClientboundStopSoundPacket(final @Nullable Sound.Source source, final @Nullable Key soundName) {
+  public ClientboundStopSoundPacket(@Nullable Sound.Source source, @Nullable Key soundName) {
     this.source = source;
     this.soundName = soundName;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     int flagsBitmask = buf.readByte();
 
     if ((flagsBitmask & 1) != 0) {
@@ -63,7 +63,7 @@ public class ClientboundStopSoundPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     int flagsBitmask = 0;
     if (source != null && soundName == null) {
       flagsBitmask |= 1;
@@ -85,7 +85,7 @@ public class ClientboundStopSoundPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -94,7 +94,7 @@ public class ClientboundStopSoundPacket implements MinecraftPacket {
     return source;
   }
 
-  public void setSource(final @Nullable Sound.Source source) {
+  public void setSource(@Nullable Sound.Source source) {
     this.source = source;
   }
 
@@ -103,7 +103,7 @@ public class ClientboundStopSoundPacket implements MinecraftPacket {
     return soundName;
   }
 
-  public void setSoundName(final @Nullable Key soundName) {
+  public void setSoundName(@Nullable Key soundName) {
     this.soundName = soundName;
   }
 }

@@ -47,7 +47,7 @@ public class HandshakePacket implements MinecraftPacket {
     return protocolVersion;
   }
 
-  public void setProtocolVersion(final ProtocolVersion protocolVersion) {
+  public void setProtocolVersion(ProtocolVersion protocolVersion) {
     this.protocolVersion = protocolVersion;
   }
 
@@ -55,7 +55,7 @@ public class HandshakePacket implements MinecraftPacket {
     return serverAddress;
   }
 
-  public void setServerAddress(final String serverAddress) {
+  public void setServerAddress(String serverAddress) {
     this.serverAddress = serverAddress;
   }
 
@@ -63,7 +63,7 @@ public class HandshakePacket implements MinecraftPacket {
     return port;
   }
 
-  public void setPort(final int port) {
+  public void setPort(int port) {
     this.port = port;
   }
 
@@ -71,7 +71,7 @@ public class HandshakePacket implements MinecraftPacket {
     return this.nextStatus;
   }
 
-  public void setIntent(final HandshakeIntent intent) {
+  public void setIntent(HandshakeIntent intent) {
     this.intent = intent;
     this.nextStatus = intent.id();
   }
@@ -91,7 +91,7 @@ public class HandshakePacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion ignored) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion ignored) {
     int realProtocolVersion = ProtocolUtils.readVarInt(buf);
     this.protocolVersion = ProtocolVersion.getProtocolVersion(realProtocolVersion);
     this.serverAddress = ProtocolUtils.readString(buf, MAXIMUM_HOSTNAME_LENGTH);
@@ -101,7 +101,7 @@ public class HandshakePacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion ignored) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion ignored) {
     ProtocolUtils.writeVarInt(buf, this.protocolVersion.getProtocol());
     ProtocolUtils.writeString(buf, this.serverAddress);
     buf.writeShort(this.port);
@@ -109,24 +109,24 @@ public class HandshakePacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int decodeExpectedMinLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                                     final ProtocolVersion version) {
+  public int decodeExpectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction,
+                                     ProtocolVersion version) {
     return 7;
   }
 
   @Override
-  public int decodeExpectedMaxLength(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                                     final ProtocolVersion version) {
+  public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction,
+                                     ProtocolVersion version) {
     return 9 + (MAXIMUM_HOSTNAME_LENGTH * 3);
   }
 
   @Override
-  public int encodeSizeHint(final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
     // We could compute an exact size, but 4KiB ought to be enough to encode all reasonable
     // sizes of this packet.
     return 4 * 1024;

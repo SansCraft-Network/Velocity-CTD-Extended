@@ -39,19 +39,19 @@ public class ClientboundSoundEntityPacket implements MinecraftPacket {
   public ClientboundSoundEntityPacket() {
   }
 
-  public ClientboundSoundEntityPacket(final Sound sound, final @Nullable Float fixedRange, final int emitterEntityId) {
+  public ClientboundSoundEntityPacket(Sound sound, @Nullable Float fixedRange, int emitterEntityId) {
     this.sound = sound;
     this.fixedRange = fixedRange;
     this.emitterEntityId = emitterEntityId;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     throw new UnsupportedOperationException("Decode is not implemented");
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, 0); // Version-dependent, hardcoded sound ID
 
     ProtocolUtils.writeMinimalKey(buf, sound.name());
@@ -73,7 +73,7 @@ public class ClientboundSoundEntityPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -81,7 +81,7 @@ public class ClientboundSoundEntityPacket implements MinecraftPacket {
     return sound;
   }
 
-  public void setSound(final Sound sound) {
+  public void setSound(Sound sound) {
     this.sound = sound;
   }
 
@@ -89,7 +89,7 @@ public class ClientboundSoundEntityPacket implements MinecraftPacket {
     return fixedRange;
   }
 
-  public void setFixedRange(final @Nullable Float fixedRange) {
+  public void setFixedRange(@Nullable Float fixedRange) {
     this.fixedRange = fixedRange;
   }
 
@@ -97,7 +97,7 @@ public class ClientboundSoundEntityPacket implements MinecraftPacket {
     return emitterEntityId;
   }
 
-  public void setEmitterEntityId(final int emitterEntityId) {
+  public void setEmitterEntityId(int emitterEntityId) {
     this.emitterEntityId = emitterEntityId;
   }
 }

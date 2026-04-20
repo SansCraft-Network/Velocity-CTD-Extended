@@ -34,13 +34,13 @@ public class KnownPacksPacket implements MinecraftPacket {
   private List<KnownPack> packs;
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
-    final int packCount = ProtocolUtils.readVarInt(buf);
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
+    int packCount = ProtocolUtils.readVarInt(buf);
     if (direction == ProtocolUtils.Direction.SERVERBOUND && packCount > MAX_LENGTH_PACKS) {
       throw TOO_MANY_PACKS;
     }
 
-    final List<KnownPack> packs = ProtocolUtils.newList(packCount);
+    List<KnownPack> packs = ProtocolUtils.newList(packCount);
 
     for (int i = 0; i < packCount; i++) {
       packs.add(KnownPack.read(buf));
@@ -50,7 +50,7 @@ public class KnownPacksPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, packs.size());
 
     for (KnownPack pack : packs) {
@@ -59,16 +59,16 @@ public class KnownPacksPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   public record KnownPack(String namespace, String id, String version) {
-    private static KnownPack read(final ByteBuf buf) {
+    private static KnownPack read(ByteBuf buf) {
       return new KnownPack(ProtocolUtils.readString(buf), ProtocolUtils.readString(buf), ProtocolUtils.readString(buf));
     }
 
-    private void write(final ByteBuf buf) {
+    private void write(ByteBuf buf) {
       ProtocolUtils.writeString(buf, namespace);
       ProtocolUtils.writeString(buf, id);
       ProtocolUtils.writeString(buf, version);

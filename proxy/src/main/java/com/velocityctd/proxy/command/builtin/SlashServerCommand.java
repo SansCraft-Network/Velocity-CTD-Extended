@@ -24,7 +24,7 @@ import com.velocityctd.proxy.command.CommandUtils;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
@@ -34,7 +34,7 @@ import net.kyori.adventure.text.Component;
 /**
  * Implements Velocity-CTD's {@code /<server_name>} commands.
  */
-public class SlashServerCommand implements BuiltinCommand {
+public class SlashServerCommand implements BuiltinCommandDefinition {
 
   public static Function<VelocityServer, SlashServerCommand> factory(String serverName, String commandLabel) {
     return proxyServer -> new SlashServerCommand(proxyServer, serverName, commandLabel);

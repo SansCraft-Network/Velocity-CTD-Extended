@@ -61,7 +61,7 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
 
   private @MonotonicNonNull IdentifiedKey playerKey;
 
-  LoginInboundConnection(final InitialInboundConnection delegate) {
+  LoginInboundConnection(InitialInboundConnection delegate) {
     this.delegate = delegate;
     this.outstandingResponses = Int2ObjectSyncMap.hashmap();
     this.loginMessagesToSend = new ConcurrentLinkedQueue<>();
@@ -93,8 +93,8 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
   }
 
   @Override
-  public void sendLoginPluginMessage(final ChannelIdentifier identifier, final byte[] contents,
-                                     final MessageConsumer consumer) {
+  public void sendLoginPluginMessage(ChannelIdentifier identifier, byte[] contents,
+                                     MessageConsumer consumer) {
     if (identifier == null) {
       throw new NullPointerException("identifier");
     }
@@ -112,10 +112,10 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
           + "Minecraft 1.13 and above");
     }
 
-    final int id = SEQUENCE_UPDATER.incrementAndGet(this);
+    int id = SEQUENCE_UPDATER.incrementAndGet(this);
     this.outstandingResponses.put(id, consumer);
 
-    final LoginPluginMessagePacket message = new LoginPluginMessagePacket(id, identifier.getId(),
+    LoginPluginMessagePacket message = new LoginPluginMessagePacket(id, identifier.getId(),
         Unpooled.wrappedBuffer(contents));
     if (!this.loginEventFired) {
       this.loginMessagesToSend.add(message);
@@ -129,7 +129,7 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
    *
    * @param reason the reason for disconnecting
    */
-  public void disconnect(final Component reason) {
+  public void disconnect(Component reason) {
     this.delegate.disconnect(reason);
     this.cleanup();
   }
@@ -140,13 +140,13 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
     this.onAllMessagesHandled = null;
   }
 
-  void handleLoginPluginResponse(final LoginPluginResponsePacket response) {
-    final MessageConsumer consumer = this.outstandingResponses.remove(response.getId());
+  void handleLoginPluginResponse(LoginPluginResponsePacket response) {
+    MessageConsumer consumer = this.outstandingResponses.remove(response.getId());
     if (consumer != null) {
       try {
         consumer.onMessageResponse(response.isSuccess() ? ByteBufUtil.getBytes(response.content()) : null);
       } finally {
-        final Runnable onAllMessagesHandled = this.onAllMessagesHandled;
+        Runnable onAllMessagesHandled = this.onAllMessagesHandled;
         if (this.outstandingResponses.isEmpty() && onAllMessagesHandled != null) {
           onAllMessagesHandled.run();
         }
@@ -154,7 +154,7 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
     }
   }
 
-  void loginEventFired(final Runnable onAllMessagesHandled) {
+  void loginEventFired(Runnable onAllMessagesHandled) {
     this.loginEventFired = true;
     this.onAllMessagesHandled = onAllMessagesHandled;
     if (!this.loginMessagesToSend.isEmpty()) {
@@ -173,7 +173,7 @@ public class LoginInboundConnection implements LoginPhaseConnection, KeyIdentifi
     return delegate.getConnection();
   }
 
-  public void setPlayerKey(final IdentifiedKey playerKey) {
+  public void setPlayerKey(IdentifiedKey playerKey) {
     this.playerKey = playerKey;
   }
 

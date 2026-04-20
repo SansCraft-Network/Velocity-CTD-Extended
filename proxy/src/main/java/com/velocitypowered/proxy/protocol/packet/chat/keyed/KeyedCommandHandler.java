@@ -32,7 +32,7 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
 
   private final VelocityServer server;
 
-  public KeyedCommandHandler(final ConnectedPlayer player, final VelocityServer server) {
+  public KeyedCommandHandler(ConnectedPlayer player, VelocityServer server) {
     super(player, server);
     this.player = player;
     this.server = server;
@@ -44,7 +44,7 @@ public class KeyedCommandHandler extends RateLimitedCommandHandler<KeyedPlayerCo
   }
 
   @Override
-  public void handlePlayerCommandInternal(final KeyedPlayerCommandPacket packet) {
+  public void handlePlayerCommandInternal(KeyedPlayerCommandPacket packet) {
     queueCommandResult(this.server, this.player, (event, newLastSeenMessages) -> {
       CommandExecuteEvent.CommandResult result = event.getResult();
       IdentifiedKey playerKey = player.getIdentifiedKey();

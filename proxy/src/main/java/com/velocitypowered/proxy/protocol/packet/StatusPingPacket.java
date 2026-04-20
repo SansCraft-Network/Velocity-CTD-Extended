@@ -29,27 +29,27 @@ public class StatusPingPacket implements MinecraftPacket {
   private long randomId;
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     randomId = buf.readLong();
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     buf.writeLong(randomId);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int decodeExpectedMaxLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public int decodeExpectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
     return 8;
   }
 
   @Override
-  public int decodeExpectedMinLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public int decodeExpectedMinLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
     return 8;
   }
 }

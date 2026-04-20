@@ -51,12 +51,12 @@ public class ServerChannelInitializer extends ChannelInitializer<Channel> {
 
   private final VelocityServer server;
 
-  public ServerChannelInitializer(final VelocityServer server) {
+  public ServerChannelInitializer(VelocityServer server) {
     this.server = server;
   }
 
   @Override
-  protected void initChannel(final Channel ch) {
+  protected void initChannel(Channel ch) {
     ch.pipeline()
         .addLast(LEGACY_PING_DECODER, new LegacyPingDecoder())
         .addLast(FRAME_DECODER, new MinecraftVarintFrameDecoder(ProtocolUtils.Direction.SERVERBOUND))
@@ -66,7 +66,7 @@ public class ServerChannelInitializer extends ChannelInitializer<Channel> {
         .addLast(MINECRAFT_DECODER, new MinecraftDecoder(ProtocolUtils.Direction.SERVERBOUND))
         .addLast(MINECRAFT_ENCODER, new MinecraftEncoder(ProtocolUtils.Direction.CLIENTBOUND));
 
-    final MinecraftConnection connection = new MinecraftConnection(ch, this.server);
+    MinecraftConnection connection = new MinecraftConnection(ch, this.server);
     connection.setActiveSessionHandler(StateRegistry.HANDSHAKE,
         new HandshakeSessionHandler(connection, this.server));
     ch.pipeline().addLast(Connections.HANDLER, connection);

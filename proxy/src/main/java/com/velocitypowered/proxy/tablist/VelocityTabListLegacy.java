@@ -41,13 +41,13 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
 
   private final Map<String, UUID> nameMapping = new ConcurrentHashMap<>();
 
-  public VelocityTabListLegacy(final ConnectedPlayer player, final VelocityServer proxyServer) {
+  public VelocityTabListLegacy(ConnectedPlayer player, VelocityServer proxyServer) {
     super(player, proxyServer);
   }
 
   @Deprecated
   @Override
-  public void setHeaderAndFooter(final Component header, final Component footer) {
+  public void setHeaderAndFooter(Component header, Component footer) {
   }
 
   @Override
@@ -55,13 +55,13 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
   }
 
   @Override
-  public void addEntry(final TabListEntry entry) {
+  public void addEntry(TabListEntry entry) {
     super.addEntry(entry);
     nameMapping.put(entry.getProfile().getName(), entry.getProfile().getId());
   }
 
   @Override
-  public Optional<TabListEntry> removeEntry(final UUID uuid) {
+  public Optional<TabListEntry> removeEntry(UUID uuid) {
     Optional<TabListEntry> entry = super.removeEntry(uuid);
     entry.map(TabListEntry::getProfile).map(GameProfile::getName).ifPresent(nameMapping::remove);
     return entry;
@@ -85,7 +85,7 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
   }
 
   @Override
-  public void processLegacy(final LegacyPlayerListItemPacket packet) {
+  public void processLegacy(LegacyPlayerListItemPacket packet) {
     Item item = packet.getItems().getFirst(); // Only one item per packet in 1.7
 
     switch (packet.getAction()) {
@@ -118,7 +118,7 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
   }
 
   @Override
-  final void updateEntry(final int action, final TabListEntry entry) {
+  final void updateEntry(int action, TabListEntry entry) {
     if (entries.containsKey(entry.getProfile().getId())) {
       switch (action) {
         // Add here because we removed beforehand
@@ -134,22 +134,22 @@ public class VelocityTabListLegacy extends KeyedVelocityTabList {
   }
 
   @Override
-  public TabListEntry buildEntry(final GameProfile profile,
-                                 final @Nullable Component displayName,
-                                 final int latency, final int gameMode, final @Nullable IdentifiedKey key) {
+  public TabListEntry buildEntry(GameProfile profile,
+                                 @Nullable Component displayName,
+                                 int latency, int gameMode, @Nullable IdentifiedKey key) {
     return new VelocityTabListEntryLegacy(this, profile, displayName, latency, gameMode);
   }
 
   @Override
-  public TabListEntry buildEntry(final GameProfile profile, final @Nullable Component displayName, final int latency,
-                                 final int gameMode, final @Nullable ChatSession chatSession, final boolean listed) {
+  public TabListEntry buildEntry(GameProfile profile, @Nullable Component displayName, int latency,
+                                 int gameMode, @Nullable ChatSession chatSession, boolean listed) {
     return new VelocityTabListEntryLegacy(this, profile, displayName, latency, gameMode);
   }
 
   @Override
-  public TabListEntry buildEntry(final GameProfile profile, final @Nullable Component displayName, final int latency,
-                                 final int gameMode, final @Nullable ChatSession chatSession, final boolean listed, final int listOrder,
-                                 final boolean showHat) {
+  public TabListEntry buildEntry(GameProfile profile, @Nullable Component displayName, int latency,
+                                 int gameMode, @Nullable ChatSession chatSession, boolean listed, int listOrder,
+                                 boolean showHat) {
     return new VelocityTabListEntryLegacy(this, profile, displayName, latency, gameMode);
   }
 }

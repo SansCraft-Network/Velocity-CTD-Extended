@@ -39,9 +39,9 @@ public class QueueComponents {
   /**
    * Creates the action bar component shown to the player at their current position.
    */
-  public static @Nullable Component createActionbarComponent(final @NotNull VelocityQueueEntry entry) {
+  public static @Nullable Component createActionbarComponent(@NotNull VelocityQueueEntry entry) {
     VelocityQueue queue = entry.getQueue();
-    final Integer position = queue.getPosition(entry.getUniqueId()).orElse(null);
+    Integer position = queue.getPosition(entry.getUniqueId()).orElse(null);
     if (position == null) {
       return null;
     }
@@ -82,7 +82,7 @@ public class QueueComponents {
    * @param inputSeconds the number of seconds
    * @return the time formatted as a component
    */
-  private static Component formatSeconds(final long inputSeconds) {
+  private static Component formatSeconds(long inputSeconds) {
     long days = TimeUnit.SECONDS.toDays(inputSeconds);
     long hours = (TimeUnit.SECONDS.toHours(inputSeconds) - (days * 24L));
     long minutes = (TimeUnit.SECONDS.toMinutes(inputSeconds)
@@ -114,7 +114,7 @@ public class QueueComponents {
    * @param value the value of the time unit
    * @return the time formatted as a component
    */
-  private static Component formatTimeUnit(final String name, final long value) {
+  private static Component formatTimeUnit(String name, long value) {
     String key = "velocity.queue.time." + name + (value == 1 ? "" : "s");
     return Component.translatable(key).arguments(Component.text(String.valueOf(value)));
   }

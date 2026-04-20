@@ -99,9 +99,7 @@ public interface ProxyConfig {
    * does. For a view of all registered servers, see {@link ProxyServer#getAllServers()}.
    *
    * @return registered servers map
-   * @deprecated use {@link #getBackendServers()} instead.
    */
-  @Deprecated(forRemoval = true, since = "3.4.0")
   Map<String, String> getServers();
 
   /**
@@ -129,15 +127,6 @@ public interface ProxyConfig {
    * @return mapped list of server names
    */
   Map<String, List<String>> getForcedHosts();
-
-  /**
-   * Whether to use the forced hosts list as the fallback servers, instead of
-   * servers-to-try ({@code getAttemptConnectionOrder}), if a forced host
-   * is configured for the virtual host a player is connected to.
-   *
-   * @return true if {@code getForcedHosts().get(virtualHost)} should be used instead of {@code getAttemptConnectionOrder}.
-   */
-  boolean isForcedHostAsFallback();
 
   /**
    * Get the minimum compression threshold for packets.

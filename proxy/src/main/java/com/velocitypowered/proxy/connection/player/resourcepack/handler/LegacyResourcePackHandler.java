@@ -44,7 +44,7 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
 
   private @Nullable ResourcePackInfo appliedResourcePack;
 
-  LegacyResourcePackHandler(final ConnectedPlayer player, final VelocityServer server) {
+  LegacyResourcePackHandler(ConnectedPlayer player, VelocityServer server) {
     super(player, server);
   }
 
@@ -85,12 +85,12 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
   }
 
   @Override
-  public boolean remove(final @NotNull UUID id) throws UnsupportedOperationException {
+  public boolean remove(@NotNull UUID id) throws UnsupportedOperationException {
     throw new UnsupportedOperationException("Cannot remove a ResourcePack from a legacy client");
   }
 
   @Override
-  public void queueResourcePack(final @NotNull ResourcePackInfo info) {
+  public void queueResourcePack(@NotNull ResourcePackInfo info) {
     outstandingResourcePacks.add(info);
     if (outstandingResourcePacks.size() == 1) {
       tickResourcePackQueue();
@@ -128,9 +128,9 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
   }
 
   @Override
-  public boolean onResourcePackResponse(final @NotNull ResourcePackResponseBundle bundle) {
-    final boolean peek = bundle.status().isIntermediate();
-    final ResourcePackInfo queued = peek ? outstandingResourcePacks.peek() : outstandingResourcePacks.poll();
+  public boolean onResourcePackResponse(@NotNull ResourcePackResponseBundle bundle) {
+    boolean peek = bundle.status().isIntermediate();
+    ResourcePackInfo queued = peek ? outstandingResourcePacks.peek() : outstandingResourcePacks.poll();
 
     server.getEventManager()
             .fire(new PlayerResourcePackStatusEvent(
@@ -173,7 +173,7 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
   }
 
   @Override
-  public boolean hasPackAppliedByHash(final byte[] hash) {
+  public boolean hasPackAppliedByHash(byte[] hash) {
     if (hash == null) {
       return false;
     }
@@ -182,7 +182,7 @@ public sealed class LegacyResourcePackHandler extends ResourcePackHandler permit
   }
 
   @SuppressWarnings("checkstyle:DesignForExtension")
-  protected boolean shouldDisconnectForForcePack(final PlayerResourcePackStatusEvent event) {
+  protected boolean shouldDisconnectForForcePack(PlayerResourcePackStatusEvent event) {
     return event.getStatus() == PlayerResourcePackStatusEvent.Status.DECLINED && event.getPackInfo() != null && event.getPackInfo().getShouldForce();
   }
 }

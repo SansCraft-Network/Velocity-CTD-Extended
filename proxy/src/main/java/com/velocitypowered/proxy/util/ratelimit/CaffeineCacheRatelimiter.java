@@ -36,12 +36,12 @@ public class CaffeineCacheRatelimiter<T> implements Ratelimiter<T> {
 
   private final long timeoutNanos;
 
-  CaffeineCacheRatelimiter(final long time, final TimeUnit unit) {
+  CaffeineCacheRatelimiter(long time, TimeUnit unit) {
     this(time, unit, Ticker.systemTicker());
   }
 
   @VisibleForTesting
-  CaffeineCacheRatelimiter(final long time, final TimeUnit unit, final Ticker ticker) {
+  CaffeineCacheRatelimiter(long time, TimeUnit unit, Ticker ticker) {
     Preconditions.checkNotNull(unit, "unit");
     Preconditions.checkNotNull(ticker, "ticker");
     this.timeoutNanos = unit.toNanos(time);
@@ -58,7 +58,7 @@ public class CaffeineCacheRatelimiter<T> implements Ratelimiter<T> {
    * @return true if we should allow the object, false if we should rate-limit
    */
   @Override
-  public boolean attempt(final @NotNull T key) {
+  public boolean attempt(@NotNull T key) {
     long expectedNewValue = System.nanoTime() + timeoutNanos;
     Long last = expiringCache.get(key, (key1) -> expectedNewValue);
     return last != null && expectedNewValue == last;

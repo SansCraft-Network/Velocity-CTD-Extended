@@ -42,11 +42,11 @@ public class ServerListPingHandler {
 
   private final VelocityServer server;
 
-  public ServerListPingHandler(final VelocityServer server) {
+  public ServerListPingHandler(VelocityServer server) {
     this.server = server;
   }
 
-  private boolean displayFallbackPing(final ProtocolVersion clientVersion) {
+  private boolean displayFallbackPing(ProtocolVersion clientVersion) {
     String minVersion = server.getConfiguration().getMinimumVersion();
     ProtocolVersion minimumVersion = ProtocolVersion.getVersionByName(minVersion);
     ProtocolVersion maximumVersion = server.getConfiguration().getMaximumVersion()
@@ -56,17 +56,31 @@ public class ServerListPingHandler {
     return clientVersion.lessThan(minimumVersion) || clientVersion.greaterThan(maximumVersion);
   }
 
-  @SuppressWarnings("checkstyle:FinalParameters")
-  private ServerPing constructLocalPing(ProtocolVersion version) {
-    boolean fallback = displayFallbackPing(version);
+  private ServerPing constructLocalPing(ProtocolVersion clientVersion) {
     VelocityConfiguration configuration = server.getConfiguration();
+    boolean outOfRange = displayFallbackPing(clientVersion);
 
-    if (version == ProtocolVersion.UNKNOWN || fallback) {
-      version = ProtocolVersion.MAXIMUM_VERSION;
-    }
+    ProtocolVersion displayVersion =
+        (clientVersion == ProtocolVersion.UNKNOWN || outOfRange)
+            ? ProtocolVersion.MAXIMUM_VERSION
+            : clientVersion;
 
-    if (configuration.getAlwaysFallBackPing()) {
-      version = ProtocolVersion.LEGACY;
+    // When forcing a mismatch, prefer displayVersion's protocol so the client still shows an
+    // informative "Client out of date, update to X" label. Fall back to LEGACY (-2) only when
+    // displayVersion would coincide with the client's protocol (e.g. a client on the proxy's
+    // actual maximum while maximum-version is configured lower), since that would otherwise
+    // collapse into a normal online state.
+    boolean forceMismatch = configuration.isAlwaysFallBackPing()
+        || clientVersion == ProtocolVersion.UNKNOWN
+        || outOfRange;
+    int responseProtocol;
+    if (forceMismatch) {
+      int candidate = displayVersion.getProtocol();
+      responseProtocol = candidate != clientVersion.getProtocol()
+          ? candidate
+          : ProtocolVersion.LEGACY.getProtocol();
+    } else {
+      responseProtocol = clientVersion.getProtocol();
     }
 
     List<ServerPing.SamplePlayer> samplePlayers;
@@ -97,7 +111,7 @@ public class ServerListPingHandler {
     }
 
     return new ServerPing(
-        new ServerPing.Version(version.getProtocol(), formatVersionString(serverPingVersion, version)),
+        new ServerPing.Version(responseProtocol, formatVersionString(serverPingVersion, displayVersion)),
         new ServerPing.Players(server.getClusterPlayerService().getTotalPlayerCount(),
             configuration.getShowMaxPlayers(), samplePlayers),
         configuration.getMotd(),
@@ -107,10 +121,10 @@ public class ServerListPingHandler {
     );
   }
 
-  private String formatVersionString(final String raw, final ProtocolVersion version) {
-    final String minVersionIntroducedIn = ProtocolVersion.getVersionByName(
+  private String formatVersionString(String raw, ProtocolVersion version) {
+    String minVersionIntroducedIn = ProtocolVersion.getVersionByName(
         server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn();
-    final String maxVersionDisplay = server.getConfiguration().getMaximumVersion()
+    String maxVersionDisplay = server.getConfiguration().getMaximumVersion()
         .orElse(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion());
     return raw
         .replaceAll("\\{protocol-min}", minVersionIntroducedIn)
@@ -124,10 +138,10 @@ public class ServerListPingHandler {
         .replaceAll("\\{max-players}", String.valueOf(server.getConfiguration().getShowMaxPlayers()));
   }
 
-  private CompletableFuture<ServerPing> attemptPingPassthrough(final VelocityInboundConnection connection,
-                                                               final PingPassthroughMode mode, final List<String> servers,
-                                                               final ProtocolVersion responseProtocolVersion,
-                                                               final String virtualHostStr) {
+  private CompletableFuture<ServerPing> attemptPingPassthrough(VelocityInboundConnection connection,
+                                                               PingPassthroughMode mode, List<String> servers,
+                                                               ProtocolVersion responseProtocolVersion,
+                                                               String virtualHostStr) {
     ServerPing fallback = constructLocalPing(connection.getProtocolVersion());
     List<CompletableFuture<ServerPing>> pings = new ArrayList<>();
     for (String s : servers) {
@@ -138,7 +152,7 @@ public class ServerListPingHandler {
 
       VelocityRegisteredServer vrs = rs.get();
       pings.add(vrs.ping(connection.getConnection().eventLoop(), PingOptions.builder()
-              .version(responseProtocolVersion).virtualHost(virtualHostStr).build()));
+          .version(responseProtocolVersion).virtualHost(virtualHostStr).build()));
     }
 
     if (pings.isEmpty()) {
@@ -214,19 +228,19 @@ public class ServerListPingHandler {
    * @param connection the connection
    * @return a future with the initial ping result
    */
-  public CompletableFuture<ServerPing> getInitialPing(final VelocityInboundConnection connection) {
+  public CompletableFuture<ServerPing> getInitialPing(VelocityInboundConnection connection) {
     VelocityConfiguration configuration = server.getConfiguration();
     ProtocolVersion shownVersion = connection.getProtocolVersion().isSupported()
         ? connection.getProtocolVersion() : ProtocolVersion.MAXIMUM_VERSION;
     PingPassthroughMode passthroughMode = configuration.getPingPassthrough();
 
     if (passthroughMode == PingPassthroughMode.DISABLED) {
-      return CompletableFuture.completedFuture(constructLocalPing(shownVersion));
+      return CompletableFuture.completedFuture(constructLocalPing(connection.getProtocolVersion()));
     } else {
-      List<String> serversToTry = FallbackServerResolver.resolveServersToTry(server, connection);
-      String virtualHost = FallbackServerResolver.normalizeHostString(connection.getVirtualHost().orElse(null));
+      FallbackServers fallbackServers = FallbackServers.resolveFallbackServers(server, connection);
 
-      return attemptPingPassthrough(connection, passthroughMode, serversToTry, shownVersion, virtualHost);
+      return attemptPingPassthrough(connection, passthroughMode, fallbackServers.serversToTry(),
+          shownVersion, fallbackServers.virtualHost());
     }
   }
 }

@@ -43,8 +43,8 @@ public final class VelocityArgumentBuilder<S, T>
    * @param <T>  the type of the argument to parse
    * @return a builder
    */
-  public static <S, T> VelocityArgumentBuilder<S, T> velocityArgument(final String name,
-                                                                      final ArgumentType<T> type) {
+  public static <S, T> VelocityArgumentBuilder<S, T> velocityArgument(String name,
+                                                                      ArgumentType<T> type) {
     Preconditions.checkNotNull(name, "name");
     Preconditions.checkNotNull(type, "type");
     return new VelocityArgumentBuilder<>(name, type);
@@ -56,23 +56,23 @@ public final class VelocityArgumentBuilder<S, T>
 
   private SuggestionProvider<S> suggestionsProvider = null;
 
-  private VelocityArgumentBuilder(final String name, final ArgumentType<T> type) {
+  private VelocityArgumentBuilder(String name, ArgumentType<T> type) {
     this.name = name;
     this.type = type;
   }
 
-  public VelocityArgumentBuilder<S, T> suggests(final @Nullable SuggestionProvider<S> provider) {
+  public VelocityArgumentBuilder<S, T> suggests(@Nullable SuggestionProvider<S> provider) {
     this.suggestionsProvider = provider;
     return this;
   }
 
   @Override
-  public VelocityArgumentBuilder<S, T> then(final ArgumentBuilder<S, ?> argument) {
+  public VelocityArgumentBuilder<S, T> then(ArgumentBuilder<S, ?> argument) {
     throw new UnsupportedOperationException("Cannot add children to a greedy node");
   }
 
   @Override
-  public VelocityArgumentBuilder<S, T> then(final CommandNode<S> argument) {
+  public VelocityArgumentBuilder<S, T> then(CommandNode<S> argument) {
     throw new UnsupportedOperationException("Cannot add children to a greedy node");
   }
 

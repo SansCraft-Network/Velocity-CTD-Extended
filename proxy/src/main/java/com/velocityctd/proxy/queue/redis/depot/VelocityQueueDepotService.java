@@ -38,7 +38,7 @@ public final class VelocityQueueDepotService
    *
    * @param redis the active Redis integration
    */
-  public VelocityQueueDepotService(final @NotNull VelocityRedis redis) {
+  public VelocityQueueDepotService(@NotNull VelocityRedis redis) {
     super(VelocityQueueDepotEntry.class, redis.getProvider());
   }
 
@@ -47,7 +47,7 @@ public final class VelocityQueueDepotService
    *
    * @param queue the queue to persist
    */
-  public void upsertQueue(final @NotNull RedisVelocityQueue queue) {
+  public void upsertQueue(@NotNull RedisVelocityQueue queue) {
     this.depot.upsert(new VelocityQueueDepotEntry(queue));
   }
 
@@ -57,7 +57,7 @@ public final class VelocityQueueDepotService
    * @param serverName the name of the server
    * @return the depot entry, or {@code null}
    */
-  public @Nullable VelocityQueueDepotEntry getQueueEntry(final @NotNull String serverName) {
+  public @Nullable VelocityQueueDepotEntry getQueueEntry(@NotNull String serverName) {
     return this.depot.get(serverName);
   }
 }

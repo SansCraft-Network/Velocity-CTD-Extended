@@ -37,12 +37,12 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void read(final ChannelHandlerContext ctx) throws Exception {
+  public void read(ChannelHandlerContext ctx) throws Exception {
     drainQueuedMessages(ctx);
     ctx.read();
   }
 
-  private void drainQueuedMessages(final ChannelHandlerContext ctx) {
+  private void drainQueuedMessages(ChannelHandlerContext ctx) {
     if (!this.queuedMessages.isEmpty()) {
       Object queued;
       while ((queued = this.queuedMessages.poll()) != null) {
@@ -54,7 +54,7 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelRead(final ChannelHandlerContext ctx, final @NotNull Object msg) {
+  public void channelRead(ChannelHandlerContext ctx, @NotNull Object msg) {
     if (ctx.channel().config().isAutoRead()) {
       ctx.fireChannelRead(msg);
     } else {
@@ -63,7 +63,7 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelReadComplete(final ChannelHandlerContext ctx) {
+  public void channelReadComplete(ChannelHandlerContext ctx) {
     if (ctx.channel().config().isAutoRead()) {
       if (!this.queuedMessages.isEmpty()) {
         this.drainQueuedMessages(ctx); // will also call fireChannelReadComplete()
@@ -74,7 +74,7 @@ public class AutoReadHolderHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(ChannelHandlerContext ctx) {
     for (Object message : this.queuedMessages) {
       ReferenceCountUtil.release(message);
     }

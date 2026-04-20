@@ -891,8 +891,8 @@ public enum StateRegistry {
 
   protected final PacketRegistry serverbound = new PacketRegistry(SERVERBOUND, this);
 
-  public StateRegistry.PacketRegistry.ProtocolRegistry getProtocolRegistry(final Direction direction,
-                                                                           final ProtocolVersion version) {
+  public StateRegistry.PacketRegistry.ProtocolRegistry getProtocolRegistry(Direction direction,
+                                                                           ProtocolVersion version) {
     return (direction == SERVERBOUND ? serverbound : clientbound).getProtocolRegistry(version);
   }
 
@@ -924,7 +924,7 @@ public enum StateRegistry {
 
     private boolean fallback = true;
 
-    PacketRegistry(final Direction direction, final StateRegistry registry) {
+    PacketRegistry(Direction direction, StateRegistry registry) {
       this.direction = direction;
       this.registry = registry;
 
@@ -938,7 +938,7 @@ public enum StateRegistry {
       this.versions = Collections.unmodifiableMap(mutableVersions);
     }
 
-    final ProtocolRegistry getProtocolRegistry(final ProtocolVersion version) {
+    final ProtocolRegistry getProtocolRegistry(ProtocolVersion version) {
       ProtocolRegistry registry = versions.get(version);
       if (registry == null) {
         if (fallback) {
@@ -952,8 +952,8 @@ public enum StateRegistry {
     }
 
     @SuppressWarnings("checkstyle:DesignForExtension")
-    <P extends MinecraftPacket> void register(final Class<P> clazz, final Supplier<P> packetSupplier,
-                                              final PacketMapping... mappings) {
+    <P extends MinecraftPacket> void register(Class<P> clazz, Supplier<P> packetSupplier,
+                                              PacketMapping... mappings) {
       if (mappings.length == 0) {
         throw new IllegalArgumentException("At least one mapping must be provided.");
       }
@@ -1034,7 +1034,7 @@ public enum StateRegistry {
       final Object2IntMap<Class<? extends MinecraftPacket>> packetClassToId =
           new Object2IntOpenHashMap<>(16, 0.5f);
 
-      ProtocolRegistry(final ProtocolVersion version) {
+      ProtocolRegistry(ProtocolVersion version) {
         this.version = version;
         this.packetClassToId.defaultReturnValue(Integer.MIN_VALUE);
       }
@@ -1045,8 +1045,8 @@ public enum StateRegistry {
        * @param id the packet ID
        * @return the packet instance, or {@code null} if the ID is not registered
        */
-      public @Nullable MinecraftPacket createPacket(final int id) {
-        final Supplier<? extends MinecraftPacket> supplier = this.packetIdToSupplier.get(id);
+      public @Nullable MinecraftPacket createPacket(int id) {
+        Supplier<? extends MinecraftPacket> supplier = this.packetIdToSupplier.get(id);
         if (supplier == null) {
           return null;
         }
@@ -1061,8 +1061,8 @@ public enum StateRegistry {
        * @return the packet ID
        * @throws IllegalArgumentException if the packet ID is not found
        */
-      public int getPacketId(final MinecraftPacket packet) {
-        final int id = this.packetClassToId.getInt(packet.getClass());
+      public int getPacketId(MinecraftPacket packet) {
+        int id = this.packetClassToId.getInt(packet.getClass());
         if (id == Integer.MIN_VALUE) {
           throw new IllegalArgumentException(String.format(
               "Unable to find proxyId for packet of type %s in %s protocol %s phase %s",
@@ -1080,7 +1080,7 @@ public enum StateRegistry {
        * @param packet the packet to check
        * @return {@code true} if the packet is registered, {@code false} otherwise
        */
-      public boolean containsPacket(final MinecraftPacket packet) {
+      public boolean containsPacket(MinecraftPacket packet) {
         return this.packetClassToId.containsKey(packet.getClass());
       }
     }
@@ -1099,9 +1099,9 @@ public enum StateRegistry {
 
     private final @Nullable ProtocolVersion lastValidProtocolVersion;
 
-    PacketMapping(final int id, final ProtocolVersion protocolVersion,
-                  final @Nullable ProtocolVersion lastValidProtocolVersion,
-                  final boolean packetDecoding) {
+    PacketMapping(int id, ProtocolVersion protocolVersion,
+                  @Nullable ProtocolVersion lastValidProtocolVersion,
+                  boolean packetDecoding) {
       this.id = id;
       this.protocolVersion = protocolVersion;
       this.lastValidProtocolVersion = lastValidProtocolVersion;
@@ -1118,7 +1118,7 @@ public enum StateRegistry {
     }
 
     @Override
-    public boolean equals(final @Nullable Object o) {
+    public boolean equals(@Nullable Object o) {
       if (this == o) {
         return true;
       }
@@ -1148,7 +1148,7 @@ public enum StateRegistry {
    * @return PacketMapping with the provided arguments
    */
   @SuppressFBWarnings({"UPM_UNCALLED_PRIVATE_METHOD"})
-  private static PacketMapping map(final int id, final ProtocolVersion version, final boolean encodeOnly) {
+  private static PacketMapping map(int id, ProtocolVersion version, boolean encodeOnly) {
     return map(id, version, null, encodeOnly);
   }
 
@@ -1161,8 +1161,8 @@ public enum StateRegistry {
    * @param lastValidProtocolVersion Last version this Mapping is valid at
    * @return PacketMapping with the provided arguments
    */
-  private static PacketMapping map(final int id, final ProtocolVersion version,
-                                   final ProtocolVersion lastValidProtocolVersion, final boolean encodeOnly) {
+  private static PacketMapping map(int id, ProtocolVersion version,
+                                   ProtocolVersion lastValidProtocolVersion, boolean encodeOnly) {
     return new PacketMapping(id, version, lastValidProtocolVersion, encodeOnly);
   }
 }

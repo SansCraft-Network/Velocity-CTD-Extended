@@ -48,7 +48,7 @@ public enum TransactionHandlerRegistry {
    * Handles the {@link VelocityGetPlayerPing} transaction by replying with the player's ping.
    */
   VELOCITY_GET_PLAYER_PING(VelocityGetPlayerPing.class, (server, data) -> {
-    final ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
+    ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
     if (player == null) {
       return null;
     }
@@ -76,7 +76,7 @@ public enum TransactionHandlerRegistry {
     }
 
     try {
-      final boolean success = server.reloadConfiguration();
+      boolean success = server.reloadConfiguration();
       if (success) {
         server.getLogger().info("Reloaded Velocity configuration on remote request.");
       } else {
@@ -93,7 +93,7 @@ public enum TransactionHandlerRegistry {
    * Handles the {@link VelocityTransferRemote} transaction by transferring a player to another remote/proxy.
    */
   VELOCITY_TRANSFER_REMOTE(VelocityTransferRemote.class, (server, data) -> {
-    final ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
+    ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
     if (player == null) {
       return null;
     }
@@ -122,8 +122,8 @@ public enum TransactionHandlerRegistry {
    */
   private final Delegate<?, ?> delegate;
 
-  <T extends TransactionData<R>, R> TransactionHandlerRegistry(final Class<T> dataClass,
-                                                                final Delegate<T, R> delegate) {
+  <T extends TransactionData<R>, R> TransactionHandlerRegistry(Class<T> dataClass,
+                                                                Delegate<T, R> delegate) {
     this.dataClass = dataClass;
     this.delegate = delegate;
   }
@@ -136,11 +136,11 @@ public enum TransactionHandlerRegistry {
    */
   @SuppressWarnings("unchecked")
   public <T extends TransactionData<R>, R> TransactionHandler<T, R> createTransactionHandler(
-          final @NotNull VelocityServer server) {
-    final Delegate<T, R> typedDelegate = (Delegate<T, R>) this.delegate;
+          @NotNull VelocityServer server) {
+    Delegate<T, R> typedDelegate = (Delegate<T, R>) this.delegate;
     return new TransactionHandler<>((Class<T>) dataClass) {
       @Override
-      public @Nullable CompletableFuture<R> handleData(final T data) {
+      public @Nullable CompletableFuture<R> handleData(T data) {
         return typedDelegate.handleData(server, data);
       }
     };

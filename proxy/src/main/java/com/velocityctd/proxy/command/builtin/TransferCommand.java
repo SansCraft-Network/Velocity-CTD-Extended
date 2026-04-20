@@ -30,7 +30,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.config.ProxyAddress;
 import java.util.Objects;
@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  * Implements Velocity-CTD's {@code /transfer} command.
  * Sends players to another proxy if they're above 1.20.5.
  */
-public class TransferCommand implements BuiltinCommand {
+public class TransferCommand implements BuiltinCommandDefinition {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TransferCommand.class);
 

@@ -28,7 +28,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import java.util.Optional;
 import net.kyori.adventure.text.Component;
@@ -37,11 +37,11 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity-CTD's {@code /gkick} command.
  */
-public class GkickCommand implements BuiltinCommand {
+public class GkickCommand implements BuiltinCommandDefinition {
 
   private final VelocityServer server;
 
-  public GkickCommand(final VelocityServer server) {
+  public GkickCommand(VelocityServer server) {
     this.server = server;
   }
 
@@ -70,7 +70,7 @@ public class GkickCommand implements BuiltinCommand {
     return new BrigadierCommand(rootNode);
   }
 
-  private Component parseReason(final CommandContext<CommandSource> context) {
+  private Component parseReason(CommandContext<CommandSource> context) {
     if (!context.getArguments().containsKey("reason")) {
       return Component.translatable("velocity.command.gkick.reason");
     }
@@ -78,8 +78,8 @@ public class GkickCommand implements BuiltinCommand {
     return CommandUtils.deserializeComponent(context.getArgument("reason", String.class));
   }
 
-  private int executeKick(final CommandContext<CommandSource> context) {
-    final String playerName = context.getArgument("player", String.class);
+  private int executeKick(CommandContext<CommandSource> context) {
+    String playerName = context.getArgument("player", String.class);
     Optional<VelocityClusterPlayer> maybePlayer = server.getClusterPlayerService().getPlayer(playerName);
 
     if (maybePlayer.isEmpty()) {

@@ -96,8 +96,8 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
    */
   private final String maximumVersion;
 
-  AuthSessionHandler(final VelocityServer server, final LoginInboundConnection inbound,
-                     final GameProfile profile, final boolean onlineMode, final String serverIdHash) {
+  AuthSessionHandler(VelocityServer server, LoginInboundConnection inbound,
+                     GameProfile profile, boolean onlineMode, String serverIdHash) {
     this.server = Preconditions.checkNotNull(server, "server");
     this.inbound = Preconditions.checkNotNull(inbound, "inbound");
     this.profile = Preconditions.checkNotNull(profile, "profile");
@@ -114,7 +114,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     // Some connection types may need to alter the game profile.
     profile = mcConnection.getType().addGameProfileTokensIfRequired(profile, server.getConfiguration().getPlayerInfoForwardingMode());
     GameProfileRequestEvent profileRequestEvent = new GameProfileRequestEvent(inbound, profile, onlineMode);
-    final GameProfile finalProfile = profile;
+    GameProfile finalProfile = profile;
 
     // Make sure the player is on the minimum version set in configuration or higher
     if (!versionCheck(mcConnection)) {
@@ -122,7 +122,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
         return;
       }
 
-      final String discMessage = String.format("[initial connection] %s (%s) has disconnected: ",
+      String discMessage = String.format("[initial connection] %s (%s) has disconnected: ",
           finalProfile.getName(),
           mcConnection.getRemoteAddress().toString());
 
@@ -161,7 +161,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
           .thenAcceptAsync(event -> {
             if (!mcConnection.isClosed()) {
               // wait for permissions to load, then set the players permission function
-              final PermissionFunction function = event.createFunction(player);
+              PermissionFunction function = event.createFunction(player);
               if (function == null) {
                 LOGGER.error("A plugin permission provider {} provided an invalid permission "
                         + "function for player {}. This is a bug in the plugin, not in "
@@ -179,10 +179,10 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     });
   }
 
-  private boolean versionCheck(final MinecraftConnection connection) {
-    final ProtocolVersion minimumProtocolVersion = ProtocolVersion.getVersionByName(minimumVersion);
-    final ProtocolVersion maximumProtocolVersion = ProtocolVersion.getVersionByName(maximumVersion);
-    final String clientProtocolVersion = connection.getProtocolVersion().getVersionIntroducedIn();
+  private boolean versionCheck(MinecraftConnection connection) {
+    ProtocolVersion minimumProtocolVersion = ProtocolVersion.getVersionByName(minimumVersion);
+    ProtocolVersion maximumProtocolVersion = ProtocolVersion.getVersionByName(maximumVersion);
+    String clientProtocolVersion = connection.getProtocolVersion().getVersionIntroducedIn();
 
     // Compare the client's protocol version with the minimum and maximum required versions
     if (ProtocolVersion.getVersionByName(clientProtocolVersion).lessThan(minimumProtocolVersion)
@@ -197,7 +197,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
-  private void startLoginCompletion(final ConnectedPlayer player) {
+  private void startLoginCompletion(ConnectedPlayer player) {
     int threshold = server.getConfiguration().getCompressionThreshold();
     if (threshold >= 0 && mcConnection.getProtocolVersion().noLessThan(MINECRAFT_1_8)) {
       mcConnection.write(new SetCompressionPacket(threshold));
@@ -211,7 +211,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     }
 
     if (player.getIdentifiedKey() != null) {
-      final IdentifiedKey playerKey = player.getIdentifiedKey();
+      IdentifiedKey playerKey = player.getIdentifiedKey();
       if (playerKey.getSignatureHolder() == null) {
         if (playerKey instanceof IdentifiedKeyImpl unlinkedKey) {
           // Failsafe
@@ -240,7 +240,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final LoginAcknowledgedPacket packet) {
+  public boolean handle(LoginAcknowledgedPacket packet) {
     if (loginState != State.SUCCESS_SENT) {
       inbound.disconnect(Component.translatable("multiplayer.disconnect.invalid_player_data"));
     } else {
@@ -258,7 +258,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final ServerboundCookieResponsePacket packet) {
+  public boolean handle(ServerboundCookieResponsePacket packet) {
     server.getEventManager()
         .fire(new CookieReceiveEvent(connectedPlayer, packet.getKey(), packet.getPayload()))
         .thenAcceptAsync(event -> {
@@ -276,7 +276,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     return true;
   }
 
-  private void completeLoginProtocolPhaseAndInitialize(final ConnectedPlayer player) {
+  private void completeLoginProtocolPhaseAndInitialize(ConnectedPlayer player) {
     mcConnection.setAssociation(player);
 
     server.getEventManager().fire(new LoginEvent(player, serverIdHash)).thenAcceptAsync(event -> {
@@ -325,7 +325,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
     });
   }
 
-  private CompletableFuture<Void> connectToInitialServer(final ConnectedPlayer player) {
+  private CompletableFuture<Void> connectToInitialServer(ConnectedPlayer player) {
     Optional<VelocityRegisteredServer> initialFromConfig = player.currentServerRetrySession().getNextServerToTry();
     PlayerChooseInitialServerEvent event =
         new PlayerChooseInitialServerEvent(player, initialFromConfig.orElse(null));
@@ -348,7 +348,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(ByteBuf buf) {
     mcConnection.close(true);
   }
 

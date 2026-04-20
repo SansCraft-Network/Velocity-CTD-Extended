@@ -61,7 +61,7 @@ public class VelocityTabList implements InternalTabList {
    *
    * @param player player associated with this tab list
    */
-  public VelocityTabList(final ConnectedPlayer player) {
+  public VelocityTabList(ConnectedPlayer player) {
     this.player = player;
     this.connection = player.getConnection();
     this.entries = Maps.newConcurrentMap();
@@ -73,7 +73,7 @@ public class VelocityTabList implements InternalTabList {
   }
 
   @Override
-  public void setHeaderAndFooter(final Component header, final Component footer) {
+  public void setHeaderAndFooter(Component header, Component footer) {
     Preconditions.checkNotNull(header, "header");
     Preconditions.checkNotNull(footer, "footer");
     this.player.sendPlayerListHeaderAndFooter(header, footer);
@@ -85,7 +85,7 @@ public class VelocityTabList implements InternalTabList {
   }
 
   @Override
-  public void addEntry(final TabListEntry entry1) {
+  public void addEntry(TabListEntry entry1) {
     VelocityTabListEntry entry;
     if (entry1 instanceof VelocityTabListEntry) {
       entry = (VelocityTabListEntry) entry1;
@@ -199,18 +199,18 @@ public class VelocityTabList implements InternalTabList {
   }
 
   @Override
-  public Optional<TabListEntry> removeEntry(final UUID uuid) {
+  public Optional<TabListEntry> removeEntry(UUID uuid) {
     this.connection.write(new RemovePlayerInfoPacket(List.of(uuid)));
     return Optional.ofNullable(this.entries.remove(uuid));
   }
 
   @Override
-  public boolean containsEntry(final UUID uuid) {
+  public boolean containsEntry(UUID uuid) {
     return this.entries.containsKey(uuid);
   }
 
   @Override
-  public Optional<TabListEntry> getEntry(final UUID uuid) {
+  public Optional<TabListEntry> getEntry(UUID uuid) {
     return Optional.ofNullable(this.entries.get(uuid));
   }
 
@@ -232,33 +232,33 @@ public class VelocityTabList implements InternalTabList {
   }
 
   @Override
-  public TabListEntry buildEntry(final GameProfile profile, final @Nullable Component displayName, final int latency,
-                                 final int gameMode, final @Nullable ChatSession chatSession, final boolean listed, final int listOrder,
-                                 final boolean showHat) {
+  public TabListEntry buildEntry(GameProfile profile, @Nullable Component displayName, int latency,
+                                 int gameMode, @Nullable ChatSession chatSession, boolean listed, int listOrder,
+                                 boolean showHat) {
     return new VelocityTabListEntry(this, profile, displayName, latency, gameMode, chatSession, listed, listOrder, showHat);
   }
 
   @Override
-  public void processUpdate(final UpsertPlayerInfoPacket infoPacket) {
+  public void processUpdate(UpsertPlayerInfoPacket infoPacket) {
     for (UpsertPlayerInfoPacket.Entry entry : infoPacket.getEntries()) {
       processUpsert(infoPacket.getActions(), entry);
     }
   }
 
-  protected UpsertPlayerInfoPacket.Entry createRawEntry(final VelocityTabListEntry entry) {
+  protected UpsertPlayerInfoPacket.Entry createRawEntry(VelocityTabListEntry entry) {
     Preconditions.checkNotNull(entry, "entry");
     Preconditions.checkNotNull(entry.getProfile(), "Profile cannot be null");
     Preconditions.checkNotNull(entry.getProfile().getId(), "Profile ID cannot be null");
     return new UpsertPlayerInfoPacket.Entry(entry.getProfile().getId());
   }
 
-  protected void emitActionRaw(final UpsertPlayerInfoPacket.Action action,
-                               final UpsertPlayerInfoPacket.Entry entry) {
+  protected void emitActionRaw(UpsertPlayerInfoPacket.Action action,
+                               UpsertPlayerInfoPacket.Entry entry) {
     this.connection.write(new UpsertPlayerInfoPacket(EnumSet.of(action), List.of(entry)));
   }
 
-  private void processUpsert(final EnumSet<UpsertPlayerInfoPacket.Action> actions,
-                             final UpsertPlayerInfoPacket.Entry entry) {
+  private void processUpsert(EnumSet<UpsertPlayerInfoPacket.Action> actions,
+                             UpsertPlayerInfoPacket.Entry entry) {
     Preconditions.checkNotNull(entry.getProfileId(), "Profile ID cannot be null");
     UUID profileId = entry.getProfileId();
     VelocityTabListEntry currentEntry = this.entries.get(profileId);
@@ -314,7 +314,7 @@ public class VelocityTabList implements InternalTabList {
   }
 
   @Override
-  public void processRemove(final RemovePlayerInfoPacket infoPacket) {
+  public void processRemove(RemovePlayerInfoPacket infoPacket) {
     for (UUID uuid : infoPacket.getProfilesToRemove()) {
       this.entries.remove(uuid);
     }

@@ -38,7 +38,7 @@ public final class BundleDelimiterHandler {
 
   private CompletableFuture<Void> finishedBundleSessionFuture;
 
-  public BundleDelimiterHandler(final ConnectedPlayer player) {
+  public BundleDelimiterHandler(ConnectedPlayer player) {
     this.player = player;
   }
 
@@ -67,7 +67,7 @@ public final class BundleDelimiterHandler {
    * @param sendPackets the logic that sends packets to the player
    * @return a future that completes when the packets have been sent
    */
-  public CompletableFuture<Void> bundlePackets(final Runnable sendPackets) {
+  public CompletableFuture<Void> bundlePackets(Runnable sendPackets) {
     VelocityServerConnection connectedServer = player.getConnectedServer();
     MinecraftConnection connection = connectedServer == null ? null : connectedServer.getConnection();
     if (connection == null) {
@@ -96,7 +96,7 @@ public final class BundleDelimiterHandler {
     return future;
   }
 
-  private void sendPackets(final Runnable sendPackets) {
+  private void sendPackets(Runnable sendPackets) {
     player.getConnection().write(BundleDelimiterPacket.INSTANCE);
     try {
       sendPackets.run();

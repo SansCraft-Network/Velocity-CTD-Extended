@@ -58,7 +58,7 @@ public class KeyedVelocityTabList implements InternalTabList {
    * @param player the connected player this tab list is associated with
    * @param proxyServer the proxy server instance used for player lookup and metadata
    */
-  public KeyedVelocityTabList(final ConnectedPlayer player, final VelocityServer proxyServer) {
+  public KeyedVelocityTabList(ConnectedPlayer player, VelocityServer proxyServer) {
     this.player = player;
     this.proxyServer = proxyServer;
     this.connection = player.getConnection();
@@ -71,7 +71,7 @@ public class KeyedVelocityTabList implements InternalTabList {
 
   @Deprecated
   @Override
-  public void setHeaderAndFooter(final Component header, final Component footer) {
+  public void setHeaderAndFooter(Component header, Component footer) {
     Preconditions.checkNotNull(header, "header");
     Preconditions.checkNotNull(footer, "footer");
     this.player.sendPlayerListHeaderAndFooter(header, footer);
@@ -83,7 +83,7 @@ public class KeyedVelocityTabList implements InternalTabList {
   }
 
   @Override
-  public void addEntry(final TabListEntry entry) {
+  public void addEntry(TabListEntry entry) {
     Preconditions.checkNotNull(entry, "entry");
     Preconditions.checkArgument(entry.getTabList().equals(this),
         "The provided entry was not created by this tab list");
@@ -100,7 +100,7 @@ public class KeyedVelocityTabList implements InternalTabList {
   }
 
   @Override
-  public Optional<TabListEntry> removeEntry(final UUID uuid) {
+  public Optional<TabListEntry> removeEntry(UUID uuid) {
     Preconditions.checkNotNull(uuid, "uuid");
 
     TabListEntry entry = entries.remove(uuid);
@@ -115,13 +115,13 @@ public class KeyedVelocityTabList implements InternalTabList {
   }
 
   @Override
-  public boolean containsEntry(final UUID uuid) {
+  public boolean containsEntry(UUID uuid) {
     Preconditions.checkNotNull(uuid, "uuid");
     return entries.containsKey(uuid);
   }
 
   @Override
-  public Optional<TabListEntry> getEntry(final UUID uuid) {
+  public Optional<TabListEntry> getEntry(UUID uuid) {
     return Optional.ofNullable(this.entries.get(uuid));
   }
 
@@ -158,28 +158,28 @@ public class KeyedVelocityTabList implements InternalTabList {
   }
 
   @Override
-  public TabListEntry buildEntry(final GameProfile profile, final @Nullable Component displayName,
-                                 final int latency, final int gameMode, final @Nullable IdentifiedKey key) {
+  public TabListEntry buildEntry(GameProfile profile, @Nullable Component displayName,
+                                 int latency, int gameMode, @Nullable IdentifiedKey key) {
     return new KeyedVelocityTabListEntry(this, profile, displayName, latency, gameMode, key);
   }
 
   @Override
-  public TabListEntry buildEntry(final GameProfile profile, final @Nullable Component displayName,
-                                 final int latency, final int gameMode, final @Nullable ChatSession chatSession,
-                                 final boolean listed) {
+  public TabListEntry buildEntry(GameProfile profile, @Nullable Component displayName,
+                                 int latency, int gameMode, @Nullable ChatSession chatSession,
+                                 boolean listed) {
     return new KeyedVelocityTabListEntry(this, profile, displayName, latency, gameMode,
         chatSession == null ? null : chatSession.getIdentifiedKey());
   }
 
   @Override
-  public TabListEntry buildEntry(final GameProfile profile, final @Nullable Component displayName,
-                                 final int latency, final int gameMode, final @Nullable ChatSession chatSession,
-                                 final boolean listed, final int listOrder, final boolean showHat) {
+  public TabListEntry buildEntry(GameProfile profile, @Nullable Component displayName,
+                                 int latency, int gameMode, @Nullable ChatSession chatSession,
+                                 boolean listed, int listOrder, boolean showHat) {
     return buildEntry(profile, displayName, latency, gameMode, chatSession, listed);
   }
 
   @Override
-  public void processLegacy(final LegacyPlayerListItemPacket packet) {
+  public void processLegacy(LegacyPlayerListItemPacket packet) {
     // Packets are already forwarded on, so no need to do that here
     for (LegacyPlayerListItemPacket.Item item : packet.getItems()) {
       UUID uuid = item.getUuid();
@@ -234,7 +234,7 @@ public class KeyedVelocityTabList implements InternalTabList {
     }
   }
 
-  void updateEntry(final int action, final TabListEntry entry) {
+  void updateEntry(int action, TabListEntry entry) {
     if (entries.containsKey(entry.getProfile().getId())) {
       LegacyPlayerListItemPacket.Item packetItem = LegacyPlayerListItemPacket.Item.from(entry);
 

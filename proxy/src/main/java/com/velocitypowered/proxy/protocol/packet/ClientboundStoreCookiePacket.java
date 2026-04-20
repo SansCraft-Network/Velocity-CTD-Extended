@@ -42,25 +42,25 @@ public class ClientboundStoreCookiePacket implements MinecraftPacket {
   public ClientboundStoreCookiePacket() {
   }
 
-  public ClientboundStoreCookiePacket(final Key key, final byte[] payload) {
+  public ClientboundStoreCookiePacket(Key key, byte[] payload) {
     this.key = key;
     this.payload = payload;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     this.key = ProtocolUtils.readKey(buf);
     this.payload = ProtocolUtils.readByteArray(buf, 5120);
   }
 
   @Override
-  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeKey(buf, key);
     ProtocolUtils.writeByteArray(buf, payload);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

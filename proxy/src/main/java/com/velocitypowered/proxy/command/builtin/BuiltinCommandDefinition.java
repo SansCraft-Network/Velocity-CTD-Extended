@@ -23,7 +23,7 @@ import java.util.List;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-public interface BuiltinCommand {
+public interface BuiltinCommandDefinition {
 
   /**
    * Builds and returns the command instance if enabled, or returns {@code null} if disabled (e.g. via configuration).

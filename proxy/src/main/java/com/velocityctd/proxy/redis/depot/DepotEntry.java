@@ -51,7 +51,7 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
    *
    * @param key the unique id of the entry
    */
-  public DepotEntry(final K key) {
+  public DepotEntry(K key) {
     this.uniqueId = key;
   }
 
@@ -90,7 +90,7 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
    * @param depot the depot to set
    */
   @ApiStatus.Internal
-  public void setDepot(final Depot<K, T> depot) {
+  public void setDepot(Depot<K, T> depot) {
     if (depot != null) {
       this.depot = depot;
     }
@@ -106,7 +106,7 @@ public abstract class DepotEntry<K, T extends DepotEntry<K, T>> {
    * @return {@code true} if the objects are equal, otherwise {@code false}
    */
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }

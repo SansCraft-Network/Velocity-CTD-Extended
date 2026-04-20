@@ -73,7 +73,7 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
    *
    * @param redis the {@link VelocityRedis} instance
    */
-  public ProxyDepotService(final @NotNull VelocityRedis redis) {
+  public ProxyDepotService(@NotNull VelocityRedis redis) {
     super(ProxyEntry.class, redis.getProvider());
 
     this.redis = redis;
@@ -104,7 +104,7 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
     // Delete own heartbeat key so surviving proxies don't try to reap us while we're cleaning up.
     this.redis.getProvider().deleteKey(HEARTBEAT_KEY_PREFIX + this.redis.getProxyId());
 
-    final ProxyEntry proxyEntry = this.get(this.redis.getServer().getProxyId());
+    ProxyEntry proxyEntry = this.get(this.redis.getServer().getProxyId());
     if (proxyEntry != null) {
       proxyEntry.remove();
     }
@@ -154,7 +154,7 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
       return;
     }
 
-    for (final String proxyId : this.getAllProxyIds()) {
+    for (String proxyId : this.getAllProxyIds()) {
       if (proxyId.equalsIgnoreCase(this.redis.getProxyId())) {
         continue; // Never reap ourselves.
       }
@@ -173,10 +173,10 @@ public final class ProxyDepotService extends AbstractDepotService<String, ProxyE
    *
    * @param proxyId the ID of the proxy to reap
    */
-  private void reapProxy(final @NotNull String proxyId) {
+  private void reapProxy(@NotNull String proxyId) {
     LOGGER.warn("Reaping proxy {} from redis. This proxy shut down improperly.", proxyId);
 
-    for (final PlayerEntry playerEntry : this.redis.getPlayerService().getPlayerEntriesOnProxy(proxyId)) {
+    for (PlayerEntry playerEntry : this.redis.getPlayerService().getPlayerEntriesOnProxy(proxyId)) {
       playerEntry.remove();
     }
 

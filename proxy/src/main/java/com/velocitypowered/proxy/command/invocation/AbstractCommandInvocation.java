@@ -32,7 +32,7 @@ abstract class AbstractCommandInvocation<T> implements CommandInvocation<T> {
 
   private final T arguments;
 
-  protected AbstractCommandInvocation(final CommandSource source, final T arguments) {
+  protected AbstractCommandInvocation(CommandSource source, T arguments) {
     this.source = Preconditions.checkNotNull(source, "source");
     this.arguments = Preconditions.checkNotNull(arguments, "arguments");
   }
@@ -48,7 +48,7 @@ abstract class AbstractCommandInvocation<T> implements CommandInvocation<T> {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
@@ -57,7 +57,7 @@ abstract class AbstractCommandInvocation<T> implements CommandInvocation<T> {
       return false;
     }
 
-    final AbstractCommandInvocation<?> that = (AbstractCommandInvocation<?>) o;
+    AbstractCommandInvocation<?> that = (AbstractCommandInvocation<?>) o;
 
     if (!this.source.equals(that.source)) {
       return false;

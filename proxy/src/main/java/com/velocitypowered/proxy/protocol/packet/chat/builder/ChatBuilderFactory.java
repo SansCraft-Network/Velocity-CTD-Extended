@@ -29,7 +29,7 @@ public class ChatBuilderFactory {
 
   private final Function<ProtocolVersion, ChatBuilderV2> builderFunction;
 
-  public ChatBuilderFactory(final ProtocolVersion version) {
+  public ChatBuilderFactory(ProtocolVersion version) {
     this.version = version;
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_3)) {
       this.builderFunction = SessionChatBuilder::new;

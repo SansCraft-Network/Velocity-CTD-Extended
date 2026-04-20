@@ -54,8 +54,8 @@ public class VelocityQueue implements Queue {
   /**
    * Creates a fresh queue for the given backend server.
    */
-  public VelocityQueue(final VelocityServer server, final VelocityQueueManager manager,
-                       final VelocityRegisteredServer backend, final QueueState initialState) {
+  public VelocityQueue(VelocityServer server, VelocityQueueManager manager,
+                       VelocityRegisteredServer backend, QueueState initialState) {
     this.server = server;
     this.manager = manager;
     this.backend = backend;
@@ -74,7 +74,7 @@ public class VelocityQueue implements Queue {
   }
 
   @Override
-  public void enqueue(final @NotNull Player player) {
+  public void enqueue(@NotNull Player player) {
     enqueue((ConnectedPlayer) player);
   }
 
@@ -83,22 +83,22 @@ public class VelocityQueue implements Queue {
   }
 
   @Override
-  public void enqueue(final @NotNull QueueEntryData data) {
+  public void enqueue(@NotNull QueueEntryData data) {
     playerList.insertByPriority(createEntry(data));
   }
 
   @Override
-  public void dequeue(final @NotNull UUID uniqueId) {
+  public void dequeue(@NotNull UUID uniqueId) {
     playerList.remove(uniqueId);
   }
 
   @Override
-  public boolean contains(final @NotNull UUID uniqueId) {
+  public boolean contains(@NotNull UUID uniqueId) {
     return playerList.contains(uniqueId);
   }
 
   @Override
-  public @Nullable VelocityQueueEntry getEntry(final @NotNull UUID uniqueId) {
+  public @Nullable VelocityQueueEntry getEntry(@NotNull UUID uniqueId) {
     return playerList.get(uniqueId);
   }
 
@@ -108,7 +108,7 @@ public class VelocityQueue implements Queue {
   }
 
   @Override
-  public Optional<Integer> getPosition(final @NotNull UUID uniqueId) {
+  public Optional<Integer> getPosition(@NotNull UUID uniqueId) {
     return Optional.ofNullable(playerList.get(uniqueId))
         .map(VelocityQueueEntry::getPosition);
   }
@@ -124,7 +124,7 @@ public class VelocityQueue implements Queue {
   }
 
   @Override
-  public void setServerStatus(final @NotNull ServerStatus status) {
+  public void setServerStatus(@NotNull ServerStatus status) {
     if (this.serverStatus == status) {
       return;
     }
@@ -137,7 +137,7 @@ public class VelocityQueue implements Queue {
   }
 
   @Override
-  public void setState(final @NotNull QueueState state) {
+  public void setState(@NotNull QueueState state) {
     if (this.state == state) {
       return;
     }
@@ -149,9 +149,9 @@ public class VelocityQueue implements Queue {
     playerList.clear();
   }
 
-  public void broadcastMessage(final @NotNull Function<VelocityQueueEntry, Component> componentFn) {
+  public void broadcastMessage(@NotNull Function<VelocityQueueEntry, Component> componentFn) {
     for (VelocityQueueEntry entry : getEntries()) {
-      final Component msg = componentFn.apply(entry);
+      Component msg = componentFn.apply(entry);
       server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendMessage(msg));
     }
   }
@@ -161,7 +161,7 @@ public class VelocityQueue implements Queue {
    * already waiting for a connection.
    */
   @ApiStatus.Internal
-  void transferEntry(final VelocityQueueEntry entry) {
+  void transferEntry(VelocityQueueEntry entry) {
     if (entry.isWaitingForConnection()) {
       return;
     }
@@ -173,14 +173,14 @@ public class VelocityQueue implements Queue {
    * Used when the player is no longer online on any proxy.
    */
   @ApiStatus.Internal
-  void removeEntry(final VelocityQueueEntry entry) {
+  void removeEntry(VelocityQueueEntry entry) {
     playerList.remove(entry.getUniqueId());
   }
 
   /**
    * Computes the estimated time to transfer for the given position.
    */
-  public int calculateEta(final int position) {
+  public int calculateEta(int position) {
     int eta = (int) (server.getConfiguration().getQueue().getSendDelay() * position);
     return Math.max(eta, 0);
   }
@@ -197,7 +197,7 @@ public class VelocityQueue implements Queue {
   /**
    * Appends a pre-constructed entry to the end of the deque without priority sorting.
    */
-  protected void addEntryInternal(final VelocityQueueEntry entry) {
+  protected void addEntryInternal(VelocityQueueEntry entry) {
     playerList.addLast(entry);
   }
 
@@ -209,7 +209,7 @@ public class VelocityQueue implements Queue {
    * @param data the player data
    * @return a new entry instance
    */
-  protected VelocityQueueEntry createEntry(final @NotNull QueueEntryData data) {
+  protected VelocityQueueEntry createEntry(@NotNull QueueEntryData data) {
     return new VelocityQueueEntry(server, this, data);
   }
 
@@ -219,7 +219,7 @@ public class VelocityQueue implements Queue {
    * @param player the online player
    * @return a populated {@link QueueEntryData}
    */
-  private @NotNull QueueEntryData createQueueEntryData(final @NotNull ConnectedPlayer player) {
+  private @NotNull QueueEntryData createQueueEntryData(@NotNull ConnectedPlayer player) {
     return new QueueEntryData(
         player.getUniqueId(),
         player.getUsername(),

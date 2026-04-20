@@ -43,7 +43,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
   protected LastSeenMessages lastSeenMessages;
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     int cap = protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_20_5) ? 256 : ProtocolUtils.DEFAULT_MAX_STRING_SIZE;
     this.command = ProtocolUtils.readString(buf, cap);
     this.timeStamp = Instant.ofEpochMilli(buf.readLong());
@@ -53,7 +53,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, this.command);
     buf.writeLong(this.timeStamp.toEpochMilli());
     buf.writeLong(this.salt);
@@ -80,7 +80,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -95,7 +95,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
         + '}';
   }
 
-  public SessionPlayerCommandPacket withLastSeenMessages(final @Nullable LastSeenMessages lastSeenMessages) {
+  public SessionPlayerCommandPacket withLastSeenMessages(@Nullable LastSeenMessages lastSeenMessages) {
     if (lastSeenMessages == null) {
       UnsignedPlayerCommandPacket packet = new UnsignedPlayerCommandPacket();
       packet.command = command;
@@ -119,7 +119,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
       this.entries = List.of();
     }
 
-    public ArgumentSignatures(final ByteBuf buf) {
+    public ArgumentSignatures(ByteBuf buf) {
       int size = ProtocolUtils.readVarInt(buf);
       if (size > 8) {
         throw new QuietDecoderException(
@@ -136,7 +136,7 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
       return this.entries.isEmpty();
     }
 
-    public void encode(final ByteBuf buf) {
+    public void encode(ByteBuf buf) {
       ProtocolUtils.writeVarInt(buf, entries.size());
       for (ArgumentSignature entry : entries) {
         entry.encode(buf);
@@ -157,12 +157,12 @@ public class SessionPlayerCommandPacket implements MinecraftPacket {
 
     private final byte[] signature;
 
-    public ArgumentSignature(final ByteBuf buf) {
+    public ArgumentSignature(ByteBuf buf) {
       name = ProtocolUtils.readString(buf, 16);
       signature = SessionPlayerChatPacket.readMessageSignature(buf);
     }
 
-    public void encode(final ByteBuf buf) {
+    public void encode(ByteBuf buf) {
       ProtocolUtils.writeString(buf, name);
       buf.writeBytes(signature);
     }

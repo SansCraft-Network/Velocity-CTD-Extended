@@ -56,31 +56,31 @@ public final class ProxyOptions {
    */
   private final List<String> additionalPlugins;
 
-  ProxyOptions(final String[] args) {
-    final OptionParser parser = new OptionParser();
+  ProxyOptions(String[] args) {
+    OptionParser parser = new OptionParser();
 
-    final OptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "Print help")
+    OptionSpec<Void> help = parser.acceptsAll(Arrays.asList("h", "help"), "Print help")
         .forHelp();
-    final OptionSpec<Integer> port = parser.acceptsAll(Arrays.asList("p", "port"),
+    OptionSpec<Integer> port = parser.acceptsAll(Arrays.asList("p", "port"),
             "Specify the bind port to be used. The configuration bind port will be ignored.")
         .withRequiredArg().ofType(Integer.class);
-    final OptionSpec<Boolean> haproxy = parser.acceptsAll(
+    OptionSpec<Boolean> haproxy = parser.acceptsAll(
             Arrays.asList("haproxy", "haproxy-protocol"),
             "Choose whether to enable haproxy protocol. "
                     + "The configuration haproxy protocol will be ignored.")
         .withRequiredArg().ofType(Boolean.class);
-    final OptionSpec<ServerInfo> servers = parser.accepts("add-server",
+    OptionSpec<ServerInfo> servers = parser.accepts("add-server",
             "Define a server mapping. "
                     + "You must ensure that server name is not also registered in the config or use --ignore-config-servers.")
         .withRequiredArg().withValuesConvertedBy(new ServerInfoConverter());
-    final OptionSpec<Void> ignoreConfigServers = parser.accepts("ignore-config-servers",
+    OptionSpec<Void> ignoreConfigServers = parser.accepts("ignore-config-servers",
             "Skip registering servers from the config file. "
                     + "Useful in dynamic setups or with the --add-server flag.");
-    final OptionSpec<String> additionalPlugins = parser.acceptsAll(Arrays.asList("add-plugin", "add-extra-plugin-jar"),
+    OptionSpec<String> additionalPlugins = parser.acceptsAll(Arrays.asList("add-plugin", "add-extra-plugin-jar"),
             "Specify paths to extra plugin jars to be loaded in addition to those in the plugins folder. "
                     + "This argument can be specified multiple times, once for each extra plugin jar path."
             ).withRequiredArg().ofType(String.class);
-    final OptionSet set = parser.parse(args);
+    OptionSet set = parser.parse(args);
 
     this.help = set.has(help);
     this.port = port.value(set);
@@ -92,7 +92,7 @@ public final class ProxyOptions {
     if (this.help) {
       try {
         parser.printHelpOn(System.out);
-      } catch (final IOException e) {
+      } catch (IOException e) {
         LOGGER.error("Could not print help", e);
       }
     }
@@ -130,7 +130,7 @@ public final class ProxyOptions {
   private static final class ServerInfoConverter implements ValueConverter<ServerInfo> {
 
     @Override
-    public ServerInfo convert(final String s) {
+    public ServerInfo convert(String s) {
       String[] split = s.split(":", 2);
       if (split.length < 2) {
         throw new ValueConversionException("Invalid server format. Use <name>:<host>:[port]:[forwardingmode]:[minimumversion]");

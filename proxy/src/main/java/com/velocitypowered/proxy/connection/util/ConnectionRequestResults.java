@@ -34,7 +34,7 @@ public final class ConnectionRequestResults {
     throw new AssertionError();
   }
 
-  public static Impl successful(final VelocityRegisteredServer server) {
+  public static Impl successful(VelocityRegisteredServer server) {
     return plainResult(Status.SUCCESS, server);
   }
 
@@ -45,8 +45,8 @@ public final class ConnectionRequestResults {
    * @param server the server to use
    * @return the result
    */
-  public static Impl plainResult(final ConnectionRequestBuilder.Status status,
-                                 final VelocityRegisteredServer server) {
+  public static Impl plainResult(ConnectionRequestBuilder.Status status,
+                                 VelocityRegisteredServer server) {
     return new Impl(status, null, server, true);
   }
 
@@ -57,7 +57,7 @@ public final class ConnectionRequestResults {
    * @param server    the server to use
    * @return the result
    */
-  public static Impl forDisconnect(final Component component, final VelocityRegisteredServer server) {
+  public static Impl forDisconnect(Component component, VelocityRegisteredServer server) {
     return new Impl(Status.SERVER_DISCONNECTED, component, server, true);
   }
 
@@ -68,11 +68,11 @@ public final class ConnectionRequestResults {
    * @param server     the server the player attempted to connect to
    * @return the result
    */
-  public static Impl forDisconnect(final DisconnectPacket disconnect, final VelocityRegisteredServer server) {
+  public static Impl forDisconnect(DisconnectPacket disconnect, VelocityRegisteredServer server) {
     return forDisconnect(disconnect.getReason().getComponent(), server);
   }
 
-  public static Impl forUnsafeDisconnect(final DisconnectPacket disconnect, final VelocityRegisteredServer server) {
+  public static Impl forUnsafeDisconnect(DisconnectPacket disconnect, VelocityRegisteredServer server) {
     return new Impl(Status.SERVER_DISCONNECTED, disconnect.getReason().getComponent(), server, false);
   }
 
@@ -89,8 +89,8 @@ public final class ConnectionRequestResults {
 
     private final boolean safe;
 
-    Impl(final Status status, final @Nullable Component component,
-         final VelocityRegisteredServer attemptedConnection, final boolean safe) {
+    Impl(Status status, @Nullable Component component,
+         VelocityRegisteredServer attemptedConnection, boolean safe) {
       this.status = status;
       this.component = component;
       this.attemptedConnection = attemptedConnection;

@@ -77,7 +77,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
 
   private final Map<UUID, ConnectedPlayer> players = new ConcurrentHashMap<>();
 
-  public VelocityRegisteredServer(final @Nullable VelocityServer server, final ServerInfo serverInfo) {
+  public VelocityRegisteredServer(@Nullable VelocityServer server, ServerInfo serverInfo) {
     this.server = server;
     this.serverInfo = Preconditions.checkNotNull(serverInfo, "serverInfo");
   }
@@ -145,12 +145,12 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @param uuid the UUID of the player
    * @return the connected player, or {@code null} if not found
    */
-  public ConnectedPlayer getPlayer(final UUID uuid) {
+  public ConnectedPlayer getPlayer(UUID uuid) {
     return players.get(uuid);
   }
 
   @Override
-  public CompletableFuture<ServerPing> ping(final PingOptions pingOptions) {
+  public CompletableFuture<ServerPing> ping(PingOptions pingOptions) {
     return ping(null, pingOptions);
   }
 
@@ -167,7 +167,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @param pingOptions the options to apply to this ping
    * @return the server list's ping response
    */
-  public CompletableFuture<ServerPing> ping(final @Nullable EventLoop loop, final PingOptions pingOptions) {
+  public CompletableFuture<ServerPing> ping(@Nullable EventLoop loop, PingOptions pingOptions) {
     if (server == null) {
       throw new IllegalStateException("No Velocity proxy instance available");
     }
@@ -175,7 +175,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     CompletableFuture<ServerPing> pingFuture = new CompletableFuture<>();
     server.createBootstrap(loop).handler(new ChannelInitializer<>() {
       @Override
-      protected void initChannel(final @NotNull Channel ch) {
+      protected void initChannel(@NotNull Channel ch) {
         ch.pipeline().addLast(FRAME_DECODER, new MinecraftVarintFrameDecoder(ProtocolUtils.Direction.CLIENTBOUND))
             .addLast(READ_TIMEOUT, new ReadTimeoutHandler(
                 pingOptions.getTimeout() == 0
@@ -201,16 +201,16 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
     return pingFuture;
   }
 
-  public void addPlayer(final ConnectedPlayer player) {
+  public void addPlayer(ConnectedPlayer player) {
     players.put(player.getUniqueId(), player);
   }
 
-  public void removePlayer(final ConnectedPlayer player) {
+  public void removePlayer(ConnectedPlayer player) {
     players.remove(player.getUniqueId(), player);
   }
 
   @Override
-  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final byte @NotNull [] data) {
+  public boolean sendPluginMessage(@NotNull ChannelIdentifier identifier, byte @NotNull [] data) {
     requireNonNull(identifier);
     requireNonNull(data);
     return sendPluginMessage(identifier, Unpooled.wrappedBuffer(data));
@@ -229,11 +229,11 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @return {@code true} if the message was successfully sent, {@code false} otherwise
    */
   @Override
-  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
+  public boolean sendPluginMessage(@NotNull ChannelIdentifier identifier, @NotNull PluginMessageEncoder dataEncoder) {
     requireNonNull(identifier);
     requireNonNull(dataEncoder);
-    final ByteBuf buf = Unpooled.buffer();
-    final ByteBufDataOutput dataInput = new ByteBufDataOutput(buf);
+    ByteBuf buf = Unpooled.buffer();
+    ByteBufDataOutput dataInput = new ByteBufDataOutput(buf);
     dataEncoder.encode(dataInput);
     if (buf.isReadable()) {
       return sendPluginMessage(identifier, buf);
@@ -251,9 +251,9 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    * @param data       the data
    * @return whether the message was sent
    */
-  public boolean sendPluginMessage(final ChannelIdentifier identifier, final ByteBuf data) {
-    for (final ConnectedPlayer player : players.values()) {
-      final VelocityServerConnection serverConnection = player.getConnectedServer();
+  public boolean sendPluginMessage(ChannelIdentifier identifier, ByteBuf data) {
+    for (ConnectedPlayer player : players.values()) {
+      VelocityServerConnection serverConnection = player.getConnectedServer();
       if (serverConnection != null && serverConnection.getConnection() != null
               && serverConnection.getServer() == this) {
         return serverConnection.sendPluginMessage(identifier, data);
@@ -281,7 +281,7 @@ public class VelocityRegisteredServer implements RegisteredServer, ForwardingAud
    */
   @Override
   public VelocityQueue getQueue() {
-    final VelocityQueueManager queueManager = requireNonNull(server).getQueueManager();
+    VelocityQueueManager queueManager = requireNonNull(server).getQueueManager();
     if (queueManager == null) {
       throw new IllegalStateException("No QueueManager available on the server");
     }

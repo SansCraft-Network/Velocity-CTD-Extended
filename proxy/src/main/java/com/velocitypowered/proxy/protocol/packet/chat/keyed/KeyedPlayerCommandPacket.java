@@ -83,7 +83,7 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
    * @param arguments the arguments of the command
    * @param timestamp the timestamp of the command execution
    */
-  public KeyedPlayerCommandPacket(final String command, final List<String> arguments, final Instant timestamp) {
+  public KeyedPlayerCommandPacket(String command, List<String> arguments, Instant timestamp) {
     this.unsigned = true;
     ImmutableMap.Builder<String, byte[]> builder = ImmutableMap.builder();
     arguments.forEach(entry -> builder.put(entry, EncryptionUtils.EMPTY));
@@ -95,8 +95,8 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     command = ProtocolUtils.readString(buf, 256);
     timestamp = Instant.ofEpochMilli(buf.readLong());
 
@@ -147,8 +147,8 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, command);
     buf.writeLong(timestamp.toEpochMilli());
 
@@ -199,7 +199,7 @@ public class KeyedPlayerCommandPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

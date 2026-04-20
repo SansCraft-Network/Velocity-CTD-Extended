@@ -36,7 +36,7 @@ public class HeaderAndFooterPacket implements MinecraftPacket {
     throw new UnsupportedOperationException("Decode is not implemented");
   }
 
-  public HeaderAndFooterPacket(final ComponentHolder header, final ComponentHolder footer) {
+  public HeaderAndFooterPacket(ComponentHolder header, ComponentHolder footer) {
     this.header = Preconditions.checkNotNull(header, "header");
     this.footer = Preconditions.checkNotNull(footer, "footer");
   }
@@ -50,28 +50,28 @@ public class HeaderAndFooterPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     throw new UnsupportedOperationException("Decode is not implemented");
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     header.write(buf);
     footer.write(buf);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
-  public static HeaderAndFooterPacket create(final Component header,
-                                             final Component footer, final ProtocolVersion protocolVersion) {
+  public static HeaderAndFooterPacket create(Component header,
+                                             Component footer, ProtocolVersion protocolVersion) {
     return new HeaderAndFooterPacket(new ComponentHolder(protocolVersion, header),
         new ComponentHolder(protocolVersion, footer));
   }
 
-  public static HeaderAndFooterPacket reset(final ProtocolVersion version) {
+  public static HeaderAndFooterPacket reset(ProtocolVersion version) {
     ComponentHolder empty = new ComponentHolder(version, Component.empty());
     return new HeaderAndFooterPacket(empty, empty);
   }

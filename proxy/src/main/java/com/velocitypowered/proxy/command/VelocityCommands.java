@@ -55,8 +55,8 @@ public final class VelocityCommands {
    * @param registrant the plugin that registered the command
    * @return the wrapped command node
    */
-  public static CommandNode<CommandSource> wrap(final CommandNode<CommandSource> delegate,
-                                                final @Nullable Object registrant) {
+  public static CommandNode<CommandSource> wrap(CommandNode<CommandSource> delegate,
+                                                @Nullable Object registrant) {
     Preconditions.checkNotNull(delegate, "delegate");
     if (registrant == null) {
       // The registrant is null if the `plugin` was absent when we try to register the command
@@ -73,7 +73,7 @@ public final class VelocityCommands {
         var literalBuilder = shallowCopyAsBuilder(lcn, delegate.getName(), true);
         literalBuilder.executes(maybeCommand);
         // We also need to wrap any children
-        for (final CommandNode<CommandSource> child : delegate.getChildren()) {
+        for (CommandNode<CommandSource> child : delegate.getChildren()) {
           literalBuilder.then(wrap(child, registrant));
         }
         if (delegate.getRedirect() != null) {
@@ -86,7 +86,7 @@ public final class VelocityCommands {
       case ArgumentCommandNode<CommandSource, ?> node -> {
         var argBuilder = node.createBuilder().executes(maybeCommand);
         // We also need to wrap any children
-        for (final CommandNode<CommandSource> child : delegate.getChildren()) {
+        for (CommandNode<CommandSource> child : delegate.getChildren()) {
           argBuilder.then(wrap(child, registrant));
         }
         if (delegate.getRedirect() != null) {
@@ -105,8 +105,8 @@ public final class VelocityCommands {
    * @param trim  whether to remove leading and trailing whitespace from the input
    * @return the normalized command input
    */
-  static String normalizeInput(final String input, final boolean trim) {
-    final String command = trim ? input.trim() : input;
+  static String normalizeInput(String input, boolean trim) {
+    String command = trim ? input.trim() : input;
     int firstSep = command.indexOf(CommandDispatcher.ARGUMENT_SEPARATOR_CHAR);
     if (firstSep != -1) {
       // Aliases are case-insensitive, arguments are not
@@ -124,7 +124,7 @@ public final class VelocityCommands {
    *              {@link CommandContextBuilder#getNodes()}
    * @return the command alias
    */
-  public static String readAlias(final List<? extends ParsedCommandNode<?>> nodes) {
+  public static String readAlias(List<? extends ParsedCommandNode<?>> nodes) {
     if (nodes.isEmpty()) {
       throw new IllegalArgumentException("Cannot read alias from empty node list");
     }
@@ -146,16 +146,16 @@ public final class VelocityCommands {
    * @param <V> the type of the arguments
    * @return the command arguments
    */
-  public static <V> V readArguments(final Map<String, ? extends ParsedArgument<?, ?>> arguments,
-                                    final Class<V> type, final V fallback) {
-    final ParsedArgument<?, ?> argument = arguments.get(ARGS_NODE_NAME);
+  public static <V> V readArguments(Map<String, ? extends ParsedArgument<?, ?>> arguments,
+                                    Class<V> type, V fallback) {
+    ParsedArgument<?, ?> argument = arguments.get(ARGS_NODE_NAME);
     if (argument == null) {
       return fallback; // Either no arguments were given or this isn't an InvocableCommand
     }
-    final Object result = argument.getResult();
+    Object result = argument.getResult();
     try {
       return type.cast(result);
-    } catch (final ClassCastException e) {
+    } catch (ClassCastException e) {
       throw new IllegalArgumentException("Parsed argument is of type " + result.getClass()
           + ", expected " + type, e);
     }
@@ -171,7 +171,7 @@ public final class VelocityCommands {
    * @param alias the alias to check
    * @return true if the alias can be registered; false otherwise
    */
-  public static boolean isValidAlias(final String alias) {
+  public static boolean isValidAlias(String alias) {
     return alias.equals(alias.toLowerCase(Locale.ENGLISH));
   }
 
@@ -182,7 +182,7 @@ public final class VelocityCommands {
    * @param newName  the name of the returned literal node
    * @return a copy of the literal with the given name
    */
-  public static LiteralCommandNode<CommandSource> shallowCopy(final LiteralCommandNode<CommandSource> original, final String newName) {
+  public static LiteralCommandNode<CommandSource> shallowCopy(LiteralCommandNode<CommandSource> original, String newName) {
     return shallowCopy(original, newName, original.getCommand());
   }
 
@@ -194,8 +194,8 @@ public final class VelocityCommands {
    * @param newCommand the new command to set on the copied node
    * @return a copy of the literal with the given name
    */
-  private static LiteralCommandNode<CommandSource> shallowCopy(final LiteralCommandNode<CommandSource> original, final String newName,
-                                                               final com.mojang.brigadier.Command<CommandSource> newCommand) {
+  private static LiteralCommandNode<CommandSource> shallowCopy(LiteralCommandNode<CommandSource> original, String newName,
+                                                               com.mojang.brigadier.Command<CommandSource> newCommand) {
     return shallowCopyAsBuilder(original, newName, false).executes(newCommand).build();
   }
 
@@ -207,8 +207,8 @@ public final class VelocityCommands {
    * @param skipChildren if {@code true}, the copied node will not include children of the original
    * @return a copy of the literal with the given name
    */
-  private static LiteralArgumentBuilder<CommandSource> shallowCopyAsBuilder(final LiteralCommandNode<CommandSource> original, final String newName,
-                                                                            final boolean skipChildren) {
+  private static LiteralArgumentBuilder<CommandSource> shallowCopyAsBuilder(LiteralCommandNode<CommandSource> original, String newName,
+                                                                            boolean skipChildren) {
     // Brigadier resolves the redirect of a node if further input can be parsed.
     // Let <bar> be a literal node having a redirect to a <foo> literal. Then,
     // the context returned by CommandDispatcher#parseNodes when given the input
@@ -218,14 +218,14 @@ public final class VelocityCommands {
     // Perform a shallow copy of the literal instead.
     Preconditions.checkNotNull(original, "original");
     Preconditions.checkNotNull(newName, "secondaryAlias");
-    final LiteralArgumentBuilder<CommandSource> builder = LiteralArgumentBuilder
+    LiteralArgumentBuilder<CommandSource> builder = LiteralArgumentBuilder
         .<CommandSource>literal(newName)
         .requires(original.getRequirement())
         .requiresWithContext(original.getContextRequirement())
         .forward(original.getRedirect(), original.getRedirectModifier(), original.isFork())
         .executes(original.getCommand());
     if (!skipChildren) {
-      for (final CommandNode<CommandSource> child : original.getChildren()) {
+      for (CommandNode<CommandSource> child : original.getChildren()) {
         builder.then(child);
       }
     }
@@ -241,8 +241,8 @@ public final class VelocityCommands {
    * @param <S>   the type of the command source
    * @return the argument's node, or null if not present
    */
-  static <S> @Nullable VelocityArgumentCommandNode<S, ?> getArgumentsNode(final LiteralCommandNode<S> alias) {
-    final CommandNode<S> node = alias.getChild(ARGS_NODE_NAME);
+  static <S> @Nullable VelocityArgumentCommandNode<S, ?> getArgumentsNode(LiteralCommandNode<S> alias) {
+    CommandNode<S> node = alias.getChild(ARGS_NODE_NAME);
     if (node instanceof VelocityArgumentCommandNode) {
       return (VelocityArgumentCommandNode<S, ?>) node;
     }
@@ -256,7 +256,7 @@ public final class VelocityCommands {
    * @param node the node to check
    * @return true if the node is an argument's node; false otherwise
    */
-  public static boolean isArgumentsNode(final CommandNode<?> node) {
+  public static boolean isArgumentsNode(CommandNode<?> node) {
     return node instanceof VelocityArgumentCommandNode && node.getName().equals(ARGS_NODE_NAME);
   }
 

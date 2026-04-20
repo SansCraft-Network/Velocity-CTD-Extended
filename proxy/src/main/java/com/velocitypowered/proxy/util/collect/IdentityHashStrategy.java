@@ -35,12 +35,12 @@ public final class IdentityHashStrategy<T> implements Strategy<T> {
   }
 
   @Override
-  public int hashCode(final T o) {
+  public int hashCode(T o) {
     return System.identityHashCode(o);
   }
 
   @Override
-  public boolean equals(final T a, final T b) {
+  public boolean equals(T a, T b) {
     return a == b;
   }
 }

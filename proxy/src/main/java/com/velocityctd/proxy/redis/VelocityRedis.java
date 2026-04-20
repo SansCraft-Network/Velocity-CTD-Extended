@@ -87,8 +87,8 @@ public final class VelocityRedis {
    *
    * @param server the {@link VelocityServer} instance
    */
-  public VelocityRedis(final @NotNull VelocityServer server) {
-    final VelocityConfiguration.Redis config = server.getConfiguration().getRedis();
+  public VelocityRedis(@NotNull VelocityServer server) {
+    VelocityConfiguration.Redis config = server.getConfiguration().getRedis();
     this.proxyId = config.getProxyId();
 
     this.server = server;
@@ -202,7 +202,7 @@ public final class VelocityRedis {
    *
    * @param payload the payload to publish
    */
-  public <T> void publish(final @NotNull T payload) {
+  public <T> void publish(@NotNull T payload) {
     provider.publish(payload);
   }
 
@@ -215,7 +215,7 @@ public final class VelocityRedis {
    * @param <R> the type of the expected response
    * @return a future that completes with the response data or exceptionally on timeout
    */
-  public <T extends TransactionData<R>, R> CompletableFuture<R> publishTransaction(final @NotNull T data) {
+  public <T extends TransactionData<R>, R> CompletableFuture<R> publishTransaction(@NotNull T data) {
     Transaction<T, R> transaction = Transaction.of(data);
     provider.publish(transaction);
     return transaction.getFuture();
@@ -245,7 +245,7 @@ public final class VelocityRedis {
    *
    * @param listener the callback to register
    */
-  public void addReconnectListener(final @NotNull Runnable listener) {
+  public void addReconnectListener(@NotNull Runnable listener) {
     ((AbstractRedisProvider) provider).addReconnectListener(listener);
   }
 

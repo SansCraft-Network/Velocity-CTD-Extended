@@ -83,7 +83,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    * @param player the player to construct from
    * @param proxyId the ID of the proxy the player is on
    */
-  PlayerEntry(final @NotNull ConnectedPlayer player, final String proxyId) {
+  PlayerEntry(@NotNull ConnectedPlayer player, String proxyId) {
     super(player.getUniqueId());
 
     this.username = player.getUsername();
@@ -158,7 +158,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
    *
    * @param serverName the server name
    */
-  public void setServerName(final String serverName) {
+  public void setServerName(String serverName) {
     this.serverName = serverName;
   }
 

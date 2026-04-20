@@ -30,7 +30,7 @@ import java.util.concurrent.locks.Lock;
 public final class RawCommandRegistrar
     extends InvocableCommandRegistrar<RawCommand, RawCommand.Invocation, String> {
 
-  public RawCommandRegistrar(final RootCommandNode<CommandSource> root, final Lock lock) {
+  public RawCommandRegistrar(RootCommandNode<CommandSource> root, Lock lock) {
     super(root, lock, RawCommandInvocation.FACTORY, StringArgumentType.greedyString());
   }
 

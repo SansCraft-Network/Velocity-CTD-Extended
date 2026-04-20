@@ -29,7 +29,7 @@ public class LegacyChatHandler implements ChatHandler<LegacyChatPacket> {
 
   private final ConnectedPlayer player;
 
-  public LegacyChatHandler(final VelocityServer server, final ConnectedPlayer player) {
+  public LegacyChatHandler(VelocityServer server, ConnectedPlayer player) {
     this.server = server;
     this.player = player;
   }
@@ -40,7 +40,7 @@ public class LegacyChatHandler implements ChatHandler<LegacyChatPacket> {
   }
 
   @Override
-  public void handlePlayerChatInternal(final LegacyChatPacket packet) {
+  public void handlePlayerChatInternal(LegacyChatPacket packet) {
     MinecraftConnection serverConnection = player.ensureAndGetCurrentServer().ensureConnected();
     if (serverConnection == null) {
       return;

@@ -25,7 +25,7 @@ public class TimeArgumentSerializer implements ArgumentPropertySerializer<Intege
   static final TimeArgumentSerializer TIME = new TimeArgumentSerializer();
 
   @Override
-  public Integer deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public Integer deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_4)) {
       return buf.readInt();
     }
@@ -34,7 +34,7 @@ public class TimeArgumentSerializer implements ArgumentPropertySerializer<Intege
   }
 
   @Override
-  public void serialize(final Integer object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void serialize(Integer object, ByteBuf buf, ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_4)) {
       buf.writeInt(object);
     }

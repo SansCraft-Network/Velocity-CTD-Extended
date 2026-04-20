@@ -43,7 +43,7 @@ public abstract class TransactionHandler<T extends TransactionData<R>, R> {
    *
    * @param dataClass the class of the data this handler processes
    */
-  public TransactionHandler(final @NotNull Class<T> dataClass) {
+  public TransactionHandler(@NotNull Class<T> dataClass) {
     this.dataClass = dataClass;
   }
 

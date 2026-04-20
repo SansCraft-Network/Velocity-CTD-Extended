@@ -23,7 +23,7 @@ package com.velocitypowered.proxy.util.except;
  */
 public class QuietRuntimeException extends RuntimeException {
 
-  public QuietRuntimeException(final String message) {
+  public QuietRuntimeException(String message) {
     super(message);
   }
 

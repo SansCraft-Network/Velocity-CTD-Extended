@@ -67,8 +67,8 @@ public class SessionPlayerChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     this.message = ProtocolUtils.readString(buf, 256);
     this.timestamp = Instant.ofEpochMilli(buf.readLong());
     this.salt = buf.readLong();
@@ -83,8 +83,8 @@ public class SessionPlayerChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, this.message);
     buf.writeLong(this.timestamp.toEpochMilli());
     buf.writeLong(this.salt);
@@ -97,17 +97,17 @@ public class SessionPlayerChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
-  protected static byte[] readMessageSignature(final ByteBuf buf) {
+  protected static byte[] readMessageSignature(ByteBuf buf) {
     byte[] signature = new byte[256];
     buf.readBytes(signature);
     return signature;
   }
 
-  public SessionPlayerChatPacket withLastSeenMessages(final LastSeenMessages lastSeenMessages) {
+  public SessionPlayerChatPacket withLastSeenMessages(LastSeenMessages lastSeenMessages) {
     SessionPlayerChatPacket packet = new SessionPlayerChatPacket();
     packet.message = message;
     packet.timestamp = timestamp;

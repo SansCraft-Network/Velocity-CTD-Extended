@@ -34,7 +34,7 @@ public class TransferPacket implements MinecraftPacket {
   public TransferPacket() {
   }
 
-  public TransferPacket(final String host, final int port) {
+  public TransferPacket(String host, int port) {
     this.host = host;
     this.port = port;
   }
@@ -49,19 +49,19 @@ public class TransferPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     this.host = ProtocolUtils.readString(buf);
     this.port = ProtocolUtils.readVarInt(buf);
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, host);
     ProtocolUtils.writeVarInt(buf, port);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

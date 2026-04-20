@@ -34,7 +34,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
@@ -54,7 +54,7 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity-CTD's {@code /queueadmin} command.
  */
-public class QueueAdminCommand implements BuiltinCommand {
+public class QueueAdminCommand implements BuiltinCommandDefinition {
 
   private final VelocityServer server;
 

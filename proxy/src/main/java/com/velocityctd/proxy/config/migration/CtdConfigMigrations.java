@@ -174,7 +174,7 @@ public class CtdConfigMigrations {
         migration(
             "Replaces what is returned for both the server brand and fallback version pinger.",
             "advanced.custom-brand-proxy",
-            "Velocity"
+            "Velocity-CTD"
         ),
         migration(
             "Replaces what is returned as the server brand for the user's client.",
@@ -201,11 +201,6 @@ public class CtdConfigMigrations {
         ),
         migration(null, "redis.password", ""),
         migration(null, "redis.use-ssl", false),
-        migration(
-            "Maximum number of maintained connections to the Redis server.",
-            "redis.max-concurrent-connections",
-            50
-        ),
         migration(
             "The ID of this proxy, only needed for multi-proxy setups.\n"
                 + " Leave blank if you do not use Redis. Your server will not start if this is blank and Redis is on.",
@@ -325,14 +320,6 @@ public class CtdConfigMigrations {
                 + " Available options: \"first_found\", \"most_empty\", \"least_empty\", \"none\".",
             "proxy-addresses.dynamic-proxy-filter",
             "most_empty"
-        ),
-
-        // [forced-hosts]
-        migration(
-            "Whether to use the configured forced hosts as fallback (try) servers\n"
-                + "if a player joins through a forced host that's configured.",
-            "forced-hosts.forced-host-as-fallback",
-            true
         ),
 
         new CtdAutoQueueServersMigration()

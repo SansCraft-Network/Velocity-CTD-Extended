@@ -91,12 +91,12 @@ public class VelocityCommandManager implements CommandManager {
    * @param eventManager the event manager
    * @param pluginManager the plugin manager
    */
-  public VelocityCommandManager(final VelocityEventManager eventManager, final PluginManager pluginManager) {
+  public VelocityCommandManager(VelocityEventManager eventManager, PluginManager pluginManager) {
     this.pluginManager = pluginManager;
     this.lock = new ReentrantReadWriteLock();
     this.dispatcher = new CommandDispatcher<>();
     this.eventManager = Preconditions.checkNotNull(eventManager);
-    final RootCommandNode<CommandSource> root = this.dispatcher.getRoot();
+    RootCommandNode<CommandSource> root = this.dispatcher.getRoot();
     this.registrars = ImmutableList.of(
         new BrigadierCommandRegistrar(root, this.lock.writeLock()),
         new SimpleCommandRegistrar(root, this.lock.writeLock()),
@@ -106,39 +106,39 @@ public class VelocityCommandManager implements CommandManager {
     this.commandMetas = new ConcurrentHashMap<>();
   }
 
-  public final void setAnnounceProxyCommands(final boolean announceProxyCommands) {
+  public final void setAnnounceProxyCommands(boolean announceProxyCommands) {
     this.suggestionsProvider.setAnnounceProxyCommands(announceProxyCommands);
   }
 
   @Override
-  public CommandMeta.Builder metaBuilder(final String alias) {
+  public CommandMeta.Builder metaBuilder(String alias) {
     Preconditions.checkNotNull(alias, "alias");
     return new VelocityCommandMeta.Builder(alias);
   }
 
   @Override
-  public CommandMeta.Builder metaBuilder(final BrigadierCommand command) {
+  public CommandMeta.Builder metaBuilder(BrigadierCommand command) {
     Preconditions.checkNotNull(command, "command");
     return new VelocityCommandMeta.Builder(command.getNode().getName());
   }
 
   @Override
-  public void register(final BrigadierCommand command) {
+  public void register(BrigadierCommand command) {
     Preconditions.checkNotNull(command, "command");
     register(metaBuilder(command).build(), command);
   }
 
   @Override
-  public void register(final CommandMeta meta, final Command command) {
+  public void register(CommandMeta meta, Command command) {
     Preconditions.checkNotNull(meta, "meta");
     Preconditions.checkNotNull(command, "command");
 
-    final List<CommandRegistrar<?>> commandRegistrars = this.implementedRegistrars(command);
+    List<CommandRegistrar<?>> commandRegistrars = this.implementedRegistrars(command);
     if (commandRegistrars.isEmpty()) {
       throw new IllegalArgumentException(
               command + " does not implement a registrable Command subinterface");
     } else if (commandRegistrars.size() > 1) {
-      final String implementedInterfaces = commandRegistrars.stream()
+      String implementedInterfaces = commandRegistrars.stream()
               .map(CommandRegistrar::registrableSuperInterface)
               .map(Class::getSimpleName)
               .collect(Collectors.joining(", "));
@@ -161,19 +161,19 @@ public class VelocityCommandManager implements CommandManager {
    * @param <T>       the type of the command
    * @throws IllegalArgumentException if the registrar cannot register the command
    */
-  private <T extends Command> void internalRegister(final CommandRegistrar<T> registrar,
-                                                    final Command command, final CommandMeta meta) {
-    final Class<T> superInterface = registrar.registrableSuperInterface();
+  private <T extends Command> void internalRegister(CommandRegistrar<T> registrar,
+                                                    Command command, CommandMeta meta) {
+    Class<T> superInterface = registrar.registrableSuperInterface();
     registrar.register(meta, superInterface.cast(command));
     for (String alias : meta.getAliases()) {
       commandMetas.put(alias, meta);
     }
   }
 
-  private List<CommandRegistrar<?>> implementedRegistrars(final Command command) {
-    final List<CommandRegistrar<?>> registrarsFound = new ArrayList<>(2);
-    for (final CommandRegistrar<?> registrar : this.registrars) {
-      final Class<?> superInterface = registrar.registrableSuperInterface();
+  private List<CommandRegistrar<?>> implementedRegistrars(Command command) {
+    List<CommandRegistrar<?>> registrarsFound = new ArrayList<>(2);
+    for (CommandRegistrar<?> registrar : this.registrars) {
+      Class<?> superInterface = registrar.registrableSuperInterface();
       if (superInterface.isInstance(command)) {
         registrarsFound.add(registrar);
       }
@@ -183,7 +183,7 @@ public class VelocityCommandManager implements CommandManager {
   }
 
   @Override
-  public void unregister(final String alias) {
+  public void unregister(String alias) {
     Preconditions.checkNotNull(alias, "alias");
     lock.writeLock().lock();
     try {
@@ -197,14 +197,14 @@ public class VelocityCommandManager implements CommandManager {
   }
 
   @Override
-  public void unregister(final CommandMeta meta) {
+  public void unregister(CommandMeta meta) {
     Preconditions.checkNotNull(meta, "meta");
     lock.writeLock().lock();
     try {
       // The literals of secondary aliases will preserve the children of
       // the removed literal in the graph.
       for (String alias : meta.getAliases()) {
-        final String lowercased = alias.toLowerCase(Locale.ENGLISH);
+        String lowercased = alias.toLowerCase(Locale.ENGLISH);
         if (commandMetas.remove(lowercased, meta)) {
           dispatcher.getRoot().removeChildByName(lowercased);
         }
@@ -215,7 +215,7 @@ public class VelocityCommandManager implements CommandManager {
   }
 
   @Override
-  public @Nullable CommandMeta getCommandMeta(final String alias) {
+  public @Nullable CommandMeta getCommandMeta(String alias) {
     Preconditions.checkNotNull(alias, "alias");
     return commandMetas.get(alias);
   }
@@ -228,14 +228,14 @@ public class VelocityCommandManager implements CommandManager {
    * @param invocationInfo the invocation info
    * @return the {@link CompletableFuture} of the event
    */
-  public CompletableFuture<CommandExecuteEvent> callCommandEvent(final CommandSource source,
-                                                                 final String cmdLine, final CommandExecuteEvent.InvocationInfo invocationInfo) {
+  public CompletableFuture<CommandExecuteEvent> callCommandEvent(CommandSource source,
+                                                                 String cmdLine, CommandExecuteEvent.InvocationInfo invocationInfo) {
     Preconditions.checkNotNull(source, "source");
     Preconditions.checkNotNull(cmdLine, "cmdLine");
     return eventManager.fire(new CommandExecuteEvent(source, cmdLine, invocationInfo));
   }
 
-  private boolean executeImmediately0(final CommandSource source, final ParseResults<CommandSource> parsed) {
+  private boolean executeImmediately0(CommandSource source, ParseResults<CommandSource> parsed) {
     Preconditions.checkNotNull(source, "source");
 
     CommandResult result = CommandResult.EXCEPTION;
@@ -244,11 +244,11 @@ public class VelocityCommandManager implements CommandManager {
       boolean executed = dispatcher.execute(parsed) != BrigadierCommand.FORWARD;
       result = executed ? CommandResult.EXECUTED : CommandResult.FORWARDED;
       return executed;
-    } catch (final CommandSyntaxException e) {
+    } catch (CommandSyntaxException e) {
       boolean isSyntaxError = !e.getType().equals(
           CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownCommand());
       if (isSyntaxError) {
-        final Message message = e.getRawMessage();
+        Message message = e.getRawMessage();
         if (message instanceof ComponentLike componentLike) {
           source.sendMessage(componentLike.asComponent().applyFallbackStyle(NamedTextColor.RED));
         } else {
@@ -262,7 +262,7 @@ public class VelocityCommandManager implements CommandManager {
         result = CommandResult.FORWARDED;
         return false;
       }
-    } catch (final Throwable e) {
+    } catch (Throwable e) {
       // Ugly, ugly swallowing of everything Throwable, because plugins are naughty.
       // "Ugly indeed, but with proper spacing... umm... uhh... yeah still ugly..."
       throw new RuntimeException("Unable to invoke command " + parsed.getReader().getString() + " for " + source, e);
@@ -272,7 +272,7 @@ public class VelocityCommandManager implements CommandManager {
   }
 
   @Override
-  public CompletableFuture<Boolean> executeAsync(final CommandSource source, final String cmdLine) {
+  public CompletableFuture<Boolean> executeAsync(CommandSource source, String cmdLine) {
     Preconditions.checkNotNull(source, "source");
     Preconditions.checkNotNull(cmdLine, "cmdLine");
 
@@ -286,7 +286,7 @@ public class VelocityCommandManager implements CommandManager {
       if (commandResult.isForwardToServer() || !commandResult.isAllowed()) {
         return CompletableFuture.completedFuture(false);
       }
-      final ParseResults<CommandSource> parsed = this.parse(
+      ParseResults<CommandSource> parsed = this.parse(
           commandResult.getCommand().orElse(cmdLine), source);
       return CompletableFuture.supplyAsync(() -> executeImmediately0(source, parsed), this.getAsyncExecutor(parsed)
       );
@@ -295,7 +295,7 @@ public class VelocityCommandManager implements CommandManager {
 
   @Override
   public CompletableFuture<Boolean> executeImmediatelyAsync(
-      final CommandSource source, final String cmdLine) {
+      CommandSource source, String cmdLine) {
     Preconditions.checkNotNull(source, "source");
     Preconditions.checkNotNull(cmdLine, "cmdLine");
 
@@ -308,20 +308,20 @@ public class VelocityCommandManager implements CommandManager {
   }
 
   @Override
-  public CompletableFuture<List<String>> offerSuggestions(final CommandSource source, final String cmdLine) {
+  public CompletableFuture<List<String>> offerSuggestions(CommandSource source, String cmdLine) {
     return offerBrigadierSuggestions(source, cmdLine)
         .thenApply(suggestions -> Lists.transform(suggestions.getList(), Suggestion::getText));
   }
 
   @Override
-  public CompletableFuture<Suggestions> offerBrigadierSuggestions(final CommandSource source, final String cmdLine) {
+  public CompletableFuture<Suggestions> offerBrigadierSuggestions(CommandSource source, String cmdLine) {
     Preconditions.checkNotNull(source, "source");
     Preconditions.checkNotNull(cmdLine, "cmdLine");
 
-    final String normalizedInput = VelocityCommands.normalizeInput(cmdLine, false);
+    String normalizedInput = VelocityCommands.normalizeInput(cmdLine, false);
     try {
       return suggestionsProvider.provideSuggestions(normalizedInput, source);
-    } catch (final Throwable e) {
+    } catch (Throwable e) {
       // Again, plugins are naughty
       return CompletableFuture.failedFuture(
           new RuntimeException("Unable to provide suggestions for " + cmdLine + " for " + source, e));
@@ -335,8 +335,8 @@ public class VelocityCommandManager implements CommandManager {
    * @param source the command source to parse the command for
    * @return the parse results
    */
-  private ParseResults<CommandSource> parse(final String input, final CommandSource source) {
-    final String normalizedInput = VelocityCommands.normalizeInput(input, true);
+  private ParseResults<CommandSource> parse(String input, CommandSource source) {
+    String normalizedInput = VelocityCommands.normalizeInput(input, true);
     lock.readLock().lock();
     try {
       return dispatcher.parse(normalizedInput, source);
@@ -359,18 +359,18 @@ public class VelocityCommandManager implements CommandManager {
   }
 
   @Override
-  public boolean hasCommand(final String alias) {
+  public boolean hasCommand(String alias) {
     return getCommand(alias) != null;
   }
 
   @Override
-  public boolean hasCommand(final String alias, final CommandSource source) {
+  public boolean hasCommand(String alias, CommandSource source) {
     Preconditions.checkNotNull(source, "source");
     CommandNode<CommandSource> command = getCommand(alias);
     return command != null && command.canUse(source);
   }
 
-  public final CommandNode<CommandSource> getCommand(final String alias) {
+  public final CommandNode<CommandSource> getCommand(String alias) {
     Preconditions.checkNotNull(alias, "alias");
     return dispatcher.getRoot().getChild(alias.toLowerCase(Locale.ENGLISH));
   }
@@ -388,7 +388,7 @@ public class VelocityCommandManager implements CommandManager {
     return dispatcher;
   }
 
-  private Executor getAsyncExecutor(final ParseResults<CommandSource> parse) {
+  private Executor getAsyncExecutor(ParseResults<CommandSource> parse) {
     Object registrant;
     if (parse.getContext().getCommand() instanceof VelocityBrigadierCommandWrapper vbcw) {
       registrant = vbcw.registrant() == null ? VelocityVirtualPlugin.INSTANCE : vbcw.registrant();
@@ -400,7 +400,7 @@ public class VelocityCommandManager implements CommandManager {
   }
 
   private Executor figureAsyncExecutorForParsing() {
-    final Thread thread = Thread.currentThread();
+    Thread thread = Thread.currentThread();
     if (thread instanceof FastThreadLocalThread) {
       // we *never* want to block the Netty event loop, so use the async executor
       return pluginManager.ensurePluginContainer(VelocityVirtualPlugin.INSTANCE).getExecutorService();

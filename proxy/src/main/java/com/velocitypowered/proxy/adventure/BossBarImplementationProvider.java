@@ -27,8 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public class BossBarImplementationProvider implements BossBarImplementation.Provider {
 
   @Override
-  public @NotNull BossBarImplementation create(final @NotNull BossBar bar) {
-    final VelocityBossBarImplementation impl = new VelocityBossBarImplementation(bar);
+  public @NotNull BossBarImplementation create(@NotNull BossBar bar) {
+    VelocityBossBarImplementation impl = new VelocityBossBarImplementation(bar);
     bar.addListener(impl);
     return impl;
   }

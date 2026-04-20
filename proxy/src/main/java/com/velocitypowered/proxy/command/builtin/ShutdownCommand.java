@@ -32,7 +32,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 /**
  * Implements Velocity's {@code /shutdown} command.
  */
-public class ShutdownCommand implements BuiltinCommand {
+public class ShutdownCommand implements BuiltinCommandDefinition {
 
   private final VelocityServer server;
 

@@ -56,12 +56,12 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
   public KeyedPlayerChatPacket() {
   }
 
-  public KeyedPlayerChatPacket(final String message) {
+  public KeyedPlayerChatPacket(String message) {
     this.message = message;
     this.unsigned = true;
   }
 
-  public void setExpiry(final @Nullable Instant expiry) {
+  public void setExpiry(@Nullable Instant expiry) {
     this.expiry = expiry;
   }
 
@@ -82,8 +82,8 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     message = ProtocolUtils.readString(buf, 256);
 
     long expiresAt = buf.readLong();
@@ -128,8 +128,8 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     ProtocolUtils.writeString(buf, message);
 
     buf.writeLong(unsigned ? Instant.now().toEpochMilli() : Objects.requireNonNull(expiry).toEpochMilli());
@@ -157,7 +157,7 @@ public class KeyedPlayerChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

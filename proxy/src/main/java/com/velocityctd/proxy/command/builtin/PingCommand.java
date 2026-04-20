@@ -28,7 +28,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import java.util.Optional;
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Implements Velocity-CTD's {@code /ping} command.
  */
-public class PingCommand implements BuiltinCommand {
+public class PingCommand implements BuiltinCommandDefinition {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(PingCommand.class);
   private final VelocityServer server;

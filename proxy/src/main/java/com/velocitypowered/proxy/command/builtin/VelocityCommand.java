@@ -98,7 +98,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  *   <li>{@code /velocity uptime} - Shows how long the proxy has been running</li>
  * </ul>
  */
-public class VelocityCommand implements BuiltinCommand {
+public class VelocityCommand implements BuiltinCommandDefinition {
 
   private static final String USAGE = "/velocity <%s>";
 

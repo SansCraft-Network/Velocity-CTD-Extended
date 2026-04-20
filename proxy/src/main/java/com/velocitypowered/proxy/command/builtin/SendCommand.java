@@ -41,7 +41,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Implements Velocity's {@code /send} command.
  */
-public class SendCommand implements BuiltinCommand {
+public class SendCommand implements BuiltinCommandDefinition {
 
   private static final String SELECTOR_ARG = "selector";
   private static final String TARGET_ARG = "target";

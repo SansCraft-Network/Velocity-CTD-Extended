@@ -63,7 +63,7 @@ import com.velocitypowered.api.util.GameProfile;
 import com.velocitypowered.api.util.ProxyVersion;
 import com.velocitypowered.api.util.ServerLink;
 import com.velocitypowered.proxy.command.VelocityCommandManager;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.command.builtin.CallbackCommand;
 import com.velocitypowered.proxy.command.builtin.GlistCommand;
 import com.velocitypowered.proxy.command.builtin.SendCommand;
@@ -214,7 +214,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   /**
    * Holds a set of all registered BuiltinCommand instances. Used for unregistering these commands later.
    */
-  private final Set<BuiltinCommand> registeredBuiltinCommands = new HashSet<>();
+  private final Set<BuiltinCommandDefinition> registeredBuiltinCommands = new HashSet<>();
 
   private final VelocityConsole console;
 
@@ -685,7 +685,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   private void unregisterCommands() {
-    for (BuiltinCommand command : registeredBuiltinCommands) {
+    for (BuiltinCommandDefinition command : registeredBuiltinCommands) {
       unregisterCommand(command.label());
     }
     registeredBuiltinCommands.clear();
@@ -755,8 +755,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     }
   }
 
-  private void registerCommand(Function<VelocityServer, ? extends BuiltinCommand> commandConstructor) {
-    BuiltinCommand command = commandConstructor.apply(this);
+  private void registerCommand(Function<VelocityServer, ? extends BuiltinCommandDefinition> commandConstructor) {
+    BuiltinCommandDefinition command = commandConstructor.apply(this);
     if (commandManager.hasCommand(command.label())) {
       LOGGER.debug("Not registering built-in command /{}, command already exists.", command.label());
       return;
@@ -787,13 +787,13 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     LOGGER.debug("Registered built-in command /{}", command.label());
   }
 
-  private void registerCommand(boolean condition, Function<VelocityServer, ? extends BuiltinCommand> commandConstructor) {
+  private void registerCommand(boolean condition, Function<VelocityServer, ? extends BuiltinCommandDefinition> commandConstructor) {
     if (condition) {
       registerCommand(commandConstructor);
     }
   }
 
-  private String[] findAliases(BuiltinCommand command) {
+  private String[] findAliases(BuiltinCommandDefinition command) {
     List<String> aliases = new ArrayList<>(command.aliases());
 
     List<String> configuredAliases = configuration.getCommandAliases().get(command.label());

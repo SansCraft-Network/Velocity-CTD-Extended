@@ -26,7 +26,7 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
@@ -41,7 +41,7 @@ import net.kyori.adventure.translation.GlobalTranslator;
 /**
  * Implements Velocity-CTD's {@code /hub} command.
  */
-public class HubCommand implements BuiltinCommand {
+public class HubCommand implements BuiltinCommandDefinition {
 
   private final VelocityServer server;
 

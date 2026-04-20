@@ -43,7 +43,7 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity's {@code /server} command.
  */
-public class ServerCommand implements BuiltinCommand {
+public class ServerCommand implements BuiltinCommandDefinition {
 
   private static final String SERVER_ARG = "server";
 

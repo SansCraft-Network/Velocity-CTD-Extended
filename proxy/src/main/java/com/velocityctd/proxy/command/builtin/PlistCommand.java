@@ -31,7 +31,7 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.VelocityCommands;
-import com.velocitypowered.proxy.command.builtin.BuiltinCommand;
+import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -46,7 +46,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 /**
  * Implements Velocity-CTD's {@code /plist} command.
  */
-public class PlistCommand implements BuiltinCommand {
+public class PlistCommand implements BuiltinCommandDefinition {
 
   private static final String SERVER_ARG = "server";
   private static final String SERVER_ALL = "all";

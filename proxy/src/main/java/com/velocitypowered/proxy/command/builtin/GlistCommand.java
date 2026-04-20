@@ -44,7 +44,7 @@ import net.kyori.adventure.text.minimessage.translation.Argument;
 /**
  * Implements Velocity's {@code /glist} command.
  */
-public class GlistCommand implements BuiltinCommand {
+public class GlistCommand implements BuiltinCommandDefinition {
 
   private static final String SERVER_ARG = "server";
   private static final String SERVER_ALL = "all";

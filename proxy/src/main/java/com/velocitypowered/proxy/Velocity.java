@@ -71,8 +71,8 @@ public class Velocity {
    *
    * @param args the arguments to the proxy
    */
-  public static void main(final String... args) {
-    final ProxyOptions options = new ProxyOptions(args);
+  public static void main(String... args) {
+    ProxyOptions options = new ProxyOptions(args);
     if (options.isHelp()) {
       return;
     }

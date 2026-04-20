@@ -60,7 +60,7 @@ public class TranslationRegistryManager {
   }
 
   void unregisterTranslations() {
-    for (final Translator source : GlobalTranslator.translator().sources()) {
+    for (Translator source : GlobalTranslator.translator().sources()) {
       if (source.name().equals(this.translationRegistryKey)) {
         GlobalTranslator.translator().removeSource(source);
       }
@@ -68,13 +68,13 @@ public class TranslationRegistryManager {
   }
 
   void registerTranslations() {
-    final MiniMessageTranslationStore translationRegistry =
+    MiniMessageTranslationStore translationRegistry =
         MiniMessageTranslationStore.create(this.translationRegistryKey);
     translationRegistry.defaultLocale(Locale.US);
 
     try {
       ResourceUtils.visitResources(VelocityServer.class, path -> {
-        final Path langPath = Path.of("lang");
+        Path langPath = Path.of("lang");
 
         try {
           if (!Files.exists(langPath)) {
@@ -83,7 +83,7 @@ public class TranslationRegistryManager {
 
           try (Stream<Path> files = Files.walk(path)) {
             files.filter(Files::isRegularFile).forEach(src -> {
-              final Path target = langPath.resolve(src.getFileName().toString());
+              Path target = langPath.resolve(src.getFileName().toString());
               if (Files.notExists(target)) {
                 try {
                   saveMissingFile(src, target);
@@ -132,7 +132,7 @@ public class TranslationRegistryManager {
       localePart = localePart.substring(1);
     }
 
-    final Locale locale = localePart.isBlank()
+    Locale locale = localePart.isBlank()
         ? Locale.US
         : Locale.forLanguageTag(localePart.replace('_', '-'));
 

@@ -37,12 +37,12 @@ public final class QueuePlayerList {
    * Inserts the entry in descending priority order, preserving FIFO within the same priority tier.
    * Silently ignores the call if an entry with the same UUID is already present.
    */
-  public synchronized void insertByPriority(final VelocityQueueEntry entry) {
+  public synchronized void insertByPriority(VelocityQueueEntry entry) {
     if (index.containsKey(entry.getUniqueId())) {
       return;
     }
 
-    final Iterator<VelocityQueueEntry> it = players.iterator();
+    Iterator<VelocityQueueEntry> it = players.iterator();
     int position = 0;
     boolean inserted = false;
 
@@ -68,7 +68,7 @@ public final class QueuePlayerList {
    * Used when restoring entries from a Redis depot snapshot, where ordering
    * is already correct.
    */
-  public synchronized void addLast(final VelocityQueueEntry entry) {
+  public synchronized void addLast(VelocityQueueEntry entry) {
     players.addLast(entry);
     index.put(entry.getUniqueId(), entry);
     entry.setPosition(players.size());
@@ -77,7 +77,7 @@ public final class QueuePlayerList {
   /**
    * Removes the entry with the given UUID, if present.
    */
-  public synchronized void remove(final UUID uniqueId) {
+  public synchronized void remove(UUID uniqueId) {
     players.removeIf(p -> p.getUniqueId().equals(uniqueId));
     index.remove(uniqueId);
     rebuildPositions();
@@ -94,14 +94,14 @@ public final class QueuePlayerList {
   /**
    * Returns {@code true} if an entry with the given UUID is present.
    */
-  public boolean contains(final UUID uniqueId) {
+  public boolean contains(UUID uniqueId) {
     return index.containsKey(uniqueId);
   }
 
   /**
    * Returns the entry for the given UUID, or {@code null} if not present.
    */
-  public @Nullable VelocityQueueEntry get(final UUID uniqueId) {
+  public @Nullable VelocityQueueEntry get(UUID uniqueId) {
     return index.get(uniqueId);
   }
 
@@ -119,8 +119,8 @@ public final class QueuePlayerList {
     return List.copyOf(players);
   }
 
-  private void insertAt(final VelocityQueueEntry entry, final int position) {
-    final List<VelocityQueueEntry> tempList = new ArrayList<>(players);
+  private void insertAt(VelocityQueueEntry entry, int position) {
+    List<VelocityQueueEntry> tempList = new ArrayList<>(players);
     tempList.add(position, entry);
     players.clear();
     players.addAll(tempList);
@@ -128,7 +128,7 @@ public final class QueuePlayerList {
 
   private void rebuildPositions() {
     int pos = 1;
-    for (final VelocityQueueEntry entry : players) {
+    for (VelocityQueueEntry entry : players) {
       entry.setPosition(pos++);
     }
   }

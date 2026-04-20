@@ -34,7 +34,7 @@ public class RegistryKeyArgument implements ArgumentType<String> {
 
   private final String identifier;
 
-  public RegistryKeyArgument(final String identifier) {
+  public RegistryKeyArgument(String identifier) {
     this.identifier = identifier;
   }
 
@@ -43,13 +43,13 @@ public class RegistryKeyArgument implements ArgumentType<String> {
   }
 
   @Override
-  public String parse(final StringReader stringReader) throws CommandSyntaxException {
+  public String parse(StringReader stringReader) throws CommandSyntaxException {
     return stringReader.readString();
   }
 
   @Override
-  public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
-                                                            final SuggestionsBuilder builder) {
+  public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context,
+                                                            SuggestionsBuilder builder) {
     return Suggestions.empty();
   }
 

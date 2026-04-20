@@ -186,7 +186,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the decoded VarInt
    */
-  public static int readVarInt(final ByteBuf buf) {
+  public static int readVarInt(ByteBuf buf) {
     int readable = buf.readableBytes();
     if (readable == 0) {
       // special case for empty buffer
@@ -219,7 +219,7 @@ public enum ProtocolUtils {
    * @param value the value to encode
    * @return the byte size of {@code value} if encoded as a VarInt
    */
-  public static int varIntBytes(final int value) {
+  public static int varIntBytes(int value) {
     return VAR_INT_LENGTHS[Integer.numberOfLeadingZeros(value)];
   }
 
@@ -229,7 +229,7 @@ public enum ProtocolUtils {
    * @param buf   the buffer to read from
    * @param value the integer to write
    */
-  public static void writeVarInt(final ByteBuf buf, final int value) {
+  public static void writeVarInt(ByteBuf buf, int value) {
     // Peel the one and two byte count cases explicitly as they are the most common VarInt sizes
     // that the proxy will write, to improve inlining.
     if ((value & (0xFFFFFFFF << 7)) == 0) {
@@ -242,7 +242,7 @@ public enum ProtocolUtils {
     }
   }
 
-  private static void writeVarIntFull(final ByteBuf buf, final int value) {
+  private static void writeVarIntFull(ByteBuf buf, int value) {
     // See https://steinborn.me/posts/performance/how-fast-can-you-write-a-varint/
 
     // This essentially is an unrolled version of the "traditional" VarInt encoding.
@@ -273,12 +273,12 @@ public enum ProtocolUtils {
    * @param value the value to encode
    * @return the encoded value
    */
-  public static int encode21BitVarInt(final int value) {
+  public static int encode21BitVarInt(int value) {
     // See https://steinborn.me/posts/performance/how-fast-can-you-write-a-varint/
     return (value & 0x7F | 0x80) << 16 | ((value >>> 7) & 0x7F | 0x80) << 8 | (value >>> 14);
   }
 
-  public static String readString(final ByteBuf buf) {
+  public static String readString(ByteBuf buf) {
     return readString(buf, DEFAULT_MAX_STRING_SIZE);
   }
 
@@ -290,12 +290,12 @@ public enum ProtocolUtils {
    * @param cap the maximum size of the string, in UTF-8 character length
    * @return the decoded string
    */
-  public static String readString(final ByteBuf buf, final int cap) {
+  public static String readString(ByteBuf buf, int cap) {
     int length = readVarInt(buf);
     return readString(buf, cap, length);
   }
 
-  private static String readString(final ByteBuf buf, final int cap, final int length) {
+  private static String readString(ByteBuf buf, int cap, int length) {
     checkFrame(length >= 0, "Got a negative-length string (%s)", length);
     // `cap` is interpreted as a UTF-8 character length. To cover the full Unicode plane, we must
     // consider the length of a UTF-8 character, which can be up to 3 bytes. We do an initial
@@ -315,7 +315,7 @@ public enum ProtocolUtils {
    * @param str the string to write
    * @return the encoded size
    */
-  public static int stringSizeHint(final CharSequence str) {
+  public static int stringSizeHint(CharSequence str) {
     int size = ByteBufUtil.utf8Bytes(str);
     return varIntBytes(size) + size;
   }
@@ -326,7 +326,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to write to
    * @param str the string to write
    */
-  public static void writeString(final ByteBuf buf, final CharSequence str) {
+  public static void writeString(ByteBuf buf, CharSequence str) {
     int size = ByteBufUtil.utf8Bytes(str);
     writeVarInt(buf, size);
     buf.writeCharSequence(str, StandardCharsets.UTF_8);
@@ -338,7 +338,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the decoded key
    */
-  public static Key readKey(final ByteBuf buf) {
+  public static Key readKey(ByteBuf buf) {
     return Key.key(readString(buf), Key.DEFAULT_SEPARATOR);
   }
 
@@ -348,7 +348,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to write to
    * @param key the key to write
    */
-  public static void writeKey(final ByteBuf buf, final Key key) {
+  public static void writeKey(ByteBuf buf, Key key) {
     writeString(buf, key.asString());
   }
 
@@ -358,7 +358,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to write to
    * @param key the key to write
    */
-  public static void writeMinimalKey(final ByteBuf buf, final Key key) {
+  public static void writeMinimalKey(ByteBuf buf, Key key) {
     writeString(buf, key.asMinimalString());
   }
 
@@ -368,7 +368,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the decoded key array
    */
-  public static Key[] readKeyArray(final ByteBuf buf) {
+  public static Key[] readKeyArray(ByteBuf buf) {
     int length = readVarInt(buf);
     checkFrame(length >= 0, "Got a negative-length array (%s)", length);
     checkFrame(buf.isReadable(length),
@@ -389,14 +389,14 @@ public enum ProtocolUtils {
    * @param buf  the buffer to write to
    * @param keys the keys to write
    */
-  public static void writeKeyArray(final ByteBuf buf, final Key[] keys) {
+  public static void writeKeyArray(ByteBuf buf, Key[] keys) {
     writeVarInt(buf, keys.length);
     for (Key key : keys) {
       writeKey(buf, key);
     }
   }
 
-  public static byte[] readByteArray(final ByteBuf buf) {
+  public static byte[] readByteArray(ByteBuf buf) {
     return readByteArray(buf, DEFAULT_MAX_STRING_SIZE);
   }
 
@@ -408,7 +408,7 @@ public enum ProtocolUtils {
    * @param cap the maximum size of the string, in UTF-8 character length
    * @return the byte array
    */
-  public static byte[] readByteArray(final ByteBuf buf, final int cap) {
+  public static byte[] readByteArray(ByteBuf buf, int cap) {
     int length = readVarInt(buf);
     checkFrame(length >= 0, "Got a negative-length array (%s)", length);
     checkFrame(length <= cap, "Bad array size (got %s, maximum is %s)", length, cap);
@@ -420,7 +420,7 @@ public enum ProtocolUtils {
     return array;
   }
 
-  public static void writeByteArray(final ByteBuf buf, final byte[] array) {
+  public static void writeByteArray(ByteBuf buf, byte[] array) {
     writeVarInt(buf, array.length);
     buf.writeBytes(array);
   }
@@ -431,7 +431,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return an array of integers
    */
-  public static int[] readIntegerArray(final ByteBuf buf) {
+  public static int[] readIntegerArray(ByteBuf buf) {
     int len = readVarInt(buf);
     checkFrame(len >= 0, "Got a negative-length integer array (%s)", len);
     checkFrame(buf.isReadable(len),
@@ -451,13 +451,13 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the UUID from the buffer
    */
-  public static UUID readUuid(final ByteBuf buf) {
+  public static UUID readUuid(ByteBuf buf) {
     long msb = buf.readLong();
     long lsb = buf.readLong();
     return new UUID(msb, lsb);
   }
 
-  public static void writeUuid(final ByteBuf buf, final UUID uuid) {
+  public static void writeUuid(ByteBuf buf, UUID uuid) {
     buf.writeLong(uuid.getMostSignificantBits());
     buf.writeLong(uuid.getLeastSignificantBits());
   }
@@ -468,7 +468,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the UUID from the buffer
    */
-  public static UUID readUuidIntArray(final ByteBuf buf) {
+  public static UUID readUuidIntArray(ByteBuf buf) {
     long msbHigh = (long) buf.readInt() << 32;
     long msbLow = (long) buf.readInt() & 0xFFFFFFFFL;
     long msb = msbHigh | msbLow;
@@ -484,7 +484,7 @@ public enum ProtocolUtils {
    * @param buf  the buffer to write to
    * @param uuid the UUID to write
    */
-  public static void writeUuidIntArray(final ByteBuf buf, final UUID uuid) {
+  public static void writeUuidIntArray(ByteBuf buf, UUID uuid) {
     buf.writeInt((int) (uuid.getMostSignificantBits() >> 32));
     buf.writeInt((int) uuid.getMostSignificantBits());
     buf.writeInt((int) (uuid.getLeastSignificantBits() >> 32));
@@ -500,8 +500,8 @@ public enum ProtocolUtils {
    * @return the decoded {@link net.kyori.adventure.nbt.CompoundBinaryTag}
    * @throws DecoderException if the root tag is not a compound tag
    */
-  public static CompoundBinaryTag readCompoundTag(final ByteBuf buf, final ProtocolVersion version,
-                                                  final BinaryTagIO.Reader reader) {
+  public static CompoundBinaryTag readCompoundTag(ByteBuf buf, ProtocolVersion version,
+                                                  BinaryTagIO.Reader reader) {
     BinaryTag binaryTag = readBinaryTag(buf, version, reader);
     if (binaryTag.type() != BinaryTagTypes.COMPOUND) {
       throw new DecoderException(
@@ -520,8 +520,8 @@ public enum ProtocolUtils {
    * @return the decoded {@link net.kyori.adventure.nbt.BinaryTag}
    * @throws DecoderException if an I/O error occurs during tag parsing
    */
-  public static BinaryTag readBinaryTag(final ByteBuf buf, final ProtocolVersion version,
-                                        final BinaryTagIO.Reader ignoredReader) {
+  public static BinaryTag readBinaryTag(ByteBuf buf, ProtocolVersion version,
+                                        BinaryTagIO.Reader ignoredReader) {
     BinaryTagType<?> type = BINARY_TAG_TYPES[buf.readByte()];
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_20_2)) {
       buf.skipBytes(buf.readUnsignedShort());
@@ -544,8 +544,8 @@ public enum ProtocolUtils {
    * @throws EncoderException if encoding fails due to I/O errors
    */
   @SuppressWarnings("unchecked")
-  public static <T extends BinaryTag> void writeBinaryTag(final ByteBuf buf, final ProtocolVersion version,
-                                                          final T tag) {
+  public static <T extends BinaryTag> void writeBinaryTag(ByteBuf buf, ProtocolVersion version,
+                                                          T tag) {
     BinaryTagType<T> type = (BinaryTagType<T>) tag.type();
     buf.writeByte(type.id());
     try {
@@ -566,7 +566,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the String array from the buffer
    */
-  public static String[] readStringArray(final ByteBuf buf) {
+  public static String[] readStringArray(ByteBuf buf) {
     int length = readVarInt(buf);
     checkFrame(length >= 0, "Got a negative-length array (%s)", length);
     checkFrame(buf.isReadable(length),
@@ -586,7 +586,7 @@ public enum ProtocolUtils {
    * @param buf         the buffer to write to
    * @param stringArray the array to write
    */
-  public static void writeStringArray(final ByteBuf buf, final String[] stringArray) {
+  public static void writeStringArray(ByteBuf buf, String[] stringArray) {
     writeVarInt(buf, stringArray.length);
     for (String s : stringArray) {
       writeString(buf, s);
@@ -599,7 +599,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the Integer array from the buffer
    */
-  public static int[] readVarIntArray(final ByteBuf buf) {
+  public static int[] readVarIntArray(ByteBuf buf) {
     int length = readVarInt(buf);
     checkFrame(length >= 0, "Got a negative-length array (%s)", length);
     checkFrame(buf.isReadable(length),
@@ -619,7 +619,7 @@ public enum ProtocolUtils {
    * @param buf      the buffer to write to
    * @param intArray the array to write
    */
-  public static void writeVarIntArray(final ByteBuf buf, final int[] intArray) {
+  public static void writeVarIntArray(ByteBuf buf, int[] intArray) {
     writeVarInt(buf, intArray.length);
     for (int j : intArray) {
       writeVarInt(buf, j);
@@ -632,7 +632,7 @@ public enum ProtocolUtils {
    * @param buf        the buffer to write to
    * @param properties the properties to serialize
    */
-  public static void writeProperties(final ByteBuf buf, final List<GameProfile.Property> properties) {
+  public static void writeProperties(ByteBuf buf, List<GameProfile.Property> properties) {
     writeVarInt(buf, properties.size());
     for (GameProfile.Property property : properties) {
       writeString(buf, property.getName());
@@ -653,7 +653,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the read properties
    */
-  public static List<GameProfile.Property> readProperties(final ByteBuf buf) {
+  public static List<GameProfile.Property> readProperties(ByteBuf buf) {
     List<GameProfile.Property> properties = new ArrayList<>();
     int size = readVarInt(buf);
     for (int i = 0; i < size; i++) {
@@ -679,7 +679,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the read byte array
    */
-  public static byte[] readByteArray17(final ByteBuf buf) {
+  public static byte[] readByteArray17(ByteBuf buf) {
     // Read in a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
     // No vanilla packet should give a 3-byte packet
@@ -702,7 +702,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the retained slice
    */
-  public static ByteBuf readRetainedByteBufSlice17(final ByteBuf buf) {
+  public static ByteBuf readRetainedByteBufSlice17(ByteBuf buf) {
     // Read in a 2 or 3 byte number that represents the length of the packet. (3 byte "shorts" for
     // Forge only)
     // No vanilla packet should give a 3-byte packet
@@ -721,7 +721,7 @@ public enum ProtocolUtils {
    * @param buf           buf
    * @param allowExtended forge
    */
-  public static void writeByteArray17(final byte[] b, final ByteBuf buf, final boolean allowExtended) {
+  public static void writeByteArray17(byte[] b, ByteBuf buf, boolean allowExtended) {
     if (allowExtended) {
       checkFrame(b.length <= FORGE_MAX_ARRAY_LENGTH,
           "Cannot send array longer than %s (got %s bytes)", FORGE_MAX_ARRAY_LENGTH,
@@ -746,7 +746,7 @@ public enum ProtocolUtils {
    * @param buf           buf
    * @param allowExtended forge
    */
-  public static void writeByteBuf17(final ByteBuf b, final ByteBuf buf, final boolean allowExtended) {
+  public static void writeByteBuf17(ByteBuf b, ByteBuf buf, boolean allowExtended) {
     if (allowExtended) {
       checkFrame(b.readableBytes() <= FORGE_MAX_ARRAY_LENGTH,
           "Cannot send array longer than %s (got %s bytes)", FORGE_MAX_ARRAY_LENGTH,
@@ -770,7 +770,7 @@ public enum ProtocolUtils {
    * @param buf buf to write
    * @return read extended short
    */
-  public static int readExtendedForgeShort(final ByteBuf buf) {
+  public static int readExtendedForgeShort(ByteBuf buf) {
     int low = buf.readUnsignedShort();
     int high = 0;
     if ((low & 0x8000) != 0) {
@@ -787,7 +787,7 @@ public enum ProtocolUtils {
    * @param buf     buf to write
    * @param toWrite the extended short to write
    */
-  public static void writeExtendedForgeShort(final ByteBuf buf, final int toWrite) {
+  public static void writeExtendedForgeShort(ByteBuf buf, int toWrite) {
     int low = toWrite & 0x7FFF;
     int high = (toWrite & 0x7F8000) >> 15;
     if (high != 0) {
@@ -808,7 +808,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the decoded string
    */
-  public static String readStringWithoutLength(final ByteBuf buf) {
+  public static String readStringWithoutLength(ByteBuf buf) {
     return readString(buf, DEFAULT_MAX_STRING_SIZE, buf.readableBytes());
   }
 
@@ -819,7 +819,7 @@ public enum ProtocolUtils {
    * @param version the protocol version used by the client.
    * @return the appropriate {@link GsonComponentSerializer}
    */
-  public static GsonComponentSerializer getJsonChatSerializer(final ProtocolVersion version) {
+  public static GsonComponentSerializer getJsonChatSerializer(ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
       return MODERN_SERIALIZER;
     }
@@ -841,7 +841,7 @@ public enum ProtocolUtils {
    * @param buf       the buffer
    * @param playerKey the key to write
    */
-  public static void writePlayerKey(final ByteBuf buf, final IdentifiedKey playerKey) {
+  public static void writePlayerKey(ByteBuf buf, IdentifiedKey playerKey) {
     buf.writeLong(playerKey.getExpiryTemporal().toEpochMilli());
     ProtocolUtils.writeByteArray(buf, playerKey.getSignedPublicKey().getEncoded());
     ProtocolUtils.writeByteArray(buf, Objects.requireNonNull(playerKey.getSignature()));
@@ -854,7 +854,7 @@ public enum ProtocolUtils {
    * @param buf the buffer to read from
    * @return the decoded {@link IdentifiedKey}
    */
-  public static IdentifiedKey readPlayerKey(final ProtocolVersion version, final ByteBuf buf) {
+  public static IdentifiedKey readPlayerKey(ProtocolVersion version, ByteBuf buf) {
     long expiry = buf.readLong();
     byte[] key = ProtocolUtils.readByteArray(buf);
     byte[] signature = ProtocolUtils.readByteArray(buf, 4096);
@@ -870,7 +870,7 @@ public enum ProtocolUtils {
    * @param version the protocol version
    * @return the sound source
    */
-  public static Sound.Source readSoundSource(final ByteBuf buf, final ProtocolVersion version) {
+  public static Sound.Source readSoundSource(ByteBuf buf, ProtocolVersion version) {
     int ordinal = readVarInt(buf);
 
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)
@@ -888,7 +888,7 @@ public enum ProtocolUtils {
    * @param version the protocol version
    * @param source the sound source to write
    */
-  public static void writeSoundSource(final ByteBuf buf, final ProtocolVersion version, final Sound.Source source) {
+  public static void writeSoundSource(ByteBuf buf, ProtocolVersion version, Sound.Source source) {
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_21_5)
         && source == Sound.Source.UI) {
       throw new UnsupportedOperationException("UI sound-source is only supported in 1.21.5+");

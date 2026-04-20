@@ -105,16 +105,16 @@ public class VelocityQueueManager implements QueueManager {
    *
    * @param server the proxy instance
    */
-  public VelocityQueueManager(final @NotNull VelocityServer server) {
+  public VelocityQueueManager(@NotNull VelocityServer server) {
     this.server = server;
 
     preInitialize();
 
     // Ensure every registered server has a queue (fills gaps not covered by preInitialize).
     for (VelocityRegisteredServer rs : server.getAllServers()) {
-      final String name = rs.getServerInfo().getName();
+      String name = rs.getServerInfo().getName();
       queues.computeIfAbsent(name, n -> {
-        final boolean inactive = server.getConfiguration().getQueue()
+        boolean inactive = server.getConfiguration().getQueue()
             .getNoQueueServers().contains(n);
         return createQueue(rs, inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
       });
@@ -151,22 +151,22 @@ public class VelocityQueueManager implements QueueManager {
   /**
    * Checks whether the player with the given UUID is online on this proxy.
    */
-  protected boolean isPlayerOnline(final UUID uuid) {
+  protected boolean isPlayerOnline(UUID uuid) {
     return server.getPlayer(uuid).isPresent();
   }
 
   /**
    * Creates a new queue for the given backend server.
    */
-  protected VelocityQueue createQueue(final VelocityRegisteredServer rs, final QueueState state) {
+  protected VelocityQueue createQueue(VelocityRegisteredServer rs, QueueState state) {
     return new VelocityQueue(server, this, rs, state);
   }
 
   /**
    * Sends an action-bar update for the given queue entry.
    */
-  protected void sendActionBar(final VelocityQueueEntry entry) {
-    final Component component = QueueComponents.createActionbarComponent(entry);
+  protected void sendActionBar(VelocityQueueEntry entry) {
+    Component component = QueueComponents.createActionbarComponent(entry);
     if (component != null) {
       server.getPlayer(entry.getUniqueId()).ifPresent(p -> p.sendActionBar(component));
     }
@@ -184,12 +184,12 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public @NotNull VelocityQueue getQueue(final @NotNull String serverName) {
-    final VelocityRegisteredServer rs = server.getServer(serverName)
+  public @NotNull VelocityQueue getQueue(@NotNull String serverName) {
+    VelocityRegisteredServer rs = server.getServer(serverName)
         .orElseThrow(() -> new IllegalArgumentException("Unknown server: " + serverName));
 
     return queues.computeIfAbsent(serverName, n -> {
-      final boolean inactive = server.getConfiguration().getQueue().getNoQueueServers().contains(n);
+      boolean inactive = server.getConfiguration().getQueue().getNoQueueServers().contains(n);
       return createQueue(rs, inactive ? QueueState.INACTIVE : QueueState.ACTIVE);
     });
   }
@@ -200,7 +200,7 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public @Nullable VelocityQueue getQueueFor(final @NotNull UUID uniqueId) {
+  public @Nullable VelocityQueue getQueueFor(@NotNull UUID uniqueId) {
     for (VelocityQueue q : queues.values()) {
       if (q.contains(uniqueId)) {
         return q;
@@ -210,15 +210,15 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public void queue(final @NotNull Player player, final @NotNull RegisteredServer targetServer) {
+  public void queue(@NotNull Player player, @NotNull RegisteredServer targetServer) {
     queue((ConnectedPlayer) player, (VelocityRegisteredServer) targetServer);
   }
 
-  public void queue(final @NotNull ConnectedPlayer player, final @NotNull VelocityRegisteredServer targetServer) {
-    final String targetName = targetServer.getServerInfo().getName();
-    final VelocityQueue queue = getQueue(targetName);
+  public void queue(@NotNull ConnectedPlayer player, @NotNull VelocityRegisteredServer targetServer) {
+    String targetName = targetServer.getServerInfo().getName();
+    VelocityQueue queue = getQueue(targetName);
 
-    final VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
+    VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
     if (!config.isEnabled() || player.hasPermission("velocity.queue.bypass")) {
       player.createConnectionRequest(targetServer).connectWithIndication();
       return;
@@ -258,7 +258,7 @@ public class VelocityQueueManager implements QueueManager {
         .arguments(Component.text(targetName)));
 
     // If a queue-server is configured, move the player there if they aren't already on it
-    final String queueServerName = config.getQueueServer();
+    String queueServerName = config.getQueueServer();
     if (!queueServerName.isEmpty()) {
       server.getServer(queueServerName).ifPresentOrElse(queueServer -> {
         player.getCurrentServer().ifPresent(currentServer -> {
@@ -271,7 +271,7 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   @Override
-  public void removePlayerEntirely(final @NotNull UUID uniqueId) {
+  public void removePlayerEntirely(@NotNull UUID uniqueId) {
     for (VelocityQueue queue : queues.values()) {
       if (queue.contains(uniqueId)) {
         queue.dequeue(uniqueId);
@@ -279,7 +279,7 @@ public class VelocityQueueManager implements QueueManager {
     }
   }
 
-  public void onPlayerConnect(final @NotNull ConnectedPlayer player) {
+  public void onPlayerConnect(@NotNull ConnectedPlayer player) {
     ScheduledTask timeoutTask = pendingTimeoutTasks.remove(player.getUniqueId());
     if (timeoutTask != null) {
       timeoutTask.cancel();
@@ -292,7 +292,7 @@ public class VelocityQueueManager implements QueueManager {
    *
    * @param player the player who disconnected
    */
-  public void onPlayerDisconnect(final @NotNull ConnectedPlayer player) {
+  public void onPlayerDisconnect(@NotNull ConnectedPlayer player) {
     if (!isQueued(player)) {
       return;
     }
@@ -302,7 +302,7 @@ public class VelocityQueueManager implements QueueManager {
       return;
     }
 
-    final int timeout = getTimeoutInSeconds(player);
+    int timeout = getTimeoutInSeconds(player);
     if (timeout <= 0) {
       LOGGER.debug("Removing player {} from all queues immediately (no timeout).", player.getUsername());
       removePlayerEntirely(player);
@@ -327,7 +327,7 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   private void scheduleTransferTask() {
-    final VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
+    VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
     transferTask = server.getScheduler()
         .buildTask(VelocityVirtualPlugin.INSTANCE, this::runTransfer)
         .delay((long) (config.getSendDelay() * 1000), TimeUnit.MILLISECONDS)
@@ -336,7 +336,7 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   private void scheduleBackendHandshakeTask() {
-    final VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
+    VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
     backendHandshakeTask = server.getScheduler()
         .buildTask(VelocityVirtualPlugin.INSTANCE, this::pingBackends)
         .delay((long) (config.getBackendPingInterval() * 1000), TimeUnit.MILLISECONDS)
@@ -345,7 +345,7 @@ public class VelocityQueueManager implements QueueManager {
   }
 
   private void scheduleActionBarTask() {
-    final VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
+    VelocityConfiguration.Queue config = server.getConfiguration().getQueue();
     actionBarTask = server.getScheduler()
         .buildTask(VelocityVirtualPlugin.INSTANCE, this::sendActionBars)
         .delay((long) (config.getMessageDelay() * 1000), TimeUnit.MILLISECONDS)
@@ -373,14 +373,14 @@ public class VelocityQueueManager implements QueueManager {
       return;
     }
 
-    final Set<UUID> transferredThisTick = new HashSet<>();
+    Set<UUID> transferredThisTick = new HashSet<>();
 
     queues.values().stream()
         .filter(q -> q.getState() == ACTIVE)
         .filter(q -> q.getServerStatus().isActive())
         .filter(q -> q.size() > 0)
         .forEach(queue -> {
-          final VelocityQueueEntry candidate = queue.getInternalEntries().stream()
+          VelocityQueueEntry candidate = queue.getInternalEntries().stream()
               .filter(e -> !transferredThisTick.contains(e.getUniqueId()))
               .filter(e -> queue.getServerStatus() != FULL || e.isFullBypass())
               .filter(e -> !e.isWaitingForConnection())
@@ -406,7 +406,7 @@ public class VelocityQueueManager implements QueueManager {
     }
 
     for (VelocityQueue queue : queues.values()) {
-      final VelocityRegisteredServer rs = server.getServer(queue.getName()).orElse(null);
+      VelocityRegisteredServer rs = server.getServer(queue.getName()).orElse(null);
       if (rs == null) {
         continue;
       }
@@ -417,10 +417,10 @@ public class VelocityQueueManager implements QueueManager {
           return;
         }
 
-        final boolean serverFull = result.getPlayers()
+        boolean serverFull = result.getPlayers()
             .map(p -> p.getMax() > 0 && p.getOnline() >= p.getMax())
             .orElse(false);
-        final ServerStatus activeStatus = serverFull ? FULL : ONLINE;
+        ServerStatus activeStatus = serverFull ? FULL : ONLINE;
 
         if (queue.getServerStatus() == OFFLINE) {
           queue.setServerStatus(WAITING);
@@ -433,9 +433,9 @@ public class VelocityQueueManager implements QueueManager {
         }
 
         // Still WAITING – check warmup delay
-        final Long lastOnline = LAST_TURNED_ONLINE_TIME.get(queue.getName());
+        Long lastOnline = LAST_TURNED_ONLINE_TIME.get(queue.getName());
         if (lastOnline != null) {
-          final double queueDelay = server.getConfiguration().getQueue().getQueueDelay() * 1000;
+          double queueDelay = server.getConfiguration().getQueue().getQueueDelay() * 1000;
           if (System.currentTimeMillis() >= lastOnline + queueDelay) {
             queue.setServerStatus(activeStatus);
           }
@@ -453,7 +453,7 @@ public class VelocityQueueManager implements QueueManager {
     }
 
     // Collect all entries per player UUID (player may be in multiple queues)
-    final Map<UUID, List<VelocityQueueEntry>> byPlayer = new HashMap<>();
+    Map<UUID, List<VelocityQueueEntry>> byPlayer = new HashMap<>();
 
     queues.values()
         .stream()
@@ -465,15 +465,15 @@ public class VelocityQueueManager implements QueueManager {
         });
 
     for (List<VelocityQueueEntry> entries : byPlayer.values()) {
-      final int index = (actionBarTick / TICKS_PER_ACTION_BAR_CHANGE) % entries.size();
-      final VelocityQueueEntry entry = entries.get(index);
+      int index = (actionBarTick / TICKS_PER_ACTION_BAR_CHANGE) % entries.size();
+      VelocityQueueEntry entry = entries.get(index);
       sendActionBar(entry);
     }
 
     actionBarTick++;
   }
 
-  private int getTimeoutInSeconds(final ConnectedPlayer player) {
+  private int getTimeoutInSeconds(ConnectedPlayer player) {
     if (player.hasPermission("velocity.queue.timeout.exempt")) {
       return 0;
     }

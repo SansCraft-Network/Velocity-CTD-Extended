@@ -57,11 +57,11 @@ public class RespawnPacket implements MinecraftPacket {
   public RespawnPacket() {
   }
 
-  public RespawnPacket(final int dimension, final long partialHashedSeed, final short difficulty, final short gamemode,
-                       final String levelType, final byte dataToKeep, final DimensionInfo dimensionInfo,
-                       final short previousGamemode, final CompoundBinaryTag currentDimensionData,
-                       final @Nullable Pair<String, Long> lastDeathPosition, final int portalCooldown,
-                       final int seaLevel) {
+  public RespawnPacket(int dimension, long partialHashedSeed, short difficulty, short gamemode,
+                       String levelType, byte dataToKeep, DimensionInfo dimensionInfo,
+                       short previousGamemode, CompoundBinaryTag currentDimensionData,
+                       @Nullable Pair<String, Long> lastDeathPosition, int portalCooldown,
+                       int seaLevel) {
     this.dimension = dimension;
     this.partialHashedSeed = partialHashedSeed;
     this.difficulty = difficulty;
@@ -76,7 +76,7 @@ public class RespawnPacket implements MinecraftPacket {
     this.seaLevel = seaLevel;
   }
 
-  public static RespawnPacket fromJoinGame(final JoinGamePacket joinGame) {
+  public static RespawnPacket fromJoinGame(JoinGamePacket joinGame) {
     return new RespawnPacket(
         joinGame.getDimension(),
         joinGame.getPartialHashedSeed(),
@@ -96,7 +96,7 @@ public class RespawnPacket implements MinecraftPacket {
     return dimension;
   }
 
-  public void setDimension(final int dimension) {
+  public void setDimension(int dimension) {
     this.dimension = dimension;
   }
 
@@ -104,7 +104,7 @@ public class RespawnPacket implements MinecraftPacket {
     return partialHashedSeed;
   }
 
-  public void setPartialHashedSeed(final long partialHashedSeed) {
+  public void setPartialHashedSeed(long partialHashedSeed) {
     this.partialHashedSeed = partialHashedSeed;
   }
 
@@ -112,7 +112,7 @@ public class RespawnPacket implements MinecraftPacket {
     return difficulty;
   }
 
-  public void setDifficulty(final short difficulty) {
+  public void setDifficulty(short difficulty) {
     this.difficulty = difficulty;
   }
 
@@ -120,7 +120,7 @@ public class RespawnPacket implements MinecraftPacket {
     return gamemode;
   }
 
-  public void setGamemode(final short gamemode) {
+  public void setGamemode(short gamemode) {
     this.gamemode = gamemode;
   }
 
@@ -128,7 +128,7 @@ public class RespawnPacket implements MinecraftPacket {
     return levelType;
   }
 
-  public void setLevelType(final String levelType) {
+  public void setLevelType(String levelType) {
     this.levelType = levelType;
   }
 
@@ -136,7 +136,7 @@ public class RespawnPacket implements MinecraftPacket {
     return dataToKeep;
   }
 
-  public void setDataToKeep(final byte dataToKeep) {
+  public void setDataToKeep(byte dataToKeep) {
     this.dataToKeep = dataToKeep;
   }
 
@@ -144,7 +144,7 @@ public class RespawnPacket implements MinecraftPacket {
     return previousGamemode;
   }
 
-  public void setPreviousGamemode(final short previousGamemode) {
+  public void setPreviousGamemode(short previousGamemode) {
     this.previousGamemode = previousGamemode;
   }
 
@@ -152,7 +152,7 @@ public class RespawnPacket implements MinecraftPacket {
     return lastDeathPosition;
   }
 
-  public void setLastDeathPosition(final @Nullable Pair<String, Long> lastDeathPosition) {
+  public void setLastDeathPosition(@Nullable Pair<String, Long> lastDeathPosition) {
     this.lastDeathPosition = lastDeathPosition;
   }
 
@@ -160,7 +160,7 @@ public class RespawnPacket implements MinecraftPacket {
     return portalCooldown;
   }
 
-  public void setPortalCooldown(final int portalCooldown) {
+  public void setPortalCooldown(int portalCooldown) {
     this.portalCooldown = portalCooldown;
   }
 
@@ -168,7 +168,7 @@ public class RespawnPacket implements MinecraftPacket {
     return seaLevel;
   }
 
-  public void setSeaLevel(final int seaLevel) {
+  public void setSeaLevel(int seaLevel) {
     this.seaLevel = seaLevel;
   }
 
@@ -191,7 +191,7 @@ public class RespawnPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     String dimensionKey = "";
     String levelName = null;
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
@@ -253,7 +253,7 @@ public class RespawnPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
       if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16_2)
           && version.lessThan(ProtocolVersion.MINECRAFT_1_19)) {
@@ -318,7 +318,7 @@ public class RespawnPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

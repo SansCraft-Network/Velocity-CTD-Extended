@@ -113,7 +113,7 @@ public class PingCommand implements BuiltinCommand {
         return -1;
       }
 
-      final CommandSource source = context.getSource();
+      CommandSource source = context.getSource();
       maybeClusterPlayer.get().queryPing().thenAccept(ping -> {
         source.sendMessage(Component.translatable("velocity.command.ping.other", NamedTextColor.GREEN)
             .arguments(Argument.string("player", username), Argument.numeric("ping", ping)));

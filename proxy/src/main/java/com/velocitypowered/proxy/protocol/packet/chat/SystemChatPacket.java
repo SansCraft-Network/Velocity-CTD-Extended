@@ -32,7 +32,7 @@ public class SystemChatPacket implements MinecraftPacket {
   public SystemChatPacket() {
   }
 
-  public SystemChatPacket(final ComponentHolder component, final ChatType type) {
+  public SystemChatPacket(ComponentHolder component, ChatType type) {
     this.component = component;
     this.type = type;
   }
@@ -46,7 +46,7 @@ public class SystemChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     component = ComponentHolder.read(buf, version);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       type = buf.readBoolean() ? ChatType.GAME_INFO : ChatType.SYSTEM;
@@ -56,7 +56,7 @@ public class SystemChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     component.write(buf);
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19_1)) {
       switch (type) {
@@ -70,7 +70,7 @@ public class SystemChatPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

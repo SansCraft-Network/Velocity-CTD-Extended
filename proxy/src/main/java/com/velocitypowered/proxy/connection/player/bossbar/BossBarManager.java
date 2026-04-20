@@ -41,7 +41,7 @@ public final class BossBarManager {
 
   private boolean dropPackets = false;
 
-  public BossBarManager(final ConnectedPlayer player) {
+  public BossBarManager(ConnectedPlayer player) {
     this.player = player;
   }
 
@@ -52,7 +52,7 @@ public final class BossBarManager {
    * @param bar the boss bar being updated
    * @param packet the packet representing the boss bar update
    */
-  public synchronized void writeUpdate(final VelocityBossBarImplementation bar, final BossBarPacket packet) {
+  public synchronized void writeUpdate(VelocityBossBarImplementation bar, BossBarPacket packet) {
     this.bossBars.add(bar);
     if (!this.dropPackets) {
       this.player.getConnection().write(packet);
@@ -66,7 +66,7 @@ public final class BossBarManager {
    * @param bar the boss bar being removed
    * @param packet the packet representing the boss bar removal
    */
-  public synchronized void remove(final VelocityBossBarImplementation bar, final BossBarPacket packet) {
+  public synchronized void remove(VelocityBossBarImplementation bar, BossBarPacket packet) {
     this.bossBars.remove(bar);
     if (!this.dropPackets) {
       this.player.getConnection().write(packet);

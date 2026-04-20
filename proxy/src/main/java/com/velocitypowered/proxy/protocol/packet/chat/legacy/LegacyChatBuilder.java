@@ -27,7 +27,7 @@ import net.kyori.adventure.text.Component;
 
 public class LegacyChatBuilder extends ChatBuilderV2 {
 
-  public LegacyChatBuilder(final ProtocolVersion version) {
+  public LegacyChatBuilder(ProtocolVersion version) {
     super(version);
   }
 

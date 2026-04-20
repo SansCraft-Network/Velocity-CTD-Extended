@@ -44,7 +44,7 @@ public final class RedisClusterPlayer implements VelocityClusterPlayer {
   private final VelocityRedis redis;
   private final PlayerEntry redisEntry;
 
-  RedisClusterPlayer(final VelocityServer server, final PlayerEntry redisEntry) {
+  RedisClusterPlayer(VelocityServer server, PlayerEntry redisEntry) {
     this.server = server;
     this.redis = server.getRedis();
     this.redisEntry = redisEntry;
@@ -81,27 +81,27 @@ public final class RedisClusterPlayer implements VelocityClusterPlayer {
   }
 
   @Override
-  public void kick(final Component reason) {
+  public void kick(Component reason) {
     redis.publish(new VelocityKick(redisEntry.getUniqueId(), reason));
   }
 
   @Override
-  public void sudo(final String command) {
+  public void sudo(String command) {
     redis.publish(new VelocitySudo(redisEntry.getUniqueId(), command));
   }
 
   @Override
-  public void move(final String targetServer) {
+  public void move(String targetServer) {
     redis.publish(new VelocitySwitchServer(redisEntry.getUniqueId(), targetServer));
   }
 
   @Override
-  public CompletableFuture<Boolean> transfer(final String ip, final int port) {
+  public CompletableFuture<Boolean> transfer(String ip, int port) {
     return redis.publishTransaction(new VelocityTransferRemote(redisEntry.getUniqueId(), ip, port));
   }
 
   @Override
-  public void sendMessage(final Component message) {
+  public void sendMessage(Component message) {
     redis.publish(new VelocityMessage(redisEntry.getUniqueId(), message));
   }
 
@@ -111,7 +111,7 @@ public final class RedisClusterPlayer implements VelocityClusterPlayer {
   }
 
   @Override
-  public QueueEntryData toQueueEntryData(final String serverName) {
+  public QueueEntryData toQueueEntryData(String serverName) {
     return new QueueEntryData(
         redisEntry.getUniqueId(),
         redisEntry.getUsername(),

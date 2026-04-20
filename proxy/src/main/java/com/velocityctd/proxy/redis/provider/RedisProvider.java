@@ -71,7 +71,7 @@ public sealed interface RedisProvider permits AbstractRedisProvider {
    * @param transaction the transaction to publish
    * @see #publish(Transaction, int, TimeUnit)
    */
-  default void publish(final @NotNull Transaction<?, ?> transaction) {
+  default void publish(@NotNull Transaction<?, ?> transaction) {
     publish(transaction, transaction.getTimeout(), transaction.getTimeUnit());
   }
 

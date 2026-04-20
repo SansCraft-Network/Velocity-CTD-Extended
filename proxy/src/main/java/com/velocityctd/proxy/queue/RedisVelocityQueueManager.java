@@ -40,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public final class RedisVelocityQueueManager extends VelocityQueueManager {
 
-  public RedisVelocityQueueManager(final @NotNull VelocityServer server) {
+  public RedisVelocityQueueManager(@NotNull VelocityServer server) {
     super(server);
   }
 
@@ -60,12 +60,12 @@ public final class RedisVelocityQueueManager extends VelocityQueueManager {
 
   @Override
   public boolean isMasterProxy() {
-    final List<String> masterProxies = server.getConfiguration().getQueue().getMasterProxyIds();
-    final List<String> activeProxies = new ArrayList<>(
+    List<String> masterProxies = server.getConfiguration().getQueue().getMasterProxyIds();
+    List<String> activeProxies = new ArrayList<>(
         server.getRedis().getProxyService().getAllProxyIds());
     Collections.sort(activeProxies);
 
-    final String ownId = server.getProxyId();
+    String ownId = server.getProxyId();
 
     if (masterProxies.isEmpty() || (masterProxies.size() == 1 && masterProxies.getFirst().isEmpty())) {
       // No explicit master list: alphabetically-first active proxy is master
@@ -88,18 +88,18 @@ public final class RedisVelocityQueueManager extends VelocityQueueManager {
   }
 
   @Override
-  protected boolean isPlayerOnline(final UUID uuid) {
+  protected boolean isPlayerOnline(UUID uuid) {
     return server.getRedis().getPlayerService().isPlayerOnline(uuid);
   }
 
   @Override
-  protected RedisVelocityQueue createQueue(final VelocityRegisteredServer rs, final QueueState state) {
+  protected RedisVelocityQueue createQueue(VelocityRegisteredServer rs, QueueState state) {
     return new RedisVelocityQueue(server, this, rs, state);
   }
 
   @Override
-  protected void sendActionBar(final VelocityQueueEntry entry) {
-    final Component component = QueueComponents.createActionbarComponent(entry);
+  protected void sendActionBar(VelocityQueueEntry entry) {
+    Component component = QueueComponents.createActionbarComponent(entry);
     if (component != null) {
       server.getRedis().publish(new VelocityActionBar(entry.getUniqueId(), component));
     }
@@ -111,8 +111,8 @@ public final class RedisVelocityQueueManager extends VelocityQueueManager {
    *
    * @param sync the incoming sync data
    */
-  public void handleSync(final @NotNull VelocityQueueSync sync) {
-    final RedisVelocityQueue queue;
+  public void handleSync(@NotNull VelocityQueueSync sync) {
+    RedisVelocityQueue queue;
     try {
       queue = (RedisVelocityQueue) getQueue(sync.serverName());
     } catch (IllegalArgumentException ignored) {
@@ -134,11 +134,11 @@ public final class RedisVelocityQueueManager extends VelocityQueueManager {
    * Called at startup ({@link #preInitialize()}) and on reconnect ({@link #reloadFromRedis()}).
    */
   private void loadFromRedis() {
-    final VelocityQueueDepotService service = server.getRedis().getQueueService();
+    VelocityQueueDepotService service = server.getRedis().getQueueService();
 
     queues.clear();
     for (VelocityQueueDepotEntry entry : service.getAll()) {
-      final VelocityRegisteredServer rs = server.getServer(entry.getUniqueId()).orElse(null);
+      VelocityRegisteredServer rs = server.getServer(entry.getUniqueId()).orElse(null);
       if (rs != null) {
         queues.put(entry.getUniqueId(), new RedisVelocityQueue(server, this, rs, entry));
 

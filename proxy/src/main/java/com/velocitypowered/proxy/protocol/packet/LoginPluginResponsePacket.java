@@ -37,7 +37,7 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     super(Unpooled.EMPTY_BUFFER);
   }
 
-  public LoginPluginResponsePacket(final int id, final boolean success, final @MonotonicNonNull ByteBuf buf) {
+  public LoginPluginResponsePacket(int id, boolean success, @MonotonicNonNull ByteBuf buf) {
     super(buf);
     this.id = id;
     this.success = success;
@@ -47,7 +47,7 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     return id;
   }
 
-  public void setId(final int id) {
+  public void setId(int id) {
     this.id = id;
   }
 
@@ -55,7 +55,7 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
     return success;
   }
 
-  public void setSuccess(final boolean success) {
+  public void setSuccess(boolean success) {
     this.success = success;
   }
 
@@ -69,7 +69,7 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     this.id = ProtocolUtils.readVarInt(buf);
     this.success = buf.readBoolean();
     if (buf.isReadable()) {
@@ -80,19 +80,19 @@ public class LoginPluginResponsePacket extends DeferredByteBufHolder implements 
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     ProtocolUtils.writeVarInt(buf, id);
     buf.writeBoolean(success);
     buf.writeBytes(content());
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
     return content().readableBytes();
   }
 }

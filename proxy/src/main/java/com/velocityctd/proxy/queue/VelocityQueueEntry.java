@@ -68,9 +68,9 @@ public class VelocityQueueEntry implements QueueEntry {
    * @param queue  the owning queue
    * @param data   the player data
    */
-  public VelocityQueueEntry(final @NotNull VelocityServer server,
-                            final @NotNull VelocityQueue queue,
-                            final @NotNull QueueEntryData data) {
+  public VelocityQueueEntry(@NotNull VelocityServer server,
+                            @NotNull VelocityQueue queue,
+                            @NotNull QueueEntryData data) {
     this.server = server;
     this.queue = queue;
     this.uniqueId = data.uniqueId();
@@ -86,7 +86,7 @@ public class VelocityQueueEntry implements QueueEntry {
    * @param server the proxy server
    * @param queue  the owning queue
    */
-  protected void setContext(final @NotNull VelocityServer server, final @NotNull VelocityQueue queue) {
+  protected void setContext(@NotNull VelocityServer server, @NotNull VelocityQueue queue) {
     this.server = server;
     this.queue = queue;
   }
@@ -96,7 +96,7 @@ public class VelocityQueueEntry implements QueueEntry {
    *
    * @param position the position index
    */
-  protected void setPosition(final int position) {
+  protected void setPosition(int position) {
     this.position = position;
   }
 
@@ -163,17 +163,17 @@ public class VelocityQueueEntry implements QueueEntry {
    */
   @ApiStatus.Internal
   public void handleTransfer() {
-    final VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
-    final String targetServerName = this.queue.getName();
+    VelocityConfiguration.Queue config = this.server.getConfiguration().getQueue();
+    String targetServerName = this.queue.getName();
 
     this.server.getPlayer(this.uniqueId).ifPresentOrElse(player -> {
-      final VelocityRegisteredServer foundServer = this.server.getServer(targetServerName).orElse(null);
+      VelocityRegisteredServer foundServer = this.server.getServer(targetServerName).orElse(null);
       if (foundServer == null) {
         queue.dequeue(this.uniqueId);
         return;
       }
 
-      final CompletableFuture<?> future = config.isForwardKickReason()
+      CompletableFuture<?> future = config.isForwardKickReason()
           ? player.createConnectionRequest(foundServer).connectWithIndication()
           : player.createConnectionRequest(foundServer).connect();
 
@@ -208,8 +208,8 @@ public class VelocityQueueEntry implements QueueEntry {
     // no-op
   }
 
-  private void resetAfterFailedTransfer(final VelocityConfiguration.Queue config) {
-    final VelocityRegisteredServer targetServer = this.server.getServer(this.queue.getName()).orElseThrow();
+  private void resetAfterFailedTransfer(VelocityConfiguration.Queue config) {
+    VelocityRegisteredServer targetServer = this.server.getServer(this.queue.getName()).orElseThrow();
 
     targetServer.ping().orTimeout(3, TimeUnit.SECONDS).whenComplete((result, th) -> {
       if (th != null) {
@@ -225,14 +225,14 @@ public class VelocityQueueEntry implements QueueEntry {
     });
   }
 
-  private void applyFailedAttempt(final VelocityConfiguration.Queue config) {
+  private void applyFailedAttempt(VelocityConfiguration.Queue config) {
     this.waitingForConnection = false;
     this.connectionAttempts++;
     refreshPermissions();
     publishWaitingChange();
 
     if (this.connectionAttempts >= config.getMaxSendRetries()) {
-      final Component message = Component.translatable("velocity.queue.error.max-send-retries-reached")
+      Component message = Component.translatable("velocity.queue.error.max-send-retries-reached")
           .arguments(
               Component.text(this.queue.getName()),
               Component.text(config.getMaxSendRetries()));

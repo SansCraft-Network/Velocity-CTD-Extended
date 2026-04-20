@@ -47,11 +47,11 @@ final class CustomHandlerAdapter<F> {
   private final MethodHandles.Lookup methodHandlesLookup;
 
   @SuppressWarnings("unchecked")
-  CustomHandlerAdapter(final String name, final Predicate<Method> filter,
-                       final BiConsumer<Method, List<String>> validator,
-                       final TypeToken<F> invokeFunctionType,
-                       final Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder,
-                       final MethodHandles.Lookup methodHandlesLookup) {
+  CustomHandlerAdapter(String name, Predicate<Method> filter,
+                       BiConsumer<Method, List<String>> validator,
+                       TypeToken<F> invokeFunctionType,
+                       Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder,
+                       MethodHandles.Lookup methodHandlesLookup) {
     this.name = name;
     this.filter = filter;
     this.validator = validator;
@@ -60,21 +60,21 @@ final class CustomHandlerAdapter<F> {
     this.methodHandlesLookup = methodHandlesLookup;
   }
 
-  UntargetedEventHandler buildUntargetedHandler(final Method method) throws IllegalAccessException {
-    final MethodHandle methodHandle = methodHandlesLookup.unreflect(method);
-    final LambdaType<F> lambdaType = functionType.defineClassesWith(methodHandlesLookup);
-    final F invokeFunction = LambdaFactory.create(lambdaType, methodHandle);
-    final BiFunction<Object, Object, EventTask> handlerFunction =
+  UntargetedEventHandler buildUntargetedHandler(Method method) throws IllegalAccessException {
+    MethodHandle methodHandle = methodHandlesLookup.unreflect(method);
+    LambdaType<F> lambdaType = functionType.defineClassesWith(methodHandlesLookup);
+    F invokeFunction = LambdaFactory.create(lambdaType, methodHandle);
+    BiFunction<Object, Object, EventTask> handlerFunction =
         handlerBuilder.apply(invokeFunction);
     return targetInstance -> new EventHandler<>() {
 
       @Override
-      public void execute(final Object event) {
+      public void execute(Object event) {
         throw new UnsupportedOperationException();
       }
 
       @Override
-      public @Nullable EventTask executeAsync(final Object event) {
+      public @Nullable EventTask executeAsync(Object event) {
         return handlerFunction.apply(targetInstance, event);
       }
     };

@@ -89,9 +89,9 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    * @param proxyPlayer      the player connecting to the server
    * @param server           the Velocity proxy instance
    */
-  public VelocityServerConnection(final VelocityRegisteredServer registeredServer,
-                                  final @Nullable VelocityRegisteredServer previousServer,
-                                  final ConnectedPlayer proxyPlayer, final VelocityServer server) {
+  public VelocityServerConnection(VelocityRegisteredServer registeredServer,
+                                  @Nullable VelocityRegisteredServer previousServer,
+                                  ConnectedPlayer proxyPlayer, VelocityServer server) {
     this.registeredServer = registeredServer;
     this.previousServer = previousServer;
     this.proxyPlayer = proxyPlayer;
@@ -141,7 +141,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
   }
 
   String getPlayerRemoteAddressAsString() {
-    final String addr = proxyPlayer.getRemoteAddress().getAddress().getHostAddress();
+    String addr = proxyPlayer.getRemoteAddress().getAddress().getHostAddress();
     int ipv6ScopeIdx = addr.indexOf('%');
     if (ipv6ScopeIdx == -1) {
       return addr;
@@ -159,7 +159,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
     );
   }
 
-  private String createBungeeGuardForwardingAddress(final byte[] forwardingSecret) {
+  private String createBungeeGuardForwardingAddress(byte[] forwardingSecret) {
     return PlayerDataForwarding.createBungeeGuardForwardingAddress(
       proxyPlayer.getVirtualHost().orElseGet(() ->
         registeredServer.getServerInfo().getAddress()).getHostString(),
@@ -170,7 +170,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
   }
 
   private void startHandshake() {
-    final MinecraftConnection mc = ensureConnected();
+    MinecraftConnection mc = ensureConnected();
 
     PlayerInfoForwarding forwardingMode = registeredServer.getPlayerInfoForwardingMode();
 
@@ -275,7 +275,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    * @return {@code true} if the message was sent, {@code false} if the buffer was empty
    */
   @Override
-  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final byte @NotNull [] data) {
+  public boolean sendPluginMessage(@NotNull ChannelIdentifier identifier, byte @NotNull [] data) {
     return sendPluginMessage(identifier, Unpooled.wrappedBuffer(data));
   }
 
@@ -289,11 +289,11 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    * @return {@code true} if the message was sent, {@code false} if the encoded payload was empty
    */
   @Override
-  public boolean sendPluginMessage(final @NotNull ChannelIdentifier identifier, final @NotNull PluginMessageEncoder dataEncoder) {
+  public boolean sendPluginMessage(@NotNull ChannelIdentifier identifier, @NotNull PluginMessageEncoder dataEncoder) {
     requireNonNull(identifier);
     requireNonNull(dataEncoder);
-    final ByteBuf buf = Unpooled.buffer();
-    final ByteBufDataOutput dataOutput = new ByteBufDataOutput(buf);
+    ByteBuf buf = Unpooled.buffer();
+    ByteBufDataOutput dataOutput = new ByteBufDataOutput(buf);
     dataEncoder.encode(dataOutput);
     if (buf.isReadable()) {
       return sendPluginMessage(identifier, buf);
@@ -310,13 +310,13 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    * @param data       the data
    * @return whether the message was sent
    */
-  public boolean sendPluginMessage(final ChannelIdentifier identifier, final ByteBuf data) {
+  public boolean sendPluginMessage(ChannelIdentifier identifier, ByteBuf data) {
     Preconditions.checkNotNull(identifier, "identifier");
     Preconditions.checkNotNull(data, "data");
 
-    final MinecraftConnection mc = ensureConnected();
+    MinecraftConnection mc = ensureConnected();
 
-    final PluginMessagePacket message = new PluginMessagePacket(identifier.getId(), data);
+    PluginMessagePacket message = new PluginMessagePacket(identifier.getId(), data);
     mc.write(message);
     return true;
   }
@@ -349,7 +349,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
     return entityId;
   }
 
-  public void setEntityId(final Integer entityId) {
+  public void setEntityId(Integer entityId) {
     this.entityId = entityId;
   }
 
@@ -378,7 +378,7 @@ public class VelocityServerConnection implements MinecraftConnectionAssociation,
    *
    * @param connectionPhase The {@link BackendConnectionPhase}
    */
-  public void setConnectionPhase(final BackendConnectionPhase connectionPhase) {
+  public void setConnectionPhase(BackendConnectionPhase connectionPhase) {
     this.connectionPhase = connectionPhase;
   }
 

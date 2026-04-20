@@ -39,7 +39,7 @@ public class ServerMap {
 
   private final Map<String, VelocityRegisteredServer> servers = new ConcurrentHashMap<>();
 
-  public ServerMap(final @Nullable VelocityServer server) {
+  public ServerMap(@Nullable VelocityServer server) {
     this.server = server;
   }
 
@@ -49,7 +49,7 @@ public class ServerMap {
    * @param name the name to look up
    * @return the server, if it exists
    */
-  public Optional<VelocityRegisteredServer> getServer(final String name) {
+  public Optional<VelocityRegisteredServer> getServer(String name) {
     Preconditions.checkNotNull(name, "server");
     String lowerName = name.toLowerCase(Locale.US);
     return Optional.ofNullable(servers.get(lowerName));
@@ -66,7 +66,7 @@ public class ServerMap {
    * @param serverInfo the server to create a registered server with
    * @return the {@link VelocityRegisteredServer} built from the {@link ServerInfo}
    */
-  public VelocityRegisteredServer createRawRegisteredServer(final ServerInfo serverInfo) {
+  public VelocityRegisteredServer createRawRegisteredServer(ServerInfo serverInfo) {
     return new VelocityRegisteredServer(server, serverInfo);
   }
 
@@ -76,7 +76,7 @@ public class ServerMap {
    * @param serverInfo the server to register
    * @return the registered server
    */
-  public VelocityRegisteredServer register(final ServerInfo serverInfo) {
+  public VelocityRegisteredServer register(ServerInfo serverInfo) {
     Preconditions.checkNotNull(serverInfo, "serverInfo");
     String lowerName = serverInfo.getName().toLowerCase(Locale.US);
     VelocityRegisteredServer rs = createRawRegisteredServer(serverInfo);
@@ -101,7 +101,7 @@ public class ServerMap {
    *
    * @param serverInfo the server to unregister
    */
-  public void unregister(final ServerInfo serverInfo) {
+  public void unregister(ServerInfo serverInfo) {
     Preconditions.checkNotNull(serverInfo, "serverInfo");
     String lowerName = serverInfo.getName().toLowerCase(Locale.US);
     VelocityRegisteredServer rs = servers.get(lowerName);

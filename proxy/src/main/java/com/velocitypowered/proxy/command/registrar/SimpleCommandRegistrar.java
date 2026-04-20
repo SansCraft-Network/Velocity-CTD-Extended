@@ -29,7 +29,7 @@ import java.util.concurrent.locks.Lock;
  */
 public final class SimpleCommandRegistrar extends InvocableCommandRegistrar<SimpleCommand, SimpleCommand.Invocation, String[]> {
 
-  public SimpleCommandRegistrar(final RootCommandNode<CommandSource> root, final Lock lock) {
+  public SimpleCommandRegistrar(RootCommandNode<CommandSource> root, Lock lock) {
     super(root, lock, SimpleCommandInvocation.FACTORY, StringArrayArgumentType.INSTANCE);
   }
 

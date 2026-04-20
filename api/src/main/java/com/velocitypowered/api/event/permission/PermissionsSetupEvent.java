@@ -52,7 +52,7 @@ public final class PermissionsSetupEvent {
    * @param subject the subject (e.g., player or console) whose permissions are being initialized
    * @param provider the default permission provider used for the subject
    */
-  public PermissionsSetupEvent(final PermissionSubject subject, final PermissionProvider provider) {
+  public PermissionsSetupEvent(PermissionSubject subject, PermissionProvider provider) {
     this.subject = Preconditions.checkNotNull(subject, "subject");
     this.provider = this.defaultProvider = Preconditions.checkNotNull(provider, "provider");
   }
@@ -74,7 +74,7 @@ public final class PermissionsSetupEvent {
    * @param subject the subject
    * @return the obtained permission function
    */
-  public PermissionFunction createFunction(final PermissionSubject subject) {
+  public PermissionFunction createFunction(PermissionSubject subject) {
     return this.provider.createFunction(subject);
   }
 
@@ -96,7 +96,7 @@ public final class PermissionsSetupEvent {
    *
    * @param provider the provider
    */
-  public void setProvider(final @Nullable PermissionProvider provider) {
+  public void setProvider(@Nullable PermissionProvider provider) {
     this.provider = provider == null ? this.defaultProvider : provider;
   }
 

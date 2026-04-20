@@ -32,12 +32,12 @@ public class LegacyPingPacket implements MinecraftPacket {
 
   private final @Nullable InetSocketAddress vhost;
 
-  public LegacyPingPacket(final LegacyMinecraftPingVersion version) {
+  public LegacyPingPacket(LegacyMinecraftPingVersion version) {
     this.version = version;
     this.vhost = null;
   }
 
-  public LegacyPingPacket(final LegacyMinecraftPingVersion version, final @Nullable InetSocketAddress vhost) {
+  public LegacyPingPacket(LegacyMinecraftPingVersion version, @Nullable InetSocketAddress vhost) {
     this.version = version;
     this.vhost = vhost;
   }
@@ -51,17 +51,17 @@ public class LegacyPingPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

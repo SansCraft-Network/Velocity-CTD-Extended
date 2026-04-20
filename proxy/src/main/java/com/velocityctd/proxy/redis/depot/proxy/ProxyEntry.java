@@ -31,7 +31,7 @@ public final class ProxyEntry extends DepotEntry<String, ProxyEntry> {
    *
    * @param server the proxy instance
    */
-  public ProxyEntry(final @NotNull VelocityServer server) {
+  public ProxyEntry(@NotNull VelocityServer server) {
     super(server.getProxyId());
   }
 }

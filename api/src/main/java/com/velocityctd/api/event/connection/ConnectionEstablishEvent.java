@@ -58,8 +58,8 @@ public class ConnectionEstablishEvent implements ResultedEvent<ResultedEvent.Gen
    * @param intention  the handshake intention of the client, or {@code null} if not yet determined
    * @throws NullPointerException if {@code connection} is null
    */
-  public ConnectionEstablishEvent(final @NonNull InboundConnection connection,
-                                  final @Nullable HandshakeIntent intention) {
+  public ConnectionEstablishEvent(@NonNull InboundConnection connection,
+                                  @Nullable HandshakeIntent intention) {
     this.connection = Preconditions.checkNotNull(connection, "connection");
     this.intention = intention;
   }
@@ -102,7 +102,7 @@ public class ConnectionEstablishEvent implements ResultedEvent<ResultedEvent.Gen
    * @throws NullPointerException if {@code result} is null
    */
   @Override
-  public void setResult(final @NonNull GenericResult result) {
+  public void setResult(@NonNull GenericResult result) {
     this.result = Preconditions.checkNotNull(result, "result");
   }
 }

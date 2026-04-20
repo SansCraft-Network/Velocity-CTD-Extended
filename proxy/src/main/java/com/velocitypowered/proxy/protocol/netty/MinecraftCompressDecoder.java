@@ -66,7 +66,7 @@ public class MinecraftCompressDecoder extends MessageToMessageDecoder<ByteBuf> {
   }
 
   @Override
-  protected void decode(final ChannelHandlerContext ctx, final ByteBuf in, final List<Object> out) throws Exception {
+  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
     int claimedUncompressedSize = ProtocolUtils.readVarInt(in);
     if (claimedUncompressedSize == 0) {
       if (!SKIP_COMPRESSION_VALIDATION) {
@@ -112,11 +112,11 @@ public class MinecraftCompressDecoder extends MessageToMessageDecoder<ByteBuf> {
   }
 
   @Override
-  public void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(ChannelHandlerContext ctx) {
     compressor.close();
   }
 
-  public void setThreshold(final int threshold) {
+  public void setThreshold(int threshold) {
     this.threshold = threshold;
   }
 }

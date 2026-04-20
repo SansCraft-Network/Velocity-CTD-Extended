@@ -28,12 +28,12 @@ final class ByteArgumentPropertySerializer implements ArgumentPropertySerializer
   }
 
   @Override
-  public Byte deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public Byte deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
     return buf.readByte();
   }
 
   @Override
-  public void serialize(final Byte object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void serialize(Byte object, ByteBuf buf, ProtocolVersion protocolVersion) {
     buf.writeByte(object);
   }
 }

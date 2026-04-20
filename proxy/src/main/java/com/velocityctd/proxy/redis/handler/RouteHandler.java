@@ -47,7 +47,7 @@ public final class RouteHandler<T> {
    * @param dataClass the data class this registration handles
    * @param consumer the consumer that will process incoming data of type {@code T}
    */
-  public RouteHandler(final Class<T> dataClass, final Consumer<T> consumer) {
+  public RouteHandler(Class<T> dataClass, Consumer<T> consumer) {
     this.dataClass = dataClass;
     this.consumer = consumer;
   }
@@ -61,8 +61,8 @@ public final class RouteHandler<T> {
    * @return a new {@link RouteHandler} instance
    */
   @Contract("_, _ -> new")
-  public static <T> @NotNull RouteHandler<T> consumer(final Class<T> dataClass,
-                                                      final Consumer<T> consumer) {
+  public static <T> @NotNull RouteHandler<T> consumer(Class<T> dataClass,
+                                                      Consumer<T> consumer) {
     return new RouteHandler<>(dataClass, consumer);
   }
 

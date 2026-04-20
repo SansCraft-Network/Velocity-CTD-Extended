@@ -32,24 +32,24 @@ public class RegistrySyncPacket extends DeferredByteBufHolder implements Minecra
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     this.replace(buf.readRetainedSlice(buf.readableBytes()));
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     buf.writeBytes(content());
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
     return content().readableBytes();
   }
 }

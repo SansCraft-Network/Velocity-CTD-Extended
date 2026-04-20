@@ -46,13 +46,13 @@ public class ServerboundCookieResponsePacket implements MinecraftPacket {
   public ServerboundCookieResponsePacket() {
   }
 
-  public ServerboundCookieResponsePacket(final Key key, final byte @Nullable [] payload) {
+  public ServerboundCookieResponsePacket(Key key, byte @Nullable [] payload) {
     this.key = key;
     this.payload = payload;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     this.key = ProtocolUtils.readKey(buf);
     if (buf.readBoolean()) {
       this.payload = ProtocolUtils.readByteArray(buf, 5120);
@@ -60,9 +60,9 @@ public class ServerboundCookieResponsePacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeKey(buf, key);
-    final boolean hasPayload = payload != null && payload.length > 0;
+    boolean hasPayload = payload != null && payload.length > 0;
     buf.writeBoolean(hasPayload);
     if (hasPayload) {
       ProtocolUtils.writeByteArray(buf, payload);
@@ -80,7 +80,7 @@ public class ServerboundCookieResponsePacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

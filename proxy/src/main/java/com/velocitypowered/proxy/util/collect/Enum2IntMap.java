@@ -28,11 +28,11 @@ public final class Enum2IntMap<E extends Enum<E>> {
 
   private final int[] mappings;
 
-  private Enum2IntMap(final int[] mappings) {
+  private Enum2IntMap(int[] mappings) {
     this.mappings = mappings;
   }
 
-  public int get(final E key) {
+  public int get(E key) {
     return mappings[key.ordinal()];
   }
 
@@ -49,7 +49,7 @@ public final class Enum2IntMap<E extends Enum<E>> {
 
     private int defaultValue = -1;
 
-    public Builder(final Class<E> klazz) {
+    public Builder(Class<E> klazz) {
       this.mappings = new int[klazz.getEnumConstants().length];
       this.populated = EnumSet.noneOf(klazz);
     }
@@ -61,23 +61,23 @@ public final class Enum2IntMap<E extends Enum<E>> {
      * @param value the value to associate with the key
      * @return {@code this}, for chaining
      */
-    public Builder<E> put(final E key, final int value) {
+    public Builder<E> put(E key, int value) {
       this.mappings[key.ordinal()] = value;
       this.populated.add(key);
       return this;
     }
 
-    public Builder<E> remove(final E key) {
+    public Builder<E> remove(E key) {
       this.populated.remove(key);
       return this;
     }
 
-    public Builder<E> defaultValue(final int defaultValue) {
+    public Builder<E> defaultValue(int defaultValue) {
       this.defaultValue = defaultValue;
       return this;
     }
 
-    public int get(final E key) {
+    public int get(E key) {
       if (this.populated.contains(key)) {
         return this.mappings[key.ordinal()];
       }

@@ -39,13 +39,13 @@ public class LastSeenMessages {
     this(0, new BitSet(), (byte) 0);
   }
 
-  public LastSeenMessages(final int offset, final BitSet acknowledged, final byte checksum) {
+  public LastSeenMessages(int offset, BitSet acknowledged, byte checksum) {
     this.offset = offset;
     this.acknowledged = acknowledged;
     this.checksum = checksum;
   }
 
-  public LastSeenMessages(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public LastSeenMessages(ByteBuf buf, ProtocolVersion protocolVersion) {
     this.offset = ProtocolUtils.readVarInt(buf);
 
     byte[] bytes = new byte[DIV_FLOOR];
@@ -57,7 +57,7 @@ public class LastSeenMessages {
     }
   }
 
-  public void encode(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, offset);
     buf.writeBytes(Arrays.copyOf(acknowledged.toByteArray(), DIV_FLOOR));
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_21_5)) {
@@ -73,7 +73,7 @@ public class LastSeenMessages {
     return acknowledged;
   }
 
-  public LastSeenMessages offset(final int offset) {
+  public LastSeenMessages offset(int offset) {
     return new LastSeenMessages(this.offset + offset, acknowledged, checksum);
   }
 

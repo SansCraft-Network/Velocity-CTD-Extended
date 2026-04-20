@@ -66,7 +66,7 @@ public class VelocityPluginManager implements PluginManager {
 
   private final VelocityServer server;
 
-  public VelocityPluginManager(final VelocityServer server) {
+  public VelocityPluginManager(VelocityServer server) {
     this.server = checkNotNull(server, "server");
   }
 
@@ -75,13 +75,13 @@ public class VelocityPluginManager implements PluginManager {
    *
    * @param plugin the plugin to register
    */
-  public void registerPlugin(final PluginContainer plugin) {
+  public void registerPlugin(PluginContainer plugin) {
     pluginsById.put(plugin.getDescription().getId(), plugin);
     Optional<?> instance = plugin.getInstance();
     instance.ifPresent(o -> pluginInstances.put(o, plugin));
   }
 
-  private void loadPluginDescription(final JavaPluginLoader loader, final Map<String, PluginDescription> foundCandidates, final Path path) {
+  private void loadPluginDescription(JavaPluginLoader loader, Map<String, PluginDescription> foundCandidates, Path path) {
     try {
       PluginDescription candidate = loader.loadCandidate(path);
 
@@ -101,7 +101,7 @@ public class VelocityPluginManager implements PluginManager {
     }
   }
 
-  private static boolean isJarFile(final Path p) {
+  private static boolean isJarFile(Path p) {
     return p.toFile().isFile() && p.toString().endsWith(".jar");
   }
 
@@ -114,7 +114,7 @@ public class VelocityPluginManager implements PluginManager {
    */
   @SuppressFBWarnings(value = "RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE",
       justification = "I looked carefully and there's no way SpotBugs is right.")
-  public void loadPlugins(final Path directory, final Collection<Path> extraPluginJars) throws IOException {
+  public void loadPlugins(Path directory, Collection<Path> extraPluginJars) throws IOException {
 
     Map<String, PluginDescription> foundCandidates = new LinkedHashMap<>();
     JavaPluginLoader loader = new JavaPluginLoader(server, directory);
@@ -201,7 +201,7 @@ public class VelocityPluginManager implements PluginManager {
   }
 
   @Override
-  public Optional<PluginContainer> fromInstance(final Object instance) {
+  public Optional<PluginContainer> fromInstance(Object instance) {
     checkNotNull(instance, "instance");
 
     if (instance instanceof PluginContainer) {
@@ -212,7 +212,7 @@ public class VelocityPluginManager implements PluginManager {
   }
 
   @Override
-  public Optional<PluginContainer> getPlugin(final String id) {
+  public Optional<PluginContainer> getPlugin(String id) {
     checkNotNull(id, "id");
     return Optional.ofNullable(pluginsById.get(id));
   }
@@ -223,12 +223,12 @@ public class VelocityPluginManager implements PluginManager {
   }
 
   @Override
-  public boolean isLoaded(final String id) {
+  public boolean isLoaded(String id) {
     return pluginsById.containsKey(id);
   }
 
   @Override
-  public void addToClasspath(final Object plugin, final Path path) {
+  public void addToClasspath(Object plugin, Path path) {
     checkNotNull(plugin, "instance");
     checkNotNull(path, "path");
     Optional<PluginContainer> optContainer = fromInstance(plugin);

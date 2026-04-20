@@ -31,7 +31,7 @@ public class TagsUpdatePacket implements MinecraftPacket {
 
   private Map<String, Map<String, int[]>> tags;
 
-  public TagsUpdatePacket(final Map<String, Map<String, int[]>> tags) {
+  public TagsUpdatePacket(Map<String, Map<String, int[]>> tags) {
     this.tags = tags;
   }
 
@@ -40,8 +40,8 @@ public class TagsUpdatePacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     ImmutableMap.Builder<@NotNull String, @NotNull Map<String, int[]>> builder = ImmutableMap.builder();
     int size = ProtocolUtils.readVarInt(buf);
     for (int i = 0; i < size; i++) {
@@ -62,8 +62,8 @@ public class TagsUpdatePacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, tags.size());
     for (Map.Entry<String, Map<String, int[]>> entry : tags.entrySet()) {
       ProtocolUtils.writeString(buf, entry.getKey());
@@ -78,12 +78,12 @@ public class TagsUpdatePacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
   @Override
-  public int encodeSizeHint(final Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(Direction direction, ProtocolVersion version) {
     int size = ProtocolUtils.varIntBytes(tags.size());
     for (Map.Entry<String, Map<String, int[]>> entry : tags.entrySet()) {
       size += ProtocolUtils.stringSizeHint(entry.getKey());

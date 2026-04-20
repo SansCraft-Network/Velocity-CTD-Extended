@@ -56,7 +56,7 @@ public final class PendingTransactions extends HashMap<UUID, Transaction<?, ?>> 
    *
    * @param scheduler the scheduler to use for timeout tasks
    */
-  public PendingTransactions(final @NotNull Scheduler scheduler) {
+  public PendingTransactions(@NotNull Scheduler scheduler) {
     this.refreshTasks = new HashMap<>();
     this.scheduler = scheduler;
     this.delay = Transaction.DEFAULT_TIMEOUT;
@@ -64,7 +64,7 @@ public final class PendingTransactions extends HashMap<UUID, Transaction<?, ?>> 
   }
 
   @Override
-  public Transaction<?, ?> put(final UUID key, final Transaction<?, ?> value) {
+  public Transaction<?, ?> put(UUID key, Transaction<?, ?> value) {
     this.queue(value, this.delay, this.timeUnit);
     return super.put(key, value);
   }
@@ -80,14 +80,14 @@ public final class PendingTransactions extends HashMap<UUID, Transaction<?, ?>> 
    * @param timeUnit the time unit of the delay parameter; must not be null
    * @return the previous transaction associated with the transaction ID, or null if there was no mapping
    */
-  public Transaction<?, ?> put(final @NotNull Transaction<?, ?> value, final int delay, final TimeUnit timeUnit) {
+  public Transaction<?, ?> put(@NotNull Transaction<?, ?> value, int delay, TimeUnit timeUnit) {
     this.queue(value, delay, timeUnit);
     return super.put(value.getTransactionId(), value);
   }
 
   @Override
-  public Transaction<?, ?> remove(final Object key) {
-    final ScheduledTask scheduledTask = this.refreshTasks.remove(key);
+  public Transaction<?, ?> remove(Object key) {
+    ScheduledTask scheduledTask = this.refreshTasks.remove(key);
 
     if (scheduledTask != null) {
       scheduledTask.cancel();
@@ -104,15 +104,15 @@ public final class PendingTransactions extends HashMap<UUID, Transaction<?, ?>> 
    * @param delay the delay, after which the transaction will be processed
    * @param timeUnit the time unit used for the delay parameter; must not be null
    */
-  private void queue(final @NotNull Transaction<?, ?> transaction, final double delay, final TimeUnit timeUnit) {
-    final UUID key = transaction.getTransactionId();
+  private void queue(@NotNull Transaction<?, ?> transaction, double delay, TimeUnit timeUnit) {
+    UUID key = transaction.getTransactionId();
 
     if (this.refreshTasks.containsKey(key)) {
       this.refreshTasks.get(key).cancel();
       this.refreshTasks.remove(key);
     }
 
-    final ScheduledTask scheduledTask = this.scheduler
+    ScheduledTask scheduledTask = this.scheduler
             .buildTask(VelocityVirtualPlugin.INSTANCE, () -> {
               this.remove(key);
               transaction.timeout();

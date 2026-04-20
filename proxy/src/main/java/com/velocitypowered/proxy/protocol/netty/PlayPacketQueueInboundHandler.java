@@ -59,13 +59,13 @@ public class PlayPacketQueueInboundHandler extends ChannelDuplexHandler {
    * @param version the protocol version
    * @param direction the direction of the packet flow (typically {@code SERVERBOUND})
    */
-  public PlayPacketQueueInboundHandler(final ProtocolVersion version, final ProtocolUtils.Direction direction) {
+  public PlayPacketQueueInboundHandler(ProtocolVersion version, ProtocolUtils.Direction direction) {
     this.registry = StateRegistry.CONFIG.getProtocolRegistry(direction, version);
   }
 
   @Override
-  public void channelRead(final @NotNull ChannelHandlerContext ctx, final @NotNull Object msg) {
-    if (msg instanceof final MinecraftPacket packet) {
+  public void channelRead(@NotNull ChannelHandlerContext ctx, @NotNull Object msg) {
+    if (msg instanceof MinecraftPacket packet) {
       // If the packet exists in the CONFIG state, we want to always
       // ensure that it gets handled by the current handler
       if (this.registry.containsPacket(packet)) {
@@ -93,18 +93,18 @@ public class PlayPacketQueueInboundHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelInactive(final @NotNull ChannelHandlerContext ctx) throws Exception {
+  public void channelInactive(@NotNull ChannelHandlerContext ctx) throws Exception {
     this.releaseQueue(ctx, false);
 
     super.channelInactive(ctx);
   }
 
   @Override
-  public void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(ChannelHandlerContext ctx) {
     this.releaseQueue(ctx, ctx.channel().isActive());
   }
 
-  private void releaseQueue(final ChannelHandlerContext ctx, final boolean active) {
+  private void releaseQueue(ChannelHandlerContext ctx, boolean active) {
     // Handle all the queued packets
     Object msg;
     while ((msg = this.queue.poll()) != null) {

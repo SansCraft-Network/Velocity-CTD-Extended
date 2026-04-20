@@ -38,7 +38,7 @@ public final class ProxyVersion {
    * @param vendor the vendor for the proxy implementation
    * @param version the version for the proxy implementation
    */
-  public ProxyVersion(final String name, final String vendor, final String version) {
+  public ProxyVersion(String name, String vendor, String version) {
     this.name = Preconditions.checkNotNull(name, "name");
     this.vendor = Preconditions.checkNotNull(vendor, "vendor");
     this.version = Preconditions.checkNotNull(version, "version");
@@ -81,7 +81,7 @@ public final class ProxyVersion {
   }
 
   @Override
-  public boolean equals(final @Nullable Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) {
       return true;
     }

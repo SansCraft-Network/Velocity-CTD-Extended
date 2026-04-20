@@ -27,13 +27,13 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 public class VelocityTabListEntryLegacy extends KeyedVelocityTabListEntry {
 
-  VelocityTabListEntryLegacy(final VelocityTabListLegacy tabList, final GameProfile profile,
-                             final @Nullable Component displayName, final int latency, final int gameMode) {
+  VelocityTabListEntryLegacy(VelocityTabListLegacy tabList, GameProfile profile,
+                             @Nullable Component displayName, int latency, int gameMode) {
     super(tabList, profile, displayName, latency, gameMode, null);
   }
 
   @Override
-  public TabListEntry setDisplayName(final @Nullable Component displayName) {
+  public TabListEntry setDisplayName(@Nullable Component displayName) {
     getTabList().removeEntry(getProfile().getId()); // We have to remove first if updating
     setDisplayNameInternal(displayName);
     getTabList().addEntry(this);

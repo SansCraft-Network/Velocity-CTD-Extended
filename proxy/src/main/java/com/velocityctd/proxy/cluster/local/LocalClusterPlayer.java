@@ -41,7 +41,7 @@ public final class LocalClusterPlayer implements VelocityClusterPlayer {
   private final VelocityServer server;
   private final ConnectedPlayer player;
 
-  LocalClusterPlayer(final VelocityServer server, final ConnectedPlayer player) {
+  LocalClusterPlayer(VelocityServer server, ConnectedPlayer player) {
     this.server = server;
     this.player = player;
   }
@@ -78,12 +78,12 @@ public final class LocalClusterPlayer implements VelocityClusterPlayer {
   }
 
   @Override
-  public void kick(final Component reason) {
+  public void kick(Component reason) {
     player.disconnect0(reason, true);
   }
 
   @Override
-  public void sudo(final String message) {
+  public void sudo(String message) {
     if (message.startsWith("/")) {
       String fullCommand = message.substring(1);
       String commandLabel = fullCommand.split(" ")[0];
@@ -97,13 +97,13 @@ public final class LocalClusterPlayer implements VelocityClusterPlayer {
   }
 
   @Override
-  public void move(final String targetServer) {
+  public void move(String targetServer) {
     this.server.getServer(targetServer).ifPresent(
         target -> player.createConnectionRequest(target).fireAndForget());
   }
 
   @Override
-  public CompletableFuture<Boolean> transfer(final String ip, final int port) {
+  public CompletableFuture<Boolean> transfer(String ip, int port) {
     if (player.getProtocolVersion().lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
       return completedFuture(false);
     }
@@ -118,7 +118,7 @@ public final class LocalClusterPlayer implements VelocityClusterPlayer {
   }
 
   @Override
-  public void sendMessage(final Component message) {
+  public void sendMessage(Component message) {
     player.sendMessage(message);
   }
 
@@ -128,7 +128,7 @@ public final class LocalClusterPlayer implements VelocityClusterPlayer {
   }
 
   @Override
-  public QueueEntryData toQueueEntryData(final String serverName) {
+  public QueueEntryData toQueueEntryData(String serverName) {
     return new QueueEntryData(
         player.getUniqueId(),
         player.getUsername(),

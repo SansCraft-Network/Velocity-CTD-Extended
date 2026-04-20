@@ -36,22 +36,22 @@ public class ClientboundCookieRequestPacket implements MinecraftPacket {
   public ClientboundCookieRequestPacket() {
   }
 
-  public ClientboundCookieRequestPacket(final Key key) {
+  public ClientboundCookieRequestPacket(Key key) {
     this.key = key;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     this.key = ProtocolUtils.readKey(buf);
   }
 
   @Override
-  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeKey(buf, key);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

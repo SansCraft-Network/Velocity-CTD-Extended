@@ -39,7 +39,7 @@ public final class RedisClusterPlayerService implements VelocityClusterPlayerSer
   private final VelocityServer server;
   private final VelocityRedis redis;
 
-  public RedisClusterPlayerService(final VelocityServer server, final VelocityRedis redis) {
+  public RedisClusterPlayerService(VelocityServer server, VelocityRedis redis) {
     this.server = server;
     this.redis = redis;
   }
@@ -54,7 +54,7 @@ public final class RedisClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public int getPlayersOnServerCount(final String serverName) {
+  public int getPlayersOnServerCount(String serverName) {
     return playerService().getPlayerEntriesInServer(serverName).size();
   }
 
@@ -66,53 +66,53 @@ public final class RedisClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public Collection<VelocityClusterPlayer> getPlayersOnServer(final String serverName) {
+  public Collection<VelocityClusterPlayer> getPlayersOnServer(String serverName) {
     return playerService().getPlayerEntriesInServer(serverName).stream()
         .<VelocityClusterPlayer>map(this::toRedisPlayer)
         .toList();
   }
 
   @Override
-  public Collection<VelocityClusterPlayer> getPlayersOnProxy(final String proxyId) {
+  public Collection<VelocityClusterPlayer> getPlayersOnProxy(String proxyId) {
     return playerService().getPlayerEntriesOnProxy(proxyId).stream()
         .<VelocityClusterPlayer>map(this::toRedisPlayer)
         .toList();
   }
 
   @Override
-  public Optional<VelocityClusterPlayer> getPlayer(final String username) {
-    final PlayerEntry entry = playerService().getPlayerEntry(username);
+  public Optional<VelocityClusterPlayer> getPlayer(String username) {
+    PlayerEntry entry = playerService().getPlayerEntry(username);
     return Optional.ofNullable(entry).map(this::toRedisPlayer);
   }
 
   @Override
-  public Optional<VelocityClusterPlayer> getPlayer(final UUID uniqueId) {
-    final PlayerEntry entry = playerService().getPlayerEntry(uniqueId);
+  public Optional<VelocityClusterPlayer> getPlayer(UUID uniqueId) {
+    PlayerEntry entry = playerService().getPlayerEntry(uniqueId);
     return Optional.ofNullable(entry).map(this::toRedisPlayer);
   }
 
   @Override
-  public boolean isPlayerOnline(final String username) {
+  public boolean isPlayerOnline(String username) {
     return playerService().isPlayerOnline(username);
   }
 
   @Override
-  public boolean onPlayerConnect(final ConnectedPlayer player) {
+  public boolean onPlayerConnect(ConnectedPlayer player) {
     return playerService().onPlayerConnect(player);
   }
 
   @Override
-  public void onPlayerDisconnect(final ConnectedPlayer player) {
+  public void onPlayerDisconnect(ConnectedPlayer player) {
     playerService().onPlayerDisconnect(player);
   }
 
   @Override
-  public void onPlayerSwitchServer(final ConnectedPlayer player, final String serverName) {
+  public void onPlayerSwitchServer(ConnectedPlayer player, String serverName) {
     playerService().onPlayerSwitchServer(player, serverName);
   }
 
   @Override
-  public void onPlayerSettingsChange(final ConnectedPlayer player, final PlayerSettings settings) {
+  public void onPlayerSettingsChange(ConnectedPlayer player, PlayerSettings settings) {
     playerService().onPlayerSettingsChange(player, settings);
   }
 
@@ -124,7 +124,7 @@ public final class RedisClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public void broadcastAlert(final Component message) {
+  public void broadcastAlert(Component message) {
     redis.publish(new VelocityAlert(message));
   }
 

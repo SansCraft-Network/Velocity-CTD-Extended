@@ -47,12 +47,12 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
     this.entries = new ArrayList<>();
   }
 
-  public UpsertPlayerInfoPacket(final Action action) {
+  public UpsertPlayerInfoPacket(Action action) {
     this.actions = EnumSet.of(action);
     this.entries = new ArrayList<>();
   }
 
-  public UpsertPlayerInfoPacket(final EnumSet<Action> actions, final List<Entry> entries) {
+  public UpsertPlayerInfoPacket(EnumSet<Action> actions, List<Entry> entries) {
     this.actions = actions;
     this.entries = entries;
   }
@@ -65,28 +65,28 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
     return actions;
   }
 
-  public boolean containsAction(final Action action) {
+  public boolean containsAction(Action action) {
     return this.actions.contains(action);
   }
 
-  public void addAction(final Action action) {
+  public void addAction(Action action) {
     this.actions.add(action);
   }
 
-  public void addAllActions(final Collection<? extends Action> actions) {
+  public void addAllActions(Collection<? extends Action> actions) {
     this.actions.addAll(actions);
   }
 
-  public void addEntry(final Entry entry) {
+  public void addEntry(Entry entry) {
     this.entries.add(entry);
   }
 
-  public void addAllEntries(final Collection<? extends Entry> entries) {
+  public void addAllEntries(Collection<? extends Entry> entries) {
     this.entries.addAll(entries);
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     byte[] bytes = new byte[-Math.floorDiv(-ALL_ACTIONS.length, 8)];
     buf.readBytes(bytes);
     BitSet actionSet = BitSet.valueOf(bytes);
@@ -109,7 +109,7 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     BitSet set = new BitSet(ALL_ACTIONS.length);
     for (int idx = 0; idx < ALL_ACTIONS.length; idx++) {
       set.set(idx, this.actions.contains(ALL_ACTIONS[idx]));
@@ -129,7 +129,7 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -194,7 +194,7 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
 
     private final Write write;
 
-    Action(final Read read, final Write write) {
+    Action(Read read, Write write) {
       this.read = read;
       this.write = write;
     }
@@ -228,7 +228,7 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
 
     @Nullable private RemoteChatSession chatSession;
 
-    public Entry(final UUID uuid) {
+    public Entry(UUID uuid) {
       this.profileId = uuid;
     }
 
@@ -270,35 +270,35 @@ public class UpsertPlayerInfoPacket implements MinecraftPacket {
       return chatSession;
     }
 
-    public void setProfile(final GameProfile profile) {
+    public void setProfile(GameProfile profile) {
       this.profile = profile;
     }
 
-    public void setListed(final boolean listed) {
+    public void setListed(boolean listed) {
       this.listed = listed;
     }
 
-    public void setLatency(final int latency) {
+    public void setLatency(int latency) {
       this.latency = latency;
     }
 
-    public void setGameMode(final int gameMode) {
+    public void setGameMode(int gameMode) {
       this.gameMode = gameMode;
     }
 
-    public void setDisplayName(final @Nullable ComponentHolder displayName) {
+    public void setDisplayName(@Nullable ComponentHolder displayName) {
       this.displayName = displayName;
     }
 
-    public void setShowHat(final boolean showHat) {
+    public void setShowHat(boolean showHat) {
       this.showHat = showHat;
     }
 
-    public void setListOrder(final int listOrder) {
+    public void setListOrder(int listOrder) {
       this.listOrder = listOrder;
     }
 
-    public void setChatSession(final @Nullable RemoteChatSession chatSession) {
+    public void setChatSession(@Nullable RemoteChatSession chatSession) {
       this.chatSession = chatSession;
     }
 

@@ -35,17 +35,17 @@ public final class SimpleCommandInvocation extends AbstractCommandInvocation<Str
   public static class Factory implements CommandInvocationFactory<SimpleCommand.Invocation> {
 
     @Override
-    public SimpleCommand.Invocation create(final CommandSource source, final List<? extends ParsedCommandNode<?>> nodes,
-                                           final Map<String, ? extends ParsedArgument<?, ?>> arguments) {
-      final String alias = VelocityCommands.readAlias(nodes);
-      final String[] args = VelocityCommands.readArguments(arguments, String[].class, StringArrayArgumentType.EMPTY);
+    public SimpleCommand.Invocation create(CommandSource source, List<? extends ParsedCommandNode<?>> nodes,
+                                           Map<String, ? extends ParsedArgument<?, ?>> arguments) {
+      String alias = VelocityCommands.readAlias(nodes);
+      String[] args = VelocityCommands.readArguments(arguments, String[].class, StringArrayArgumentType.EMPTY);
       return new SimpleCommandInvocation(source, alias, args);
     }
   }
 
   private final String alias;
 
-  SimpleCommandInvocation(final CommandSource source, final String alias, final String[] arguments) {
+  SimpleCommandInvocation(CommandSource source, String alias, String[] arguments) {
     super(source, arguments);
     this.alias = Preconditions.checkNotNull(alias, "alias");
   }
@@ -56,7 +56,7 @@ public final class SimpleCommandInvocation extends AbstractCommandInvocation<Str
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) {
       return true;
     }
@@ -69,7 +69,7 @@ public final class SimpleCommandInvocation extends AbstractCommandInvocation<Str
       return false;
     }
 
-    final SimpleCommandInvocation that = (SimpleCommandInvocation) o;
+    SimpleCommandInvocation that = (SimpleCommandInvocation) o;
     return this.alias.equals(that.alias);
   }
 

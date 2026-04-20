@@ -33,12 +33,12 @@ public class VelocityNettyThreadFactory implements ThreadFactory {
 
   private final String nameFormat;
 
-  public VelocityNettyThreadFactory(final String nameFormat) {
+  public VelocityNettyThreadFactory(String nameFormat) {
     this.nameFormat = checkNotNull(nameFormat, "nameFormat");
   }
 
   @Override
-  public Thread newThread(final @NotNull Runnable r) {
+  public Thread newThread(@NotNull Runnable r) {
     String name = String.format(nameFormat, threadNumber.getAndIncrement());
     return new FastThreadLocalThread(name) {
       @Override

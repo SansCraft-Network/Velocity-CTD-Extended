@@ -39,15 +39,15 @@ public class ServerDataPacket implements MinecraftPacket {
   public ServerDataPacket() {
   }
 
-  public ServerDataPacket(final @Nullable ComponentHolder description, final @Nullable Favicon favicon,
-                          final boolean secureChatEnforced) {
+  public ServerDataPacket(@Nullable ComponentHolder description, @Nullable Favicon favicon,
+                          boolean secureChatEnforced) {
     this.description = description;
     this.favicon = favicon;
     this.secureChatEnforced = secureChatEnforced;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_19_4) || buf.readBoolean()) {
       this.description = ComponentHolder.read(buf, protocolVersion);
     }
@@ -75,7 +75,7 @@ public class ServerDataPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     boolean hasDescription = this.description != null;
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_19_4)) {
       buf.writeBoolean(hasDescription);
@@ -108,7 +108,7 @@ public class ServerDataPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -124,12 +124,12 @@ public class ServerDataPacket implements MinecraftPacket {
     return secureChatEnforced;
   }
 
-  public void setSecureChatEnforced(final boolean secureChatEnforced) {
+  public void setSecureChatEnforced(boolean secureChatEnforced) {
     this.secureChatEnforced = secureChatEnforced;
   }
 
   @Override
-  public int encodeSizeHint(final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public int encodeSizeHint(ProtocolUtils.Direction direction, ProtocolVersion version) {
     return 8 * 1024;
   }
 }

@@ -70,20 +70,20 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
 
   private boolean informationForwarded;
 
-  LoginSessionHandler(final VelocityServer server, final VelocityServerConnection serverConn,
-                      final CompletableFuture<Impl> resultFuture) {
+  LoginSessionHandler(VelocityServer server, VelocityServerConnection serverConn,
+                      CompletableFuture<Impl> resultFuture) {
     this.server = server;
     this.serverConn = serverConn;
     this.resultFuture = resultFuture;
   }
 
   @Override
-  public boolean handle(final EncryptionRequestPacket packet) {
+  public boolean handle(EncryptionRequestPacket packet) {
     throw new IllegalStateException("Backend server is online-mode!");
   }
 
   @Override
-  public boolean handle(final LoginPluginMessagePacket packet) {
+  public boolean handle(LoginPluginMessagePacket packet) {
     MinecraftConnection mc = serverConn.ensureConnected();
     VelocityConfiguration configuration = server.getConfiguration();
 
@@ -117,8 +117,8 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
         return true;
       }
 
-      final byte[] contents = ByteBufUtil.getBytes(packet.content());
-      final MinecraftChannelIdentifier identifier = MinecraftChannelIdentifier.from(packet.getChannel());
+      byte[] contents = ByteBufUtil.getBytes(packet.content());
+      MinecraftChannelIdentifier identifier = MinecraftChannelIdentifier.from(packet.getChannel());
       this.server.getEventManager().fire(new ServerLoginPluginMessageEvent(serverConn, identifier,
               contents, packet.getId()))
           .thenAcceptAsync(event -> {
@@ -135,20 +135,20 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final DisconnectPacket packet) {
+  public boolean handle(DisconnectPacket packet) {
     resultFuture.complete(ConnectionRequestResults.forDisconnect(packet, serverConn.getServer()));
     serverConn.disconnect();
     return true;
   }
 
   @Override
-  public boolean handle(final SetCompressionPacket packet) {
+  public boolean handle(SetCompressionPacket packet) {
     serverConn.ensureConnected().setCompressionThreshold(packet.getThreshold());
     return true;
   }
 
   @Override
-  public boolean handle(final ServerLoginSuccessPacket packet) {
+  public boolean handle(ServerLoginSuccessPacket packet) {
     PlayerInfoForwarding forwardingMode = serverConn.getServer().getPlayerInfoForwardingMode();
 
     if (forwardingMode == PlayerInfoForwarding.MODERN && !informationForwarded) {
@@ -185,16 +185,16 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final ClientboundStoreCookiePacket packet) {
+  public boolean handle(ClientboundStoreCookiePacket packet) {
     throw new IllegalStateException("Can only store cookie in CONFIGURATION or PLAY protocol");
   }
 
   @Override
-  public boolean handle(final ClientboundCookieRequestPacket packet) {
+  public boolean handle(ClientboundCookieRequestPacket packet) {
     server.getEventManager().fire(new CookieRequestEvent(serverConn.getPlayer(), packet.getKey()))
         .thenAcceptAsync(event -> {
           if (event.getResult().isAllowed()) {
-            final Key resultedKey = event.getResult().getKey() == null
+            Key resultedKey = event.getResult().getKey() == null
                 ? event.getOriginalKey() : event.getResult().getKey();
             serverConn.getPlayer().getConnection().write(new ClientboundCookieRequestPacket(resultedKey));
           }
@@ -204,7 +204,7 @@ public class LoginSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public void exception(final Throwable throwable) {
+  public void exception(Throwable throwable) {
     resultFuture.completeExceptionally(throwable);
   }
 

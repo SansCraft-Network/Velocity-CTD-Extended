@@ -50,8 +50,8 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
 
   private Origin originalOrigin;
 
-  private VelocityResourcePackInfo(final UUID id, final String url, final byte @Nullable [] hash, final boolean shouldForce,
-                                   final @Nullable Component prompt, final Origin origin) {
+  private VelocityResourcePackInfo(UUID id, String url, byte @Nullable [] hash, boolean shouldForce,
+                                   @Nullable Component prompt, Origin origin) {
     this.id = id;
     this.url = url;
     this.hash = hash;
@@ -91,7 +91,7 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
     return origin;
   }
 
-  public void setOriginalOrigin(final Origin originalOrigin) {
+  public void setOriginalOrigin(Origin originalOrigin) {
     this.originalOrigin = originalOrigin;
   }
 
@@ -110,7 +110,7 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
   }
 
   @Override
-  public Builder asBuilder(final String newUrl) {
+  public Builder asBuilder(String newUrl) {
     return new BuilderImpl(newUrl)
         .setId(id)
         .setShouldForce(shouldForce)
@@ -131,8 +131,8 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
         .build();
   }
 
-  public static ResourcePackInfo fromAdventureRequest(final ResourcePackRequest request,
-                                                      final net.kyori.adventure.resource.ResourcePackInfo pack) {
+  public static ResourcePackInfo fromAdventureRequest(ResourcePackRequest request,
+                                                      net.kyori.adventure.resource.ResourcePackInfo pack) {
     return new BuilderImpl(pack.uri().toString())
         .setHash(pack.hash().isEmpty() ? null : ByteBufUtil.decodeHexDump(pack.hash()))
         .setId(pack.id())
@@ -161,25 +161,25 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
 
     private Origin origin = Origin.PLUGIN_ON_PROXY;
 
-    public BuilderImpl(final String url) {
+    public BuilderImpl(String url) {
       this.url = Preconditions.checkNotNull(url, "url");
       this.id = UUID.nameUUIDFromBytes(url.getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
-    public BuilderImpl setId(final UUID id) {
+    public BuilderImpl setId(UUID id) {
       this.id = id;
       return this;
     }
 
     @Override
-    public BuilderImpl setShouldForce(final boolean shouldForce) {
+    public BuilderImpl setShouldForce(boolean shouldForce) {
       this.shouldForce = shouldForce;
       return this;
     }
 
     @Override
-    public BuilderImpl setHash(final byte @Nullable [] hash) {
+    public BuilderImpl setHash(byte @Nullable [] hash) {
       if (hash != null) {
         Preconditions.checkArgument(hash.length == 20, "Hash length is not 20");
         this.hash = hash.clone(); // Thanks spotbugs, very helpful.
@@ -191,7 +191,7 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
     }
 
     @Override
-    public BuilderImpl setPrompt(final @Nullable Component prompt) {
+    public BuilderImpl setPrompt(@Nullable Component prompt) {
       this.prompt = prompt;
       return this;
     }
@@ -201,7 +201,7 @@ public final class VelocityResourcePackInfo implements ResourcePackInfo {
       return new VelocityResourcePackInfo(id, url, hash, shouldForce, prompt, origin);
     }
 
-    public BuilderImpl setOrigin(final Origin origin) {
+    public BuilderImpl setOrigin(Origin origin) {
       this.origin = origin;
       return this;
     }

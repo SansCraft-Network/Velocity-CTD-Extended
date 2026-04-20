@@ -54,11 +54,11 @@ public class ChatQueue implements AutoCloseable {
    *
    * @param player the {@link ConnectedPlayer} to maintain the queue for.
    */
-  public ChatQueue(final ConnectedPlayer player) {
+  public ChatQueue(ConnectedPlayer player) {
     this.player = player;
   }
 
-  private void queueTask(final Task task) {
+  private void queueTask(Task task) {
     synchronized (internalLock) {
       if (closed) {
         throw new IllegalStateException("ChatQueue has already been closed");
@@ -96,8 +96,8 @@ public class ChatQueue implements AutoCloseable {
    * @param timestamp        the new {@link Instant} timestamp of this packet to update the internal chat state.
    * @param lastSeenMessages the new {@link LastSeenMessages} last seen messages to update the internal chat state.
    */
-  public void queuePacket(final Function<LastSeenMessages, CompletableFuture<MinecraftPacket>> nextPacket,
-                          final @Nullable Instant timestamp, final @Nullable LastSeenMessages lastSeenMessages) {
+  public void queuePacket(Function<LastSeenMessages, CompletableFuture<MinecraftPacket>> nextPacket,
+                          @Nullable Instant timestamp, @Nullable LastSeenMessages lastSeenMessages) {
     queueTask((chatState, smc) -> {
       LastSeenMessages newLastSeenMessages = chatState.updateFromMessage(timestamp, lastSeenMessages);
       return nextPacket.apply(newLastSeenMessages).thenCompose(packet -> writePacket(packet, smc));
@@ -111,14 +111,14 @@ public class ChatQueue implements AutoCloseable {
    * @param packetFunction a function that maps the prior {@link ChatState} into a new packet.
    * @param <T>            the type of packet to send.
    */
-  public <T extends MinecraftPacket> void queuePacket(final Function<ChatState, T> packetFunction) {
+  public <T extends MinecraftPacket> void queuePacket(Function<ChatState, T> packetFunction) {
     queueTask((chatState, smc) -> {
       T packet = packetFunction.apply(chatState);
       return writePacket(packet, smc);
     });
   }
 
-  public void handleAcknowledgement(final int offset) {
+  public void handleAcknowledgement(int offset) {
     queueTask((chatState, smc) -> {
       int ackCountToForward = chatState.accumulateAckCount(offset);
       if (ackCountToForward > 0) {
@@ -129,7 +129,7 @@ public class ChatQueue implements AutoCloseable {
     });
   }
 
-  private <T extends MinecraftPacket> CompletableFuture<Void> writePacket(final T packet, final MinecraftConnection smc) {
+  private <T extends MinecraftPacket> CompletableFuture<Void> writePacket(T packet, MinecraftConnection smc) {
     return CompletableFuture.runAsync(() -> {
       if (!closed && !smc.isClosed()) {
         ChannelFuture future = smc.write(packet);
@@ -184,7 +184,7 @@ public class ChatQueue implements AutoCloseable {
     }
 
     @Nullable
-    public LastSeenMessages updateFromMessage(final @Nullable Instant timestamp, final @Nullable LastSeenMessages lastSeenMessages) {
+    public LastSeenMessages updateFromMessage(@Nullable Instant timestamp, @Nullable LastSeenMessages lastSeenMessages) {
       if (timestamp != null) {
         this.lastTimestamp = timestamp;
       }
@@ -199,7 +199,7 @@ public class ChatQueue implements AutoCloseable {
       return null;
     }
 
-    public int accumulateAckCount(final int ackCount) {
+    public int accumulateAckCount(int ackCount) {
       int delayedAckCount = this.delayedAckCount.addAndGet(ackCount);
       int ackCountToForward = delayedAckCount - MINIMUM_DELAYED_ACK_COUNT;
       if (ackCountToForward >= LastSeenMessages.WINDOW_SIZE) {

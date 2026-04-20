@@ -29,7 +29,7 @@ public class SignaturePair {
 
   private final byte[] signature;
 
-  public SignaturePair(final UUID signer, final byte[] signature) {
+  public SignaturePair(UUID signer, byte[] signature) {
     this.signer = signer;
     this.signature = signature;
   }

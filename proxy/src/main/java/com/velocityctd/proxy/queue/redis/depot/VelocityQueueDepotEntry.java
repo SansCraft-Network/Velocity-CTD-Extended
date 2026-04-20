@@ -59,7 +59,7 @@ public final class VelocityQueueDepotEntry extends DepotEntry<String, VelocityQu
    *
    * @param queue the queue to snapshot
    */
-  public VelocityQueueDepotEntry(final @NotNull RedisVelocityQueue queue) {
+  public VelocityQueueDepotEntry(@NotNull RedisVelocityQueue queue) {
     super(queue.getName());
 
     //noinspection unchecked

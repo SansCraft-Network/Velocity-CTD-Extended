@@ -46,15 +46,15 @@ public class StripAnsiConverter extends LogEventPatternConverter {
    *
    * @param formatters the formatters that produce the original message content
    */
-  protected StripAnsiConverter(final List<PatternFormatter> formatters) {
+  protected StripAnsiConverter(List<PatternFormatter> formatters) {
     super("stripAnsi", null);
     this.formatters = formatters;
   }
 
   @Override
-  public void format(final LogEvent event, final StringBuilder toAppendTo) {
+  public void format(LogEvent event, StringBuilder toAppendTo) {
     int start = toAppendTo.length();
-    for (final PatternFormatter formatter : formatters) {
+    for (PatternFormatter formatter : formatters) {
       formatter.format(event, toAppendTo);
     }
 
@@ -73,7 +73,7 @@ public class StripAnsiConverter extends LogEventPatternConverter {
    * @return a new {@link StripAnsiConverter} instance, or {@code null}
    *         if the provided options are invalid
    */
-  public static StripAnsiConverter newInstance(final Configuration config, final String[] options) {
+  public static StripAnsiConverter newInstance(Configuration config, String[] options) {
     if (options.length != 1) {
       LOGGER.error("Incorrect number of options on stripFormat. Expected 1 received {}",
           options.length);

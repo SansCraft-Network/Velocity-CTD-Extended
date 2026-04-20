@@ -30,7 +30,7 @@ public final class Endpoint {
 
   private final ListenerType type;
 
-  public Endpoint(final Channel channel, final ListenerType type) {
+  public Endpoint(Channel channel, ListenerType type) {
     this.channel = Preconditions.checkNotNull(channel, "channel");
     this.type = Preconditions.checkNotNull(type, "type");
   }

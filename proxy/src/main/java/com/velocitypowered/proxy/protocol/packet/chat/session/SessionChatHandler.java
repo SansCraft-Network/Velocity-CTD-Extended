@@ -38,7 +38,7 @@ public class SessionChatHandler implements ChatHandler<SessionPlayerChatPacket> 
 
   private final VelocityServer server;
 
-  public SessionChatHandler(final ConnectedPlayer player, final VelocityServer server) {
+  public SessionChatHandler(ConnectedPlayer player, VelocityServer server) {
     this.player = player;
     this.server = server;
   }
@@ -49,7 +49,7 @@ public class SessionChatHandler implements ChatHandler<SessionPlayerChatPacket> 
   }
 
   @Override
-  public void handlePlayerChatInternal(final SessionPlayerChatPacket packet) {
+  public void handlePlayerChatInternal(SessionPlayerChatPacket packet) {
     ChatQueue chatQueue = this.player.getChatQueue();
     EventManager eventManager = this.server.getEventManager();
     PlayerChatEvent toSend = new PlayerChatEvent(player, packet.getMessage());

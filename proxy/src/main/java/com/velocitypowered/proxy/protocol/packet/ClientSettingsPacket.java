@@ -51,9 +51,9 @@ public class ClientSettingsPacket implements MinecraftPacket {
   public ClientSettingsPacket() {
   }
 
-  public ClientSettingsPacket(final @Nullable String locale, final byte viewDistance, final int chatVisibility, final boolean chatColors,
-                              final short skinParts, final int mainHand, final boolean textFilteringEnabled, final boolean clientListingAllowed,
-                              final int particleStatus) {
+  public ClientSettingsPacket(@Nullable String locale, byte viewDistance, int chatVisibility, boolean chatColors,
+                              short skinParts, int mainHand, boolean textFilteringEnabled, boolean clientListingAllowed,
+                              int particleStatus) {
     this.locale = locale;
     this.viewDistance = viewDistance;
     this.chatVisibility = chatVisibility;
@@ -73,7 +73,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return locale;
   }
 
-  public void setLocale(final @Nullable String locale) {
+  public void setLocale(@Nullable String locale) {
     this.locale = locale;
   }
 
@@ -81,7 +81,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return viewDistance;
   }
 
-  public void setViewDistance(final byte viewDistance) {
+  public void setViewDistance(byte viewDistance) {
     this.viewDistance = viewDistance;
   }
 
@@ -89,7 +89,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return chatVisibility;
   }
 
-  public void setChatVisibility(final int chatVisibility) {
+  public void setChatVisibility(int chatVisibility) {
     this.chatVisibility = chatVisibility;
   }
 
@@ -97,7 +97,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return chatColors;
   }
 
-  public void setChatColors(final boolean chatColors) {
+  public void setChatColors(boolean chatColors) {
     this.chatColors = chatColors;
   }
 
@@ -105,7 +105,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return skinParts;
   }
 
-  public void setSkinParts(final short skinParts) {
+  public void setSkinParts(short skinParts) {
     this.skinParts = skinParts;
   }
 
@@ -113,7 +113,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return mainHand;
   }
 
-  public void setMainHand(final int mainHand) {
+  public void setMainHand(int mainHand) {
     this.mainHand = mainHand;
   }
 
@@ -121,7 +121,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return textFilteringEnabled;
   }
 
-  public void setTextFilteringEnabled(final boolean textFilteringEnabled) {
+  public void setTextFilteringEnabled(boolean textFilteringEnabled) {
     this.textFilteringEnabled = textFilteringEnabled;
   }
 
@@ -129,7 +129,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return clientListingAllowed;
   }
 
-  public void setClientListingAllowed(final boolean clientListingAllowed) {
+  public void setClientListingAllowed(boolean clientListingAllowed) {
     this.clientListingAllowed = clientListingAllowed;
   }
 
@@ -137,7 +137,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
     return particleStatus;
   }
 
-  public void setParticleStatus(final int particleStatus) {
+  public void setParticleStatus(int particleStatus) {
     this.particleStatus = particleStatus;
   }
 
@@ -157,7 +157,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     this.locale = ProtocolUtils.readString(buf, 16);
     this.viewDistance = buf.readByte();
     this.chatVisibility = ProtocolUtils.readVarInt(buf);
@@ -187,7 +187,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (locale == null) {
       throw new IllegalStateException("No locale specified");
     }
@@ -221,7 +221,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -236,7 +236,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean equals(final @Nullable Object o) {
+  public boolean equals(@Nullable Object o) {
     if (this == o) {
       return true;
     }
@@ -245,7 +245,7 @@ public class ClientSettingsPacket implements MinecraftPacket {
       return false;
     }
 
-    final ClientSettingsPacket that = (ClientSettingsPacket) o;
+    ClientSettingsPacket that = (ClientSettingsPacket) o;
     return viewDistance == that.viewDistance
         && chatVisibility == that.chatVisibility
         && chatColors == that.chatColors

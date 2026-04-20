@@ -43,12 +43,12 @@ public class ServerLoginPacket implements MinecraftPacket {
   public ServerLoginPacket() {
   }
 
-  public ServerLoginPacket(final String username, final @Nullable IdentifiedKey playerKey) {
+  public ServerLoginPacket(String username, @Nullable IdentifiedKey playerKey) {
     this.username = Preconditions.checkNotNull(username, "username");
     this.playerKey = playerKey;
   }
 
-  public ServerLoginPacket(final String username, final @Nullable UUID holderUuid) {
+  public ServerLoginPacket(String username, @Nullable UUID holderUuid) {
     this.username = Preconditions.checkNotNull(username, "username");
     this.holderUuid = holderUuid;
     this.playerKey = null;
@@ -66,7 +66,7 @@ public class ServerLoginPacket implements MinecraftPacket {
     return this.playerKey;
   }
 
-  public void setPlayerKey(final @Nullable IdentifiedKey playerKey) {
+  public void setPlayerKey(@Nullable IdentifiedKey playerKey) {
     this.playerKey = playerKey;
   }
 
@@ -84,7 +84,7 @@ public class ServerLoginPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion version) {
     username = ProtocolUtils.readString(buf, 16);
     if (username.isEmpty()) {
       throw EMPTY_USERNAME;
@@ -117,7 +117,7 @@ public class ServerLoginPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (username == null) {
       throw new IllegalStateException("No username found!");
     }
@@ -154,7 +154,7 @@ public class ServerLoginPacket implements MinecraftPacket {
   }
 
   @Override
-  public int decodeExpectedMaxLength(final ByteBuf buf, final Direction direction, final ProtocolVersion version) {
+  public int decodeExpectedMaxLength(ByteBuf buf, Direction direction, ProtocolVersion version) {
     // Accommodate the rare (but likely malicious) use of UTF-8 usernames, since it is technically
     // legal on the protocol level.
     int base = 1 + (16 * 3);
@@ -181,7 +181,7 @@ public class ServerLoginPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

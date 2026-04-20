@@ -38,9 +38,9 @@ public final class RedisVelocityQueueEntry extends VelocityQueueEntry {
    * @param queue  the owning queue
    * @param data   the player data
    */
-  public RedisVelocityQueueEntry(final @NotNull VelocityServer server,
-                                 final @NotNull RedisVelocityQueue queue,
-                                 final @NotNull QueueEntryData data) {
+  public RedisVelocityQueueEntry(@NotNull VelocityServer server,
+                                 @NotNull RedisVelocityQueue queue,
+                                 @NotNull QueueEntryData data) {
     super(server, queue, data);
   }
 
@@ -107,10 +107,10 @@ public final class RedisVelocityQueueEntry extends VelocityQueueEntry {
    * @param updatedQueueBypass the refreshed queueBypass flag
    */
   @ApiStatus.Internal
-  public void applyWaitingChangeFromPacket(final boolean waiting, final int attempts,
-                                           final int updatedPriority,
-                                           final boolean updatedFullBypass,
-                                           final boolean updatedQueueBypass) {
+  public void applyWaitingChangeFromPacket(boolean waiting, int attempts,
+                                           int updatedPriority,
+                                           boolean updatedFullBypass,
+                                           boolean updatedQueueBypass) {
     this.waitingForConnection = waiting;
     this.connectionAttempts = attempts;
     this.priority = updatedPriority;

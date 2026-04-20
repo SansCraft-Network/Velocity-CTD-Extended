@@ -68,11 +68,11 @@ public class CommandUtils {
    * @param magicServers "magic servers" to add, if any. useful for including an "all" argument option.
    * @return a suggestion provider that completes a server name
    */
-  public static SuggestionProvider<CommandSource> suggestServer(final VelocityServer server, final String argName,
-                                                                final boolean allowNonQueueable, final boolean performPermissionCheck,
-                                                                final String... magicServers) {
+  public static SuggestionProvider<CommandSource> suggestServer(VelocityServer server, String argName,
+                                                                boolean allowNonQueueable, boolean performPermissionCheck,
+                                                                String... magicServers) {
     return (ctx, builder) -> {
-      final String argument = ctx.getArguments().containsKey(argName)
+      String argument = ctx.getArguments().containsKey(argName)
           ? StringArgumentType.getString(ctx, argName)
           : "";
 
@@ -108,8 +108,8 @@ public class CommandUtils {
    * @param allowNonQueueable whether to return a servers if it can't be queued.
    * @return the found server, or {@code null} if one couldn't be found
    */
-  public static VelocityRegisteredServer getServer(final VelocityServer server, final CommandContext<CommandSource> ctx,
-                                                   final String argName, final boolean allowNonQueueable) {
+  public static VelocityRegisteredServer getServer(VelocityServer server, CommandContext<CommandSource> ctx,
+                                                   String argName, boolean allowNonQueueable) {
     String serverName = ctx.getArgument(argName, String.class);
     Optional<VelocityRegisteredServer> serverOptional = server.getServer(serverName);
 
@@ -143,7 +143,7 @@ public class CommandUtils {
    * @param source the command source to be checked
    * @return whether the command source has permission to join
    */
-  public static boolean checkServerPermissions(final VelocityRegisteredServer server, final CommandSource source) {
+  public static boolean checkServerPermissions(VelocityRegisteredServer server, CommandSource source) {
     String serverName = server.getServerInfo().getName();
     return source.getPermissionValue("velocity.command.server." + serverName) != Tristate.FALSE;
   }
@@ -155,7 +155,7 @@ public class CommandUtils {
    * @param commandName the command name
    * @return {@code Command.SINGLE_SUCCESS} to allow using in expression-style {@code .executes} lambdas.
    */
-  public static int emitUsage(final CommandContext<CommandSource> ctx, final String commandName) {
+  public static int emitUsage(CommandContext<CommandSource> ctx, String commandName) {
     String usedName = commandName;
     ParsedCommandNode<?> node = ctx.getNodes().getFirst();
 
@@ -176,10 +176,10 @@ public class CommandUtils {
    * @param magicProxies "magic proxies" to add, if any. useful for including an "all" argument option.
    * @return a future that resolves to the suggestions
    */
-  public static SuggestionProvider<CommandSource> suggestProxy(final VelocityServer server, final String argName,
-                                                               final String... magicProxies) {
+  public static SuggestionProvider<CommandSource> suggestProxy(VelocityServer server, String argName,
+                                                               String... magicProxies) {
     return (ctx, builder) -> {
-      final String argument = ctx.getArguments().containsKey(argName)
+      String argument = ctx.getArguments().containsKey(argName)
           ? ctx.getArgument(argName, String.class)
           : "";
 
@@ -207,14 +207,14 @@ public class CommandUtils {
    * @param builder the builder passed to the {@code builder} callback
    * @return a future that resolves to the suggestions
    */
-  public static CompletableFuture<Suggestions> suggestPlayer(final VelocityServer server, final CommandContext<CommandSource> ctx,
-                                                             final SuggestionsBuilder builder) {
-    final String argument = ctx.getArguments().containsKey("player")
+  public static CompletableFuture<Suggestions> suggestPlayer(VelocityServer server, CommandContext<CommandSource> ctx,
+                                                             SuggestionsBuilder builder) {
+    String argument = ctx.getArguments().containsKey("player")
         ? ctx.getArgument("player", String.class)
         : "";
-    final Collection<String> playerNames = server.getClusterPlayerService().getPlayerNames();
+    Collection<String> playerNames = server.getClusterPlayerService().getPlayerNames();
 
-    for (final String playerName : playerNames) {
+    for (String playerName : playerNames) {
       if (playerName.regionMatches(true, 0, argument, 0, argument.length())) {
         builder.suggest(playerName);
       }
@@ -229,7 +229,7 @@ public class CommandUtils {
    * @param proxy the proxy server instance
    * @return a list of all registered servers, sorted by name
    */
-  public static List<VelocityRegisteredServer> sortedServerList(final VelocityServer proxy) {
+  public static List<VelocityRegisteredServer> sortedServerList(VelocityServer proxy) {
     List<VelocityRegisteredServer> servers = new ArrayList<>(proxy.getAllServers());
     servers.sort(Comparator.comparing(VelocityRegisteredServer::getServerInfo));
     return Collections.unmodifiableList(servers);
@@ -271,7 +271,7 @@ public class CommandUtils {
    * @param raw the raw string to deserialize
    * @return the deserialized component
    */
-  public static Component deserializeComponent(final @NonNull String raw) {
+  public static Component deserializeComponent(@NonNull String raw) {
     if (raw.startsWith("{") || raw.startsWith("[") || raw.startsWith("\"")) {
       try {
         return GsonComponentSerializer.gson().deserializeOrNull(raw);

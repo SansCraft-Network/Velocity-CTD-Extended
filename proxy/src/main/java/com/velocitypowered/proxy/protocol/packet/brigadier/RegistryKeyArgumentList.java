@@ -25,7 +25,7 @@ public final class RegistryKeyArgumentList {
 
   public static class ResourceOrTag extends RegistryKeyArgument {
 
-    public ResourceOrTag(final String identifier) {
+    public ResourceOrTag(String identifier) {
       super(identifier);
     }
 
@@ -34,12 +34,12 @@ public final class RegistryKeyArgumentList {
       static final ResourceOrTag.Serializer REGISTRY = new ResourceOrTag.Serializer();
 
       @Override
-      public ResourceOrTag deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceOrTag deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
         return new ResourceOrTag(ProtocolUtils.readString(buf));
       }
 
       @Override
-      public void serialize(final ResourceOrTag object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(ResourceOrTag object, ByteBuf buf, ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }
@@ -47,7 +47,7 @@ public final class RegistryKeyArgumentList {
 
   public static class ResourceOrTagKey extends RegistryKeyArgument {
 
-    public ResourceOrTagKey(final String identifier) {
+    public ResourceOrTagKey(String identifier) {
       super(identifier);
     }
 
@@ -56,12 +56,12 @@ public final class RegistryKeyArgumentList {
       static final ResourceOrTagKey.Serializer REGISTRY = new ResourceOrTagKey.Serializer();
 
       @Override
-      public ResourceOrTagKey deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceOrTagKey deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
         return new ResourceOrTagKey(ProtocolUtils.readString(buf));
       }
 
       @Override
-      public void serialize(final ResourceOrTagKey object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(ResourceOrTagKey object, ByteBuf buf, ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }
@@ -69,7 +69,7 @@ public final class RegistryKeyArgumentList {
 
   public static class ResourceSelector extends RegistryKeyArgument {
 
-    public ResourceSelector(final String identifier) {
+    public ResourceSelector(String identifier) {
       super(identifier);
     }
 
@@ -78,12 +78,12 @@ public final class RegistryKeyArgumentList {
       static final ResourceSelector.Serializer REGISTRY = new ResourceSelector.Serializer();
 
       @Override
-      public ResourceSelector deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceSelector deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
         return new ResourceSelector(ProtocolUtils.readString(buf));
       }
 
       @Override
-      public void serialize(final ResourceSelector object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(ResourceSelector object, ByteBuf buf, ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }
@@ -91,7 +91,7 @@ public final class RegistryKeyArgumentList {
 
   public static class ResourceKey extends RegistryKeyArgument {
 
-    public ResourceKey(final String identifier) {
+    public ResourceKey(String identifier) {
       super(identifier);
     }
 
@@ -100,12 +100,12 @@ public final class RegistryKeyArgumentList {
       static final ResourceKey.Serializer REGISTRY = new ResourceKey.Serializer();
 
       @Override
-      public ResourceKey deserialize(final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public ResourceKey deserialize(ByteBuf buf, ProtocolVersion protocolVersion) {
         return new ResourceKey(ProtocolUtils.readString(buf));
       }
 
       @Override
-      public void serialize(final ResourceKey object, final ByteBuf buf, final ProtocolVersion protocolVersion) {
+      public void serialize(ResourceKey object, ByteBuf buf, ProtocolVersion protocolVersion) {
         ProtocolUtils.writeString(buf, object.getIdentifier());
       }
     }

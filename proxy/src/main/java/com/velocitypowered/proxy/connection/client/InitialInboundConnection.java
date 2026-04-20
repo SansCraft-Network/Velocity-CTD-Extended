@@ -41,8 +41,8 @@ public final class InitialInboundConnection implements VelocityInboundConnection
   private final String cleanedAddress;
   private final HandshakePacket handshake;
 
-  InitialInboundConnection(final MinecraftConnection connection, final String cleanedAddress,
-                           final HandshakePacket handshake) {
+  InitialInboundConnection(MinecraftConnection connection, String cleanedAddress,
+                           HandshakePacket handshake) {
     this.connection = connection;
     this.cleanedAddress = cleanedAddress;
     this.handshake = handshake;
@@ -75,8 +75,8 @@ public final class InitialInboundConnection implements VelocityInboundConnection
 
   @Override
   public String toString() {
-    final boolean isPlayerAddressLoggingEnabled = connection.server.getConfiguration().isPlayerAddressLoggingEnabled();
-    final String playerIp = isPlayerAddressLoggingEnabled ? connection.getRemoteAddress().toString() : "<ip address withheld>";
+    boolean isPlayerAddressLoggingEnabled = connection.server.getConfiguration().isPlayerAddressLoggingEnabled();
+    String playerIp = isPlayerAddressLoggingEnabled ? connection.getRemoteAddress().toString() : "<ip address withheld>";
     return "[initial connection] " + playerIp;
   }
 
@@ -100,7 +100,7 @@ public final class InitialInboundConnection implements VelocityInboundConnection
    *
    * @param reason the reason for disconnecting
    */
-  public void disconnect(final Component reason) {
+  public void disconnect(Component reason) {
     Component translated = GlobalTranslator.render(reason, ClosestLocaleMatcher.INSTANCE
         .lookupClosest(Locale.getDefault()));
     if (connection.server.getConfiguration().isLogOfflineConnections()
@@ -119,7 +119,7 @@ public final class InitialInboundConnection implements VelocityInboundConnection
    *
    * @param reason the reason for disconnecting
    */
-  public void disconnectQuietly(final Component reason) {
+  public void disconnectQuietly(Component reason) {
     Component translated = GlobalTranslator.render(reason, ClosestLocaleMatcher.INSTANCE
         .lookupClosest(Locale.getDefault()));
     connection.closeWith(DisconnectPacket.create(translated, getProtocolVersion(), connection.getState()));

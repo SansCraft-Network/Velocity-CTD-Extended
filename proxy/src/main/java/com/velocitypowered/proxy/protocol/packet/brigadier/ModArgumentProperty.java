@@ -34,7 +34,7 @@ public class ModArgumentProperty implements ArgumentType<ByteBuf> {
 
   private final ByteBuf data;
 
-  public ModArgumentProperty(final ArgumentIdentifier identifier, final ByteBuf data) {
+  public ModArgumentProperty(ArgumentIdentifier identifier, ByteBuf data) {
     this.identifier = identifier;
     this.data = Unpooled.unreleasableBuffer(data.asReadOnly());
   }
@@ -48,13 +48,13 @@ public class ModArgumentProperty implements ArgumentType<ByteBuf> {
   }
 
   @Override
-  public ByteBuf parse(final StringReader reader) throws CommandSyntaxException {
+  public ByteBuf parse(StringReader reader) throws CommandSyntaxException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
-                                                            final SuggestionsBuilder builder) {
+  public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context,
+                                                            SuggestionsBuilder builder) {
     throw new UnsupportedOperationException();
   }
 

@@ -49,7 +49,7 @@ public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K,
    * @param valueClass the class type of the value in the depot
    * @param provider the redis provider implementation instance
    */
-  public AbstractDepotService(final Class<V> valueClass, final @NotNull RedisProvider provider) {
+  public AbstractDepotService(Class<V> valueClass, @NotNull RedisProvider provider) {
     this.depot = provider.createDepot(valueClass);
   }
 
@@ -60,7 +60,7 @@ public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K,
    * @return the matching depot entry, or {@code null} if not found
    */
   @Override
-  public @Nullable V get(final K key) {
+  public @Nullable V get(K key) {
     return this.depot.get(key);
   }
 
@@ -82,7 +82,7 @@ public abstract non-sealed class AbstractDepotService<K, V extends DepotEntry<K,
    * @return a collection of matching entries
    */
   @Override
-  public @NotNull Collection<V> queryAll(final Predicate<V> predicate) {
+  public @NotNull Collection<V> queryAll(Predicate<V> predicate) {
     return this.depot.values().stream().filter(predicate).toList();
   }
 

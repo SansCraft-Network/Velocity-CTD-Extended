@@ -51,7 +51,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
     return command;
   }
 
-  public void setCommand(final @Nullable String command) {
+  public void setCommand(@Nullable String command) {
     this.command = command;
   }
 
@@ -60,7 +60,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
     return assumeCommand;
   }
 
-  public void setAssumeCommand(final boolean assumeCommand) {
+  public void setAssumeCommand(boolean assumeCommand) {
     this.assumeCommand = assumeCommand;
   }
 
@@ -68,7 +68,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
     return hasPosition;
   }
 
-  public void setHasPosition(final boolean hasPosition) {
+  public void setHasPosition(boolean hasPosition) {
     this.hasPosition = hasPosition;
   }
 
@@ -76,7 +76,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
     return position;
   }
 
-  public void setPosition(final long position) {
+  public void setPosition(long position) {
     this.position = position;
   }
 
@@ -84,7 +84,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
     return transactionId;
   }
 
-  public void setTransactionId(final int transactionId) {
+  public void setTransactionId(int transactionId) {
     this.transactionId = transactionId;
   }
 
@@ -100,7 +100,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (version.noLessThan(MINECRAFT_1_13)) {
       this.transactionId = ProtocolUtils.readVarInt(buf);
       this.command = ProtocolUtils.readString(buf, VANILLA_MAX_TAB_COMPLETE_LEN);
@@ -120,7 +120,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (command == null) {
       throw new IllegalStateException("Command is not specified");
     }
@@ -144,7 +144,7 @@ public class TabCompleteRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

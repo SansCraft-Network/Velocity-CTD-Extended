@@ -87,7 +87,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
 
   private final VelocityServer server;
 
-  public GameSpyQueryHandler(final VelocityServer server) {
+  public GameSpyQueryHandler(VelocityServer server) {
     this.server = server;
     this.random = new SecureRandom();
   }
@@ -108,7 +108,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
   }
 
   @Override
-  protected void channelRead0(final ChannelHandlerContext ctx, final DatagramPacket msg) {
+  protected void channelRead0(ChannelHandlerContext ctx, DatagramPacket msg) {
     ByteBuf queryMessage = msg.content();
     InetAddress senderAddress = msg.sender().getAddress();
 
@@ -199,7 +199,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
     }
   }
 
-  private static void writeString(final ByteBuf buf, final String string) {
+  private static void writeString(ByteBuf buf, String string) {
     buf.writeCharSequence(string, StandardCharsets.ISO_8859_1);
     buf.writeByte(0x00);
   }
@@ -221,7 +221,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
 
     private final boolean isBasic;
 
-    ResponseWriter(final ByteBuf buf, final boolean isBasic) {
+    ResponseWriter(ByteBuf buf, boolean isBasic) {
       this.buf = buf;
       this.isBasic = isBasic;
 
@@ -234,7 +234,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
     // for full stat response. Otherwise, this follows
     // GS4QueryHandler#QUERY_BASIC_RESPONSE_CONTENTS to decide what
     // to write into the packet body
-    void write(final String key, final Object value) {
+    void write(String key, Object value) {
       if (isBasic) {
         // Basic contains only specific-set of data
         if (!QUERY_BASIC_RESPONSE_CONTENTS.contains(key)) {
@@ -255,7 +255,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
 
     // "Ends" packet k/v body writing and writes a stat player list to
     // the packet if this writer is initialized for full stat response
-    void writePlayers(final Collection<String> players) {
+    void writePlayers(Collection<String> players) {
       if (isBasic) {
         return;
       }
@@ -268,7 +268,7 @@ public class GameSpyQueryHandler extends SimpleChannelInboundHandler<DatagramPac
       buf.writeByte(0x00);
     }
 
-    void writePlugins(final String serverVersion, final Collection<QueryResponse.PluginInformation> plugins) {
+    void writePlugins(String serverVersion, Collection<QueryResponse.PluginInformation> plugins) {
       if (isBasic) {
         return;
       }

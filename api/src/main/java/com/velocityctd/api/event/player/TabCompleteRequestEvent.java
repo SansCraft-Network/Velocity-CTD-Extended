@@ -38,7 +38,7 @@ public class TabCompleteRequestEvent {
    * @param player the player who initiated the tab completion request
    * @param partialMessage the message being partially completed
    */
-  public TabCompleteRequestEvent(final Player player, final String partialMessage) {
+  public TabCompleteRequestEvent(Player player, String partialMessage) {
     this.player = checkNotNull(player, "player");
     this.partialMessage = checkNotNull(partialMessage, "partialMessage");
   }
@@ -66,7 +66,7 @@ public class TabCompleteRequestEvent {
    *
    * @param partialMessage the new partial message string
    */
-  public void setPartialMessage(final String partialMessage) {
+  public void setPartialMessage(String partialMessage) {
     this.partialMessage = partialMessage;
   }
 

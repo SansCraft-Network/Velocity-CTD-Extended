@@ -32,12 +32,12 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
   public ClientboundServerLinksPacket() {
   }
 
-  public ClientboundServerLinksPacket(final List<ServerLink> serverLinks) {
+  public ClientboundServerLinksPacket(List<ServerLink> serverLinks) {
     this.serverLinks = serverLinks;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     int linksCount = ProtocolUtils.readVarInt(buf);
 
     this.serverLinks = ProtocolUtils.newList(linksCount);
@@ -47,7 +47,7 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
     ProtocolUtils.writeVarInt(buf, serverLinks.size());
 
     for (ServerLink serverLink : serverLinks) {
@@ -56,7 +56,7 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
@@ -66,7 +66,7 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
 
   public record ServerLink(int id, ComponentHolder displayName, String url) {
 
-    private static ServerLink read(final ByteBuf buf, final ProtocolVersion version) {
+    private static ServerLink read(ByteBuf buf, ProtocolVersion version) {
       if (buf.readBoolean()) {
         return new ServerLink(ProtocolUtils.readVarInt(buf), null, ProtocolUtils.readString(buf));
       } else {
@@ -74,7 +74,7 @@ public class ClientboundServerLinksPacket implements MinecraftPacket {
       }
     }
 
-    private void write(final ByteBuf buf) {
+    private void write(ByteBuf buf) {
       if (id >= 0) {
         buf.writeBoolean(true);
         ProtocolUtils.writeVarInt(buf, id);

@@ -118,7 +118,7 @@ public class VelocityEventManager implements EventManager {
    *
    * @param pluginManager a reference to the Velocity plugin manager
    */
-  public VelocityEventManager(final PluginManager pluginManager) {
+  public VelocityEventManager(PluginManager pluginManager) {
     this.pluginManager = pluginManager;
   }
 
@@ -134,10 +134,10 @@ public class VelocityEventManager implements EventManager {
    * @param <F> the type of the functional interface used to invoke the handler method
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  public <F> void registerHandlerAdapter(final String name, final Predicate<Method> filter,
-                                         final BiConsumer<Method, List<String>> validator,
-                                         final TypeToken<@NotNull F> invokeFunctionType,
-                                         final Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder) {
+  public <F> void registerHandlerAdapter(String name, Predicate<Method> filter,
+                                         BiConsumer<Method, List<String>> validator,
+                                         TypeToken<@NotNull F> invokeFunctionType,
+                                         Function<F, BiFunction<Object, Object, EventTask>> handlerBuilder) {
     handlerAdapters.add(new CustomHandlerAdapter(name, filter, validator, invokeFunctionType, handlerBuilder, METHOD_HANDLES_LOOKUP));
   }
 
@@ -161,9 +161,9 @@ public class VelocityEventManager implements EventManager {
      */
     final Object instance;
 
-    HandlerRegistration(final PluginContainer plugin, final short order,
-                        final Class<?> eventType, final Object instance, final EventHandler<Object> handler,
-                        final AsyncType asyncType) {
+    HandlerRegistration(PluginContainer plugin, short order,
+                        Class<?> eventType, Object instance, EventHandler<Object> handler,
+                        AsyncType asyncType) {
       this.plugin = plugin;
       this.order = order;
       this.eventType = eventType;
@@ -198,19 +198,19 @@ public class VelocityEventManager implements EventManager {
 
     final HandlerRegistration[] handlers;
 
-    HandlersCache(final AsyncType asyncType, final HandlerRegistration[] handlers) {
+    HandlersCache(AsyncType asyncType, HandlerRegistration[] handlers) {
       this.asyncType = asyncType;
       this.handlers = handlers;
     }
   }
 
-  private @Nullable HandlersCache bakeHandlers(final Class<?> eventType) {
-    final List<HandlerRegistration> baked = new ArrayList<>();
-    final Collection<Class<?>> types = eventTypeTracker.getFriendsOf(eventType);
+  private @Nullable HandlersCache bakeHandlers(Class<?> eventType) {
+    List<HandlerRegistration> baked = new ArrayList<>();
+    Collection<Class<?>> types = eventTypeTracker.getFriendsOf(eventType);
 
     lock.readLock().lock();
     try {
-      for (final Class<?> type : types) {
+      for (Class<?> type : types) {
         baked.addAll(handlersByType.get(type));
       }
     } finally {
@@ -242,17 +242,17 @@ public class VelocityEventManager implements EventManager {
    * @param method The method to generate an untargeted handler for
    * @return The untargeted handler
    */
-  private UntargetedEventHandler buildUntargetedMethodHandler(final Method method) throws IllegalAccessException {
-    for (final CustomHandlerAdapter<?> handlerAdapter : handlerAdapters) {
+  private UntargetedEventHandler buildUntargetedMethodHandler(Method method) throws IllegalAccessException {
+    for (CustomHandlerAdapter<?> handlerAdapter : handlerAdapters) {
       if (handlerAdapter.filter.test(method)) {
         return handlerAdapter.buildUntargetedHandler(method);
       }
     }
 
-    final MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(
+    MethodHandles.Lookup lookup = MethodHandles.privateLookupIn(
         method.getDeclaringClass(), METHOD_HANDLES_LOOKUP);
-    final MethodHandle methodHandle = lookup.unreflect(method);
-    final LambdaType<? extends UntargetedEventHandler> type;
+    MethodHandle methodHandle = lookup.unreflect(method);
+    LambdaType<? extends UntargetedEventHandler> type;
     if (EventTask.class.isAssignableFrom(method.getReturnType())) {
       type = UNTARGETED_EVENT_TASK_HANDLER_TYPE;
     } else if (method.getParameterCount() == 2) {
@@ -278,9 +278,9 @@ public class VelocityEventManager implements EventManager {
 
     final @Nullable Class<?> continuationType;
 
-    private MethodHandlerInfo(final Method method, final AsyncType asyncType,
-                              final @Nullable Class<?> eventType, final short order,
-                              final @Nullable String errors, final @Nullable Class<?> continuationType) {
+    private MethodHandlerInfo(Method method, AsyncType asyncType,
+                              @Nullable Class<?> eventType, short order,
+                              @Nullable String errors, @Nullable Class<?> continuationType) {
       this.method = method;
       this.asyncType = asyncType;
       this.eventType = eventType;
@@ -290,10 +290,10 @@ public class VelocityEventManager implements EventManager {
     }
   }
 
-  private void collectMethods(final Class<?> targetClass,
-                              final Map<String, MethodHandlerInfo> collected) {
-    for (final Method method : targetClass.getDeclaredMethods()) {
-      final Subscribe subscribe = method.getAnnotation(Subscribe.class);
+  private void collectMethods(Class<?> targetClass,
+                              Map<String, MethodHandlerInfo> collected) {
+    for (Method method : targetClass.getDeclaredMethods()) {
+      Subscribe subscribe = method.getAnnotation(Subscribe.class);
       if (subscribe == null) {
         continue;
       }
@@ -312,7 +312,7 @@ public class VelocityEventManager implements EventManager {
         continue;
       }
 
-      final Set<String> errors = new HashSet<>();
+      Set<String> errors = new HashSet<>();
       if (Modifier.isStatic(method.getModifiers())) {
         errors.add("method must not be static");
       }
@@ -324,13 +324,13 @@ public class VelocityEventManager implements EventManager {
       Class<?> eventType = null;
       Class<?> continuationType = null;
       CustomHandlerAdapter<?> handlerAdapter = null;
-      final int paramCount = method.getParameterCount();
+      int paramCount = method.getParameterCount();
       if (paramCount == 0) {
         errors.add("method must have at least one parameter which is the event");
       } else {
-        final Class<?>[] parameterTypes = method.getParameterTypes();
+        Class<?>[] parameterTypes = method.getParameterTypes();
         eventType = parameterTypes[0];
-        for (final CustomHandlerAdapter<?> handlerAdapterCandidate : handlerAdapters) {
+        for (CustomHandlerAdapter<?> handlerAdapterCandidate : handlerAdapters) {
           if (handlerAdapterCandidate.filter.test(method)) {
             handlerAdapter = handlerAdapterCandidate;
             break;
@@ -338,7 +338,7 @@ public class VelocityEventManager implements EventManager {
         }
 
         if (handlerAdapter != null) {
-          final List<String> adapterErrors = new ArrayList<>();
+          List<String> adapterErrors = new ArrayList<>();
           handlerAdapter.validator.accept(method, adapterErrors);
           if (!adapterErrors.isEmpty()) {
             errors.add(String.format("%s adapter errors: [%s]",
@@ -354,7 +354,7 @@ public class VelocityEventManager implements EventManager {
       }
 
       AsyncType asyncType = AsyncType.NEVER;
-      final Class<?> returnType = method.getReturnType();
+      Class<?> returnType = method.getReturnType();
       if (handlerAdapter == null) {
         if (returnType != void.class && continuationType == Continuation.class) {
           errors.add("method return type must be void if a continuation parameter is provided");
@@ -381,27 +381,27 @@ public class VelocityEventManager implements EventManager {
       }
 
       // The default value of 0 will fall back to PostOrder, the default PostOrder (NORMAL) is also 0
-      final short order;
+      short order;
       if (subscribe.priority() != 0) {
         order = subscribe.priority();
       } else {
         order = (short) POST_ORDER_MAP.get(subscribe.order());
       }
-      final String errorsJoined = errors.isEmpty() ? null : String.join(",", errors);
+      String errorsJoined = errors.isEmpty() ? null : String.join(",", errors);
       collected.put(key, new MethodHandlerInfo(method, asyncType, eventType, order, errorsJoined,
           continuationType));
     }
 
-    final Class<?> superclass = targetClass.getSuperclass();
+    Class<?> superclass = targetClass.getSuperclass();
     if (superclass != Object.class) {
       collectMethods(superclass, collected);
     }
   }
 
-  private void register(final List<HandlerRegistration> registrations) {
+  private void register(List<HandlerRegistration> registrations) {
     lock.writeLock().lock();
     try {
-      for (final HandlerRegistration registration : registrations) {
+      for (HandlerRegistration registration : registrations) {
         handlersByType.put(registration.eventType, registration);
       }
     } finally {
@@ -416,9 +416,9 @@ public class VelocityEventManager implements EventManager {
   }
 
   @Override
-  public void register(final Object plugin, final Object listener) {
+  public void register(Object plugin, Object listener) {
     requireNonNull(listener, "listener");
-    final PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
+    PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
     if (plugin == listener) {
       throw new IllegalArgumentException("The plugin main instance is automatically registered.");
     }
@@ -427,7 +427,7 @@ public class VelocityEventManager implements EventManager {
   }
 
   @Override
-  public <E> void register(final Object plugin, final Class<E> eventClass, final PostOrder order, final EventHandler<E> handler) {
+  public <E> void register(Object plugin, Class<E> eventClass, PostOrder order, EventHandler<E> handler) {
     if (order == PostOrder.CUSTOM) {
       throw new IllegalArgumentException(
           "This method does not support custom post orders. Use the overload with short instead."
@@ -438,18 +438,18 @@ public class VelocityEventManager implements EventManager {
   }
 
   @Override
-  public <E> void register(final Object plugin, final Class<E> eventClass, final short postOrder, final EventHandler<E> handler) {
+  public <E> void register(Object plugin, Class<E> eventClass, short postOrder, EventHandler<E> handler) {
     register(plugin, eventClass, postOrder, handler, AsyncType.SOMETIMES);
   }
 
   @SuppressWarnings("unchecked")
-  private <E> void register(final Object plugin, final Class<E> eventClass, final short postOrder,
-                            final EventHandler<E> handler, final AsyncType ignoredAsyncType) {
-    final PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
+  private <E> void register(Object plugin, Class<E> eventClass, short postOrder,
+                            EventHandler<E> handler, AsyncType ignoredAsyncType) {
+    PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
     requireNonNull(eventClass, "eventClass");
     requireNonNull(handler, "handler");
 
-    final HandlerRegistration registration = new HandlerRegistration(pluginContainer,
+    HandlerRegistration registration = new HandlerRegistration(pluginContainer,
         postOrder, eventClass, handler, (EventHandler<Object>) handler,
         AsyncType.ALWAYS);
     register(Collections.singletonList(registration));
@@ -461,26 +461,26 @@ public class VelocityEventManager implements EventManager {
    * @param pluginContainer registering plugin
    * @param listener        listener to register
    */
-  public void registerInternally(final PluginContainer pluginContainer, final Object listener) {
-    final Class<?> targetClass = listener.getClass();
-    final Map<String, MethodHandlerInfo> collected = new HashMap<>();
+  public void registerInternally(PluginContainer pluginContainer, Object listener) {
+    Class<?> targetClass = listener.getClass();
+    Map<String, MethodHandlerInfo> collected = new HashMap<>();
     collectMethods(targetClass, collected);
 
-    final List<HandlerRegistration> registrations = new ArrayList<>();
-    for (final MethodHandlerInfo info : collected.values()) {
+    List<HandlerRegistration> registrations = new ArrayList<>();
+    for (MethodHandlerInfo info : collected.values()) {
       if (info.errors != null) {
         LOGGER.info("Invalid listener method {} in {}: {}",
             info.method.getName(), info.method.getDeclaringClass().getName(), info.errors);
         continue;
       }
 
-      final UntargetedEventHandler untargetedHandler = untargetedMethodHandlers.get(info.method);
+      UntargetedEventHandler untargetedHandler = untargetedMethodHandlers.get(info.method);
       assert untargetedHandler != null;
       if (info.eventType == null) {
         throw new VerifyException("Event type is not present and there are no errors");
       }
 
-      final EventHandler<Object> handler = untargetedHandler.buildHandler(listener);
+      EventHandler<Object> handler = untargetedHandler.buildHandler(listener);
       registrations.add(new HandlerRegistration(pluginContainer, info.order,
           info.eventType, listener, handler, info.asyncType));
     }
@@ -489,31 +489,31 @@ public class VelocityEventManager implements EventManager {
   }
 
   @Override
-  public void unregisterListeners(final Object plugin) {
-    final PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
+  public void unregisterListeners(Object plugin) {
+    PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
     unregisterIf(registration -> registration.plugin == pluginContainer);
   }
 
   @Override
-  public void unregisterListener(final Object plugin, final Object handler) {
-    final PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
+  public void unregisterListener(Object plugin, Object handler) {
+    PluginContainer pluginContainer = pluginManager.ensurePluginContainer(plugin);
     requireNonNull(handler, "handler");
     unregisterIf(registration ->
         registration.plugin == pluginContainer && registration.instance == handler);
   }
 
   @Override
-  public <E> void unregister(final Object plugin, final EventHandler<E> handler) {
+  public <E> void unregister(Object plugin, EventHandler<E> handler) {
     unregisterListener(plugin, handler);
   }
 
-  private void unregisterIf(final Predicate<HandlerRegistration> predicate) {
-    final List<HandlerRegistration> removed = new ArrayList<>();
+  private void unregisterIf(Predicate<HandlerRegistration> predicate) {
+    List<HandlerRegistration> removed = new ArrayList<>();
     lock.writeLock().lock();
     try {
-      final Iterator<HandlerRegistration> it = handlersByType.values().iterator();
+      Iterator<HandlerRegistration> it = handlersByType.values().iterator();
       while (it.hasNext()) {
-        final HandlerRegistration registration = it.next();
+        HandlerRegistration registration = it.next();
         if (predicate.test(registration)) {
           it.remove();
           removed.add(registration);
@@ -537,16 +537,16 @@ public class VelocityEventManager implements EventManager {
    * @param eventClass the class of the event to check
    * @return {@code true} if any subscribers were found, else {@code false}
    */
-  public boolean hasSubscribers(final Class<?> eventClass) {
+  public boolean hasSubscribers(Class<?> eventClass) {
     requireNonNull(eventClass, "eventClass");
-    final HandlersCache handlersCache = this.handlersCache.get(eventClass);
+    HandlersCache handlersCache = this.handlersCache.get(eventClass);
     return handlersCache != null && handlersCache.handlers.length > 0;
   }
 
   @Override
-  public void fireAndForget(final Object event) {
+  public void fireAndForget(Object event) {
     requireNonNull(event, "event");
-    final HandlersCache handlersCache = this.handlersCache.get(event.getClass());
+    HandlersCache handlersCache = this.handlersCache.get(event.getClass());
     if (handlersCache == null || handlersCache.handlers.length == 0) {
       // Optimization: nobody's listening.
       return;
@@ -556,22 +556,22 @@ public class VelocityEventManager implements EventManager {
   }
 
   @Override
-  public <E> CompletableFuture<E> fire(final E event) {
+  public <E> CompletableFuture<E> fire(E event) {
     requireNonNull(event, "event");
-    final HandlersCache handlersCache = this.handlersCache.get(event.getClass());
+    HandlersCache handlersCache = this.handlersCache.get(event.getClass());
     if (handlersCache == null || handlersCache.handlers.length == 0) {
       // Optimization: nobody's listening.
       return CompletableFuture.completedFuture(event);
     }
 
-    final CompletableFuture<E> future = new CompletableFuture<>();
+    CompletableFuture<E> future = new CompletableFuture<>();
     fire(future, event, handlersCache);
     return future;
   }
 
-  private <E> void fire(final @Nullable CompletableFuture<E> future,
-                        final E event, final HandlersCache handlersCache) {
-    final HandlerRegistration registration = handlersCache.handlers[0];
+  private <E> void fire(@Nullable CompletableFuture<E> future,
+                        E event, HandlersCache handlersCache) {
+    HandlerRegistration registration = handlersCache.handlers[0];
     if (registration.asyncType == AsyncType.ALWAYS) {
       registration.plugin.getExecutorService().execute(() -> fire(future, event, 0, true, handlersCache.handlers));
     } else {
@@ -579,17 +579,17 @@ public class VelocityEventManager implements EventManager {
     }
   }
 
-  private <E> void fire(final @Nullable CompletableFuture<E> future, final E event,
-                        final int offset, final boolean currentlyAsync, final HandlerRegistration[] registrations) {
+  private <E> void fire(@Nullable CompletableFuture<E> future, E event,
+                        int offset, boolean currentlyAsync, HandlerRegistration[] registrations) {
     for (int i = offset; i < registrations.length; i++) {
-      final HandlerRegistration registration = registrations[i];
+      HandlerRegistration registration = registrations[i];
       try {
-        final EventTask eventTask = registration.handler.executeAsync(event);
+        EventTask eventTask = registration.handler.executeAsync(event);
         if (eventTask == null) {
           continue;
         }
 
-        final ContinuationTask<E> continuationTask = new ContinuationTask<>(eventTask,
+        ContinuationTask<E> continuationTask = new ContinuationTask<>(eventTask,
             registrations, future, event, i, currentlyAsync);
         if (currentlyAsync || !eventTask.requiresAsync()) {
           if (continuationTask.execute()) {
@@ -602,7 +602,7 @@ public class VelocityEventManager implements EventManager {
         // fire will continue in another thread once the async task is
         // executed and the continuation is resumed
         return;
-      } catch (final Throwable t) {
+      } catch (Throwable t) {
         logHandlerException(registration, t);
       }
     }
@@ -626,7 +626,7 @@ public class VelocityEventManager implements EventManager {
     try {
       CONTINUATION_TASK_RESUMED = MethodHandles.lookup().findVarHandle(ContinuationTask.class, "resumed", boolean.class);
       CONTINUATION_TASK_STATE = MethodHandles.lookup().findVarHandle(ContinuationTask.class, "state", int.class);
-    } catch (final ReflectiveOperationException e) {
+    } catch (ReflectiveOperationException e) {
       throw new IllegalStateException();
     }
   }
@@ -652,10 +652,10 @@ public class VelocityEventManager implements EventManager {
     @SuppressWarnings({"FieldMayBeFinal"})
     private volatile boolean resumed = false;
 
-    private ContinuationTask(final EventTask task,
-                             final HandlerRegistration[] registrations,
-                             final @Nullable CompletableFuture<E> future,
-                             final E event, final int index, final boolean currentlyAsync) {
+    private ContinuationTask(EventTask task,
+                             HandlerRegistration[] registrations,
+                             @Nullable CompletableFuture<E> future,
+                             E event, int index, boolean currentlyAsync) {
       this.task = task;
       this.registrations = registrations;
       this.future = future;
@@ -680,7 +680,7 @@ public class VelocityEventManager implements EventManager {
       state = TASK_STATE_EXECUTING;
       try {
         task.execute(this);
-      } catch (final Throwable t) {
+      } catch (Throwable t) {
         // validateOnlyOnce false here so don't get an exception if the
         // continuation was resumed before
         resume(t, false);
@@ -694,14 +694,14 @@ public class VelocityEventManager implements EventManager {
       resume(null, true);
     }
 
-    void resume(final @Nullable Throwable exception, final boolean validateOnlyOnce) {
-      final boolean changed = CONTINUATION_TASK_RESUMED.compareAndSet(this, false, true);
+    void resume(@Nullable Throwable exception, boolean validateOnlyOnce) {
+      boolean changed = CONTINUATION_TASK_RESUMED.compareAndSet(this, false, true);
       // Only allow the continuation to be resumed once
       if (!changed && validateOnlyOnce) {
         throw new IllegalStateException("The continuation can only be resumed once.");
       }
 
-      final HandlerRegistration registration = registrations[index];
+      HandlerRegistration registration = registrations[index];
       if (exception != null) {
         logHandlerException(registration, exception);
       }
@@ -725,8 +725,8 @@ public class VelocityEventManager implements EventManager {
         // If we are remaining in the same thread for the next handler, fire
         // the next event immediately, else fire it within the executor service
         // of the plugin with the next handler.
-        final HandlerRegistration next = registrations[index + 1];
-        final Thread currentThread = Thread.currentThread();
+        HandlerRegistration next = registrations[index + 1];
+        Thread currentThread = Thread.currentThread();
         if (currentThread == firedOnThread && next.asyncType != AsyncType.ALWAYS) {
           fire(future, event, index + 1, currentlyAsync, registrations);
         } else {
@@ -737,13 +737,13 @@ public class VelocityEventManager implements EventManager {
     }
 
     @Override
-    public void resumeWithException(final Throwable exception) {
+    public void resumeWithException(Throwable exception) {
       resume(requireNonNull(exception, "exception"), true);
     }
   }
 
-  private static void logHandlerException(final HandlerRegistration registration, final Throwable t) {
-    final PluginDescription pluginDescription = registration.plugin.getDescription();
+  private static void logHandlerException(HandlerRegistration registration, Throwable t) {
+    PluginDescription pluginDescription = registration.plugin.getDescription();
     LOGGER.error("Couldn't pass {} to {} {}", registration.eventType.getSimpleName(),
         pluginDescription.getId(), pluginDescription.getVersion().orElse(""), t);
   }

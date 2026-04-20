@@ -35,12 +35,12 @@ public class DialogShowPacket implements MinecraftPacket {
 
   private BinaryTag nbt;
 
-  public DialogShowPacket(final StateRegistry state) {
+  public DialogShowPacket(StateRegistry state) {
     this.state = state;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     this.id = this.state == StateRegistry.CONFIG ? 0 : ProtocolUtils.readVarInt(buf);
     if (this.id == 0) {
       this.nbt = ProtocolUtils.readBinaryTag(buf, protocolVersion, BinaryTagIO.reader());
@@ -48,7 +48,7 @@ public class DialogShowPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     if (this.state == StateRegistry.CONFIG) {
       ProtocolUtils.writeBinaryTag(buf, protocolVersion, this.nbt);
     } else {
@@ -60,7 +60,7 @@ public class DialogShowPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

@@ -36,7 +36,7 @@ public record VelocityKick(UUID uniqueId, Component component, @Nullable String 
    * @param uniqueId the player's unique ID
    * @param component the disconnect message
    */
-  public VelocityKick(final UUID uniqueId, final Component component) {
+  public VelocityKick(UUID uniqueId, Component component) {
     this(uniqueId, component, null);
   }
 }

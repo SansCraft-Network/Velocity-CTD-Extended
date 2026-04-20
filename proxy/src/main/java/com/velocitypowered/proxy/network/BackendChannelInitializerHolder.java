@@ -33,7 +33,7 @@ public class BackendChannelInitializerHolder implements Supplier<ChannelInitiali
 
   private ChannelInitializer<Channel> initializer;
 
-  BackendChannelInitializerHolder(final ChannelInitializer<Channel> initializer) {
+  BackendChannelInitializerHolder(ChannelInitializer<Channel> initializer) {
     this.initializer = initializer;
   }
 
@@ -49,7 +49,7 @@ public class BackendChannelInitializerHolder implements Supplier<ChannelInitiali
    * @deprecated Internal implementation detail
    */
   @Deprecated
-  public void set(final ChannelInitializer<Channel> initializer) {
+  public void set(ChannelInitializer<Channel> initializer) {
     this.initializer = initializer;
   }
 }

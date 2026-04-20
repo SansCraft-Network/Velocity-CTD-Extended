@@ -108,7 +108,7 @@ public record ConfigDetector(Logger logger) {
    * @return a ConfigAnalysis object containing the analysis results
    * @throws IOException if there's an error reading the configuration files
    */
-  public ConfigAnalysis analyzeConfiguration(final Path configPath) throws IOException {
+  public ConfigAnalysis analyzeConfiguration(Path configPath) throws IOException {
     CommentedConfig defaultConfig = loadDefaultConfig();
     if (defaultConfig == null) {
       throw new IOException("Could not load default configuration from resources");
@@ -173,7 +173,7 @@ public record ConfigDetector(Logger logger) {
    * @param currentConfig the current configuration
    * @return list of missing option paths
    */
-  private List<String> findMissingOptions(final CommentedConfig defaultConfig, final CommentedConfig currentConfig) {
+  private List<String> findMissingOptions(CommentedConfig defaultConfig, CommentedConfig currentConfig) {
     List<String> missingOptions = new ArrayList<>();
     findMissingOptionsRecursive(defaultConfig, currentConfig, "", missingOptions);
     return missingOptions;
@@ -187,8 +187,8 @@ public record ConfigDetector(Logger logger) {
    * @param currentPath    the current path being checked
    * @param missingOptions list to collect missing options
    */
-  private void findMissingOptionsRecursive(final CommentedConfig defaultConfig, final CommentedConfig currentConfig,
-                                           final String currentPath, final List<String> missingOptions) {
+  private void findMissingOptionsRecursive(CommentedConfig defaultConfig, CommentedConfig currentConfig,
+                                           String currentPath, List<String> missingOptions) {
     for (CommentedConfig.Entry entry : defaultConfig.entrySet()) {
       String key = entry.getKey();
       String fullPath = currentPath.isEmpty() ? key : currentPath + "." + key;
@@ -218,7 +218,7 @@ public record ConfigDetector(Logger logger) {
    * @param currentConfig the current configuration
    * @return list of deprecated option paths
    */
-  private List<String> findDeprecatedOptions(final CommentedConfig defaultConfig, final CommentedConfig currentConfig) {
+  private List<String> findDeprecatedOptions(CommentedConfig defaultConfig, CommentedConfig currentConfig) {
     List<String> deprecatedOptions = new ArrayList<>();
     findDeprecatedOptionsRecursive(defaultConfig, currentConfig, "", deprecatedOptions);
     return deprecatedOptions;
@@ -232,8 +232,8 @@ public record ConfigDetector(Logger logger) {
    * @param currentPath the current path being checked
    * @param deprecatedOptions list to collect deprecated options
    */
-  private void findDeprecatedOptionsRecursive(final CommentedConfig defaultConfig, final CommentedConfig currentConfig,
-                                              final String currentPath, final List<String> deprecatedOptions) {
+  private void findDeprecatedOptionsRecursive(CommentedConfig defaultConfig, CommentedConfig currentConfig,
+                                              String currentPath, List<String> deprecatedOptions) {
     for (CommentedConfig.Entry entry : currentConfig.entrySet()) {
       String key = entry.getKey();
       String fullPath = currentPath.isEmpty() ? key : currentPath + "." + key;
@@ -265,8 +265,8 @@ public record ConfigDetector(Logger logger) {
    * @param deprecatedOptions list of deprecated options
    * @return list of recommendations
    */
-  private List<String> generateRecommendations(final String currentVersion, final String latestVersion,
-                                               final List<String> missingOptions, final List<String> deprecatedOptions) {
+  private List<String> generateRecommendations(String currentVersion, String latestVersion,
+                                               List<String> missingOptions, List<String> deprecatedOptions) {
     List<String> recommendations = new ArrayList<>();
 
     if (!currentVersion.equals(latestVersion)) {
@@ -293,7 +293,7 @@ public record ConfigDetector(Logger logger) {
    *
    * @param analysis the configuration analysis results
    */
-  public void logAnalysis(final ConfigAnalysis analysis) {
+  public void logAnalysis(ConfigAnalysis analysis) {
     if (!analysis.isOutdated()) {
       logger.info("Configuration is up to date (version {})", analysis.currentVersion());
       return;
@@ -323,7 +323,7 @@ public record ConfigDetector(Logger logger) {
    * @param configPath the path to the configuration file
    * @return true if the configuration is outdated, false otherwise
    */
-  public boolean checkAndLogConfiguration(final Path configPath) {
+  public boolean checkAndLogConfiguration(Path configPath) {
     try {
       ConfigAnalysis analysis = analyzeConfiguration(configPath);
       logAnalysis(analysis);

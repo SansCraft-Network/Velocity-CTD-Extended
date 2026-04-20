@@ -35,7 +35,7 @@ public class VelocityPluginContainer implements PluginContainer {
 
   private volatile ExecutorService service;
 
-  public VelocityPluginContainer(final PluginDescription description) {
+  public VelocityPluginContainer(PluginDescription description) {
     this.description = description;
   }
 
@@ -49,7 +49,7 @@ public class VelocityPluginContainer implements PluginContainer {
     return Optional.ofNullable(instance);
   }
 
-  public void setInstance(final Object instance) {
+  public void setInstance(Object instance) {
     this.instance = instance;
   }
 

@@ -51,7 +51,7 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
     return id;
   }
 
-  public void setId(final UUID id) {
+  public void setId(UUID id) {
     this.id = id;
   }
 
@@ -59,7 +59,7 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
     return url;
   }
 
-  public void setUrl(final String url) {
+  public void setUrl(String url) {
     this.url = url;
   }
 
@@ -71,11 +71,11 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
     return hash;
   }
 
-  public void setHash(final String hash) {
+  public void setHash(String hash) {
     this.hash = hash;
   }
 
-  public void setRequired(final boolean required) {
+  public void setRequired(boolean required) {
     isRequired = required;
   }
 
@@ -83,12 +83,12 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
     return prompt;
   }
 
-  public void setPrompt(final @Nullable ComponentHolder prompt) {
+  public void setPrompt(@Nullable ComponentHolder prompt) {
     this.prompt = prompt;
   }
 
   @Override
-  public void decode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       this.id = ProtocolUtils.readUuid(buf);
     }
@@ -106,7 +106,7 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final Direction direction, final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, Direction direction, ProtocolVersion protocolVersion) {
     if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_20_3)) {
       if (id == null) {
         throw new IllegalStateException("Resource pack proxyId not set yet!");
@@ -133,7 +133,7 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
   }
 
   public VelocityResourcePackInfo toServerPromptedPack() {
-    final ResourcePackInfo.Builder builder =
+    ResourcePackInfo.Builder builder =
         new VelocityResourcePackInfo.BuilderImpl(Preconditions.checkNotNull(url))
             .setId(id).setPrompt(prompt == null ? null : prompt.getComponent())
             .setShouldForce(isRequired).setOrigin(ResourcePackInfo.Origin.DOWNSTREAM_SERVER);
@@ -148,7 +148,7 @@ public class ResourcePackRequestPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 

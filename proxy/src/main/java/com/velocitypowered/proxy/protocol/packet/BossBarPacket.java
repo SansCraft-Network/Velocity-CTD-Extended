@@ -84,9 +84,9 @@ public class BossBarPacket implements MinecraftPacket {
 
   private short flags;
 
-  public static BossBarPacket createAddPacket(final UUID id, final BossBar bar,
-                                              final ComponentHolder name) {
-    final BossBarPacket packet = new BossBarPacket();
+  public static BossBarPacket createAddPacket(UUID id, BossBar bar,
+                                              ComponentHolder name) {
+    BossBarPacket packet = new BossBarPacket();
     packet.setUuid(id);
     packet.setAction(BossBarPacket.ADD);
     packet.setName(name);
@@ -97,32 +97,32 @@ public class BossBarPacket implements MinecraftPacket {
     return packet;
   }
 
-  public static BossBarPacket createRemovePacket(final UUID id, final BossBar ignoredBar) {
-    final BossBarPacket packet = new BossBarPacket();
+  public static BossBarPacket createRemovePacket(UUID id, BossBar ignoredBar) {
+    BossBarPacket packet = new BossBarPacket();
     packet.setUuid(id);
     packet.setAction(REMOVE);
     return packet;
   }
 
-  public static BossBarPacket createUpdateProgressPacket(final UUID id, final BossBar bar) {
-    final BossBarPacket packet = new BossBarPacket();
+  public static BossBarPacket createUpdateProgressPacket(UUID id, BossBar bar) {
+    BossBarPacket packet = new BossBarPacket();
     packet.setUuid(id);
     packet.setAction(UPDATE_PERCENT);
     packet.setPercent(bar.progress());
     return packet;
   }
 
-  public static BossBarPacket createUpdateNamePacket(final UUID id, final BossBar ignoredBar,
-                                                     final ComponentHolder name) {
-    final BossBarPacket packet = new BossBarPacket();
+  public static BossBarPacket createUpdateNamePacket(UUID id, BossBar ignoredBar,
+                                                     ComponentHolder name) {
+    BossBarPacket packet = new BossBarPacket();
     packet.setUuid(id);
     packet.setAction(UPDATE_NAME);
     packet.setName(name);
     return packet;
   }
 
-  public static BossBarPacket createUpdateStylePacket(final UUID id, final BossBar bar) {
-    final BossBarPacket packet = new BossBarPacket();
+  public static BossBarPacket createUpdateStylePacket(UUID id, BossBar bar) {
+    BossBarPacket packet = new BossBarPacket();
     packet.setUuid(id);
     packet.setAction(UPDATE_STYLE);
     packet.setColor(COLORS_TO_PROTOCOL.get(bar.color()));
@@ -130,8 +130,8 @@ public class BossBarPacket implements MinecraftPacket {
     return packet;
   }
 
-  public static BossBarPacket createUpdatePropertiesPacket(final UUID id, final BossBar bar) {
-    final BossBarPacket packet = new BossBarPacket();
+  public static BossBarPacket createUpdatePropertiesPacket(UUID id, BossBar bar) {
+    BossBarPacket packet = new BossBarPacket();
     packet.setUuid(id);
     packet.setAction(UPDATE_PROPERTIES);
     packet.setFlags(serializeFlags(bar.flags()));
@@ -146,7 +146,7 @@ public class BossBarPacket implements MinecraftPacket {
     return uuid;
   }
 
-  public void setUuid(final @Nullable UUID uuid) {
+  public void setUuid(@Nullable UUID uuid) {
     this.uuid = uuid;
   }
 
@@ -154,7 +154,7 @@ public class BossBarPacket implements MinecraftPacket {
     return action;
   }
 
-  public void setAction(final int action) {
+  public void setAction(int action) {
     this.action = action;
   }
 
@@ -162,7 +162,7 @@ public class BossBarPacket implements MinecraftPacket {
     return name;
   }
 
-  public void setName(final @Nullable ComponentHolder name) {
+  public void setName(@Nullable ComponentHolder name) {
     this.name = name;
   }
 
@@ -170,7 +170,7 @@ public class BossBarPacket implements MinecraftPacket {
     return percent;
   }
 
-  public void setPercent(final float percent) {
+  public void setPercent(float percent) {
     this.percent = percent;
   }
 
@@ -178,7 +178,7 @@ public class BossBarPacket implements MinecraftPacket {
     return color;
   }
 
-  public void setColor(final int color) {
+  public void setColor(int color) {
     this.color = color;
   }
 
@@ -186,7 +186,7 @@ public class BossBarPacket implements MinecraftPacket {
     return overlay;
   }
 
-  public void setOverlay(final int overlay) {
+  public void setOverlay(int overlay) {
     this.overlay = overlay;
   }
 
@@ -194,7 +194,7 @@ public class BossBarPacket implements MinecraftPacket {
     return flags;
   }
 
-  public void setFlags(final short flags) {
+  public void setFlags(short flags) {
     this.flags = flags;
   }
 
@@ -212,7 +212,7 @@ public class BossBarPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     this.uuid = ProtocolUtils.readUuid(buf);
     this.action = ProtocolUtils.readVarInt(buf);
     switch (action) {
@@ -237,7 +237,7 @@ public class BossBarPacket implements MinecraftPacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (uuid == null) {
       throw new IllegalStateException("No boss bar UUID specified");
     }
@@ -275,7 +275,7 @@ public class BossBarPacket implements MinecraftPacket {
     }
   }
 
-  private static byte serializeFlags(final Set<BossBar.Flag> flags) {
+  private static byte serializeFlags(Set<BossBar.Flag> flags) {
     byte val = 0x0;
     for (BossBar.Flag flag : flags) {
       val |= (byte) FLAG_BITS_TO_PROTOCOL.get(flag);
@@ -285,7 +285,7 @@ public class BossBarPacket implements MinecraftPacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

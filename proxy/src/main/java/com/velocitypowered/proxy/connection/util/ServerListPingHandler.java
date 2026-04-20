@@ -42,11 +42,11 @@ public class ServerListPingHandler {
 
   private final VelocityServer server;
 
-  public ServerListPingHandler(final VelocityServer server) {
+  public ServerListPingHandler(VelocityServer server) {
     this.server = server;
   }
 
-  private boolean displayFallbackPing(final ProtocolVersion clientVersion) {
+  private boolean displayFallbackPing(ProtocolVersion clientVersion) {
     String minVersion = server.getConfiguration().getMinimumVersion();
     ProtocolVersion minimumVersion = ProtocolVersion.getVersionByName(minVersion);
     ProtocolVersion maximumVersion = server.getConfiguration().getMaximumVersion()
@@ -107,10 +107,10 @@ public class ServerListPingHandler {
     );
   }
 
-  private String formatVersionString(final String raw, final ProtocolVersion version) {
-    final String minVersionIntroducedIn = ProtocolVersion.getVersionByName(
+  private String formatVersionString(String raw, ProtocolVersion version) {
+    String minVersionIntroducedIn = ProtocolVersion.getVersionByName(
         server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn();
-    final String maxVersionDisplay = server.getConfiguration().getMaximumVersion()
+    String maxVersionDisplay = server.getConfiguration().getMaximumVersion()
         .orElse(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion());
     return raw
         .replaceAll("\\{protocol-min}", minVersionIntroducedIn)
@@ -124,10 +124,10 @@ public class ServerListPingHandler {
         .replaceAll("\\{max-players}", String.valueOf(server.getConfiguration().getShowMaxPlayers()));
   }
 
-  private CompletableFuture<ServerPing> attemptPingPassthrough(final VelocityInboundConnection connection,
-                                                               final PingPassthroughMode mode, final List<String> servers,
-                                                               final ProtocolVersion responseProtocolVersion,
-                                                               final String virtualHostStr) {
+  private CompletableFuture<ServerPing> attemptPingPassthrough(VelocityInboundConnection connection,
+                                                               PingPassthroughMode mode, List<String> servers,
+                                                               ProtocolVersion responseProtocolVersion,
+                                                               String virtualHostStr) {
     ServerPing fallback = constructLocalPing(connection.getProtocolVersion());
     List<CompletableFuture<ServerPing>> pings = new ArrayList<>();
     for (String s : servers) {
@@ -214,7 +214,7 @@ public class ServerListPingHandler {
    * @param connection the connection
    * @return a future with the initial ping result
    */
-  public CompletableFuture<ServerPing> getInitialPing(final VelocityInboundConnection connection) {
+  public CompletableFuture<ServerPing> getInitialPing(VelocityInboundConnection connection) {
     VelocityConfiguration configuration = server.getConfiguration();
     ProtocolVersion shownVersion = connection.getProtocolVersion().isSupported()
         ? connection.getProtocolVersion() : ProtocolVersion.MAXIMUM_VERSION;

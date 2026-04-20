@@ -53,7 +53,7 @@ public enum RouteHandlerRegistry {
    * Handles the {@link VelocitySwitchServer} data by switching the player to the specified server.
    */
   VELOCITY_SWITCH_SERVER(VelocitySwitchServer.class, (server, data) -> {
-    final ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
+    ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
     if (player == null) {
       return;
     }
@@ -66,7 +66,7 @@ public enum RouteHandlerRegistry {
    * Handles the {@link VelocityMessage} data by sending a message to the specified target.
    */
   VELOCITY_MESSAGE(VelocityMessage.class, (server, data) -> {
-    final Component component = data.component();
+    Component component = data.component();
     if (component == null) {
       return;
     }
@@ -89,15 +89,15 @@ public enum RouteHandlerRegistry {
    * Handles the {@link VelocitySudo} data by letting the specified player execute a command or chat message.
    */
   VELOCITY_SUDO(VelocitySudo.class, (server, data) -> {
-    final ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
+    ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
     if (player == null) {
       return;
     }
 
-    final String message = data.message();
+    String message = data.message();
     if (message.startsWith("/")) {
-      final String fullCommand = message.substring(1);
-      final String commandLabel = fullCommand.split(" ")[0];
+      String fullCommand = message.substring(1);
+      String commandLabel = fullCommand.split(" ")[0];
       if (server.getCommandManager().hasCommand(commandLabel)) {
         server.getCommandManager().executeAsync(player, fullCommand);
         return;
@@ -111,12 +111,12 @@ public enum RouteHandlerRegistry {
    * Handles the {@link VelocityKick} data by kicking the specified player with a reason.
    */
   VELOCITY_KICK(VelocityKick.class, (server, data) -> {
-    final String targetProxyId = data.targetProxyId();
+    String targetProxyId = data.targetProxyId();
     if (targetProxyId != null && !targetProxyId.equalsIgnoreCase(server.getRedis().getProxyId())) {
       return;
     }
 
-    final ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
+    ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
     if (player == null) {
       return;
     }
@@ -141,17 +141,17 @@ public enum RouteHandlerRegistry {
    * Handles the {@link VelocityQueueTransfer} data by transferring the player to their target server.
    */
   VELOCITY_QUEUE(VelocityQueueTransfer.class, (server, data) -> {
-    final VelocityQueue queue;
+    VelocityQueue queue;
     try {
       queue = server.getQueueManager().getQueue(data.queueName());
     } catch (IllegalArgumentException ignored) {
       return; // unknown server - stale or malformed packet
     }
 
-    final ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
+    ConnectedPlayer player = server.getPlayer(data.uniqueId()).orElse(null);
     if (player == null) {
       if (!server.getRedis().getPlayerService().isPlayerOnline(data.uniqueId())) {
-        final VelocityQueueEntry entry = queue.getEntry(data.uniqueId());
+        VelocityQueueEntry entry = queue.getEntry(data.uniqueId());
         if (entry != null) {
           entry.abortTransfer();
         }
@@ -159,7 +159,7 @@ public enum RouteHandlerRegistry {
       return;
     }
 
-    final VelocityQueueEntry entry = queue.getEntry(data.uniqueId());
+    VelocityQueueEntry entry = queue.getEntry(data.uniqueId());
     if (entry == null) {
       return;
     }
@@ -177,7 +177,7 @@ public enum RouteHandlerRegistry {
    */
   private final BiConsumer<VelocityServer, ?> route;
 
-  <T> RouteHandlerRegistry(final Class<T> dataClass, final @NotNull BiConsumer<VelocityServer, T> route) {
+  <T> RouteHandlerRegistry(Class<T> dataClass, @NotNull BiConsumer<VelocityServer, T> route) {
     this.dataClass = dataClass;
     this.route = route;
   }
@@ -189,8 +189,8 @@ public enum RouteHandlerRegistry {
    * @return a new route handler
    */
   @SuppressWarnings("unchecked")
-  public <T> RouteHandler<T> createRouteHandler(final @NotNull VelocityServer server) {
-    final BiConsumer<VelocityServer, T> typedRoute = (BiConsumer<VelocityServer, T>) this.route;
+  public <T> RouteHandler<T> createRouteHandler(@NotNull VelocityServer server) {
+    BiConsumer<VelocityServer, T> typedRoute = (BiConsumer<VelocityServer, T>) this.route;
     return RouteHandler.consumer((Class<T>) dataClass, data -> typedRoute.accept(server, data));
   }
 }

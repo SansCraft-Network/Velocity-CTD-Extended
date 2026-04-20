@@ -1050,7 +1050,7 @@ public final class VelocityConfiguration implements ProxyConfig {
     }
 
     // Create the forwarding-secret file on first-time startup if it doesn't exist.
-    final Path defaultForwardingSecretPath = Path.of("forwarding.secret");
+    Path defaultForwardingSecretPath = Path.of("forwarding.secret");
     if (Files.notExists(path) && Files.notExists(defaultForwardingSecretPath)) {
       Files.writeString(defaultForwardingSecretPath, generateRandomString(12));
     }
@@ -1075,7 +1075,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         LOGGER.debug("Could not perform configuration check during configuration loading", e);
       }
 
-      final List<ConfigurationMigration> migrations = new ArrayList<>(List.of(
+      List<ConfigurationMigration> migrations = new ArrayList<>(List.of(
           new ForwardingMigration(),
           new KeyAuthenticationMigration(),
           new MotdMigration(),
@@ -1085,7 +1085,7 @@ public final class VelocityConfiguration implements ProxyConfig {
 
       migrations.addAll(CtdConfigMigrations.createCtdMigrations());
 
-      for (final ConfigurationMigration migration : migrations) {
+      for (ConfigurationMigration migration : migrations) {
         if (migration.shouldMigrate(config)) {
           migration.migrate(config, LOGGER);
         }
@@ -1094,8 +1094,8 @@ public final class VelocityConfiguration implements ProxyConfig {
       String forwardingSecretString = System.getenv().getOrDefault(
           "VELOCITY_FORWARDING_SECRET", "");
       if (forwardingSecretString.isBlank()) {
-        final String forwardSecretFile = config.get("forwarding-secret-file");
-        final Path secretPath = forwardSecretFile == null
+        String forwardSecretFile = config.get("forwarding-secret-file");
+        Path secretPath = forwardSecretFile == null
             ? defaultForwardingSecretPath
             : Path.of(forwardSecretFile);
         if (Files.exists(secretPath)) {
@@ -1112,60 +1112,50 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
       }
 
-      final byte[] forwardingSecret = forwardingSecretString.getBytes(StandardCharsets.UTF_8);
-      final String motd = config.getOrElse("motd", "<#09add3>A Velocity Server");
-      final List<String> motdHover = config.getOrElse("motd-hover", new ArrayList<>());
+      byte[] forwardingSecret = forwardingSecretString.getBytes(StandardCharsets.UTF_8);
+      String motd = config.getOrElse("motd", "<#09add3>A Velocity Server");
+      List<String> motdHover = config.getOrElse("motd-hover", new ArrayList<>());
 
       // Read the rest of the config
-      final CommentedConfig serversConfig = config.get("servers");
-      final CommentedConfig forcedHostsConfig = config.get("forced-hosts");
-      final CommentedConfig commandAliasesConfig = config.get("command-aliases");
-      final CommentedConfig proxyCommandAliasesConfig = config.get("proxy-command-aliases");
-      final CommentedConfig commandsConfig = config.get("commands");
-      final CommentedConfig advancedConfig = config.get("advanced");
-      final CommentedConfig queryConfig = config.get("query");
-      final CommentedConfig metricsConfig = config.get("metrics");
-      final CommentedConfig redisConfig = config.get("redis");
-      final CommentedConfig queueConfig = config.get("queue");
-      final CommentedConfig serverLinksConfig = config.get("server-links");
-      final CommentedConfig proxyAddressesConfig = config.get("proxy-addresses");
-      final CommentedConfig playerCapsConfig = config.get("playercaps");
-      final PlayerInfoForwarding forwardingMode = config.getEnumOrElse(
-              "player-info-forwarding-mode", PlayerInfoForwarding.NONE);
-      final PingPassthroughMode pingPassthroughMode = config.getEnumOrElse("ping-passthrough",
-              PingPassthroughMode.DISABLED);
-      final boolean samplePlayersInPing = config.getOrElse("sample-players-in-ping", false);
-      final String bind = config.getOrElse("bind", "0.0.0.0:25565");
-      final int maxPlayers = config.getIntOrElse("show-max-players", 500);
-      final boolean onlineMode = config.getOrElse("online-mode", true);
-      final boolean forceKeyAuthentication = config.getOrElse("force-key-authentication", true);
-      final boolean announceForge = config.getOrElse("announce-forge", true);
-      final boolean preventClientProxyConnections = config.getOrElse(
-              "prevent-client-proxy-connections", false);
-      final boolean kickExisting = config.getOrElse("kick-existing-players", false);
-      final boolean kickExistingCheckIp = config.getOrElse("kick-existing-players-check-ip", false);
-      final boolean enablePlayerAddressLogging = config.getOrElse(
-              "enable-player-address-logging", true);
-      final PacketLimiterConfig packetLimiterConfig = PacketLimiterConfig.fromConfig(config.get("packet-limiter"));
-      final boolean logPlayerConnections = config.getOrElse(
-              "log-player-connections", true);
-      final boolean logPlayerDisconnections = config.getOrElse(
-              "log-player-disconnections", true);
-      final boolean logOfflineConnections = config.getOrElse(
-              "log-offline-connections", true);
-      final boolean disableForge = config.getOrElse("disable-forge", false);
-      final boolean enforceChatSigning = config.getOrElse(
-              "enforce-chat-signing", false);
-      final boolean preventsChatReports = config.getOrElse(
-              "prevents-chat-reports", false);
-      final boolean translateHeaderFooter = config.getOrElse(
-              "translate-header-footer", true);
-      final boolean logMinimumVersion = config.getOrElse(
-              "log-minimum-version", false);
-      final String minimumVersion = config.getOrElse("minimum-version", "1.7.2");
-      final String maximumVersion = config.getOrElse("maximum-version", UNBOUNDED);
-      final CommentedConfig slashServersConfig = config.getOrElse("slash-servers", (CommentedConfig) null);
-      final Map<String, List<String>> slashServers = new HashMap<>();
+      CommentedConfig serversConfig = config.get("servers");
+      CommentedConfig forcedHostsConfig = config.get("forced-hosts");
+      CommentedConfig commandAliasesConfig = config.get("command-aliases");
+      CommentedConfig proxyCommandAliasesConfig = config.get("proxy-command-aliases");
+      CommentedConfig commandsConfig = config.get("commands");
+      CommentedConfig advancedConfig = config.get("advanced");
+      CommentedConfig queryConfig = config.get("query");
+      CommentedConfig metricsConfig = config.get("metrics");
+      CommentedConfig redisConfig = config.get("redis");
+      CommentedConfig queueConfig = config.get("queue");
+      CommentedConfig serverLinksConfig = config.get("server-links");
+      CommentedConfig proxyAddressesConfig = config.get("proxy-addresses");
+      CommentedConfig playerCapsConfig = config.get("playercaps");
+      PlayerInfoForwarding forwardingMode = config.getEnumOrElse("player-info-forwarding-mode", PlayerInfoForwarding.NONE);
+      PingPassthroughMode pingPassthroughMode = config.getEnumOrElse("ping-passthrough", PingPassthroughMode.DISABLED);
+      boolean samplePlayersInPing = config.getOrElse("sample-players-in-ping", false);
+      String bind = config.getOrElse("bind", "0.0.0.0:25565");
+      int maxPlayers = config.getIntOrElse("show-max-players", 500);
+      boolean onlineMode = config.getOrElse("online-mode", true);
+      boolean forceKeyAuthentication = config.getOrElse("force-key-authentication", true);
+      boolean announceForge = config.getOrElse("announce-forge", true);
+      boolean preventClientProxyConnections = config.getOrElse("prevent-client-proxy-connections", false);
+      boolean kickExisting = config.getOrElse("kick-existing-players", false);
+      boolean kickExistingCheckIp = config.getOrElse("kick-existing-players-check-ip", false);
+      boolean enablePlayerAddressLogging = config.getOrElse("enable-player-address-logging", true);
+      PacketLimiterConfig packetLimiterConfig = PacketLimiterConfig.fromConfig(config.get("packet-limiter"));
+      boolean logPlayerConnections = config.getOrElse("log-player-connections", true);
+      boolean logPlayerDisconnections = config.getOrElse("log-player-disconnections", true);
+      boolean logOfflineConnections = config.getOrElse("log-offline-connections", true);
+      boolean disableForge = config.getOrElse("disable-forge", false);
+      boolean enforceChatSigning = config.getOrElse("enforce-chat-signing", false);
+      boolean preventsChatReports = config.getOrElse("prevents-chat-reports", false);
+      boolean translateHeaderFooter = config.getOrElse("translate-header-footer", true);
+      boolean logMinimumVersion = config.getOrElse("log-minimum-version", false);
+      String minimumVersion = config.getOrElse("minimum-version", "1.7.2");
+      String maximumVersion = config.getOrElse("maximum-version", UNBOUNDED);
+      CommentedConfig slashServersConfig = config.getOrElse("slash-servers", (CommentedConfig) null);
+      Map<String, List<String>> slashServers = new HashMap<>();
+
       if (slashServersConfig != null) {
         for (UnmodifiableConfig.Entry entry : slashServersConfig.entrySet()) {
           if (entry.getValue() instanceof String) {
@@ -1180,7 +1170,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
       }
 
-      final Map<String, List<ServerLink>> links = new HashMap<>();
+      Map<String, List<ServerLink>> links = new HashMap<>();
       if (serverLinksConfig != null) {
         for (CommentedConfig.Entry entry : serverLinksConfig.entrySet()) {
           CommentedConfig link = entry.getValue();
@@ -1224,7 +1214,7 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
       }
 
-      final Map<String, Integer> playerCaps = new HashMap<>();
+      Map<String, Integer> playerCaps = new HashMap<>();
       if (playerCapsConfig != null) {
         for (CommentedConfig.Entry entry : playerCapsConfig.entrySet()) {
           playerCaps.put(entry.getKey(), entry.getValue());

@@ -32,7 +32,7 @@ public class TitleTextPacket extends GenericTitlePacket {
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     component.write(buf);
   }
 
@@ -42,7 +42,7 @@ public class TitleTextPacket extends GenericTitlePacket {
   }
 
   @Override
-  public void setComponent(final ComponentHolder component) {
+  public void setComponent(ComponentHolder component) {
     this.component = component;
   }
 
@@ -54,7 +54,7 @@ public class TitleTextPacket extends GenericTitlePacket {
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

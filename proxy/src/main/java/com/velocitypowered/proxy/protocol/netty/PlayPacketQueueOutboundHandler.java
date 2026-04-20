@@ -52,13 +52,13 @@ public class PlayPacketQueueOutboundHandler extends ChannelDuplexHandler {
    * @param version the protocol version
    * @param direction the direction of packet flow (typically {@code CLIENTBOUND})
    */
-  public PlayPacketQueueOutboundHandler(final ProtocolVersion version, final ProtocolUtils.Direction direction) {
+  public PlayPacketQueueOutboundHandler(ProtocolVersion version, ProtocolUtils.Direction direction) {
     this.registry = StateRegistry.CONFIG.getProtocolRegistry(direction, version);
   }
 
   @Override
-  public void write(final ChannelHandlerContext ctx, final Object msg, final ChannelPromise promise) throws Exception {
-    if (!(msg instanceof final MinecraftPacket packet)) {
+  public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+    if (!(msg instanceof MinecraftPacket packet)) {
       ctx.write(msg, promise);
       return;
     }
@@ -75,18 +75,18 @@ public class PlayPacketQueueOutboundHandler extends ChannelDuplexHandler {
   }
 
   @Override
-  public void channelInactive(final @NotNull ChannelHandlerContext ctx) throws Exception {
+  public void channelInactive(@NotNull ChannelHandlerContext ctx) throws Exception {
     this.releaseQueue(ctx, false);
 
     super.channelInactive(ctx);
   }
 
   @Override
-  public void handlerRemoved(final ChannelHandlerContext ctx) {
+  public void handlerRemoved(ChannelHandlerContext ctx) {
     this.releaseQueue(ctx, ctx.channel().isActive());
   }
 
-  private void releaseQueue(final ChannelHandlerContext ctx, final boolean active) {
+  private void releaseQueue(ChannelHandlerContext ctx, boolean active) {
     // Send out all the queued packets
     MinecraftPacket packet;
     while ((packet = this.queue.poll()) != null) {

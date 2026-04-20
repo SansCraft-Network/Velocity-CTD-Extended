@@ -27,7 +27,7 @@ public enum ChatType {
 
   private final byte raw;
 
-  ChatType(final byte raw) {
+  ChatType(byte raw) {
     this.raw = raw;
   }
 

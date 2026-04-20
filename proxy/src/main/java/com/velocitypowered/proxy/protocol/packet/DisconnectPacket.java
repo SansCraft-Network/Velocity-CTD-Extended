@@ -34,11 +34,11 @@ public class DisconnectPacket implements MinecraftPacket {
 
   private final StateRegistry state;
 
-  public DisconnectPacket(final StateRegistry state) {
+  public DisconnectPacket(StateRegistry state) {
     this.state = state;
   }
 
-  private DisconnectPacket(final StateRegistry state, final ComponentHolder reason) {
+  private DisconnectPacket(StateRegistry state, ComponentHolder reason) {
     this.state = state;
     this.reason = Preconditions.checkNotNull(reason, "reason");
   }
@@ -51,7 +51,7 @@ public class DisconnectPacket implements MinecraftPacket {
     return reason;
   }
 
-  public void setReason(final @Nullable ComponentHolder reason) {
+  public void setReason(@Nullable ComponentHolder reason) {
     this.reason = reason;
   }
 
@@ -63,22 +63,22 @@ public class DisconnectPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     reason = ComponentHolder.read(buf, state == StateRegistry.LOGIN
         ? ProtocolVersion.MINECRAFT_1_20_2 : version);
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction, final ProtocolVersion version) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     getReason().write(buf);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 
-  public static DisconnectPacket create(final Component component, final ProtocolVersion version, final StateRegistry state) {
+  public static DisconnectPacket create(Component component, ProtocolVersion version, StateRegistry state) {
     Preconditions.checkNotNull(component, "component");
     return new DisconnectPacket(state, new ComponentHolder(state == StateRegistry.LOGIN
         ? ProtocolVersion.MINECRAFT_1_20_2 : version, component));

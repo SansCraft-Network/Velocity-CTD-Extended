@@ -38,7 +38,7 @@ public interface UntargetedEventHandler {
     @Nullable EventTask execute(Object targetInstance, Object event);
 
     @Override
-    default EventHandler<Object> buildHandler(final Object targetInstance) {
+    default EventHandler<Object> buildHandler(Object targetInstance) {
       return (AwaitingEventExecutor<Object>) event -> execute(targetInstance, event);
     }
   }
@@ -51,7 +51,7 @@ public interface UntargetedEventHandler {
     void execute(Object targetInstance, Object event);
 
     @Override
-    default EventHandler<Object> buildHandler(final Object targetInstance) {
+    default EventHandler<Object> buildHandler(Object targetInstance) {
       return (AwaitingEventExecutor<Object>) event -> {
         execute(targetInstance, event);
         return null;
@@ -67,7 +67,7 @@ public interface UntargetedEventHandler {
     void execute(Object targetInstance, Object event, Continuation continuation);
 
     @Override
-    default EventHandler<Object> buildHandler(final Object targetInstance) {
+    default EventHandler<Object> buildHandler(Object targetInstance) {
       return (AwaitingEventExecutor<Object>) event -> EventTask.withContinuation(continuation ->
           execute(targetInstance, event, continuation));
     }

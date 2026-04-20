@@ -30,7 +30,7 @@ public final class ArgumentIdentifier {
 
   private final Map<ProtocolVersion, Integer> versionById;
 
-  private ArgumentIdentifier(final String identifier, final VersionSet... versions) {
+  private ArgumentIdentifier(String identifier, VersionSet... versions) {
     this.identifier = Preconditions.checkNotNull(identifier);
 
     Preconditions.checkNotNull(versions);
@@ -70,15 +70,15 @@ public final class ArgumentIdentifier {
     return identifier;
   }
 
-  public @Nullable Integer getIdByProtocolVersion(final ProtocolVersion version) {
+  public @Nullable Integer getIdByProtocolVersion(ProtocolVersion version) {
     return versionById.get(Preconditions.checkNotNull(version));
   }
 
-  public static VersionSet mapSet(final ProtocolVersion version, final int id) {
+  public static VersionSet mapSet(ProtocolVersion version, int id) {
     return new VersionSet(version, id);
   }
 
-  public static ArgumentIdentifier id(final String identifier, final VersionSet... versions) {
+  public static ArgumentIdentifier id(String identifier, VersionSet... versions) {
     return new ArgumentIdentifier(identifier, versions);
   }
 
@@ -91,7 +91,7 @@ public final class ArgumentIdentifier {
 
     private final int id;
 
-    private VersionSet(final ProtocolVersion version, final int id) {
+    private VersionSet(ProtocolVersion version, int id) {
       this.version = Preconditions.checkNotNull(version);
       this.id = id;
     }

@@ -78,9 +78,9 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @param scheduler the scheduler used for transaction timeout tasks
    * @param packetSerializer the serializer for packet (de)serialization
    */
-  public LettuceProvider(final VelocityConfiguration.Redis config,
-                         final @NotNull Scheduler scheduler,
-                         final @NotNull PacketSerializer packetSerializer) {
+  public LettuceProvider(VelocityConfiguration.Redis config,
+                         @NotNull Scheduler scheduler,
+                         @NotNull PacketSerializer packetSerializer) {
     super(scheduler, packetSerializer);
 
     this.client = RedisClient.create(RedisURI.Builder.redis(config.getHost(), config.getPort())
@@ -106,15 +106,15 @@ public final class LettuceProvider extends AbstractRedisProvider {
       this.syncPublisher.getStatefulConnection().close();
     }
 
-    final StatefulRedisPubSubConnection<String, String> connection = this.client.connectPubSub();
+    StatefulRedisPubSubConnection<String, String> connection = this.client.connectPubSub();
 
     // Tracks whether the initial subscribe has completed. The first subscribed() callback is
     // the initial subscribe; every subsequent one is a re-subscribe after a reconnect.
-    final AtomicBoolean subscribedOnce = new AtomicBoolean(false);
+    AtomicBoolean subscribedOnce = new AtomicBoolean(false);
 
     connection.addListener(new RedisPubSubAdapter<>() {
       @Override
-      public void subscribed(final String channel, final long count) {
+      public void subscribed(String channel, long count) {
         if (CHANNEL.equals(channel) && subscribedOnce.getAndSet(true)) {
           // Re-subscribe after a reconnect, notify listeners so they can reload state.
           fireReconnectListeners();
@@ -122,12 +122,12 @@ public final class LettuceProvider extends AbstractRedisProvider {
       }
 
       @Override
-      public void message(final String channel, final String message) {
+      public void message(String channel, String message) {
         if (!channel.equals(CHANNEL)) {
           return;
         }
 
-        final DataPacket dataPacket = packetSerializer.deserialize(message);
+        DataPacket dataPacket = packetSerializer.deserialize(message);
         if (dataPacket == null) {
           LOGGER.warn("Received a null packet from channel '{}', ignoring", channel);
           return;
@@ -189,7 +189,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @param packet the packet to publish
    */
   @Override
-  protected void publishRaw(final @NotNull DataPacket packet) {
+  protected void publishRaw(@NotNull DataPacket packet) {
     if (this.publisher == null) {
       LOGGER.warn("Attempted to publish a packet to channel '{}' but the publisher is not initialized", CHANNEL);
       return;
@@ -212,7 +212,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
    */
   @Override
   @Contract(value = "_ -> new", pure = true)
-  public <K, V extends DepotEntry<K, V>> @NotNull Depot<K, V> createDepot(final Class<V> valueClass) {
+  public <K, V extends DepotEntry<K, V>> @NotNull Depot<K, V> createDepot(Class<V> valueClass) {
     return new LettuceDepot<>(valueClass);
   }
 
@@ -232,8 +232,8 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @param dataPacket the one-way packet to handle
    */
   @SuppressWarnings("unchecked")
-  private void handleOneWay(final @NotNull DataPacket dataPacket) {
-    final RouteHandler<Object> routeHandler = (RouteHandler<Object>) routeHandlers.get(dataPacket.getPayloadType());
+  private void handleOneWay(@NotNull DataPacket dataPacket) {
+    RouteHandler<Object> routeHandler = (RouteHandler<Object>) routeHandlers.get(dataPacket.getPayloadType());
     if (routeHandler == null) {
       LOGGER.warn("Received a packet of type '{}' from channel '{}', but no route registration exists, ignoring",
               dataPacket.getPayloadType(), CHANNEL);
@@ -254,13 +254,13 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @param dataPacket the incoming transaction request packet
    */
   @SuppressWarnings({"unchecked", "rawtypes"})
-  private void handleTransactionRequest(final @NotNull DataPacket dataPacket) {
-    final TransactionHandler transactionHandler = transactionHandlers.get(dataPacket.getPayloadType());
+  private void handleTransactionRequest(@NotNull DataPacket dataPacket) {
+    TransactionHandler transactionHandler = transactionHandlers.get(dataPacket.getPayloadType());
     if (transactionHandler == null) {
       return;
     }
 
-    final CompletableFuture<?> future = transactionHandler.handleData(dataPacket.getPayload(packetSerializer));
+    CompletableFuture<?> future = transactionHandler.handleData(dataPacket.getPayload(packetSerializer));
     if (future == null) {
       return;
     }
@@ -270,7 +270,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
         return;
       }
 
-      final DataPacket replyPacket = DataPacket.of(result, packetSerializer);
+      DataPacket replyPacket = DataPacket.of(result, packetSerializer);
       replyPacket.setTransactionId(Preconditions.checkNotNull(dataPacket.getTransactionId()));
       replyPacket.setReply(true);
 
@@ -287,10 +287,10 @@ public final class LettuceProvider extends AbstractRedisProvider {
    *
    * @param dataPacket the incoming transaction reply packet
    */
-  private void handleTransactionReply(final @NotNull DataPacket dataPacket) {
-    final UUID transactionId = Preconditions.checkNotNull(dataPacket.getTransactionId());
+  private void handleTransactionReply(@NotNull DataPacket dataPacket) {
+    UUID transactionId = Preconditions.checkNotNull(dataPacket.getTransactionId());
 
-    final Transaction<?, ?> transaction = pendingTransactions.remove(transactionId);
+    Transaction<?, ?> transaction = pendingTransactions.remove(transactionId);
     if (transaction == null) {
       return;
     }
@@ -305,7 +305,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @return the value, or {@code null} if none exists
    */
   @Override
-  public @Nullable String get(final @NotNull String key) {
+  public @Nullable String get(@NotNull String key) {
     if (this.syncPublisher == null) {
       LOGGER.warn("Attempted to get key '{}' but the sync connection is not initialized", key);
       return null;
@@ -322,7 +322,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @param ttlSeconds the time-to-live in seconds
    */
   @Override
-  public void setWithExpiry(final @NotNull String key, final @NotNull String value, final long ttlSeconds) {
+  public void setWithExpiry(@NotNull String key, @NotNull String value, long ttlSeconds) {
     if (this.syncPublisher == null) {
       LOGGER.warn("Attempted to set key '{}' with expiry but the sync connection is not initialized", key);
       return;
@@ -338,7 +338,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @return {@code true} if the key exists, otherwise {@code false}
    */
   @Override
-  public boolean existsKey(final @NotNull String key) {
+  public boolean existsKey(@NotNull String key) {
     if (this.syncPublisher == null) {
       LOGGER.warn("Attempted to check existence of key '{}' but the sync connection is not initialized", key);
       return false;
@@ -353,7 +353,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
    * @param key the key to delete
    */
   @Override
-  public void deleteKey(final @NotNull String key) {
+  public void deleteKey(@NotNull String key) {
     if (this.syncPublisher == null) {
       LOGGER.warn("Attempted to delete key '{}' but the sync connection is not initialized", key);
       return;
@@ -395,7 +395,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
      *
      * @param valueClass the class of the depot value
      */
-    public LettuceDepot(final @NotNull Class<V> valueClass) {
+    public LettuceDepot(@NotNull Class<V> valueClass) {
       this.name = valueClass.getSimpleName().toLowerCase();
       this.valueClass = valueClass;
       this.connection = client.connectPubSub().sync();
@@ -408,7 +408,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @return {@code true} if a value exists for the key, otherwise {@code false}
      */
     @Override
-    public boolean contains(final @NotNull K key) {
+    public boolean contains(@NotNull K key) {
       return this.connection.hexists(this.name, parseKey(key));
     }
 
@@ -419,8 +419,8 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @return the deserialized value, or {@code null} if none exists
      */
     @Override
-    public @Nullable V get(final @NotNull K key) {
-      final String data = this.connection.hget(this.name, parseKey(key));
+    public @Nullable V get(@NotNull K key) {
+      String data = this.connection.hget(this.name, parseKey(key));
       return data == null ? null : deserialize(data);
     }
 
@@ -430,7 +430,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @param value the value to upsert
      */
     @Override
-    public void upsert(final @NotNull V value) {
+    public void upsert(@NotNull V value) {
       this.connection.hset(this.name, parseKey(value.getUniqueId()), serialize(value));
       value.setDepot(this);
     }
@@ -442,9 +442,9 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @return the removed value, or {@code null} if no value existed
      */
     @Override
-    public @Nullable V remove(final @NotNull K key) {
+    public @Nullable V remove(@NotNull K key) {
       if (this.connection.hexists(this.name, parseKey(key))) {
-        final String data = this.connection.hget(this.name, parseKey(key));
+        String data = this.connection.hget(this.name, parseKey(key));
         this.connection.hdel(this.name, parseKey(key));
 
         return data == null ? null : deserialize(data);
@@ -479,7 +479,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @param entry the entry to serialize
      * @return the JSON string representation of the entry
      */
-    private @NotNull String serialize(final @NotNull V entry) {
+    private @NotNull String serialize(@NotNull V entry) {
       return gson.toJson(entry, this.valueClass);
     }
 
@@ -489,8 +489,8 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @param data the JSON string to deserialize
      * @return the deserialized entry
      */
-    private @NotNull V deserialize(final @NotNull String data) {
-      final V entry = gson.fromJson(data, this.valueClass);
+    private @NotNull V deserialize(@NotNull String data) {
+      V entry = gson.fromJson(data, this.valueClass);
       entry.setDepot(this);
 
       return entry;
@@ -502,7 +502,7 @@ public final class LettuceProvider extends AbstractRedisProvider {
      * @param key the key to parse
      * @return the string representation of the key
      */
-    private @NotNull String parseKey(final K key) {
+    private @NotNull String parseKey(K key) {
       return String.valueOf(key);
     }
   }

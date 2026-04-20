@@ -31,7 +31,7 @@ final class ModArgumentPropertySerializer implements ArgumentPropertySerializer<
   }
 
   @Override
-  public @NotNull ModArgumentProperty deserialize(final ByteBuf buf, final ProtocolVersion version) {
+  public @NotNull ModArgumentProperty deserialize(ByteBuf buf, ProtocolVersion version) {
     ArgumentIdentifier identifier;
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_19)) {
       int idx = ProtocolUtils.readVarInt(buf);
@@ -46,7 +46,7 @@ final class ModArgumentPropertySerializer implements ArgumentPropertySerializer<
   }
 
   @Override
-  public void serialize(final ModArgumentProperty object, final ByteBuf buf, final ProtocolVersion version) {
+  public void serialize(ModArgumentProperty object, ByteBuf buf, ProtocolVersion version) {
     // This is special-cased by ArgumentPropertyRegistry
     throw new UnsupportedOperationException();
   }

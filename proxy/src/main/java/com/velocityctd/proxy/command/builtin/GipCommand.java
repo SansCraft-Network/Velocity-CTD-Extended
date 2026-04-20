@@ -41,7 +41,7 @@ public class GipCommand implements BuiltinCommand {
 
   private final VelocityServer server;
 
-  public GipCommand(final VelocityServer server) {
+  public GipCommand(VelocityServer server) {
     this.server = server;
   }
 
@@ -66,8 +66,8 @@ public class GipCommand implements BuiltinCommand {
     return new BrigadierCommand(rootNode);
   }
 
-  private int executeIp(final CommandContext<CommandSource> context) {
-    final String playerName = context.getArgument("player", String.class);
+  private int executeIp(CommandContext<CommandSource> context) {
+    String playerName = context.getArgument("player", String.class);
     Optional<VelocityClusterPlayer> maybePlayer = server.getClusterPlayerService().getPlayer(playerName);
 
     if (maybePlayer.isEmpty()) {

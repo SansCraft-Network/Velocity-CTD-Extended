@@ -37,15 +37,15 @@ class VelocityPluginModule implements Module {
 
   private final Path basePluginPath;
 
-  VelocityPluginModule(final JavaVelocityPluginDescription description, final PluginContainer pluginContainer,
-                       final Path basePluginPath) {
+  VelocityPluginModule(JavaVelocityPluginDescription description, PluginContainer pluginContainer,
+                       Path basePluginPath) {
     this.description = description;
     this.pluginContainer = pluginContainer;
     this.basePluginPath = basePluginPath;
   }
 
   @Override
-  public void configure(final Binder binder) {
+  public void configure(Binder binder) {
     binder.bind(description.getMainClass()).in(Scopes.SINGLETON);
 
     binder.bind(Logger.class).toInstance(LoggerFactory.getLogger(description.getId()));

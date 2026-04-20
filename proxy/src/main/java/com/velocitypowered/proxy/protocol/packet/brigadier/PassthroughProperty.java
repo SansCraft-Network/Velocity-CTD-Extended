@@ -29,8 +29,8 @@ class PassthroughProperty<T> implements ArgumentType<T> {
 
   private final @Nullable T result;
 
-  PassthroughProperty(final ArgumentIdentifier identifier, final ArgumentPropertySerializer<T> serializer,
-                      final @Nullable T result) {
+  PassthroughProperty(ArgumentIdentifier identifier, ArgumentPropertySerializer<T> serializer,
+                      @Nullable T result) {
     this.identifier = identifier;
     this.serializer = serializer;
     this.result = result;
@@ -49,7 +49,7 @@ class PassthroughProperty<T> implements ArgumentType<T> {
   }
 
   @Override
-  public T parse(final StringReader reader) {
+  public T parse(StringReader reader) {
     throw new UnsupportedOperationException();
   }
 }

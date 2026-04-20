@@ -31,7 +31,7 @@ public final class RedisClusterProxyService implements VelocityClusterProxyServi
 
   private final VelocityRedis redis;
 
-  public RedisClusterProxyService(final VelocityRedis redis) {
+  public RedisClusterProxyService(VelocityRedis redis) {
     this.redis = redis;
   }
 
@@ -51,12 +51,12 @@ public final class RedisClusterProxyService implements VelocityClusterProxyServi
   }
 
   @Override
-  public CompletableFuture<Boolean> reloadProxy(final String proxyId) {
+  public CompletableFuture<Boolean> reloadProxy(String proxyId) {
     return redis.publishTransaction(new VelocityReload(proxyId));
   }
 
   @Override
-  public CompletableFuture<Long> queryProxyUptime(final String proxyId) {
+  public CompletableFuture<Long> queryProxyUptime(String proxyId) {
     return redis.publishTransaction(new VelocityUptime(proxyId));
   }
 }

@@ -82,7 +82,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
    * @param server the Velocity server instance
    * @param player the player
    */
-  public ClientConfigSessionHandler(final VelocityServer server, final ConnectedPlayer player) {
+  public ClientConfigSessionHandler(VelocityServer server, ConnectedPlayer player) {
     this.server = server;
     this.player = player;
   }
@@ -98,19 +98,19 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final KeepAlivePacket packet) {
+  public boolean handle(KeepAlivePacket packet) {
     player.forwardKeepAlive(packet);
     return true;
   }
 
   @Override
-  public boolean handle(final ClientSettingsPacket packet) {
+  public boolean handle(ClientSettingsPacket packet) {
     player.setClientSettings(packet);
     return true;
   }
 
   @Override
-  public boolean handle(final ResourcePackResponsePacket packet) {
+  public boolean handle(ResourcePackResponsePacket packet) {
     return player.resourcePackHandler().onResourcePackResponse(
         new ResourcePackResponseBundle(packet.getId(),
             packet.getHash(),
@@ -119,7 +119,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final FinishedUpdatePacket packet) {
+  public boolean handle(FinishedUpdatePacket packet) {
     player.getConnection().setActiveSessionHandler(StateRegistry.PLAY, new ClientPlaySessionHandler(server, player));
 
     configSwitchFuture.complete(null);
@@ -127,10 +127,10 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final PluginMessagePacket packet) {
-    final VelocityServerConnection serverConn = player.getConnectionInFlight();
+  public boolean handle(PluginMessagePacket packet) {
+    VelocityServerConnection serverConn = player.getConnectionInFlight();
     if (PluginMessageUtil.isMcBrand(packet)) {
-      final String brand = PluginMessageUtil.readBrandMessage(packet.content());
+      String brand = PluginMessageUtil.readBrandMessage(packet.content());
       server.getEventManager().fireAndForget(new PlayerClientBrandEvent(player, brand));
       player.setClientBrand(brand);
       brandChannel = packet.getChannel();
@@ -169,7 +169,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final PingIdentifyPacket packet) {
+  public boolean handle(PingIdentifyPacket packet) {
     if (player.getConnectionInFlight() != null) {
       player.getConnectionInFlight().ensureConnected().write(packet);
       return true;
@@ -179,7 +179,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final KnownPacksPacket packet) {
+  public boolean handle(KnownPacksPacket packet) {
     callConfigurationEvent().thenRun(() -> {
       VelocityServerConnection targetServer = player.getConnectionInFlightOrConnectedServer();
       if (targetServer != null) {
@@ -194,16 +194,16 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final ServerboundCookieResponsePacket packet) {
+  public boolean handle(ServerboundCookieResponsePacket packet) {
     server.getEventManager()
         .fire(new CookieReceiveEvent(player, packet.getKey(), packet.getPayload()))
         .thenAcceptAsync(event -> {
           if (event.getResult().isAllowed()) {
-            final VelocityServerConnection serverConnection = player.getConnectionInFlight();
+            VelocityServerConnection serverConnection = player.getConnectionInFlight();
             if (serverConnection != null) {
-              final Key resultedKey = event.getResult().getKey() == null
+              Key resultedKey = event.getResult().getKey() == null
                   ? event.getOriginalKey() : event.getResult().getKey();
-              final byte[] resultedData = event.getResult().getData() == null
+              byte[] resultedData = event.getResult().getData() == null
                   ? event.getOriginalData() : event.getResult().getData();
 
               serverConnection.ensureConnected().write(new ServerboundCookieResponsePacket(resultedKey, resultedData));
@@ -215,7 +215,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final ServerboundCustomClickActionPacket packet) {
+  public boolean handle(ServerboundCustomClickActionPacket packet) {
     if (player.getConnectionInFlight() != null) {
       player.getConnectionInFlight().ensureConnected().write(packet.retain());
       return true;
@@ -225,7 +225,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final CodeOfConductAcceptPacket packet) {
+  public boolean handle(CodeOfConductAcceptPacket packet) {
     if (this.player.getConnectionInFlight() != null) {
       this.player.getConnectionInFlight().ensureConnected().write(packet);
       return true;
@@ -235,7 +235,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public void handleGeneric(final MinecraftPacket packet) {
+  public void handleGeneric(MinecraftPacket packet) {
     VelocityServerConnection serverConnection = player.getConnectedServer();
     if (serverConnection == null) {
       // No server connection yet, probably transitioning.
@@ -253,14 +253,14 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public void handleUnknown(final ByteBuf buf) {
-    final VelocityServerConnection serverConnection = player.getConnectedServer();
+  public void handleUnknown(ByteBuf buf) {
+    VelocityServerConnection serverConnection = player.getConnectedServer();
     if (serverConnection == null) {
       // No server connection yet, probably transitioning.
       return;
     }
 
-    final MinecraftConnection smc = serverConnection.getConnection();
+    MinecraftConnection smc = serverConnection.getConnection();
     if (smc != null && !smc.isClosed() && serverConnection.getPhase().consideredComplete()) {
       smc.write(buf.retain());
     }
@@ -272,7 +272,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public void exception(final Throwable throwable) {
+  public void exception(Throwable throwable) {
     player.disconnect(Component.translatable("velocity.error.player-connection-error", NamedTextColor.RED));
     if (MinecraftDecoder.DEBUG) {
       LOGGER.info("Exception while handling plugin message packet for {}", player, throwable);
@@ -281,7 +281,7 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
 
   @Override
   public void writabilityChanged() {
-    final boolean writable = player.getConnection().getChannel().isWritable();
+    boolean writable = player.getConnection().getChannel().isWritable();
 
     if (BACKPRESSURE_LOG) {
       if (writable) {
@@ -297,9 +297,9 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
       player.getConnection().eventLoop().execute(() -> player.getConnection().flush());
     }
 
-    final VelocityServerConnection serverConn = player.getConnectionInFlightOrConnectedServer();
+    VelocityServerConnection serverConn = player.getConnectionInFlightOrConnectedServer();
     if (serverConn != null) {
-      final MinecraftConnection smc = serverConn.getConnection();
+      MinecraftConnection smc = serverConn.getConnection();
       if (smc != null) {
         smc.setAutoReading(writable);
       }
@@ -336,14 +336,14 @@ public class ClientConfigSessionHandler implements MinecraftSessionHandler {
    * @param serverConn the server connection
    * @return a future that completes when the config stage is finished
    */
-  public CompletableFuture<Void> handleBackendFinishUpdate(final VelocityServerConnection serverConn) {
-    final MinecraftConnection smc = serverConn.ensureConnected();
+  public CompletableFuture<Void> handleBackendFinishUpdate(VelocityServerConnection serverConn) {
+    MinecraftConnection smc = serverConn.ensureConnected();
 
-    final String brand = serverConn.getPlayer().getClientBrand();
+    String brand = serverConn.getPlayer().getClientBrand();
     if (brand != null && brandChannel != null) {
-      final ByteBuf buf = Unpooled.buffer();
+      ByteBuf buf = Unpooled.buffer();
       ProtocolUtils.writeString(buf, brand);
-      final PluginMessagePacket brandPacket = new PluginMessagePacket(brandChannel, buf);
+      PluginMessagePacket brandPacket = new PluginMessagePacket(brandChannel, buf);
       smc.write(brandPacket);
     }
 

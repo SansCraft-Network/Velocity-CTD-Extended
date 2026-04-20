@@ -44,8 +44,8 @@ public final class RedisVelocityQueue extends VelocityQueue {
   /**
    * Creates a fresh Redis-backed queue for the given backend server.
    */
-  public RedisVelocityQueue(final VelocityServer server, final VelocityQueueManager manager,
-                            final VelocityRegisteredServer backend, final QueueState initialState) {
+  public RedisVelocityQueue(VelocityServer server, VelocityQueueManager manager,
+                            VelocityRegisteredServer backend, QueueState initialState) {
     super(server, manager, backend, initialState);
     this.redis = server.getRedis();
   }
@@ -57,9 +57,9 @@ public final class RedisVelocityQueue extends VelocityQueue {
    * {@link #addEntryInternal(VelocityQueueEntry)}, which bypasses priority-insertion and
    * any publish/persist side-effects.</p>
    */
-  public RedisVelocityQueue(final VelocityServer server, final VelocityQueueManager manager,
-                            final VelocityRegisteredServer backend,
-                            final VelocityQueueDepotEntry entry) {
+  public RedisVelocityQueue(VelocityServer server, VelocityQueueManager manager,
+                            VelocityRegisteredServer backend,
+                            VelocityQueueDepotEntry entry) {
     super(server, manager, backend, entry.getState());
     this.redis = server.getRedis();
 
@@ -73,12 +73,12 @@ public final class RedisVelocityQueue extends VelocityQueue {
   }
 
   @Override
-  protected VelocityQueueEntry createEntry(final @NotNull QueueEntryData data) {
+  protected VelocityQueueEntry createEntry(@NotNull QueueEntryData data) {
     return new RedisVelocityQueueEntry(server, this, data);
   }
 
   @Override
-  public void enqueue(final @NotNull QueueEntryData data) {
+  public void enqueue(@NotNull QueueEntryData data) {
     super.enqueue(data);
 
     redis.publish(VelocityQueueSync.enqueue(
@@ -89,7 +89,7 @@ public final class RedisVelocityQueue extends VelocityQueue {
   }
 
   @Override
-  public void dequeue(final @NotNull UUID uniqueId) {
+  public void dequeue(@NotNull UUID uniqueId) {
     super.dequeue(uniqueId);
 
     redis.publish(VelocityQueueSync.dequeue(getName(), uniqueId));
@@ -97,8 +97,8 @@ public final class RedisVelocityQueue extends VelocityQueue {
   }
 
   @Override
-  public void setServerStatus(final @NotNull ServerStatus status) {
-    final ServerStatus prev = getServerStatus();
+  public void setServerStatus(@NotNull ServerStatus status) {
+    ServerStatus prev = getServerStatus();
     super.setServerStatus(status);
 
     if (getServerStatus() != prev) {
@@ -108,8 +108,8 @@ public final class RedisVelocityQueue extends VelocityQueue {
   }
 
   @Override
-  public void setState(final @NotNull QueueState state) {
-    final QueueState prev = getState();
+  public void setState(@NotNull QueueState state) {
+    QueueState prev = getState();
     super.setState(state);
 
     if (getState() != prev) {
@@ -126,7 +126,7 @@ public final class RedisVelocityQueue extends VelocityQueue {
   }
 
   @Override
-  void removeEntry(final VelocityQueueEntry entry) {
+  void removeEntry(VelocityQueueEntry entry) {
     super.removeEntry(entry);
 
     redis.publish(VelocityQueueSync.dequeue(getName(), entry.getUniqueId()));
@@ -134,9 +134,9 @@ public final class RedisVelocityQueue extends VelocityQueue {
   }
 
   @Override
-  public void broadcastMessage(final @NotNull Function<VelocityQueueEntry, Component> componentFn) {
+  public void broadcastMessage(@NotNull Function<VelocityQueueEntry, Component> componentFn) {
     for (VelocityQueueEntry entry : getEntries()) {
-      final Component msg = componentFn.apply(entry);
+      Component msg = componentFn.apply(entry);
       redis.publish(new VelocityMessage(entry.getUniqueId(), msg));
     }
   }
@@ -156,7 +156,7 @@ public final class RedisVelocityQueue extends VelocityQueue {
    * triggering this class's publish override.</p>
    */
   @ApiStatus.Internal
-  void applyEnqueue(final VelocityQueueSync sync) {
+  void applyEnqueue(VelocityQueueSync sync) {
     super.enqueue(new QueueEntryData(sync.playerUuid(), sync.username(),
         sync.priority(), sync.fullBypass(), sync.queueBypass()));
   }
@@ -165,7 +165,7 @@ public final class RedisVelocityQueue extends VelocityQueue {
    * Applies a DEQUEUE sync received from another proxy.
    */
   @ApiStatus.Internal
-  void applyDequeue(final UUID uuid) {
+  void applyDequeue(UUID uuid) {
     super.dequeue(uuid);
   }
 
@@ -173,7 +173,7 @@ public final class RedisVelocityQueue extends VelocityQueue {
    * Applies a STATE_CHANGE sync received from another proxy.
    */
   @ApiStatus.Internal
-  void applyStateChange(final QueueState newState) {
+  void applyStateChange(QueueState newState) {
     super.setState(newState);
   }
 
@@ -181,7 +181,7 @@ public final class RedisVelocityQueue extends VelocityQueue {
    * Applies a STATUS_CHANGE sync received from another proxy.
    */
   @ApiStatus.Internal
-  void applyStatusChange(final ServerStatus newStatus) {
+  void applyStatusChange(ServerStatus newStatus) {
     super.setServerStatus(newStatus);
   }
 
@@ -189,7 +189,7 @@ public final class RedisVelocityQueue extends VelocityQueue {
    * Applies a WAITING_CHANGE sync received from another proxy.
    */
   @ApiStatus.Internal
-  void applyWaitingChange(final VelocityQueueSync sync) {
+  void applyWaitingChange(VelocityQueueSync sync) {
     for (RedisVelocityQueueEntry entry : getInternalEntries()) {
       if (entry.getUniqueId().equals(sync.playerUuid())) {
         entry.applyWaitingChangeFromPacket(

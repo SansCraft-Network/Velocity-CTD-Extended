@@ -50,7 +50,7 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
 
   private boolean pingReceived = false;
 
-  StatusSessionHandler(final VelocityServer server, final VelocityInboundConnection inbound) {
+  StatusSessionHandler(VelocityServer server, VelocityInboundConnection inbound) {
     this.server = server;
     this.connection = inbound.getConnection();
     this.inbound = inbound;
@@ -65,7 +65,7 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final LegacyPingPacket packet) {
+  public boolean handle(LegacyPingPacket packet) {
     if (this.pingReceived) {
       throw EXPECTED_AWAITING_REQUEST;
     }
@@ -90,13 +90,13 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public boolean handle(final StatusPingPacket packet) {
+  public boolean handle(StatusPingPacket packet) {
     connection.closeWith(packet);
     return true;
   }
 
   @Override
-  public boolean handle(final StatusRequestPacket packet) {
+  public boolean handle(StatusRequestPacket packet) {
     if (this.pingReceived) {
       throw EXPECTED_AWAITING_REQUEST;
     }
@@ -108,7 +108,7 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
         .thenAcceptAsync(
             (event) -> {
               if (event.getResult().isAllowed()) {
-                final StringBuilder json = new StringBuilder();
+                StringBuilder json = new StringBuilder();
                 VelocityServer.getPingGsonInstance(connection.getProtocolVersion())
                         .toJson(event.getPing(), json);
                 connection.write(new StatusResponsePacket(json));
@@ -126,7 +126,7 @@ public class StatusSessionHandler implements MinecraftSessionHandler {
   }
 
   @Override
-  public void handleUnknown(final ByteBuf buf) {
+  public void handleUnknown(ByteBuf buf) {
     // What even is going on?
     connection.close(true);
   }

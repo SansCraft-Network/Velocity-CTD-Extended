@@ -32,7 +32,7 @@ public final class VelocityBrigadierCommandWrapper implements Command<CommandSou
 
   private final Object registrant;
 
-  private VelocityBrigadierCommandWrapper(final Command<CommandSource> delegate, final Object registrant) {
+  private VelocityBrigadierCommandWrapper(Command<CommandSource> delegate, Object registrant) {
     this.delegate = delegate;
     this.registrant = registrant;
   }
@@ -45,7 +45,7 @@ public final class VelocityBrigadierCommandWrapper implements Command<CommandSou
    * @param registrant the registrant of the command
    * @return the wrapped command, if necessary
    */
-  public static Command<CommandSource> wrap(final Command<CommandSource> delegate, final @Nullable Object registrant) {
+  public static Command<CommandSource> wrap(Command<CommandSource> delegate, @Nullable Object registrant) {
     if (registrant == null) {
       // nothing to wrap
       return delegate;
@@ -60,7 +60,7 @@ public final class VelocityBrigadierCommandWrapper implements Command<CommandSou
   }
 
   @Override
-  public int run(final CommandContext<CommandSource> context) throws CommandSyntaxException {
+  public int run(CommandContext<CommandSource> context) throws CommandSyntaxException {
     return delegate.run(context);
   }
 

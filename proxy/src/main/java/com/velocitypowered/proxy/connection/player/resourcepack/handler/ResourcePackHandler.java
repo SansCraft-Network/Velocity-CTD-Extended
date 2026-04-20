@@ -49,7 +49,7 @@ public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandl
 
   protected final VelocityServer server;
 
-  protected ResourcePackHandler(final ConnectedPlayer player, final VelocityServer server) {
+  protected ResourcePackHandler(ConnectedPlayer player, VelocityServer server) {
     this.player = player;
     this.server = server;
   }
@@ -62,8 +62,8 @@ public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandl
    *
    * @return a new ResourcePackHandler
    */
-  public static @NotNull ResourcePackHandler create(final ConnectedPlayer player, final VelocityServer server) {
-    final ProtocolVersion protocolVersion = player.getProtocolVersion();
+  public static @NotNull ResourcePackHandler create(ConnectedPlayer player, VelocityServer server) {
+    ProtocolVersion protocolVersion = player.getProtocolVersion();
     if (protocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_17)) {
       return new LegacyResourcePackHandler(player, server);
     }
@@ -104,16 +104,16 @@ public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandl
    *
    * @param request the resource pack request
    */
-  public void queueResourcePack(final @NotNull ResourcePackRequest request) {
-    for (final net.kyori.adventure.resource.ResourcePackInfo pack : request.packs()) {
-      final ResourcePackInfo resourcePackInfo = VelocityResourcePackInfo.fromAdventureRequest(request, pack);
+  public void queueResourcePack(@NotNull ResourcePackRequest request) {
+    for (net.kyori.adventure.resource.ResourcePackInfo pack : request.packs()) {
+      ResourcePackInfo resourcePackInfo = VelocityResourcePackInfo.fromAdventureRequest(request, pack);
       this.checkAlreadyAppliedPack(resourcePackInfo.getHash());
       queueResourcePack(resourcePackInfo);
     }
   }
 
-  protected void sendResourcePackRequestPacket(final @NotNull ResourcePackInfo queued) {
-    final ResourcePackRequestPacket request = new ResourcePackRequestPacket();
+  protected void sendResourcePackRequestPacket(@NotNull ResourcePackInfo queued) {
+    ResourcePackRequestPacket request = new ResourcePackRequestPacket();
     request.setId(queued.getId());
     request.setUrl(queued.getUrl());
     if (queued.getHash() != null) {
@@ -163,14 +163,14 @@ public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandl
    */
   public abstract boolean onResourcePackResponse(@NotNull ResourcePackResponseBundle bundle);
 
-  protected boolean handleResponseResult(final @Nullable ResourcePackInfo queued,
-                                         final @NotNull ResourcePackResponseBundle bundle) {
+  protected boolean handleResponseResult(@Nullable ResourcePackInfo queued,
+                                         @NotNull ResourcePackResponseBundle bundle) {
     // If Velocity, through a plugin, has sent a resource pack to the client,
     // there is no need to report the status of the response to the server
     // since it has no information that a resource pack has been sent
-    final boolean handled = queued != null && queued.getOriginalOrigin() == ResourcePackInfo.Origin.PLUGIN_ON_PROXY;
+    boolean handled = queued != null && queued.getOriginalOrigin() == ResourcePackInfo.Origin.PLUGIN_ON_PROXY;
     if (!handled) {
-      final VelocityServerConnection connectionInFlight = player.getConnectionInFlight();
+      VelocityServerConnection connectionInFlight = player.getConnectionInFlight();
       if (connectionInFlight != null && connectionInFlight.getConnection() != null) {
         connectionInFlight.getConnection().write(new ResourcePackResponsePacket(bundle.uuid(), bundle.hash(), bundle.status()));
       }
@@ -186,7 +186,7 @@ public abstract sealed class ResourcePackHandler permits LegacyResourcePackHandl
    */
   public abstract boolean hasPackAppliedByHash(byte[] hash);
 
-  public void checkAlreadyAppliedPack(final byte[] hash) {
+  public void checkAlreadyAppliedPack(byte[] hash) {
     if (this.hasPackAppliedByHash(hash)) {
       throw new IllegalStateException("Cannot apply a resource pack already applied");
     }

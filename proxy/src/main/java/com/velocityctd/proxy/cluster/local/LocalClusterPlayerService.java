@@ -35,7 +35,7 @@ public final class LocalClusterPlayerService implements VelocityClusterPlayerSer
 
   private final VelocityServer server;
 
-  public LocalClusterPlayerService(final VelocityServer server) {
+  public LocalClusterPlayerService(VelocityServer server) {
     this.server = server;
   }
 
@@ -45,7 +45,7 @@ public final class LocalClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public int getPlayersOnServerCount(final String serverName) {
+  public int getPlayersOnServerCount(String serverName) {
     return this.server.getServer(serverName)
         .map(rs -> rs.getPlayersConnected().size())
         .orElse(0);
@@ -59,7 +59,7 @@ public final class LocalClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public Collection<VelocityClusterPlayer> getPlayersOnServer(final String serverName) {
+  public Collection<VelocityClusterPlayer> getPlayersOnServer(String serverName) {
     return this.server.getServer(serverName)
         .map(rs -> rs.getPlayersConnected().stream()
             .<VelocityClusterPlayer>map(this::toLocalPlayer)
@@ -68,7 +68,7 @@ public final class LocalClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public Collection<VelocityClusterPlayer> getPlayersOnProxy(final String proxyId) {
+  public Collection<VelocityClusterPlayer> getPlayersOnProxy(String proxyId) {
     if (!this.server.getProxyId().equalsIgnoreCase(proxyId)) {
       return List.of();
     }
@@ -76,35 +76,35 @@ public final class LocalClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public Optional<VelocityClusterPlayer> getPlayer(final String username) {
+  public Optional<VelocityClusterPlayer> getPlayer(String username) {
     return this.server.getPlayer(username).map(this::toLocalPlayer);
   }
 
   @Override
-  public Optional<VelocityClusterPlayer> getPlayer(final UUID uniqueId) {
+  public Optional<VelocityClusterPlayer> getPlayer(UUID uniqueId) {
     return this.server.getPlayer(uniqueId).map(this::toLocalPlayer);
   }
 
   @Override
-  public boolean isPlayerOnline(final String username) {
+  public boolean isPlayerOnline(String username) {
     return this.server.getPlayer(username).isPresent();
   }
 
   @Override
-  public boolean onPlayerConnect(final ConnectedPlayer player) {
+  public boolean onPlayerConnect(ConnectedPlayer player) {
     return true;
   }
 
   @Override
-  public void onPlayerDisconnect(final ConnectedPlayer player) {
+  public void onPlayerDisconnect(ConnectedPlayer player) {
   }
 
   @Override
-  public void onPlayerSwitchServer(final ConnectedPlayer player, final String serverName) {
+  public void onPlayerSwitchServer(ConnectedPlayer player, String serverName) {
   }
 
   @Override
-  public void onPlayerSettingsChange(final ConnectedPlayer player, final PlayerSettings settings) {
+  public void onPlayerSettingsChange(ConnectedPlayer player, PlayerSettings settings) {
   }
 
   @Override
@@ -115,7 +115,7 @@ public final class LocalClusterPlayerService implements VelocityClusterPlayerSer
   }
 
   @Override
-  public void broadcastAlert(final Component message) {
+  public void broadcastAlert(Component message) {
     this.server.sendMessage(message);
   }
 

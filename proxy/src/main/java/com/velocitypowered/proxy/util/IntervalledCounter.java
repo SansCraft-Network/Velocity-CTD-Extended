@@ -70,7 +70,7 @@ public final class IntervalledCounter {
    *
    * @param interval the window size in nanoseconds (compatible with {@link System#nanoTime()})
    */
-  public IntervalledCounter(final long interval) {
+  public IntervalledCounter(long interval) {
     this.times = new long[INITIAL_SIZE];
     this.counts = new long[INITIAL_SIZE];
     this.interval = interval;
@@ -90,13 +90,13 @@ public final class IntervalledCounter {
    *
    * @param currentTime the current time in nanoseconds (as from {@link System#nanoTime()})
    */
-  public void updateCurrentTime(final long currentTime) {
+  public void updateCurrentTime(long currentTime) {
     long sum = this.sum;
     int head = this.head;
-    final int tail = this.tail;
-    final long minTime = currentTime - this.interval;
+    int tail = this.tail;
+    long minTime = currentTime - this.interval;
 
-    final int arrayLen = this.times.length;
+    int arrayLen = this.times.length;
 
     // guard against overflow by using subtraction
     while (head != tail && this.times[head] - minTime < 0) {
@@ -124,7 +124,7 @@ public final class IntervalledCounter {
    *
    * @param currTime the timestamp in nanoseconds
    */
-  public void addTime(final long currTime) {
+  public void addTime(long currTime) {
     this.addTime(currTime, 1L);
   }
 
@@ -137,7 +137,7 @@ public final class IntervalledCounter {
    * @param currTime the timestamp in nanoseconds
    * @param count the amount to add (non-negative)
    */
-  public void addTime(final long currTime, final long count) {
+  public void addTime(long currTime, long count) {
     // guard against overflow by using subtraction
     if (currTime - this.minTime < 0) {
       return;
@@ -160,8 +160,8 @@ public final class IntervalledCounter {
    *
    * @param count the amount to add (non-negative)
    */
-  public void updateAndAdd(final long count) {
-    final long currTime = System.nanoTime();
+  public void updateAndAdd(long count) {
+    long currTime = System.nanoTime();
     this.updateCurrentTime(currTime);
     this.addTime(currTime, count);
   }
@@ -173,7 +173,7 @@ public final class IntervalledCounter {
    * @param count the amount to add (non-negative)
    * @param currTime the timestamp in nanoseconds
    */
-  public void updateAndAdd(final long count, final long currTime) {
+  public void updateAndAdd(long count, long currTime) {
     this.updateCurrentTime(currTime);
     this.addTime(currTime, count);
   }
@@ -182,16 +182,16 @@ public final class IntervalledCounter {
    * Doubles the capacity of the internal ring buffers, preserving the order of existing data.
    */
   private void resize() {
-    final long[] oldElements = this.times;
-    final long[] oldCounts = this.counts;
-    final long[] newElements = new long[this.times.length * 2];
-    final long[] newCounts = new long[this.times.length * 2];
+    long[] oldElements = this.times;
+    long[] oldCounts = this.counts;
+    long[] newElements = new long[this.times.length * 2];
+    long[] newCounts = new long[this.times.length * 2];
     this.times = newElements;
     this.counts = newCounts;
 
-    final int head = this.head;
-    final int tail = this.tail;
-    final int size = tail >= head ? (tail - head) : (tail + (oldElements.length - head));
+    int head = this.head;
+    int tail = this.tail;
+    int size = tail >= head ? (tail - head) : (tail + (oldElements.length - head));
     this.head = 0;
     this.tail = size;
 

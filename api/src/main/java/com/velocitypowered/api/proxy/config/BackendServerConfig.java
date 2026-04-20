@@ -53,7 +53,7 @@ public record BackendServerConfig(String address, @Nullable PlayerInfoForwarding
    * @param address the hostname or address of the backend server
    * @throws NullPointerException if {@code address} is null
    */
-  public BackendServerConfig(final String address) {
+  public BackendServerConfig(String address) {
     this(address, null);
   }
 }

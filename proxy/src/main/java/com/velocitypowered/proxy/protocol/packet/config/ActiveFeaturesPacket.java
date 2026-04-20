@@ -28,7 +28,7 @@ public class ActiveFeaturesPacket implements MinecraftPacket {
 
   private Key[] activeFeatures;
 
-  public ActiveFeaturesPacket(final Key[] activeFeatures) {
+  public ActiveFeaturesPacket(Key[] activeFeatures) {
     this.activeFeatures = activeFeatures;
   }
 
@@ -36,7 +36,7 @@ public class ActiveFeaturesPacket implements MinecraftPacket {
     this.activeFeatures = new Key[0];
   }
 
-  public void setActiveFeatures(final Key[] activeFeatures) {
+  public void setActiveFeatures(Key[] activeFeatures) {
     this.activeFeatures = activeFeatures;
   }
 
@@ -45,19 +45,19 @@ public class ActiveFeaturesPacket implements MinecraftPacket {
   }
 
   @Override
-  public void decode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     activeFeatures = ProtocolUtils.readKeyArray(buf);
   }
 
   @Override
-  public void encode(final ByteBuf buf, final ProtocolUtils.Direction direction,
-                     final ProtocolVersion protocolVersion) {
+  public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
+                     ProtocolVersion protocolVersion) {
     ProtocolUtils.writeKeyArray(buf, activeFeatures);
   }
 
   @Override
-  public boolean handle(final MinecraftSessionHandler handler) {
+  public boolean handle(MinecraftSessionHandler handler) {
     return handler.handle(this);
   }
 }

@@ -50,12 +50,12 @@ public class JavaPluginLoader implements PluginLoader {
 
   private final Path baseDirectory;
 
-  public JavaPluginLoader(final VelocityServer ignoredServer, final Path baseDirectory) {
+  public JavaPluginLoader(VelocityServer ignoredServer, Path baseDirectory) {
     this.baseDirectory = baseDirectory;
   }
 
   @Override
-  public PluginDescription loadCandidate(final Path source) throws Exception {
+  public PluginDescription loadCandidate(Path source) throws Exception {
     Optional<SerializedPluginDescription> serialized = getSerializedPluginInfo(source);
 
     if (serialized.isEmpty()) {
@@ -79,7 +79,7 @@ public class JavaPluginLoader implements PluginLoader {
   }
 
   @Override
-  public PluginDescription createPluginFromCandidate(final PluginDescription candidate) throws Exception {
+  public PluginDescription createPluginFromCandidate(PluginDescription candidate) throws Exception {
     if (!(candidate instanceof JavaVelocityPluginDescriptionCandidate candidateInst)) {
       throw new IllegalArgumentException("Description provided isn't of the Java plugin loader");
     }
@@ -94,7 +94,7 @@ public class JavaPluginLoader implements PluginLoader {
   }
 
   @Override
-  public Module createModule(final PluginContainer container) {
+  public Module createModule(PluginContainer container) {
     PluginDescription description = container.getDescription();
     if (!(description instanceof JavaVelocityPluginDescription javaDescription)) {
       throw new IllegalArgumentException("Description provided isn't of the Java plugin loader");
@@ -109,7 +109,7 @@ public class JavaPluginLoader implements PluginLoader {
   }
 
   @Override
-  public void createPlugin(final PluginContainer container, final Module... modules) {
+  public void createPlugin(PluginContainer container, Module... modules) {
     if (!(container instanceof VelocityPluginContainer pluginContainer)) {
       throw new IllegalArgumentException("Container provided isn't of the Java plugin loader");
     }
@@ -129,7 +129,7 @@ public class JavaPluginLoader implements PluginLoader {
     pluginContainer.setInstance(instance);
   }
 
-  private Optional<SerializedPluginDescription> getSerializedPluginInfo(final Path source)
+  private Optional<SerializedPluginDescription> getSerializedPluginInfo(Path source)
       throws Exception {
     boolean foundBungeeBukkitPluginFile = false;
     try (JarInputStream in = new JarInputStream(new BufferedInputStream(Files.newInputStream(source)))) {
@@ -158,7 +158,7 @@ public class JavaPluginLoader implements PluginLoader {
     }
   }
 
-  private VelocityPluginDescription createCandidateDescription(final SerializedPluginDescription description, final Path source) {
+  private VelocityPluginDescription createCandidateDescription(SerializedPluginDescription description, Path source) {
     Set<PluginDependency> dependencies = new HashSet<>();
 
     for (SerializedPluginDescription.Dependency dependency : description.getDependencies()) {
@@ -178,7 +178,7 @@ public class JavaPluginLoader implements PluginLoader {
     );
   }
 
-  private VelocityPluginDescription createDescription(final JavaVelocityPluginDescriptionCandidate description, final Class<?> mainClass) {
+  private VelocityPluginDescription createDescription(JavaVelocityPluginDescriptionCandidate description, Class<?> mainClass) {
     return new JavaVelocityPluginDescription(
         description.getId(),
         description.getName().orElse(null),
@@ -192,7 +192,7 @@ public class JavaPluginLoader implements PluginLoader {
     );
   }
 
-  private static PluginDependency toDependencyMeta(final SerializedPluginDescription.Dependency dependency) {
+  private static PluginDependency toDependencyMeta(SerializedPluginDescription.Dependency dependency) {
     return new PluginDependency(
         dependency.getId(),
         null, // TODO Implement version matching in dependency annotation

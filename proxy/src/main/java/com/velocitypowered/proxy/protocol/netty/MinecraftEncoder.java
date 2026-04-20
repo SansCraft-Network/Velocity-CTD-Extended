@@ -42,22 +42,22 @@ public class MinecraftEncoder extends MessageToByteEncoder<MinecraftPacket> {
    *
    * @param direction the direction to encode to
    */
-  public MinecraftEncoder(final ProtocolUtils.Direction direction) {
+  public MinecraftEncoder(ProtocolUtils.Direction direction) {
     this.direction = Preconditions.checkNotNull(direction, "direction");
     this.registry = StateRegistry.HANDSHAKE.getProtocolRegistry(direction, ProtocolVersion.MINIMUM_VERSION);
     this.state = StateRegistry.HANDSHAKE;
   }
 
   @Override
-  protected void encode(final ChannelHandlerContext ctx, final MinecraftPacket msg, final ByteBuf out) {
+  protected void encode(ChannelHandlerContext ctx, MinecraftPacket msg, ByteBuf out) {
     int packetId = this.registry.getPacketId(msg);
     ProtocolUtils.writeVarInt(out, packetId);
     msg.encode(out, direction, registry.version);
   }
 
   @Override
-  protected ByteBuf allocateBuffer(final ChannelHandlerContext ctx, final MinecraftPacket msg,
-                                   final boolean preferDirect) throws Exception {
+  protected ByteBuf allocateBuffer(ChannelHandlerContext ctx, MinecraftPacket msg,
+                                   boolean preferDirect) throws Exception {
     int hint = msg.encodeSizeHint(direction, registry.version);
     if (hint < 0) {
       return super.allocateBuffer(ctx, msg, preferDirect);
@@ -68,11 +68,11 @@ public class MinecraftEncoder extends MessageToByteEncoder<MinecraftPacket> {
     return preferDirect ? ctx.alloc().ioBuffer(totalHint) : ctx.alloc().heapBuffer(totalHint);
   }
 
-  public void setProtocolVersion(final ProtocolVersion protocolVersion) {
+  public void setProtocolVersion(ProtocolVersion protocolVersion) {
     this.registry = state.getProtocolRegistry(direction, protocolVersion);
   }
 
-  public void setState(final StateRegistry state) {
+  public void setState(StateRegistry state) {
     this.state = state;
     this.setProtocolVersion(registry.version);
   }

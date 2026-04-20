@@ -76,7 +76,7 @@ public final class DataPacket {
    * @param rawPayload the raw payload
    * @param <T> the type of the payload
    */
-  private <T> DataPacket(final @NotNull String serializedPayload, final @NotNull T rawPayload) {
+  private <T> DataPacket(@NotNull String serializedPayload, @NotNull T rawPayload) {
     this.packetId = UUID.randomUUID();
     this.payload = serializedPayload;
     this.payloadType = rawPayload.getClass().getName();
@@ -91,7 +91,7 @@ public final class DataPacket {
    * @param <T> the type of the payload
    * @return a new data packet
    */
-  public static <T> DataPacket of(final @NotNull T payload, final @NotNull PacketSerializer serializer) {
+  public static <T> DataPacket of(@NotNull T payload, @NotNull PacketSerializer serializer) {
     return new DataPacket(serializer.serializePayload(payload), payload);
   }
 
@@ -136,7 +136,7 @@ public final class DataPacket {
    *
    * @param reply {@code true} if this packet represents a reply
    */
-  public void setReply(final boolean reply) {
+  public void setReply(boolean reply) {
     this.reply = reply;
   }
 
@@ -154,7 +154,7 @@ public final class DataPacket {
    *
    * @param transactionId the transaction ID to assign
    */
-  public void setTransactionId(final @NotNull UUID transactionId) {
+  public void setTransactionId(@NotNull UUID transactionId) {
     this.transactionId = transactionId;
   }
 
@@ -166,7 +166,7 @@ public final class DataPacket {
    * @return the deserialized payload
    */
   @SuppressWarnings("unchecked")
-  public <T> T getPayload(final @NotNull PacketSerializer serializer) {
+  public <T> T getPayload(@NotNull PacketSerializer serializer) {
     if (rawPayload == null) {
       Class<?> clazz;
       try {
@@ -182,7 +182,7 @@ public final class DataPacket {
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }

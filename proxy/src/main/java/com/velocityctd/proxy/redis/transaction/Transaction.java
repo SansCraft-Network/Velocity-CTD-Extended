@@ -82,7 +82,7 @@ public final class Transaction<T extends TransactionData<R>, R> {
    *
    * @param sentData the data to send
    */
-  private Transaction(final @NotNull T sentData) {
+  private Transaction(@NotNull T sentData) {
     this.transactionId = UUID.randomUUID();
     this.sentData = sentData;
   }
@@ -95,7 +95,7 @@ public final class Transaction<T extends TransactionData<R>, R> {
    * @param <R> the type of the expected response
    * @return a new transaction
    */
-  public static <T extends TransactionData<R>, R> Transaction<T, R> of(final @NotNull T data) {
+  public static <T extends TransactionData<R>, R> Transaction<T, R> of(@NotNull T data) {
     return new Transaction<>(data);
   }
 
@@ -108,7 +108,7 @@ public final class Transaction<T extends TransactionData<R>, R> {
    *
    * @see RedisProvider#publish(Transaction, int, TimeUnit)
    */
-  public CompletableFuture<R> publish(final @NotNull RedisProvider provider) {
+  public CompletableFuture<R> publish(@NotNull RedisProvider provider) {
     provider.publish(this);
     return this.future;
   }
@@ -129,7 +129,7 @@ public final class Transaction<T extends TransactionData<R>, R> {
    * @param timeUnit the time unit of the timeout argument
    * @return itself for chaining
    */
-  public Transaction<T, R> setTimeout(final int timeout, final TimeUnit timeUnit) {
+  public Transaction<T, R> setTimeout(int timeout, TimeUnit timeUnit) {
     this.timeout = timeout;
     this.timeUnit = timeUnit;
     return this;
@@ -143,7 +143,7 @@ public final class Transaction<T extends TransactionData<R>, R> {
    * @param result the response data
    */
   @SuppressWarnings("unchecked")
-  public void complete(final Object result) {
+  public void complete(Object result) {
     if (this.future.isDone()) {
       return;
     }

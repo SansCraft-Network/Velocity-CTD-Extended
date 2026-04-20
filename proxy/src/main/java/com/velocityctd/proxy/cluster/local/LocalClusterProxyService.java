@@ -32,7 +32,7 @@ public final class LocalClusterProxyService implements VelocityClusterProxyServi
 
   private final VelocityServer server;
 
-  public LocalClusterProxyService(final VelocityServer server) {
+  public LocalClusterProxyService(VelocityServer server) {
     this.server = server;
   }
 
@@ -52,7 +52,7 @@ public final class LocalClusterProxyService implements VelocityClusterProxyServi
   }
 
   @Override
-  public CompletableFuture<Boolean> reloadProxy(final String proxyId) {
+  public CompletableFuture<Boolean> reloadProxy(String proxyId) {
     if (!getSelfProxyId().equalsIgnoreCase(proxyId)) {
       return completedFuture(false);
     }
@@ -64,7 +64,7 @@ public final class LocalClusterProxyService implements VelocityClusterProxyServi
   }
 
   @Override
-  public CompletableFuture<Long> queryProxyUptime(final String proxyId) {
+  public CompletableFuture<Long> queryProxyUptime(String proxyId) {
     if (!getSelfProxyId().equalsIgnoreCase(proxyId)) {
       return completedFuture(0L);
     }

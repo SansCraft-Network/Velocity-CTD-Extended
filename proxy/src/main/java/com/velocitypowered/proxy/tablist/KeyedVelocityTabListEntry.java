@@ -45,9 +45,9 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
 
   private @Nullable IdentifiedKey playerKey;
 
-  KeyedVelocityTabListEntry(final KeyedVelocityTabList tabList, final GameProfile profile,
-                            final @Nullable Component displayName, final int latency,
-                            final int gameMode, final @Nullable IdentifiedKey playerKey) {
+  KeyedVelocityTabListEntry(KeyedVelocityTabList tabList, GameProfile profile,
+                            @Nullable Component displayName, int latency,
+                            int gameMode, @Nullable IdentifiedKey playerKey) {
     this.tabList = tabList;
     this.profile = profile;
     this.displayName = displayName;
@@ -72,13 +72,13 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
   }
 
   @Override
-  public TabListEntry setDisplayName(final @Nullable Component displayName) {
+  public TabListEntry setDisplayName(@Nullable Component displayName) {
     this.displayName = displayName;
     tabList.updateEntry(LegacyPlayerListItemPacket.UPDATE_DISPLAY_NAME, this);
     return this;
   }
 
-  void setDisplayNameInternal(final @Nullable Component displayName) {
+  void setDisplayNameInternal(@Nullable Component displayName) {
     this.displayName = displayName;
   }
 
@@ -88,13 +88,13 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
   }
 
   @Override
-  public TabListEntry setLatency(final int latency) {
+  public TabListEntry setLatency(int latency) {
     this.latency = latency;
     tabList.updateEntry(LegacyPlayerListItemPacket.UPDATE_LATENCY, this);
     return this;
   }
 
-  void setLatencyInternal(final int latency) {
+  void setLatencyInternal(int latency) {
     this.latency = latency;
   }
 
@@ -104,13 +104,13 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
   }
 
   @Override
-  public TabListEntry setGameMode(final int gameMode) {
+  public TabListEntry setGameMode(int gameMode) {
     this.gameMode = gameMode;
     tabList.updateEntry(LegacyPlayerListItemPacket.UPDATE_GAMEMODE, this);
     return this;
   }
 
-  void setGameModeInternal(final int gameMode) {
+  void setGameModeInternal(int gameMode) {
     this.gameMode = gameMode;
   }
 
@@ -124,7 +124,7 @@ public class KeyedVelocityTabListEntry implements TabListEntry {
     return playerKey;
   }
 
-  void setPlayerKeyInternal(final IdentifiedKey playerKey) {
+  void setPlayerKeyInternal(IdentifiedKey playerKey) {
     this.playerKey = playerKey;
   }
 }

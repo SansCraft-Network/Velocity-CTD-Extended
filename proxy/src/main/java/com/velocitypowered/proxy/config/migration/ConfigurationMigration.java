@@ -37,7 +37,7 @@ public interface ConfigurationMigration {
    * @return configuration version
    */
   default double configVersion(CommentedFileConfig config) {
-    final String stringVersion = config.getOrElse("config-version", "1.0");
+    String stringVersion = config.getOrElse("config-version", "1.0");
     try {
       return Double.parseDouble(stringVersion);
     } catch (Exception e) {

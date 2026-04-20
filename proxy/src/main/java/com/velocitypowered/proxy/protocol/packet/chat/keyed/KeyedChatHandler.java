@@ -39,7 +39,7 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
 
   private final ConnectedPlayer player;
 
-  public KeyedChatHandler(final VelocityServer server, final ConnectedPlayer player) {
+  public KeyedChatHandler(VelocityServer server, ConnectedPlayer player) {
     this.server = server;
     this.player = player;
   }
@@ -49,7 +49,7 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
     return KeyedPlayerChatPacket.class;
   }
 
-  public static void invalidCancel(final Logger logger, final ConnectedPlayer player) {
+  public static void invalidCancel(Logger logger, ConnectedPlayer player) {
     logger.fatal("A plugin tried to cancel a signed chat message."
         + " This is no longer possible in 1.19.1 and newer. "
         + "Disconnecting player {}", player.getUsername());
@@ -57,7 +57,7 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
         + "Contact your network administrator."));
   }
 
-  public static void invalidChange(final Logger logger, final ConnectedPlayer player) {
+  public static void invalidChange(Logger logger, ConnectedPlayer player) {
     logger.fatal("A plugin tried to change a signed chat message. "
         + "This is no longer possible in 1.19.1 and newer. "
         + "Disconnecting player {}", player.getUsername());
@@ -66,7 +66,7 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
   }
 
   @Override
-  public void handlePlayerChatInternal(final KeyedPlayerChatPacket packet) {
+  public void handlePlayerChatInternal(KeyedPlayerChatPacket packet) {
     ChatQueue chatQueue = this.player.getChatQueue();
     EventManager eventManager = this.server.getEventManager();
     PlayerChatEvent toSend = new PlayerChatEvent(player, packet.getMessage());
@@ -100,7 +100,7 @@ public class KeyedChatHandler implements ChatHandler<KeyedPlayerChatPacket> {
     );
   }
 
-  private Function<PlayerChatEvent, MinecraftPacket> handleOldSignedChat(final KeyedPlayerChatPacket packet) {
+  private Function<PlayerChatEvent, MinecraftPacket> handleOldSignedChat(KeyedPlayerChatPacket packet) {
     IdentifiedKey playerKey = this.player.getIdentifiedKey();
     assert playerKey != null;
     return pme -> {

@@ -17,9 +17,9 @@
 
 package com.velocitypowered.proxy.command.builtin;
 
+import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -84,7 +84,7 @@ public class GlistCommand implements BuiltinCommandDefinition {
             Component.translatable("velocity.command.glist-view-all", NamedTextColor.YELLOW)
                     .arguments(Argument.string("alias", VelocityCommands.readAlias(context.getNodes()))));
 
-    return 1;
+    return SINGLE_SUCCESS;
   }
 
   private int serverCount(CommandContext<CommandSource> context) {
@@ -101,12 +101,12 @@ public class GlistCommand implements BuiltinCommandDefinition {
         source.sendMessage(
                 CommandMessages.SERVER_DOES_NOT_EXIST
                         .arguments(Component.text(serverName)));
-        return -1;
+        return 0;
       }
       sendServerPlayers(source, false, registeredServer.get());
     }
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 
   private void sendTotalProxyCount(CommandSource target) {

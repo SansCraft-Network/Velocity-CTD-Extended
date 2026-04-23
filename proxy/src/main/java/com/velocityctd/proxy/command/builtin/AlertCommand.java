@@ -17,7 +17,8 @@
 
 package com.velocityctd.proxy.command.builtin;
 
-import com.mojang.brigadier.Command;
+import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
+
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -77,6 +78,6 @@ public class AlertCommand implements BuiltinCommandDefinition {
 
     server.getClusterPlayerService().broadcastAlert(alertComponent);
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 }

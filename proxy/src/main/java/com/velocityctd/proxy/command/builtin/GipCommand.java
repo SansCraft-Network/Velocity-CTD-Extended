@@ -17,7 +17,8 @@
 
 package com.velocityctd.proxy.command.builtin;
 
-import com.mojang.brigadier.Command;
+import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
+
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
@@ -93,6 +94,6 @@ public class GipCommand implements BuiltinCommandDefinition {
             )
     );
 
-    return Command.SINGLE_SUCCESS;
+    return SINGLE_SUCCESS;
   }
 }

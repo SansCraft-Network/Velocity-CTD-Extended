@@ -17,7 +17,8 @@
 
 package com.velocitypowered.proxy.command.builtin;
 
-import com.mojang.brigadier.Command;
+import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
+
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -130,7 +131,7 @@ public class SendCommand implements BuiltinCommandDefinition {
                 Argument.string("player", player.getUsername()),
                 Argument.string("server", toName)
             ));
-        return Command.SINGLE_SUCCESS;
+        return 0;
       }
 
       player.move(toName);
@@ -139,7 +140,7 @@ public class SendCommand implements BuiltinCommandDefinition {
               Argument.string("player", player.getUsername()),
               Argument.string("server", toName)
           ));
-      return Command.SINGLE_SUCCESS;
+      return SINGLE_SUCCESS;
     }
 
     // Multiple comma-separated players
@@ -161,7 +162,7 @@ public class SendCommand implements BuiltinCommandDefinition {
               Argument.string("server", fromName),
               Argument.string("to", toName)
           ));
-      return Command.SINGLE_SUCCESS;
+      return 0;
     }
 
     for (VelocityClusterPlayer player : players) {
@@ -177,7 +178,7 @@ public class SendCommand implements BuiltinCommandDefinition {
                 Argument.string("to", toName)
             )
     );
-    return Command.SINGLE_SUCCESS;
+    return moved;
   }
 
   private int sendBulk(CommandContext<CommandSource> ctx, PlayerIdentifier.Result result, String toName) {
@@ -206,7 +207,7 @@ public class SendCommand implements BuiltinCommandDefinition {
                 Argument.string("server", toName)
             )
     );
-    return Command.SINGLE_SUCCESS;
+    return moved;
   }
 
   private void sendResolveError(CommandSource source, PlayerIdentifier.Result result) {

@@ -17,7 +17,6 @@
 
 package com.velocityctd.proxy.command.builtin;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -120,7 +119,7 @@ public class TransferCommand implements BuiltinCommandDefinition {
     if (address.isEmpty()) {
       context.getSource().sendMessage(Component.translatable("velocity.command.error.transfer.invalid-proxy")
               .arguments(Component.text(proxyId)));
-      return -1;
+      return 0;
     }
 
     return transfer(context.getSource(), player, address.get(), normalizedProxyId);
@@ -130,7 +129,7 @@ public class TransferCommand implements BuiltinCommandDefinition {
     PlayerIdentifier.Result result = PlayerIdentifier.resolve(server, player, source);
     if (!result.success()) {
       sendResolveError(source, result);
-      return -1;
+      return 0;
     }
 
     switch (result.type()) {
@@ -175,7 +174,7 @@ public class TransferCommand implements BuiltinCommandDefinition {
       }
     }
 
-    return Command.SINGLE_SUCCESS;
+    return result.players().size();
   }
 
   private void transferAll(PlayerIdentifier.Result result, Address address) {

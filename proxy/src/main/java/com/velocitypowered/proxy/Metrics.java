@@ -107,7 +107,7 @@ public final class Metrics {
     private static final Logger LOGGER = LogManager.getLogger(Metrics.class);
 
     static void startMetrics(VelocityServer server, VelocityConfiguration.Metrics metricsConfig) {
-      Metrics metrics = new Metrics(LOGGER, 4752, metricsConfig.isEnabled());
+      Metrics metrics = new Metrics(LOGGER, 30992, metricsConfig.isEnabled());
 
       metrics.addCustomChart(
           new SingleLineChart("players", server::getPlayerCount)

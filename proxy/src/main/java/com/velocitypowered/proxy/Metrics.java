@@ -156,6 +156,18 @@ public final class Metrics {
 
         return map;
       }));
+
+      // --- Velocity-CTD-specific metrics ---
+
+      metrics.addCustomChart(
+          new SimplePie("redis_enabled",
+              () -> server.getConfiguration().getRedis().isEnabled() ? "enabled" : "disabled")
+      );
+
+      metrics.addCustomChart(
+          new SimplePie("queue_enabled",
+              () -> server.getConfiguration().getQueue().isEnabled() ? "enabled" : "disabled")
+      );
     }
   }
 }

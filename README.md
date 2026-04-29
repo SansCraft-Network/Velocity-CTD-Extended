@@ -145,6 +145,57 @@ dependencies, useful performance improvements, and more.
 * `velocity.queue.admin.removeall` (Allows you to remove a player from all queues).
 * `velocity.queue.admin.unpause` (Allows you to unpause any specific server for queuing).
 
+## Velocity-CTD API
+
+Velocity-CTD exposes its own api, one that is fully backwards-compatible with [com.velocitypowered:velocity-api](https://mvnrepository.com/artifact/com.velocitypowered/velocity-api) with some additional features.
+Some features are added to existing Velocity interfaces (in `com.velocitypowered.api`), and the CTD-custom functionality is exposed through the `com.velocityctd.api` package.
+
+Our API mainly adds and exposes the redis and queue subsystem through the API module, allowing you to interact with this system through plugins.
+
+See:
+- `ProxyServer.getClusterPlayerService()`
+- `ProxyServer.getClusterProxyService()`
+- `ProxyServer.getQueueManager()`
+
+Compile your plugin using CTD's API through the [Velocity-CTD Maven Repository](https://repo.velocityctd.com/#/):
+
+**Maven**
+```xml
+<repository>
+  <id>velocityctd-snapshots</id>
+  <name>Velocity-CTD Repository</name>
+  <url>https://repo.velocityctd.com/snapshots</url>
+</repository>
+
+<dependency>
+  <groupId>com.velocityctd</groupId>
+  <artifactId>velocity-api</artifactId>
+  <version>3.5.0-SNAPSHOT</version>
+</dependency>
+```
+
+**Gradle**
+
+_Groovy_
+```groovy
+maven {
+    name "velocityctdSnapshots"
+    url "https://repo.velocityctd.com/snapshots"
+}
+
+implementation "com.velocityctd:velocity-api:3.5.0-SNAPSHOT"
+```
+
+_Kotlin_
+```kotlin
+maven {
+    name = "velocityctdSnapshots"
+    url = uri("https://repo.velocityctd.com/snapshots")
+}
+
+implementation("com.velocityctd:velocity-api:3.5.0-SNAPSHOT")
+```
+
 ## Special Notes
 To proficiently review the stability and performance of your proxy in addition to spark,
 consider utilizing JProfiler to enhance your experience and report any ongoing issues.

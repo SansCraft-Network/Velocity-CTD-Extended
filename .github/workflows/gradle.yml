@@ -7,6 +7,7 @@ on:
     branches:
       - libdeflate
   pull_request:
+  workflow_dispatch:
 
 env:
   RELEASE_BRANCH: refs/heads/libdeflate

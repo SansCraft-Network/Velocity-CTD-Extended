@@ -8,6 +8,9 @@ and flexibility.
 
 Velocity-CTD is licensed under the GPLv3 license.
 
+[![Servers using Velocity-CTD](https://bstats-graph.gritter.nl/v1/plugins/30992/charts/servers/chart.png?max_elements=336)](https://bstats.velocityctd.com/)
+_Live graph of servers using Velocity-CTD, using [bstats-graph.gritter.nl](https://bstats-graph.gritter.nl/)._
+
 ## Purpose
 
 Velocity-CTD was created to replace poorly made plugins or

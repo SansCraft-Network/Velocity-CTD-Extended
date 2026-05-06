@@ -18,6 +18,7 @@ tasks {
             attributes["Implementation-Title"] = "Velocity-CTD"
             attributes["Implementation-Vendor"] = "Velocity(-CTD) Contributors"
             attributes["Multi-Release"] = "true"
+            attributes["Enable-Native-Access"] = "ALL-UNNAMED"
         }
     }
 

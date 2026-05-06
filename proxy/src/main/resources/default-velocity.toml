@@ -214,7 +214,7 @@ server-aliases = [
 "factions.example.com" = [
     "factions"
 ]
-"minigames.example.com" = { servers = ["minigames-limbo", "minigames-1", "minigames-2"], dynamic-fallbacks-filter = "first_available", forced-host-as-fallback = true }
+# "minigames.example.com" = { servers = ["minigames-limbo", "minigames-1", "minigames-2"], dynamic-fallbacks-filter = "first_available", forced-host-as-fallback = true }
 
 [command-aliases]
 # What commands should have aliases for simpler execution that

@@ -984,10 +984,10 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
       switch (event.getResult()) {
         case DisconnectPlayer res -> disconnect(res.getReasonComponent());
-        // cast required (api event class)
+        // Cast required (API event class)
         case RedirectPlayer res -> createConnectionRequest((VelocityRegisteredServer) res.getServer(), previousConnection).connect()
             .whenCompleteAsync((status, throwable) -> {
-              // cast required (api event class)
+              // Cast required (API event class)
               VelocityRegisteredServer server = (VelocityRegisteredServer) res.getServer();
               if (throwable != null) {
                 handleConnectionException(server, throwable, true);
@@ -1889,7 +1889,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
         ServerPreConnectEvent event = new ServerPreConnectEvent(ConnectedPlayer.this, toConnect, previousServer);
         return server.getEventManager().fire(event).thenComposeAsync(newEvent -> {
-          // cast required (api event class)
+          // Cast required (API event class)
           VelocityRegisteredServer realDestination = (VelocityRegisteredServer) newEvent.getResult().getServer().orElse(null);
           if (realDestination == null) {
             return completedFuture(plainResult(ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, toConnect));

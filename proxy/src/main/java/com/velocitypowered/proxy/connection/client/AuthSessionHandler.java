@@ -331,7 +331,7 @@ public class AuthSessionHandler implements MinecraftSessionHandler {
         new PlayerChooseInitialServerEvent(player, initialFromConfig.orElse(null));
 
     return server.getEventManager().fire(event).thenRunAsync(() -> {
-      // cast required (api event class)
+      // Cast required (API event class)
       VelocityRegisteredServer toTry = (VelocityRegisteredServer) event.getInitialServer().orElse(null);
       if (toTry == null) {
         if (event.getReason().isPresent()) {

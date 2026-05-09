@@ -563,8 +563,8 @@ public class BungeeCordMessageResponder {
       case "MaxQueuedPosition" -> this.queuedMaxPosition(in);
       case "QueuedPausedChannel" -> this.queuedPaused(in);
       default -> {
+        // Do nothing, unknown command
       }
-      // Do nothing, unknown command
     }
 
     return true;

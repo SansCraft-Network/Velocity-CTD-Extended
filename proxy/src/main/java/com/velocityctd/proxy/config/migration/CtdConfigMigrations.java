@@ -125,23 +125,6 @@ public class CtdConfigMigrations {
             List.of("joinqueue", "queue")
         ),
 
-        // [command-aliases]
-        migration(
-            "What commands should have aliases for simpler execution that\n"
-                + " do not already have a more advanced function or implementation.",
-            "command-aliases.hub",
-            List.of("lobby", "return")
-        ),
-
-        // [proxy-command-aliases]
-        migration(
-            "Proxy command aliases create new commands that execute other commands when invoked.\n"
-                + " This is similar to Bukkit's commands.yml functionality.\n"
-                + " Adding multiple aliases executes multiple commands.",
-            "proxy-command-aliases.examplealias",
-            List.of("velocity help")
-        ),
-
         // [advanced]
         migration(
             "Enables the execution of illegal characters in chat and only allows\n"

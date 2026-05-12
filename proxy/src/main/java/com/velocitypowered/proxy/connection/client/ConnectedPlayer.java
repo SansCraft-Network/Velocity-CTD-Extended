@@ -166,6 +166,12 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
   public static final int MAX_CLIENTSIDE_PLUGIN_CHANNELS = Integer.getInteger("velocity.max-clientside-plugin-channels", 1024);
 
+  /**
+   * Maximum time to wait for {@link DisconnectEvent} handlers to complete during {@link #teardown()}
+   * before unregistering the player and completing the teardown future.
+   */
+  private static final long DISCONNECT_EVENT_TIMEOUT_SECONDS = 30;
+
   private static final PlainTextComponentSerializer PASS_THRU_TRANSLATE =
       PlainTextComponentSerializer.builder().flattener(TranslatableMapper.FLATTENER).build();
 
@@ -248,9 +254,10 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
   /**
    * Whether the player has fully connected to the first server it's connecting to.
-   * This flag will be {@code true} after the first call to
-   * {@link #setConnectedServer(VelocityServerConnection)} with a non-null
-   * {@link VelocityServerConnection} as its argument.
+   * Set on the first non-null call to {@link #setConnectedServer(VelocityServerConnection)}
+   * and never cleared, so that {@link DisconnectEvent.LoginStatus} correctly reports
+   * {@link DisconnectEvent.LoginStatus#SUCCESSFUL_LOGIN} even when {@code connectedServer}
+   * has been nulled by a kick handler.
    */
   private boolean firstServerConnected = false;
 
@@ -805,6 +812,10 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    * @param duringLogin whether the disconnect happened during login
    */
   public void disconnect0(Component reason, boolean duringLogin) {
+    if (connection.isKnownDisconnect()) {
+      return;
+    }
+
     Component translated = this.translateMessage(reason);
 
     if (server.getConfiguration().isLogPlayerDisconnections()) {
@@ -840,8 +851,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   public void handleConnectionException(VelocityRegisteredServer server,
                                         Throwable throwable,
                                         boolean safe) {
-    if (!isActive()) {
-      // If the connection is no longer active, it makes no sense to try and recover it.
+    if (!isActive() || connection.isKnownDisconnect()) {
+      // No point trying to recover an inactive connection or one already being torn down.
       return;
     }
 
@@ -885,8 +896,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   public void handleConnectionException(VelocityRegisteredServer server,
                                         DisconnectPacket disconnect,
                                         boolean safe) {
-    if (!isActive()) {
-      // If the connection is no longer active, it makes no sense to try and recover it.
+    if (!isActive() || connection.isKnownDisconnect()) {
+      // No point trying to recover an inactive connection or one already being torn down.
       return;
     }
 
@@ -929,8 +940,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
                                          @Nullable Component kickReason,
                                          Component friendlyReason,
                                          boolean safe) {
-    if (!isActive()) {
-      // If the connection is no longer active, it makes no sense to try and recover it.
+    if (!isActive() || connection.isKnownDisconnect()) {
+      // No point trying to recover an inactive connection or one already being torn down.
       return;
     }
 
@@ -977,8 +988,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         connectedServer = null;
       }
 
-      if (!isActive()) {
-        // If the connection is no longer active, it makes no sense to try and recover it.
+      if (!isActive() || connection.isKnownDisconnect()) {
+        // No point trying to recover an inactive connection or one already being torn down.
         return;
       }
 
@@ -1304,28 +1315,30 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       connectedServer.disconnect();
     }
 
-    Optional<ConnectedPlayer> connectedPlayer = server.getPlayer(this.getUniqueId());
-    server.unregisterConnection(this);
+    DisconnectEvent event = new DisconnectEvent(this, computeDisconnectStatus());
+    server.getEventManager().fire(event)
+        .completeOnTimeout(event, DISCONNECT_EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .whenComplete((val, ex) -> {
+          server.unregisterConnection(this);
+          if (ex == null) {
+            this.teardownFuture.complete(null);
+          } else {
+            this.teardownFuture.completeExceptionally(ex);
+          }
+        });
+  }
 
-    DisconnectEvent.LoginStatus status;
-    if (connectedPlayer.isPresent()) {
-      if (connectedPlayer.get().getCurrentServer().isEmpty()) {
-        status = LoginStatus.PRE_SERVER_JOIN;
-      } else {
-        status = connectedPlayer.get() == this ? LoginStatus.SUCCESSFUL_LOGIN : LoginStatus.CONFLICTING_LOGIN;
-      }
-    } else {
-      status = connection.isKnownDisconnect() ? LoginStatus.CANCELLED_BY_PROXY : LoginStatus.CANCELLED_BY_USER;
+  private DisconnectEvent.LoginStatus computeDisconnectStatus() {
+    Optional<ConnectedPlayer> registered = server.getPlayer(this.getUniqueId());
+    if (registered.isEmpty()) {
+      return connection.isKnownDisconnect() ? LoginStatus.CANCELLED_BY_PROXY : LoginStatus.CANCELLED_BY_USER;
     }
 
-    DisconnectEvent event = new DisconnectEvent(this, status);
-    server.getEventManager().fire(event).whenComplete((val, ex) -> {
-      if (ex == null) {
-        this.teardownFuture.complete(null);
-      } else {
-        this.teardownFuture.completeExceptionally(ex);
-      }
-    });
+    if (registered.get() != this) {
+      return LoginStatus.CONFLICTING_LOGIN;
+    }
+
+    return this.firstServerConnected ? LoginStatus.SUCCESSFUL_LOGIN : LoginStatus.PRE_SERVER_JOIN;
   }
 
   public CompletableFuture<Void> getTeardownFuture() {

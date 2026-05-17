@@ -19,6 +19,7 @@ package com.velocitypowered.proxy.connection.client;
 
 import static com.velocityctd.proxy.permission.PermissionResolverAdapterFactory.createPermissionResolverAdapter;
 import static com.velocitypowered.api.proxy.ConnectionRequestBuilder.Status.ALREADY_CONNECTED;
+import static com.velocitypowered.proxy.connection.PlayerDataForwarding.LEGACY_MODERN_FORWARDING;
 import static com.velocitypowered.proxy.connection.util.ConnectionRequestResults.plainResult;
 import static java.util.Collections.emptyList;
 import static java.util.Objects.requireNonNull;
@@ -2226,11 +2227,14 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
     // Check if the server uses modern forwarding and the client is too old
     PlayerInfoForwarding serverForwardingMode = server.getPlayerInfoForwardingMode();
-    if (serverForwardingMode == PlayerInfoForwarding.MODERN && clientProtocolVersion.lessThan(ProtocolVersion.MINECRAFT_1_13)) {
+    ProtocolVersion modernForwardingMinVersion = LEGACY_MODERN_FORWARDING
+        ? ProtocolVersion.MINECRAFT_1_7_2
+        : ProtocolVersion.MINECRAFT_1_13;
+    if (serverForwardingMode == PlayerInfoForwarding.MODERN && clientProtocolVersion.lessThan(modernForwardingMinVersion)) {
       // Disconnect the player with an appropriate message
       disconnect(Component.translatable("velocity.error.modern-forwarding-needs-new-client", NamedTextColor.RED)
           .arguments(
-              Argument.string("min", "1.13"),
+              Argument.string("min", modernForwardingMinVersion.getMostRecentSupportedVersion()),
               Argument.string("max", serverMaximumVersion)));
       return false;
     }

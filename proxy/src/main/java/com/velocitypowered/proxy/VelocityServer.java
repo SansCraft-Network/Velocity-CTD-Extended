@@ -75,6 +75,7 @@ import com.velocitypowered.proxy.config.DynamicProxyFilterMode;
 import com.velocitypowered.proxy.config.ProxyAddress;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
+import com.velocitypowered.proxy.connection.client.PlayerRegistry;
 import com.velocitypowered.proxy.connection.player.resourcepack.VelocityResourcePackInfo;
 import com.velocitypowered.proxy.connection.util.ServerListPingHandler;
 import com.velocitypowered.proxy.console.VelocityConsole;
@@ -112,14 +113,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -204,9 +203,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   private final VelocityPluginManager pluginManager;
 
-  private final Map<UUID, ConnectedPlayer> connectionsByUuid = new ConcurrentHashMap<>();
-
-  private final Map<String, ConnectedPlayer> connectionsByName = new ConcurrentHashMap<>();
+  private final PlayerRegistry playerRegistry = new PlayerRegistry(this);
 
   /**
    * Holds a set of all registered BuiltinCommand instances. Used for unregistering these commands later.
@@ -882,8 +879,10 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
         LOGGER.warn("Interrupted while waiting for ProxyPreShutdownEvent; continuing shutdown.");
       }
 
-      ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(connectionsByUuid.values());
-      ImmutableList<@NotNull UUID> playerUuids = ImmutableList.copyOf(connectionsByUuid.keySet());
+      ImmutableList<@NotNull ConnectedPlayer> players = ImmutableList.copyOf(playerRegistry.getPlayers());
+      ImmutableList<@NotNull UUID> playerUuids = players.stream()
+          .map(ConnectedPlayer::getUniqueId)
+          .collect(ImmutableList.toImmutableList());
 
       if (!getConfiguration().isAcceptTransfers()) {
         for (ConnectedPlayer player : players) {
@@ -953,6 +952,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
       if (this.configuration.getRedis().isEnabled()) {
         this.redis.shutdown();
       }
+
+      this.playerRegistry.shutdown();
 
       // Since we manually removed the shutdown hook, we need to handle the shutdown ourselves.
       LogManager.shutdown();
@@ -1057,112 +1058,32 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     return tabCompleteRateLimiter;
   }
 
-  /**
-   * Checks if a connection identified by the given profile can be registered with the proxy.
-   * Called before the {@link ConnectedPlayer} instance is constructed so that rejected
-   * connections never create a phantom player object.
-   *
-   * @param profile the resolved game profile of the incoming connection
-   * @return {@code true} if we can register the connection, {@code false} if not
-   */
-  public boolean canRegisterConnection(GameProfile profile) {
-    // When kick-existing-players is enabled, skip duplicate checks here.
-    // registerConnection() handles kicking the existing player and enforcing IP rules.
-    if (configuration.isKickExistingPlayers()) {
-      return true;
-    }
-
-    String lowerName = profile.getName().toLowerCase(Locale.US);
-
-    if (connectionsByName.containsKey(lowerName)) {
-      return false;
-    }
-
-    return !connectionsByUuid.containsKey(profile.getId());
+  public PlayerRegistry getPlayerRegistry() {
+    return playerRegistry;
   }
 
   /**
-   * Attempts to register the {@code connection} with the proxy.
+   * Attempts to register the {@code connection} with the proxy, kicking any existing
+   * player under the same name or UUID if present and if
+   * {@link VelocityConfiguration#isKickExistingPlayers()} is {@code true}.
    *
    * @param connection the connection to register
-   * @return {@code true} if we registered the connection, {@code false} if not
+   * @return a future resolving to {@code true} if we registered the connection, {@code false} if not
    */
-  public boolean registerConnection(ConnectedPlayer connection) {
-    String lowerName = connection.getUsername().toLowerCase(Locale.US);
-
-    if (!this.configuration.isKickExistingPlayers()) {
-      // Standard behavior: block duplicate connections
-      if (connectionsByName.containsKey(lowerName)) {
-        return false;
-      }
-
-      connectionsByName.put(lowerName, connection);
-
-      if (connectionsByUuid.putIfAbsent(connection.getUniqueId(), connection) != null) {
-        connectionsByName.remove(lowerName, connection);
-        return false;
-      }
-
-      return true;
-    }
-
-    // kick-existing-players is enabled. Kick the existing session so the new one can take over.
-    // When kick-existing-players-check-ip is also enabled, only kick if the new connection comes
-    // from the same IP address.
-    ConnectedPlayer existingByUuid = connectionsByUuid.get(connection.getUniqueId());
-    if (existingByUuid != null) {
-      if (this.configuration.isKickExistingPlayersCheckIp()) {
-        InetAddress newIp = connection.getRemoteAddress().getAddress();
-        InetAddress existingIp = existingByUuid.getRemoteAddress().getAddress();
-        if (!newIp.equals(existingIp)) {
-          // Different IP with same UUID: protect the existing player, deny the new connection.
-          return false;
-        }
-      }
-      existingByUuid.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
-    }
-
-    // Also check for a username conflict whose UUID differs from the one above.
-    ConnectedPlayer existingByName = connectionsByName.get(lowerName);
-    if (existingByName != null && existingByName != existingByUuid) {
-      if (this.configuration.isKickExistingPlayersCheckIp()) {
-        InetAddress newIp = connection.getRemoteAddress().getAddress();
-        InetAddress existingIp = existingByName.getRemoteAddress().getAddress();
-        if (!newIp.equals(existingIp)) {
-          return false;
-        }
-      }
-      existingByName.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
-    }
-
-    connectionsByName.put(lowerName, connection);
-    connectionsByUuid.put(connection.getUniqueId(), connection);
-
-    return true;
-  }
-
-  /**
-   * Unregisters the given player from the proxy.
-   *
-   * @param connection the connection to unregister
-   */
-  public void unregisterConnection(ConnectedPlayer connection) {
-    connectionsByName.remove(connection.getUsername().toLowerCase(Locale.US), connection);
-    connectionsByUuid.remove(connection.getUniqueId(), connection);
-    connection.disconnected();
+  public CompletableFuture<Boolean> registerConnection(ConnectedPlayer connection) {
+    return playerRegistry.registerConnection(connection);
   }
 
   @Override
   public Optional<ConnectedPlayer> getPlayer(String username) {
     Preconditions.checkNotNull(username, "username");
-
-    return Optional.ofNullable(connectionsByName.get(username.toLowerCase(Locale.US)));
+    return playerRegistry.getPlayer(username);
   }
 
   @Override
   public Optional<ConnectedPlayer> getPlayer(UUID uuid) {
     Preconditions.checkNotNull(uuid, "uuid");
-    return Optional.ofNullable(connectionsByUuid.get(uuid));
+    return playerRegistry.getPlayer(uuid);
   }
 
   @Override
@@ -1185,12 +1106,12 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
 
   @Override
   public Collection<ConnectedPlayer> getAllPlayers() {
-    return ImmutableList.copyOf(connectionsByUuid.values());
+    return ImmutableList.copyOf(playerRegistry.getPlayers());
   }
 
   @Override
   public @UnmodifiableView Collection<ConnectedPlayer> getOnlinePlayers() {
-    return Collections.unmodifiableCollection(connectionsByUuid.values());
+    return playerRegistry.getPlayers();
   }
 
   /**
@@ -1202,7 +1123,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    */
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   public boolean isPlayerOnline(ConnectedPlayer player) {
-    return connectionsByUuid.get(player.getUniqueId()) == player;
+    return playerRegistry.isPlayerOnline(player);
   }
 
   @Override
@@ -1218,7 +1139,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
    * @return the number of locally connected players
    */
   public int getLocalPlayerCount() {
-    return connectionsByUuid.size();
+    return playerRegistry.getLocalPlayerCount();
   }
 
   @Override

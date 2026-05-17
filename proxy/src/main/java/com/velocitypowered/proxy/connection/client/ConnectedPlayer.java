@@ -35,7 +35,6 @@ import com.velocityctd.proxy.queue.VelocityQueue;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.command.PlayerAvailableCommandsEvent;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
-import com.velocitypowered.api.event.connection.DisconnectEvent.LoginStatus;
 import com.velocitypowered.api.event.connection.PreTransferEvent;
 import com.velocitypowered.api.event.player.CookieRequestEvent;
 import com.velocitypowered.api.event.player.CookieStoreEvent;
@@ -136,8 +135,11 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import net.kyori.adventure.audience.MessageType;
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.identity.Identity;
@@ -172,12 +174,6 @@ import org.jetbrains.annotations.Unmodifiable;
 public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, KeyIdentifiable, VelocityInboundConnection {
 
   public static final int MAX_CLIENTSIDE_PLUGIN_CHANNELS = Integer.getInteger("velocity.max-clientside-plugin-channels", 1024);
-
-  /**
-   * Maximum time to wait for {@link DisconnectEvent} handlers to complete during {@link #teardown()}
-   * before unregistering the player and completing the teardown future.
-   */
-  private static final long DISCONNECT_EVENT_TIMEOUT_SECONDS = 30;
 
   private static final PlainTextComponentSerializer PASS_THRU_TRANSLATE =
       PlainTextComponentSerializer.builder().flattener(TranslatableMapper.FLATTENER).build();
@@ -240,6 +236,41 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private final Collection<ChannelIdentifier> clientsideChannels;
 
   private final CompletableFuture<Void> teardownFuture = new CompletableFuture<>();
+
+  /**
+   * Per-identity lock held while this connection is in the registration/login pipeline.
+   * Transferred to this player by {@code PlayerRegistry.registerConnection} and released by
+   * exactly one of {@code finalizeLogin}, {@code unregisterConnection}, or the login-lock
+   * watchdog. {@code null} once consumed.
+   */
+  private final AtomicReference<PlayerIdentityLock.LockHandle> identityLock = new AtomicReference<>();
+
+  /**
+   * Watchdog cancelling the forced lock release once login completes (or the lock is
+   * otherwise consumed). May be {@code null} until registration completes.
+   */
+  private final AtomicReference<ScheduledFuture<?>> loginLockTimeout = new AtomicReference<>();
+
+  /**
+   * Set the first time a {@code DisconnectEvent} is fired for this player; subsequent attempts
+   * are no-ops. Used to coordinate between the kick path (where the new connection fires the
+   * old player's DisconnectEvent) and the natural teardown path.
+   */
+  private final AtomicBoolean disconnectFired = new AtomicBoolean(false);
+
+  /**
+   * Set the first time {@code LoginEvent} is fired for this player. A {@code false} value at
+   * teardown time means the connection was rejected or aborted before LoginEvent ran, so no
+   * {@code DisconnectEvent} should be fired (a {@code DisconnectEvent} without a preceding
+   * {@code LoginEvent} breaks plugins that pair the two events).
+   */
+  private final AtomicBoolean loginEventFired = new AtomicBoolean(false);
+
+  /**
+   * Set when the full login sequence (through {@code PostLoginEvent}) has completed
+   * successfully, i.e. when {@code PlayerRegistry.finalizeLogin} runs.
+   */
+  private final AtomicBoolean loginCompleted = new AtomicBoolean(false);
 
   private final ResourcePackHandler resourcePackHandler;
 
@@ -1374,7 +1405,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     return mc;
   }
 
-  public void teardown() {
+  void teardown() {
     if (connectionInFlight != null) {
       connectionInFlight.disconnect();
     }
@@ -1383,30 +1414,67 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
       connectedServer.disconnect();
     }
 
-    DisconnectEvent event = new DisconnectEvent(this, computeDisconnectStatus());
-    server.getEventManager().fire(event)
-        .completeOnTimeout(event, DISCONNECT_EVENT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .whenComplete((val, ex) -> {
-          server.unregisterConnection(this);
-          if (ex == null) {
-            this.teardownFuture.complete(null);
-          } else {
-            this.teardownFuture.completeExceptionally(ex);
-          }
-        });
+    server.getPlayerRegistry().unregisterConnection(this);
   }
 
-  private DisconnectEvent.LoginStatus computeDisconnectStatus() {
-    Optional<ConnectedPlayer> registered = server.getPlayer(this.getUniqueId());
-    if (registered.isEmpty()) {
-      return connection.isKnownDisconnect() ? LoginStatus.CANCELLED_BY_PROXY : LoginStatus.CANCELLED_BY_USER;
+  void setIdentityLock(@NonNull PlayerIdentityLock.LockHandle lock) {
+    if (!identityLock.compareAndSet(null, lock)) {
+      throw new IllegalStateException("Identity lock already set on " + this);
     }
+  }
 
-    if (registered.get() != this) {
-      return LoginStatus.CONFLICTING_LOGIN;
+  @Nullable PlayerIdentityLock.LockHandle consumeIdentityLock() {
+    PlayerIdentityLock.LockHandle lock = identityLock.getAndSet(null);
+    if (lock != null) {
+      ScheduledFuture<?> timeout = loginLockTimeout.getAndSet(null);
+      if (timeout != null) {
+        timeout.cancel(false);
+      }
     }
+    return lock;
+  }
 
-    return this.firstServerConnected ? LoginStatus.SUCCESSFUL_LOGIN : LoginStatus.PRE_SERVER_JOIN;
+  void setLoginLockTimeout(@NonNull ScheduledFuture<?> timeout) {
+    ScheduledFuture<?> previous = loginLockTimeout.getAndSet(timeout);
+    if (previous != null) {
+      previous.cancel(false);
+    }
+  }
+
+  boolean markDisconnectFired() {
+    return disconnectFired.compareAndSet(false, true);
+  }
+
+  void markLoginEventFired() {
+    loginEventFired.set(true);
+  }
+
+  boolean isLoginEventFired() {
+    return loginEventFired.get();
+  }
+
+  void markLoginCompleted() {
+    loginCompleted.set(true);
+  }
+
+  boolean isLoginCompleted() {
+    return loginCompleted.get();
+  }
+
+  void completeTeardown(@Nullable Throwable error) {
+    if (error == null) {
+      teardownFuture.complete(null);
+    } else {
+      teardownFuture.completeExceptionally(error);
+    }
+  }
+
+  boolean isFirstServerConnected() {
+    return firstServerConnected;
+  }
+
+  boolean isKnownDisconnect() {
+    return connection.isKnownDisconnect();
   }
 
   public CompletableFuture<Void> getTeardownFuture() {

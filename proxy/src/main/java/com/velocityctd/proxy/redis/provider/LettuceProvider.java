@@ -486,7 +486,19 @@ public final class LettuceProvider extends AbstractRedisProvider {
      */
     @Override
     public Collection<V> values() {
-      return depotCommands.hvals(this.name).stream().map(this::deserialize).toList();
+      return depotCommands.hvals(this.name).stream()
+              .map(this::deserialize)
+              .toList();
+    }
+
+    /**
+     * Returns the number of entries stored in this depot.
+     *
+     * @return the number of entries in this depot
+     */
+    @Override
+    public int size() {
+      return depotCommands.hlen(this.name).intValue();
     }
 
     /**

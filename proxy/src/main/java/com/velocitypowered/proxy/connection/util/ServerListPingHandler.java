@@ -114,21 +114,19 @@ public class ServerListPingHandler {
   }
 
   private String formatVersionString(String raw, ProtocolVersion version) {
-    return parseVariables(raw, (variable) -> {
-      return switch (variable) {
-        case "protocol-min" -> ProtocolVersion.getVersionByName(
-            server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn();
-        case "protocol-max" -> server.getConfiguration().getMaximumVersion()
-            .orElse(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion());
-        case "protocol" -> version.getVersionIntroducedIn();
-        case "proxy-brand" -> server.getVersion().getName();
-        case "proxy-brand-custom" -> server.getConfiguration().getProxyBrandCustom();
-        case "proxy-version" -> server.getVersion().getVersion();
-        case "proxy-vendor" -> server.getVersion().getVendor();
-        case "player-count" -> String.valueOf(server.getClusterPlayerService().getTotalPlayerCount());
-        case "max-players" -> String.valueOf(server.getConfiguration().getShowMaxPlayers());
-        default -> null;
-      };
+    return parseVariables(raw, (variable) -> switch (variable) {
+      case "protocol-min" -> ProtocolVersion.getVersionByName(
+          server.getConfiguration().getMinimumVersion()).getVersionIntroducedIn();
+      case "protocol-max" -> server.getConfiguration().getMaximumVersion()
+          .orElse(ProtocolVersion.MAXIMUM_VERSION.getMostRecentSupportedVersion());
+      case "protocol" -> version.getVersionIntroducedIn();
+      case "proxy-brand" -> server.getVersion().getName();
+      case "proxy-brand-custom" -> server.getConfiguration().getProxyBrandCustom();
+      case "proxy-version" -> server.getVersion().getVersion();
+      case "proxy-vendor" -> server.getVersion().getVendor();
+      case "player-count" -> String.valueOf(server.getClusterPlayerService().getTotalPlayerCount());
+      case "max-players" -> String.valueOf(server.getConfiguration().getShowMaxPlayers());
+      default -> null;
     });
   }
 

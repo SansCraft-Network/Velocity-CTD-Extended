@@ -163,6 +163,17 @@ public interface Queue {
   void setState(@NotNull QueueState state);
 
   /**
+   * Returns this queue's ETA tracker, if one is available on this proxy.
+   *
+   * <p>The result may be {@link Optional#empty()} when this proxy is not
+   * responsible for computing ETAs for the queue. Callers should not cache
+   * the returned tracker; the queue may swap it out at any time.</p>
+   *
+   * @return this queue's ETA tracker, or {@link Optional#empty()} if not available
+   */
+  Optional<? extends EtaTracker> getEtaTracker();
+
+  /**
    * Clears all players from this queue and releases any held resources.
    */
   void teardown();

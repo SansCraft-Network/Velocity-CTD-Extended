@@ -22,13 +22,9 @@ import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import io.netty.buffer.ByteBuf;
-import java.util.Objects;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.jetbrains.annotations.NotNull;
 
 public class LegacyTitlePacket extends GenericTitlePacket {
-
-  private final ActionType action;
 
   private @Nullable ComponentHolder component;
 
@@ -38,28 +34,19 @@ public class LegacyTitlePacket extends GenericTitlePacket {
 
   private int fadeOut;
 
-  public LegacyTitlePacket() {
-    // This constructor only exists to keep StateRegistry happy (all mappings are encode-only, the constructor isn't stored or used).
-    throw new AssertionError("A bare LegacyTitlePacket should never be instantiated");
-  }
-
-  public LegacyTitlePacket(ActionType action) {
-    this.action = Objects.requireNonNull(action, "action");
-  }
-
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
     if (version.lessThan(ProtocolVersion.MINECRAFT_1_11)
-        && this.action == ActionType.SET_ACTION_BAR) {
+        && getAction() == ActionType.SET_ACTION_BAR) {
       throw new IllegalStateException("Action bars are only supported on 1.11 and newer");
     }
 
-    ProtocolUtils.writeVarInt(buf, this.action.getAction(version));
+    ProtocolUtils.writeVarInt(buf, getAction().getAction(version));
 
-    switch (this.action) {
+    switch (getAction()) {
       case SET_TITLE, SET_SUBTITLE, SET_ACTION_BAR -> {
         if (component == null) {
-          throw new IllegalStateException("No component found for " + this.action);
+          throw new IllegalStateException("No component found for " + getAction());
         }
         component.write(buf);
       }
@@ -70,13 +57,13 @@ public class LegacyTitlePacket extends GenericTitlePacket {
       }
       case HIDE, RESET -> {
       }
-      default -> throw new UnsupportedOperationException("Unknown action " + this.action);
+      default -> throw new UnsupportedOperationException("Unknown action " + getAction());
     }
   }
 
   @Override
-  public @NotNull ActionType getAction() {
-    return action;
+  public void setAction(ActionType action) {
+    super.setAction(action);
   }
 
   @Override
@@ -122,7 +109,7 @@ public class LegacyTitlePacket extends GenericTitlePacket {
   @Override
   public String toString() {
     return "GenericTitlePacket{"
-        + "action=" + action
+        + "action=" + getAction()
         + ", component='" + component + '\''
         + ", fadeIn=" + fadeIn
         + ", stay=" + stay

@@ -22,7 +22,6 @@ import com.velocitypowered.proxy.protocol.MinecraftPacket;
 import com.velocitypowered.proxy.protocol.ProtocolUtils;
 import com.velocitypowered.proxy.protocol.packet.chat.ComponentHolder;
 import io.netty.buffer.ByteBuf;
-import org.jetbrains.annotations.NotNull;
 
 public abstract class GenericTitlePacket implements MinecraftPacket {
 
@@ -52,7 +51,15 @@ public abstract class GenericTitlePacket implements MinecraftPacket {
     }
   }
 
-  public abstract @NotNull ActionType getAction();
+  private ActionType action;
+
+  protected void setAction(ActionType action) {
+    this.action = action;
+  }
+
+  public final ActionType getAction() {
+    return action;
+  }
 
   public ComponentHolder getComponent() {
     throw new UnsupportedOperationException("Invalid function for this TitlePacket ActionType");
@@ -100,16 +107,20 @@ public abstract class GenericTitlePacket implements MinecraftPacket {
    * @return GenericTitlePacket instance that follows the invoker type/version
    */
   public static GenericTitlePacket constructTitlePacket(ActionType type, ProtocolVersion version) {
+    GenericTitlePacket packet;
     if (version.noLessThan(ProtocolVersion.MINECRAFT_1_17)) {
-      return switch (type) {
+      packet = switch (type) {
         case SET_ACTION_BAR -> new TitleActionbarPacket();
         case SET_SUBTITLE -> new TitleSubtitlePacket();
         case SET_TIMES -> new TitleTimesPacket();
         case SET_TITLE -> new TitleTextPacket();
-        case HIDE, RESET -> new TitleClearPacket(type);
+        case HIDE, RESET -> new TitleClearPacket();
       };
     } else {
-      return new LegacyTitlePacket(type);
+      packet = new LegacyTitlePacket();
     }
+
+    packet.setAction(type);
+    return packet;
   }
 }

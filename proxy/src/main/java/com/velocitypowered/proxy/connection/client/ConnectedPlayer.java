@@ -889,6 +889,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    *
    * @return a future that completes once the packet has been written (or an error has been logged)
    */
+  @Override
   public CompletableFuture<Void> sendAvailableCommands() {
     return sendAvailableCommands(this.connectedServer);
   }

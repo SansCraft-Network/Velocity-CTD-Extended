@@ -77,6 +77,7 @@ import com.velocitypowered.proxy.connection.MinecraftConnectionAssociation;
 import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.player.bossbar.BossBarManager;
 import com.velocitypowered.proxy.connection.player.bundle.BundleDelimiterHandler;
+import com.velocitypowered.proxy.connection.player.resourcepack.ResourcePackTransfer;
 import com.velocitypowered.proxy.connection.player.resourcepack.VelocityResourcePackInfo;
 import com.velocitypowered.proxy.connection.player.resourcepack.handler.ResourcePackHandler;
 import com.velocitypowered.proxy.connection.util.ConnectionMessages;
@@ -1576,9 +1577,29 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           resultedAddress = address;
         }
 
+        storeAppliedPacks();
         connection.write(new TransferPacket(resultedAddress.getHostName(), resultedAddress.getPort()));
       }
     });
+  }
+
+  private void storeAppliedPacks() {
+    if (connection.getState() != StateRegistry.PLAY && connection.getState() != StateRegistry.CONFIG) {
+      return;
+    }
+
+    ResourcePackTransfer.TransferSession session = new ResourcePackTransfer.TransferSession(
+        resourcePackHandler.getAppliedResourcePacks());
+    byte[] cookieData = ResourcePackTransfer.createCookieData(
+        server.getTransferPackSecret().get(), session);
+
+    // When there are no packs to carry we still store an empty payload. Cookies persist on the
+    // client across transfers, so skipping the write would leave a cookie a previous proxy stored
+    // intact, and a later hop would then read stale applied-pack state. The receiving side decodes
+    // an empty payload as "no applied packs".
+    connection.write(new ClientboundStoreCookiePacket(
+        ResourcePackTransfer.APPLIED_RESOURCE_PACKS_KEY,
+        cookieData == null ? new byte[0] : cookieData));
   }
 
   @Override

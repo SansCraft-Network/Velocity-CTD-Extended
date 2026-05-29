@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.annotations.Expose;
 import com.velocityctd.proxy.config.migration.CtdConfigMigrations;
-import com.velocityctd.proxy.util.ComponentUtils;
 import com.velocitypowered.api.proxy.config.BackendServerConfig;
 import com.velocitypowered.api.proxy.config.ProxyConfig;
 import com.velocitypowered.api.proxy.server.PlayerInfoForwarding;
@@ -56,6 +55,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -498,7 +498,7 @@ public final class VelocityConfiguration implements ProxyConfig {
   @Override
   public Component getMotd() {
     if (motdAsComponent == null) {
-      motdAsComponent = ComponentUtils.parse(motd);
+      motdAsComponent = MiniMessage.miniMessage().deserialize(motd);
     }
 
     return motdAsComponent;
@@ -512,7 +512,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           // See https://github.com/vansencool/FastServerPings/issues/8
           // May be removed after a while.
           .map(s -> s.isEmpty() ? " " : s)
-          .map(ComponentUtils::parse)
+          .map(MiniMessage.miniMessage()::deserialize)
           .toList();
     }
 
@@ -1195,7 +1195,7 @@ public final class VelocityConfiguration implements ProxyConfig {
           if (label != null && url != null) {
             for (String scope : scopes) {
               links.computeIfAbsent(scope, s -> new ArrayList<>())
-                  .add(ServerLink.serverLink(ComponentUtils.parse(label), url));
+                  .add(ServerLink.serverLink(MiniMessage.miniMessage().deserialize(label), url));
             }
           }
         }
@@ -1319,7 +1319,7 @@ public final class VelocityConfiguration implements ProxyConfig {
       if (label != null && url != null) {
         for (String scope : scopes) {
           links.computeIfAbsent(scope, s -> new ArrayList<>())
-              .add(ServerLink.serverLink(ComponentUtils.parse(label), url));
+              .add(ServerLink.serverLink(MiniMessage.miniMessage().deserialize(label), url));
         }
       }
     }
@@ -2094,9 +2094,9 @@ public final class VelocityConfiguration implements ProxyConfig {
       }
 
       this.serverBrandAsString = LegacyComponentSerializer.legacySection()
-          .serialize(ComponentUtils.parse(this.serverBrand));
+          .serialize(MiniMessage.miniMessage().deserialize(this.serverBrand));
       this.fallbackVersionPingAsString = LegacyComponentSerializer.legacySection()
-          .serialize(ComponentUtils.parse(this.fallbackVersionPing));
+          .serialize(MiniMessage.miniMessage().deserialize(this.fallbackVersionPing));
     }
 
     public int getCompressionThreshold() {

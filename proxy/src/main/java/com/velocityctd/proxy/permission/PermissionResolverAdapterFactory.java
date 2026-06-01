@@ -100,7 +100,15 @@ public final class PermissionResolverAdapterFactory {
         return Optional.ofNullable(loadedProvider);
       }
 
-      loadedProvider = loadProviderOnce().orElse(null);
+      var theLoadedProvider = loadProviderOnce().orElse(null);
+
+      if (theLoadedProvider == null) {
+        LOGGER.debug("Could not load PermissionResolverProvider.");
+      } else {
+        LOGGER.debug("Loaded PermissionResolverProvider {}", theLoadedProvider.getClass().getName());
+      }
+
+      loadedProvider = theLoadedProvider;
       hasLoadedProvider = true;
 
       return Optional.ofNullable(loadedProvider);

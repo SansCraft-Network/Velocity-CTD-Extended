@@ -1,3 +1,4 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer
 
 plugins {
@@ -12,6 +13,18 @@ application {
     applicationDefaultJvmArgs += listOf("-Dvelocity.packet-decode-logging=true")
 }
 
+val relocations = mapOf(
+    "org.bstats" to "com.velocitypowered.proxy.bstats",
+)
+
+val relocatedLibraries: Configuration by configurations.creating {
+    isCanBeResolved = true
+    isCanBeConsumed = false
+}
+// Keep the relocated libraries on the compile/runtime classpath so the proxy compiles against them
+// and the fat shadowJar continues to bundle them.
+configurations.named("implementation") { extendsFrom(relocatedLibraries) }
+
 tasks {
     jar {
         manifest {
@@ -20,6 +33,17 @@ tasks {
             attributes["Multi-Release"] = "true"
             attributes["Enable-Native-Access"] = "ALL-UNNAMED"
             attributes["Enable-Final-Field-Mutation"] = "ALL-UNNAMED"
+        }
+    }
+
+    processResources {
+        // Embed :velocity-luckperms-integration as META-INF/velocityctd/integrations/velocity-luckperms-integration.jar
+        val lpJar = project(":velocity-luckperms-integration")
+            .tasks
+            .named<Jar>("jar")
+        from(lpJar.flatMap { it.archiveFile }) {
+            into("META-INF/velocityctd/integrations")
+            rename { "velocity-luckperms-integration.jar" }
         }
     }
 
@@ -92,22 +116,22 @@ tasks {
         // Exclude Checker Framework annotations
         exclude("org/checkerframework/checker/**")
 
-        relocate("org.bstats", "com.velocitypowered.proxy.bstats")
+        relocations.forEach { (from, to) -> relocate(from, to) }
 
         // Include Configurate 3
         val configurateBuildTask = project(":deprecated-configurate3").tasks.named("shadowJar")
         dependsOn(configurateBuildTask)
         from(zipTree(configurateBuildTask.map { it.outputs.files.singleFile }))
+    }
 
-        // Embed :velocity-luckperms-integration as META-INF/velocityctd/integrations/velocity-luckperms-integration.jar
-        val lpJar = project(":velocity-luckperms-integration")
-            .tasks
-            .named<Jar>("jar")
-        dependsOn(lpJar)
-        from(lpJar.flatMap { it.archiveFile }) {
-            into("META-INF/velocityctd/integrations")
-            rename { "velocity-luckperms-integration.jar" }
-        }
+    // A minimal shaded jar containing the proxy classes plus relocated copies of `relocatedLibraries`
+    // (and nothing else). The bootstrap embeds this as the proxy jar, while resolving every other
+    // dependency from Maven.
+    register<ShadowJar>("proxyRelocatedJar") {
+        archiveClassifier.set("relocated")
+        from(sourceSets["main"].output)
+        configurations = listOf(relocatedLibraries)
+        relocations.forEach { (from, to) -> relocate(from, to) }
     }
 
     runShadow {
@@ -166,7 +190,7 @@ dependencies {
     implementation(libs.completablefutures)
     implementation(libs.component)
     implementation(libs.nightconfig)
-    implementation(libs.bstats)
+    relocatedLibraries(libs.bstats)
     implementation(libs.lmbda)
     implementation(libs.asm)
     implementation(libs.bundles.flare)

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.permission.luckperms;
+package com.velocityctd.permission.luckperms;
 
 import com.velocityctd.api.permission.PermissionChangeListener;
 import java.util.Collections;
@@ -29,6 +29,8 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import net.luckperms.api.LuckPerms;
 import net.luckperms.api.event.user.UserDataRecalculateEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -36,8 +38,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  */
 final class LuckpermsPermissionChangeDispatcher {
 
-  private static final System.Logger LOGGER =
-      System.getLogger(LuckpermsPermissionChangeDispatcher.class.getName());
+  private static final Logger LOGGER = LogManager.getLogger(LuckpermsPermissionChangeDispatcher.class);
 
   private static final long COOLDOWN_MILLIS = 100L;
 
@@ -123,7 +124,7 @@ final class LuckpermsPermissionChangeDispatcher {
           CompletableFuture.delayedExecutor(COOLDOWN_MILLIS, TimeUnit.MILLISECONDS));
       scheduled.whenComplete((result, throwable) -> {
         if (throwable != null && !(throwable instanceof CancellationException)) {
-          LOGGER.log(System.Logger.Level.ERROR, "A permission change listener threw an exception.", throwable);
+          LOGGER.error("A permission change listener threw an exception.", throwable);
         }
       });
       pending = scheduled;

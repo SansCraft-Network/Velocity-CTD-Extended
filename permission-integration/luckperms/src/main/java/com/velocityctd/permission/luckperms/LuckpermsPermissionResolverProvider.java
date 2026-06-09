@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.velocityctd.proxy.permission.luckperms;
+package com.velocityctd.permission.luckperms;
 
 import com.velocityctd.api.permission.PermissionResolver;
-import com.velocityctd.api.permission.PermissionResolverProvider;
+import com.velocityctd.permission.spi.PermissionResolverProvider;
 import com.velocitypowered.api.permission.PermissionFunction;
 import com.velocitypowered.api.permission.PermissionSubject;
 import com.velocitypowered.api.proxy.Player;

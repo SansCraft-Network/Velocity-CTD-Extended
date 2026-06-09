@@ -7,7 +7,6 @@
 
 package com.velocityctd.api.event.permission;
 
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.velocitypowered.api.proxy.Player;
 
@@ -47,8 +46,8 @@ public final class PermissionsChangeEvent {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("player", player)
-        .toString();
+    return "PermissionsChangeEvent{"
+        + "player=" + player
+        + '}';
   }
 }

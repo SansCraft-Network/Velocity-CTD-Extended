@@ -81,6 +81,7 @@ dependencies, useful performance improvements, and more.
 * Preliminary MiniMessage support to permit full configurability of all Velocity
   messages, alongside `/velocity reload`able translations, alongside `/velocity reload`able
   server additions/removals inside the `velocity.toml`.
+* Native forced-hosts configuration extended in `velocity.toml` under `[forced-hosts]`, supporting detailed object structures with custom `motd`, custom `motd-hover` text, and `server-icon` path configurations per virtual host mapping.
 * Removal of all language files except `messages.properties` to preserve
   maintainability. PRs (Pull Requests) are welcome to reimplement all language files
   with our changes.

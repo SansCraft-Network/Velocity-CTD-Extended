@@ -151,6 +151,15 @@ public interface ProxyServer extends Audience {
   RegisteredServer registerServer(ServerInfo server);
 
   /**
+   * Registers a virtual server.
+   *
+   * @param name    the name of the virtual server
+   * @param handler the handler for the virtual server
+   * @return the registered virtual server
+   */
+  com.velocityctd.api.server.VirtualServer registerVirtualServer(String name, com.velocityctd.api.server.VirtualServerHandler handler);
+
+  /**
    * Unregisters this server from the proxy.
    *
    * @param server the server to unregister

@@ -70,6 +70,23 @@ public class ServerMap {
     return new VelocityRegisteredServer(server, serverInfo);
   }
 
+  public VelocityRegisteredServer register(VelocityRegisteredServer rs) {
+    Preconditions.checkNotNull(rs, "server");
+    String lowerName = rs.getServerInfo().getName().toLowerCase(Locale.US);
+    VelocityRegisteredServer existing = servers.putIfAbsent(lowerName, rs);
+    if (existing != null && !existing.getServerInfo().equals(rs.getServerInfo())) {
+      throw new IllegalArgumentException(
+          "Server with name " + rs.getServerInfo().getName() + " already registered");
+    } else if (existing == null) {
+      if (server != null) {
+        server.getEventManager().fireAndForget(new ServerRegisteredEvent(rs));
+      }
+      return rs;
+    } else {
+      return existing;
+    }
+  }
+
   /**
    * Registers a server with the proxy.
    *

@@ -2148,8 +2148,15 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             return completedFuture(plainResult(ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, realDestination));
           }
 
-          VelocityServerConnection con = new VelocityServerConnection(
-              realDestination, previousServer, ConnectedPlayer.this, server);
+          VelocityServerConnection con;
+          if (realDestination instanceof com.velocityctd.api.server.VirtualServer) {
+            con = new com.velocityctd.proxy.server.VelocityVirtualServerConnection(
+                realDestination, previousServer, ConnectedPlayer.this, server,
+                (com.velocityctd.api.server.VirtualServer) realDestination);
+          } else {
+            con = new VelocityServerConnection(
+                realDestination, previousServer, ConnectedPlayer.this, server);
+          }
           connectionInFlight = con;
 
           if (connectedServer == null) {

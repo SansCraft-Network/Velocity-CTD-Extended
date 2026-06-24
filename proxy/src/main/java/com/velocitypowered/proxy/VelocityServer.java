@@ -1276,6 +1276,16 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   }
 
   @Override
+  public com.velocityctd.api.server.VirtualServer registerVirtualServer(String name, com.velocityctd.api.server.VirtualServerHandler handler) {
+    com.google.common.base.Preconditions.checkNotNull(name, "name");
+    com.google.common.base.Preconditions.checkNotNull(handler, "handler");
+    ServerInfo info = new ServerInfo(name, new java.net.InetSocketAddress("127.0.0.1", 0));
+    com.velocityctd.proxy.server.VelocityVirtualRegisteredServer rs = 
+        new com.velocityctd.proxy.server.VelocityVirtualRegisteredServer(this, info, handler);
+    return (com.velocityctd.api.server.VirtualServer) servers.register(rs);
+  }
+
+  @Override
   public void unregisterServer(ServerInfo server) {
     servers.unregister(server);
   }

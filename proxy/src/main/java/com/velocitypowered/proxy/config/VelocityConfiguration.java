@@ -1692,11 +1692,31 @@ public final class VelocityConfiguration implements ProxyConfig {
     private final List<String> servers;
     private final DynamicFallbackFilter dynamicFallbackFilter;
     private final boolean forcedHostAsFallback;
+    private final @Nullable List<String> motd;
+    private final @Nullable List<String> motdHover;
+    private final @Nullable String serverIconPath;
+    private @Nullable Favicon favicon;
 
-    private ForcedHostEntry(List<String> servers, DynamicFallbackFilter dynamicFallbackFilter, boolean forcedHostAsFallback) {
+    private ForcedHostEntry(List<String> servers, DynamicFallbackFilter dynamicFallbackFilter, boolean forcedHostAsFallback,
+                             @Nullable List<String> motd, @Nullable List<String> motdHover, @Nullable String serverIconPath) {
       this.servers = servers;
       this.dynamicFallbackFilter = dynamicFallbackFilter;
       this.forcedHostAsFallback = forcedHostAsFallback;
+      this.motd = motd;
+      this.motdHover = motdHover;
+      this.serverIconPath = serverIconPath;
+      if (serverIconPath != null) {
+        Path iconPath = Path.of(serverIconPath);
+        if (Files.exists(iconPath)) {
+          try {
+            this.favicon = Favicon.create(iconPath);
+          } catch (Exception e) {
+            LOGGER.warn("Unable to load forced host icon at " + serverIconPath + ", continuing without it.", e);
+          }
+        } else {
+          LOGGER.warn("Forced host icon at " + serverIconPath + " does not exist.");
+        }
+      }
     }
 
     public List<String> getServers() {
@@ -1715,12 +1735,27 @@ public final class VelocityConfiguration implements ProxyConfig {
       return forcedHostAsFallback;
     }
 
+    public @Nullable List<String> getMotd() {
+      return motd;
+    }
+
+    public @Nullable List<String> getMotdHover() {
+      return motdHover;
+    }
+
+    public @Nullable Favicon getFavicon() {
+      return favicon;
+    }
+
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
           .add("servers", servers)
           .add("dynamicFallbackFilter", dynamicFallbackFilter)
           .add("forcedHostAsFallback", forcedHostAsFallback)
+          .add("motd", motd)
+          .add("motdHover", motdHover)
+          .add("serverIconPath", serverIconPath)
           .toString();
     }
   }
@@ -1740,9 +1775,9 @@ public final class VelocityConfiguration implements ProxyConfig {
           String key = entry.getKey().toLowerCase(Locale.ROOT);
 
           if (entry.getValue() instanceof String) {
-            entries.put(key, new ForcedHostEntry(ImmutableList.of(entry.getValue()), null, true));
+            entries.put(key, new ForcedHostEntry(ImmutableList.of(entry.getValue()), null, true, null, null, null));
           } else if (entry.getValue() instanceof List) {
-            entries.put(key, new ForcedHostEntry(ImmutableList.copyOf((List<String>) entry.getValue()), null, true));
+            entries.put(key, new ForcedHostEntry(ImmutableList.copyOf((List<String>) entry.getValue()), null, true, null, null, null));
           } else if (entry.getValue() instanceof UnmodifiableConfig tableConfig) {
             Object serversValue = tableConfig.get("servers");
             List<String> servers;
@@ -1760,7 +1795,23 @@ public final class VelocityConfiguration implements ProxyConfig {
             boolean forcedHostAsFallback = tableConfig.getOrElse("forced-host-as-fallback",
                 config.getOrElse("forced-host-as-fallback", true));
 
-            entries.put(key, new ForcedHostEntry(servers, filter, forcedHostAsFallback));
+            Object rawMotd = tableConfig.get("motd");
+            List<String> motd = null;
+            if (rawMotd instanceof String) {
+              motd = Collections.singletonList((String) rawMotd);
+            } else if (rawMotd instanceof List) {
+              motd = ImmutableList.copyOf((List<String>) rawMotd);
+            }
+
+            List<String> motdHover = null;
+            Object rawMotdHover = tableConfig.get("motd-hover");
+            if (rawMotdHover instanceof List) {
+              motdHover = ImmutableList.copyOf((List<String>) rawMotdHover);
+            }
+
+            String serverIcon = tableConfig.get("server-icon");
+
+            entries.put(key, new ForcedHostEntry(servers, filter, forcedHostAsFallback, motd, motdHover, serverIcon));
           } else {
             LOGGER.warn("Invalid value of type {} in forced hosts!", entry.getValue().getClass());
           }

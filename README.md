@@ -154,12 +154,18 @@ dependencies, useful performance improvements, and more.
 Velocity-CTD exposes its own api, one that is fully backwards-compatible with [com.velocitypowered:velocity-api](https://mvnrepository.com/artifact/com.velocitypowered/velocity-api) with some additional features.
 Some features are added to existing Velocity interfaces (in `com.velocitypowered.api`), and the CTD-custom functionality is exposed through the `com.velocityctd.api` package.
 
-Our API mainly adds and exposes the redis and queue subsystem through the API module, allowing you to interact with this system through plugins.
+Our API mainly adds and exposes the redis and queue subsystem, as well as the Virtual Server registration framework:
 
 See:
 - `ProxyServer.getClusterPlayerService()`
 - `ProxyServer.getClusterProxyService()`
 - `ProxyServer.getQueueManager()`
+- `ProxyServer.registerVirtualServer(String name, VirtualServerHandler handler)`: Registers a real virtual server with the proxy.
+- `ProxyServer.unregisterServer(ServerInfo server)`: Unregisters any server (including virtual servers) from the proxy's server registry.
+- `com.velocityctd.api.server.VirtualServer`: Represents a dynamically registered virtual server extending `RegisteredServer`.
+- `com.velocityctd.api.server.VirtualServerHandler`: Connection listener for virtual servers to accept player handshakes.
+- `com.velocityctd.api.server.VirtualConnection`: Connection channel proxy to send packets or disconnect players on virtual servers.
+- `com.velocityctd.api.server.VirtualPacketHandler`: Interceptor interface to handle inbound player-to-proxy Minecraft packets and raw byte buffers on virtual servers.
 
 Compile your plugin using CTD's API through the [Velocity-CTD Maven Repository](https://repo.velocityctd.com/#/):
 

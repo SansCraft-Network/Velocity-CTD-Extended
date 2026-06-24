@@ -26,6 +26,7 @@ import com.velocityctd.proxy.util.SamplePlayersPlaceholderResolver;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.proxy.server.PingOptions;
 import com.velocitypowered.api.proxy.server.ServerPing;
+import com.velocitypowered.api.util.Favicon;
 import com.velocitypowered.api.util.ModInfo;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.config.PingPassthroughMode;
@@ -60,7 +61,7 @@ public class ServerListPingHandler {
     return clientVersion.lessThan(minimumVersion) || clientVersion.greaterThan(maximumVersion);
   }
 
-  private ServerPing constructLocalPing(ProtocolVersion clientVersion) {
+  private ServerPing constructLocalPing(ProtocolVersion clientVersion, VelocityConfiguration.ForcedHostEntry forcedHost) {
     VelocityConfiguration configuration = server.getConfiguration();
     boolean outOfRange = displayFallbackPing(clientVersion);
 
@@ -91,10 +92,18 @@ public class ServerListPingHandler {
 
     SamplePlayersPicker sharedPicker = configuration.isPoolPlayersAcrossSections() ? SamplePlayersPicker.create(server) : null;
 
-    List<String> motd = PlaceholderSubstitutor.substitute(configuration.getMotdLines(), basicResolver,
+    List<String> motdLines = (forcedHost != null && forcedHost.getMotd() != null && !forcedHost.getMotd().isEmpty())
+        ? forcedHost.getMotd()
+        : configuration.getMotdLines();
+
+    List<String> motdHoverLines = (forcedHost != null && forcedHost.getMotdHover() != null && !forcedHost.getMotdHover().isEmpty())
+        ? forcedHost.getMotdHover()
+        : configuration.getMotdHoverLines();
+
+    List<String> motd = PlaceholderSubstitutor.substitute(motdLines, basicResolver,
             samplePlayersResolver(sharedPicker, 8, 4, "None", ", "));
 
-    List<String> motdHover = PlaceholderSubstitutor.substitute(configuration.getMotdHoverLines(), basicResolver,
+    List<String> motdHover = PlaceholderSubstitutor.substitute(motdHoverLines, basicResolver,
             samplePlayersResolver(sharedPicker, 12, 1, "", ""));
     if (motdHover.size() == 1 && motdHover.getFirst().isEmpty()) {
       motdHover.clear();
@@ -102,6 +111,10 @@ public class ServerListPingHandler {
 
     String versionName = PlaceholderSubstitutor.substitute(configuration.getFallbackVersionPing(), basicResolver,
             samplePlayersResolver(sharedPicker, 2, Integer.MAX_VALUE, "None", ", "));
+
+    Favicon customFavicon = (forcedHost != null && forcedHost.getFavicon() != null)
+        ? forcedHost.getFavicon()
+        : configuration.getFavicon().orElse(null);
 
     return new ServerPing(
         new ServerPing.Version(
@@ -119,7 +132,7 @@ public class ServerListPingHandler {
             .map(ComponentUtils::parse)
             .reduce((a, b) -> a.appendNewline().append(b))
             .orElseGet(Component::empty),
-        configuration.getFavicon().orElse(null),
+        customFavicon,
         configuration.isAnnounceForge() ? ModInfo.DEFAULT : null,
         configuration.doesPreventChatReports()
     );
@@ -141,15 +154,16 @@ public class ServerListPingHandler {
   private CompletableFuture<ServerPing> attemptPingPassthrough(VelocityInboundConnection connection,
                                                                PingPassthroughMode mode, List<String> servers,
                                                                ProtocolVersion responseProtocolVersion,
-                                                               String virtualHostStr) {
-    ServerPing fallback = constructLocalPing(connection.getProtocolVersion());
+                                                               String virtualHostStr,
+                                                               VelocityConfiguration.ForcedHostEntry forcedHost) {
+    ServerPing fallback = constructLocalPing(connection.getProtocolVersion(), forcedHost);
     List<CompletableFuture<ServerPing>> pings = new ArrayList<>();
     for (String s : servers) {
       Optional<VelocityRegisteredServer> rs = server.getServer(s);
       if (rs.isEmpty()) {
         continue;
       }
-
+ 
       VelocityRegisteredServer vrs = rs.get();
       pings.add(vrs.ping(connection.getConnection().eventLoop(), PingOptions.builder()
           .version(responseProtocolVersion).virtualHost(virtualHostStr).build()));
@@ -234,13 +248,17 @@ public class ServerListPingHandler {
         ? connection.getProtocolVersion() : ProtocolVersion.MAXIMUM_VERSION;
     PingPassthroughMode passthroughMode = configuration.getPingPassthrough();
 
-    if (passthroughMode == PingPassthroughMode.DISABLED) {
-      return CompletableFuture.completedFuture(constructLocalPing(connection.getProtocolVersion()));
-    } else {
-      FallbackServers fallbackServers = FallbackServers.resolveFallbackServers(server, connection);
+    FallbackServers fallbackServers = FallbackServers.resolveFallbackServers(server, connection);
+    VelocityConfiguration.ForcedHostEntry forcedHost = null;
+    if (fallbackServers.matchedVirtualHostPattern() != null) {
+      forcedHost = configuration.getForcedHostEntries().get(fallbackServers.matchedVirtualHostPattern());
+    }
 
+    if (passthroughMode == PingPassthroughMode.DISABLED) {
+      return CompletableFuture.completedFuture(constructLocalPing(connection.getProtocolVersion(), forcedHost));
+    } else {
       return attemptPingPassthrough(connection, passthroughMode, fallbackServers.serversToTry(),
-          shownVersion, fallbackServers.virtualHost());
+          shownVersion, fallbackServers.virtualHost(), forcedHost);
     }
   }
 

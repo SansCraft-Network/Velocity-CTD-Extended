@@ -31,6 +31,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public class VelocityVirtualServerConnection extends VelocityServerConnection {
 
   private final VirtualServer virtualServer;
+  private final VelocityServer server;
   private @Nullable VelocityVirtualConnection virtualConnection;
 
   public VelocityVirtualServerConnection(VelocityRegisteredServer registeredServer,
@@ -39,6 +40,7 @@ public class VelocityVirtualServerConnection extends VelocityServerConnection {
                                          VirtualServer virtualServer) {
     super(registeredServer, previousServer, proxyPlayer, server);
     this.virtualServer = virtualServer;
+    this.server = server;
   }
 
   @Override
@@ -67,8 +69,27 @@ public class VelocityVirtualServerConnection extends VelocityServerConnection {
 
   @Override
   public void disconnect() {
-    getPlayer().getConnection().eventLoop().execute(() -> {
+    Runnable task = () -> {
       virtualServer.getHandler().onDisconnect(getPlayer());
-    });
+      // Restore default client session handlers to prevent ClassCastException on subsequent transitions
+      com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler configHandler =
+          new com.velocitypowered.proxy.connection.client.ClientConfigSessionHandler(server, getPlayer());
+      com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler playHandler =
+          new com.velocitypowered.proxy.connection.client.ClientPlaySessionHandler(server, getPlayer());
+      com.velocitypowered.proxy.protocol.StateRegistry currentState = getPlayer().getConnection().getState();
+      if (currentState == com.velocitypowered.proxy.protocol.StateRegistry.CONFIG) {
+        getPlayer().getConnection().addSessionHandler(com.velocitypowered.proxy.protocol.StateRegistry.PLAY, playHandler);
+      } else {
+        getPlayer().getConnection().addSessionHandler(com.velocitypowered.proxy.protocol.StateRegistry.CONFIG, configHandler);
+      }
+      getPlayer().getConnection().setActiveSessionHandler(currentState,
+          currentState == com.velocitypowered.proxy.protocol.StateRegistry.CONFIG ? configHandler : playHandler);
+    };
+
+    if (getPlayer().getConnection().eventLoop().inEventLoop()) {
+      task.run();
+    } else {
+      getPlayer().getConnection().eventLoop().execute(task);
+    }
   }
 }

@@ -34,7 +34,13 @@ public class VelocityVirtualConnection implements VirtualConnection {
     this.player = player;
     this.serverConnection = serverConnection;
     this.sessionHandler = new VelocityVirtualSessionHandler(this);
-    player.getConnection().setActiveSessionHandler(StateRegistry.PLAY, this.sessionHandler);
+    StateRegistry currentState = player.getConnection().getState();
+    if (currentState == StateRegistry.CONFIG) {
+      player.getConnection().addSessionHandler(StateRegistry.PLAY, this.sessionHandler);
+    } else {
+      player.getConnection().addSessionHandler(StateRegistry.CONFIG, this.sessionHandler);
+    }
+    player.getConnection().setActiveSessionHandler(currentState, this.sessionHandler);
   }
 
   @Override

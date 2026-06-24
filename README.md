@@ -82,6 +82,7 @@ dependencies, useful performance improvements, and more.
   messages, alongside `/velocity reload`able translations, alongside `/velocity reload`able
   server additions/removals inside the `velocity.toml`.
 * Native forced-hosts configuration extended in `velocity.toml` under `[forced-hosts]`, supporting detailed object structures with custom `motd`, custom `motd-hover` text, and `server-icon` path configurations per virtual host mapping.
+* Native Virtual Server framework allowing plugins to register fully in-proxy servers (no backend required) via `ProxyServer.registerVirtualServer(...)`, including support for virtual-to-virtual (e.g. limbo-to-limbo) connection routing so players can be transitioned directly between virtual servers. See the [Velocity-CTD API](#velocity-ctd-api) section for details.
 * Removal of all language files except `messages.properties` to preserve
   maintainability. PRs (Pull Requests) are welcome to reimplement all language files
   with our changes.

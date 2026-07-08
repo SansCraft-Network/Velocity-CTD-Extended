@@ -17,6 +17,7 @@
 
 package com.velocitypowered.proxy.connection.backend;
 
+import com.velocityctd.api.queue.QueueState;
 import com.velocityctd.proxy.queue.VelocityQueue;
 import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.api.permission.Tristate;
@@ -35,10 +36,12 @@ import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import java.util.Objects;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
+import java.util.stream.Stream;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
@@ -196,21 +199,15 @@ public class BungeeCordMessageResponder {
 
     ByteBuf buf = Unpooled.buffer();
 
-    String queuedServer = null;
-
-    if (proxy.isQueueEnabled()) {
-      for (VelocityQueue<?> queue : proxy.getQueueManager().getQueues()) {
-        if (queue.contains(playerUuid)) {
-          queuedServer = queue.getName();
-          break;
-        }
-      }
-    }
+    String queuedServer = getQueues(playerUuid)
+        .findFirst()
+        .map(VelocityQueue::getName)
+        .orElse("N/A");
 
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
       out.writeUTF("QueuedServer");
       out.writeUTF(playerUuid.toString());
-      out.writeUTF(Objects.requireNonNullElse(queuedServer, "N/A"));
+      out.writeUTF(queuedServer);
     }
 
     if (buf.isReadable()) {
@@ -225,22 +222,15 @@ public class BungeeCordMessageResponder {
 
     ByteBuf buf = Unpooled.buffer();
 
-    Integer position = null;
-    if (proxy.isQueueEnabled()) {
-      for (VelocityQueue<?> queue : proxy.getQueueManager().getQueues()) {
-        if (queue.contains(playerUuid)) {
-          position = queue.getPosition(playerUuid).orElse(null);
-          if (position != null) {
-            break;
-          }
-        }
-      }
-    }
+    int position = getQueues(playerUuid)
+        .findFirst()
+        .flatMap(q -> q.getPosition(playerUuid))
+        .orElse(-1);
 
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
       out.writeUTF("QueuedPosition");
       out.writeUTF(playerUuid.toString());
-      out.writeInt(position != null ? position : -1);
+      out.writeInt(position);
     }
 
     if (buf.isReadable()) {
@@ -255,21 +245,15 @@ public class BungeeCordMessageResponder {
 
     ByteBuf buf = Unpooled.buffer();
 
-    int position = -1;
-
-    if (proxy.isQueueEnabled()) {
-      for (VelocityQueue<?> queue : proxy.getQueueManager().getQueues()) {
-        if (queue.contains(playerUuid)) {
-          position = queue.size();
-          break;
-        }
-      }
-    }
+    int maxPosition = getQueues(playerUuid)
+        .findFirst()
+        .map(VelocityQueue::size)
+        .orElse(-1);
 
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
       out.writeUTF("MaxQueuedPosition");
       out.writeUTF(playerUuid.toString());
-      out.writeInt(position);
+      out.writeInt(maxPosition);
     }
 
     if (buf.isReadable()) {
@@ -284,21 +268,42 @@ public class BungeeCordMessageResponder {
 
     ByteBuf buf = Unpooled.buffer();
 
-    boolean paused = false;
-
-    if (proxy.isQueueEnabled()) {
-      for (VelocityQueue<?> queue : proxy.getQueueManager().getQueues()) {
-        if (queue.contains(playerUuid)) {
-          paused = true;
-          break;
-        }
-      }
-    }
+    boolean paused = getQueues(playerUuid)
+        .findFirst()
+        .map(q -> q.getState() == QueueState.PAUSED)
+        .orElse(false);
 
     try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
       out.writeUTF("QueuedPausedChannel");
       out.writeUTF(playerUuid.toString());
       out.writeBoolean(paused);
+    }
+
+    if (buf.isReadable()) {
+      sendResponseOnConnection(buf);
+    } else {
+      buf.release();
+    }
+  }
+
+  private void queueStates(ByteBufDataInput in) {
+    UUID playerUuid = UUID.fromString(in.readUTF());
+
+    ByteBuf buf = Unpooled.buffer();
+
+    List<VelocityQueue<?>> queues = getQueues(playerUuid).toList();
+
+    try (ByteBufDataOutput out = new ByteBufDataOutput(buf)) {
+      out.writeUTF("QueueStates");
+      out.writeUTF(playerUuid.toString());
+
+      out.writeInt(queues.size());
+      for (VelocityQueue<?> queue : queues) {
+        out.writeUTF(queue.getName());
+        out.writeInt(queue.getPosition(playerUuid).orElse(-1));
+        out.writeInt(queue.size());
+        out.writeBoolean(queue.getState() == QueueState.PAUSED);
+      }
     }
 
     if (buf.isReadable()) {
@@ -506,6 +511,24 @@ public class BungeeCordMessageResponder {
     }));
   }
 
+  /**
+   * Returns all queues a specific player is a part of ({@link VelocityQueue#contains(UUID)}) in a
+   * stable ordering (alphabetical by queue name), or {@link Stream#empty()} if the queue subsystem
+   * is disabled.
+   *
+   * @param playerUuid the player in question
+   * @return the computed queue list
+   */
+  private Stream<VelocityQueue<?>> getQueues(UUID playerUuid) {
+    if (!proxy.isQueueEnabled()) {
+      return Stream.empty();
+    }
+    return proxy.getQueueManager().getQueues()
+        .stream()
+        .filter(q -> q.contains(playerUuid))
+        .sorted(Comparator.comparing(VelocityQueue::getName));
+  }
+
   static ChannelIdentifier getBungeeCordChannel(ProtocolVersion version) {
     return version.noLessThan(ProtocolVersion.MINECRAFT_1_13) ? MODERN_CHANNEL : LEGACY_CHANNEL;
   }
@@ -562,6 +585,7 @@ public class BungeeCordMessageResponder {
       case "QueuedPosition" -> this.queuedPosition(in);
       case "MaxQueuedPosition" -> this.queuedMaxPosition(in);
       case "QueuedPausedChannel" -> this.queuedPaused(in);
+      case "QueueStates" -> this.queueStates(in);
       default -> {
         // Do nothing, unknown command
       }

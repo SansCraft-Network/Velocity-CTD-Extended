@@ -132,6 +132,10 @@ fill {
         versionFamily("4.0.0")
         version(projectVersion)
 
+        if (versionFamily.get().split(".") != projectVersion.split(".")) {
+            throw IllegalArgumentException("Version family does not match project version")
+        }
+
         downloads {
             register("server:default") {
                 file = tasks.shadowJar.flatMap { it.archiveFile }

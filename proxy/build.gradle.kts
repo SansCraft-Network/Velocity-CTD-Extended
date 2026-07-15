@@ -132,7 +132,7 @@ fill {
         versionFamily("4.0.0")
         version(projectVersion)
 
-        if (versionFamily.get().split(".") != projectVersion.split(".")) {
+        if (versionFamily.get().split(".")[0] != projectVersion.split(".")[0]) {
             throw IllegalArgumentException("Version family does not match project version")
         }
 

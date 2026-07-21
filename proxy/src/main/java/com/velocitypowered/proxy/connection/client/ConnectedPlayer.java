@@ -48,6 +48,8 @@ import com.velocitypowered.api.event.player.KickedFromServerEvent.RedirectPlayer
 import com.velocitypowered.api.event.player.KickedFromServerEvent.ServerKickResult;
 import com.velocitypowered.api.event.player.PlayerModInfoEvent;
 import com.velocitypowered.api.event.player.PlayerSettingsChangedEvent;
+import com.velocitypowered.api.event.player.ServerConnectedEvent;
+import com.velocitypowered.api.event.player.ServerPostConnectEvent;
 import com.velocitypowered.api.event.player.ServerPreConnectEvent;
 import com.velocitypowered.api.event.player.configuration.PlayerEnterConfigurationEvent;
 import com.velocitypowered.api.network.HandshakeIntent;
@@ -58,6 +60,7 @@ import com.velocitypowered.api.permission.PermissionProvider;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.ConnectionRequestBuilder;
 import com.velocitypowered.api.proxy.Player;
+import com.velocitypowered.api.proxy.ServerConnection;
 import com.velocitypowered.api.proxy.crypto.IdentifiedKey;
 import com.velocitypowered.api.proxy.crypto.KeyIdentifiable;
 import com.velocitypowered.api.proxy.messages.ChannelIdentifier;
@@ -100,6 +103,7 @@ import com.velocitypowered.proxy.protocol.packet.ClientboundStoreCookiePacket;
 import com.velocitypowered.proxy.protocol.packet.DisconnectPacket;
 import com.velocitypowered.proxy.protocol.packet.HeaderAndFooterPacket;
 import com.velocitypowered.proxy.protocol.packet.KeepAlivePacket;
+import com.velocitypowered.proxy.protocol.packet.JoinGamePacket;
 import com.velocitypowered.proxy.protocol.packet.PluginMessagePacket;
 import com.velocitypowered.proxy.protocol.packet.RemoveResourcePackPacket;
 import com.velocitypowered.proxy.protocol.packet.TransferPacket;
@@ -114,6 +118,19 @@ import com.velocitypowered.proxy.protocol.packet.config.StartUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.title.GenericTitlePacket;
 import com.velocitypowered.proxy.protocol.util.ByteBufDataOutput;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import com.velocitypowered.proxy.server.VelocityVirtualConnection;
+import com.velocitypowered.proxy.server.VelocityVirtualRegisteredServer;
+import com.velocitypowered.proxy.server.VelocityVirtualSessionHandler;
+import com.velocitypowered.proxy.server.virtual.VelocityVirtualConfigSessionHandler;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkCenterPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkBatchStartPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkBatchFinishedPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualDefaultSpawnPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualPlayerPositionPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualTimePacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualGameEventPacket;
+import com.velocitypowered.proxy.connection.registry.DimensionInfo;
 import com.velocitypowered.proxy.tablist.InternalTabList;
 import com.velocitypowered.proxy.tablist.KeyedVelocityTabList;
 import com.velocitypowered.proxy.tablist.VelocityTabList;
@@ -212,6 +229,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   private final boolean onlineMode;
 
   private @Nullable VelocityServerConnection connectedServer;
+
+  private @Nullable VelocityVirtualConnection virtualConnection;
 
   private @Nullable VelocityServerConnection connectionInFlight;
 
@@ -437,8 +456,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   @Override
-  public Optional<VelocityServerConnection> getCurrentServer() {
-    return Optional.ofNullable(connectedServer);
+  public Optional<? extends ServerConnection> getCurrentServer() {
+    return Optional.ofNullable(virtualConnection != null ? virtualConnection : connectedServer);
   }
 
   /**
@@ -785,12 +804,13 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
   }
 
   private ConnectionRequestBuilder createConnectionRequest(VelocityRegisteredServer server) {
-    return new ConnectionRequestBuilderImpl(server, this.connectedServer);
+    return new ConnectionRequestBuilderImpl(server, getCurrentRegisteredServer());
   }
 
   private ConnectionRequestBuilder createConnectionRequest(VelocityRegisteredServer server,
                                                            @Nullable VelocityServerConnection previousConnection) {
-    return new ConnectionRequestBuilderImpl(server, previousConnection);
+    return new ConnectionRequestBuilderImpl(server,
+        previousConnection == null ? null : previousConnection.getServer());
   }
 
   @Override
@@ -893,6 +913,25 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
   public @Nullable VelocityServerConnection getConnectedServer() {
     return connectedServer;
+  }
+
+  public @Nullable VelocityVirtualConnection getVirtualConnection() {
+    return virtualConnection;
+  }
+
+  public @Nullable VelocityRegisteredServer getCurrentRegisteredServer() {
+    if (virtualConnection != null) {
+      return virtualConnection.getServer();
+    }
+    return connectedServer == null ? null : connectedServer.getServer();
+  }
+
+  public void leaveVirtualServer() {
+    VelocityVirtualConnection current = virtualConnection;
+    virtualConnection = null;
+    if (current != null) {
+      current.close();
+    }
   }
 
   public @Nullable VelocityServerConnection getConnectionInFlight() {
@@ -1245,6 +1284,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
    * @param serverConnection the new server connection
    */
   public void setConnectedServer(@Nullable VelocityServerConnection serverConnection) {
+    if (serverConnection != null) {
+      leaveVirtualServer();
+    }
     this.connectedServer = serverConnection;
     resetServerRetrySession();
 
@@ -1469,16 +1511,20 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     return mc;
   }
 
-  void teardown() {
-    if (connectionInFlight != null) {
-      connectionInFlight.disconnect();
-    }
+  public void teardown() {
+    try {
+      if (connectionInFlight != null) {
+        connectionInFlight.disconnect();
+      }
 
-    if (connectedServer != null) {
-      connectedServer.disconnect();
-    }
+      if (connectedServer != null) {
+        connectedServer.disconnect();
+      }
 
-    server.getPlayerRegistry().unregisterConnection(this);
+      leaveVirtualServer();
+    } finally {
+      server.getPlayerRegistry().unregisterConnection(this);
+    }
   }
 
   void setIdentityLock(@NonNull PlayerIdentityLock.LockHandle lock) {
@@ -2083,9 +2129,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     private final @Nullable VelocityRegisteredServer previousServer;
 
     ConnectionRequestBuilderImpl(VelocityRegisteredServer toConnect,
-                                 @Nullable VelocityServerConnection previousConnection) {
+                                 @Nullable VelocityRegisteredServer previousServer) {
       this.toConnect = Preconditions.checkNotNull(toConnect, "info");
-      this.previousServer = previousConnection == null ? null : previousConnection.getServer();
+      this.previousServer = previousServer;
     }
 
     @Override
@@ -2098,7 +2144,8 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         return Optional.of(ConnectionRequestBuilder.Status.CONNECTION_IN_PROGRESS);
       }
 
-      if (connectedServer != null && connectedServer.getServer().getServerInfo().equals(server.getServerInfo())) {
+      VelocityRegisteredServer currentServer = getCurrentRegisteredServer();
+      if (currentServer != null && currentServer.getServerInfo().equals(server.getServerInfo())) {
         return Optional.of(ALREADY_CONNECTED);
       }
 
@@ -2138,6 +2185,10 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             return completedFuture(plainResult(ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, realDestination));
           }
 
+          if (realDestination instanceof VelocityVirtualRegisteredServer virtualDestination) {
+            return connectVirtual(virtualDestination);
+          }
+
           VelocityServerConnection con = new VelocityServerConnection(
               realDestination, previousServer, ConnectedPlayer.this, server);
           connectionInFlight = con;
@@ -2163,6 +2214,113 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
         }, connection.eventLoop());
       });
     }
+
+    private CompletableFuture<Impl> connectVirtual(
+        VelocityVirtualRegisteredServer destination) {
+      if (getProtocolVersion() != com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT.getProtocolVersion()
+          && !server.isViaVersionAvailable()) {
+        return completedFuture(plainResult(
+            ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, destination));
+      }
+      VelocityRegisteredServer previous = getCurrentRegisteredServer();
+      VelocityVirtualConnection newConnection =
+          new VelocityVirtualConnection(destination, ConnectedPlayer.this, previous);
+
+      return server.getEventManager()
+          .fire(new ServerConnectedEvent(ConnectedPlayer.this, destination, previous))
+          .thenApplyAsync(ignored -> {
+            VelocityServerConnection oldBackend = connectedServer;
+            if (oldBackend != null) {
+              connectedServer = null;
+              oldBackend.disconnect();
+            }
+            leaveVirtualServer();
+            virtualConnection = newConnection;
+            destination.addPlayer(ConnectedPlayer.this);
+            VelocityVirtualSessionHandler playHandler = new VelocityVirtualSessionHandler(
+              server, ConnectedPlayer.this, newConnection);
+            Runnable finishJoin = () -> finishVirtualJoin(
+              destination, newConnection, previous);
+            if (connection.getState() == StateRegistry.CONFIG) {
+              connection.setActiveSessionHandler(StateRegistry.CONFIG,
+                new VelocityVirtualConfigSessionHandler(
+                  ConnectedPlayer.this, playHandler, finishJoin));
+            } else {
+              connection.setActiveSessionHandler(StateRegistry.PLAY, playHandler);
+              finishJoin.run();
+            }
+            return com.velocitypowered.proxy.connection.util.ConnectionRequestResults.successful(destination);
+          }, connection.eventLoop());
+    }
+
+        private void finishVirtualJoin(VelocityVirtualRegisteredServer destination,
+          VelocityVirtualConnection newConnection, @Nullable VelocityRegisteredServer previous) {
+          var definition = destination.getDefinition();
+          var baseline = com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT;
+
+          LOGGER.info("[VirtualServer-Debug] Executing finishVirtualJoin for player {} on server {}", getUsername(), destination.getServerInfo().getName());
+
+          if (previous instanceof VelocityVirtualRegisteredServer) {
+            LOGGER.info("[VirtualServer-Debug] Sending RespawnPacket to player {}", getUsername());
+            connection.write(baseline.createRespawnPacket(definition, isOnlineMode()));
+          } else {
+            LOGGER.info("[VirtualServer-Debug] Sending JoinGamePacket (entityId 1) to player {}", getUsername());
+            connection.write(baseline.createJoinGamePacket(definition, isOnlineMode()));
+          }
+
+          int centerChunkX = Math.floorDiv((int) Math.floor(definition.getSpawnX()), 16);
+          int centerChunkZ = Math.floorDiv((int) Math.floor(definition.getSpawnZ()), 16);
+
+          double spawnX = definition.getSpawnX();
+          double spawnY = 16.0;
+          double spawnZ = definition.getSpawnZ();
+
+          LOGGER.info("[VirtualServer-Debug] Sending VirtualPlayerPositionPacket (teleportId 1) at ({}, {}, {})", spawnX, spawnY, spawnZ);
+          connection.write(new VirtualPlayerPositionPacket(
+            spawnX, spawnY, spawnZ,
+            definition.getSpawnYaw(), definition.getSpawnPitch(), 1));
+
+          boolean is1202OrNewer = getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_2);
+          boolean is114OrNewer = getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_14);
+
+          if (is114OrNewer) {
+            connection.write(new VirtualChunkCenterPacket(centerChunkX, centerChunkZ));
+          }
+          if (is1202OrNewer) {
+            connection.write(new VirtualChunkBatchStartPacket());
+          }
+          for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+              connection.write(new VirtualChunkPacket(centerChunkX + dx, centerChunkZ + dz));
+            }
+          }
+          if (is1202OrNewer) {
+            connection.write(new VirtualChunkBatchFinishedPacket(9));
+            LOGGER.info("[VirtualServer-Debug] Sending VirtualGameEventPacket(13: START_WAITING_FOR_LEVEL_CHUNKS)");
+            connection.write(new VirtualGameEventPacket(13, 0.0f));
+          }
+          connection.write(new VirtualDefaultSpawnPacket("minecraft:overworld",
+            (int) spawnX, (int) spawnY, (int) spawnZ, definition.getSpawnYaw()));
+          connection.write(new VirtualTimePacket(definition.getWorldTime(), definition.getWorldTime()));
+          connection.flush();
+
+          LOGGER.info("[VirtualServer-Debug] Completed virtual spawn sequence for player {}", getUsername());
+
+          VelocityServer.setViaVersionServerProtocol(
+            getUniqueId(),
+            baseline.getProtocolVersion().getProtocol());
+
+          resumeReadTimeout();
+          firstServerConnected = true;
+          resetServerRetrySession();
+          definition.getHandler().onConnect(ConnectedPlayer.this, newConnection);
+          server.getClusterPlayerService().onPlayerSwitchServer(
+            ConnectedPlayer.this,
+            previous == null ? null : previous.getServerInfo().getName(),
+            destination.getServerInfo().getName());
+          server.getEventManager().fireAndForget(
+            new ServerPostConnectEvent(ConnectedPlayer.this, previous));
+        }
 
     private void resetIfInFlightIs(VelocityServerConnection establishedConnection) {
       if (establishedConnection == connectionInFlight) {

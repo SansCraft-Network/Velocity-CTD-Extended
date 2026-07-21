@@ -43,6 +43,8 @@ import com.velocityctd.proxy.command.builtin.TransferCommand;
 import com.velocityctd.proxy.queue.RedisVelocityQueueManager;
 import com.velocityctd.proxy.queue.VelocityQueueManager;
 import com.velocityctd.proxy.redis.VelocityRedis;
+import com.velocityctd.api.server.VirtualServer;
+import com.velocityctd.api.server.VirtualServerDefinition;
 import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandMeta;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
@@ -807,7 +809,8 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     // changed address/forwarding mode.
     List<VelocityRegisteredServer> stale = new ArrayList<>();
     for (VelocityRegisteredServer registered : getAllServers()) {
-      if (!desired.contains(registered.getServerInfo())) {
+      if (!(registered instanceof VirtualServer)
+          && !desired.contains(registered.getServerInfo())) {
         stale.add(registered);
       }
     }
@@ -1278,6 +1281,80 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
   @Override
   public void unregisterServer(ServerInfo server) {
     servers.unregister(server);
+  }
+
+  @Override
+  public VirtualServer registerVirtualServer(VirtualServerDefinition definition) {
+    return servers.registerVirtual(definition);
+  }
+
+  @Override
+  public void unregisterVirtualServer(VirtualServer server) {
+    servers.unregisterVirtual(server);
+  }
+
+  /**
+   * Returns whether an external ViaVersion plugin is explicitly loaded.
+   *
+   * @return {@code true} if the ViaVersion plugin is loaded
+   */
+  public boolean isViaVersionPluginLoaded() {
+    return pluginManager.isLoaded("viaversion") || pluginManager.getPlugin("viaversion").isPresent();
+  }
+
+  /**
+   * Returns whether ViaVersion is available (either via plugin or embedded library).
+   *
+   * @return {@code true} if ViaVersion is available
+   */
+  public boolean isViaVersionAvailable() {
+    if (isViaVersionPluginLoaded()) {
+      return true;
+    }
+    try {
+      Class.forName("com.viaversion.viaversion.api.Via");
+      return true;
+    } catch (ClassNotFoundException e) {
+      return false;
+    }
+  }
+
+  /**
+   * Returns whether ViaVersion backend connection translation is enabled.
+   * If an explicit ViaVersion plugin is installed, backend translation returns {@code false} to avoid double translation.
+   *
+   * @return {@code true} if backend connection translation should be performed
+   */
+  public boolean isViaVersionBackendTranslationEnabled() {
+    if (isViaVersionPluginLoaded()) {
+      return false;
+    }
+    return configuration.getViaVersion() != null && configuration.getViaVersion().isEnableBackendTranslation();
+  }
+
+  /**
+   * Sets ViaVersion's target server protocol version for a given player session.
+   *
+   * @param playerUuid player UUID
+   * @param targetProtocolVersion target server protocol version integer
+   */
+  public static void setViaVersionServerProtocol(UUID playerUuid, int targetProtocolVersion) {
+    try {
+      Class<?> viaClass = Class.forName("com.viaversion.viaversion.api.Via");
+      Object api = viaClass.getMethod("getAPI").invoke(null);
+      if (api != null) {
+        Object user = api.getClass().getMethod("getConnection", UUID.class).invoke(api, playerUuid);
+        if (user != null) {
+          Object protocolInfo = user.getClass().getMethod("getProtocolInfo").invoke(user);
+          if (protocolInfo != null) {
+            protocolInfo.getClass().getMethod("setServerProtocolVersion", int.class)
+                .invoke(protocolInfo, targetProtocolVersion);
+          }
+        }
+      }
+    } catch (Throwable ignored) {
+      // ViaVersion API call safety fallback
+    }
   }
 
   @Override

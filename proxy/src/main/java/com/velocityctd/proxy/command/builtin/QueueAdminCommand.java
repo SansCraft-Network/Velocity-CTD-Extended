@@ -35,7 +35,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
@@ -238,7 +237,8 @@ public class QueueAdminCommand implements BuiltinCommandDefinition {
         return 0;
       }
 
-      VelocityServerConnection connection = p.getCurrentServer().orElse(null);
+        com.velocitypowered.api.proxy.ServerConnection connection =
+          p.getCurrentServer().orElse(null);
       if (connection == null) {
         ctx.getSource().sendMessage(Component.translatable("velocity.queue.command.list.current-not-connected"));
         return 0;
@@ -267,6 +267,9 @@ public class QueueAdminCommand implements BuiltinCommandDefinition {
       }
 
       for (VelocityRegisteredServer s : this.server.getAllServers()) {
+        if (s instanceof com.velocitypowered.proxy.server.VelocityVirtualRegisteredServer) {
+          continue;
+        }
         if (this.server.getConfiguration().getQueue().getNoQueueServers().contains(s.getServerInfo().getName())) {
           continue;
         }
@@ -301,7 +304,8 @@ public class QueueAdminCommand implements BuiltinCommandDefinition {
     if (this.server.getConfiguration().getQueue().getNoQueueServers().contains(server.getServerInfo().getName())) {
       String newName = serverName;
       if (serverName.equalsIgnoreCase("current") && ctx.getSource() instanceof ConnectedPlayer cp) {
-        VelocityServerConnection conn = cp.getCurrentServer().orElse(null);
+        com.velocitypowered.api.proxy.ServerConnection conn =
+          cp.getCurrentServer().orElse(null);
         if (conn != null) {
           newName = conn.getServerInfo().getName();
         }

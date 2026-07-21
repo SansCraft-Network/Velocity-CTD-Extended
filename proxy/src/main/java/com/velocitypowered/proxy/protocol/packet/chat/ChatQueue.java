@@ -64,9 +64,9 @@ public class ChatQueue implements AutoCloseable {
         throw new IllegalStateException("ChatQueue has already been closed");
       }
 
-      MinecraftConnection smc = player.getCurrentServer()
-          .map(VelocityServerConnection::getConnection)
-          .orElse(null);
+        VelocityServerConnection serverConnection = player.getConnectedServer();
+        MinecraftConnection smc = serverConnection == null
+          ? null : serverConnection.getConnection();
 
       if (smc == null) {
         return;

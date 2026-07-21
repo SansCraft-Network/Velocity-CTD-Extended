@@ -27,7 +27,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.connection.util.FallbackServers;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
@@ -68,10 +67,11 @@ public class HubCommand implements BuiltinCommandDefinition {
       return 0;
     }
 
-    VelocityServerConnection con = player.getCurrentServer().orElse(null);
+    com.velocitypowered.api.proxy.ServerConnection con =
+      player.getCurrentServer().orElse(null);
     requireNonNull(con);
 
-    VelocityRegisteredServer currentServer = con.getServer();
+    VelocityRegisteredServer currentServer = (VelocityRegisteredServer) con.getServer();
     requireNonNull(currentServer);
 
     Deque<String> serversToTry = FallbackServers.resolveFallbackServers(server, player).calculateRetryDeque(server);

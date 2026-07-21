@@ -21,7 +21,6 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.velocityctd.proxy.cluster.VelocityClusterPlayer;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Collection;
@@ -192,7 +191,8 @@ public final class PlayerIdentifier {
         return Result.failure(Type.PLAYER_EXECUTOR_REQUIRED, null);
       }
 
-      VelocityServerConnection currentServer = sender.getCurrentServer().orElse(null);
+        com.velocitypowered.api.proxy.ServerConnection currentServer =
+          sender.getCurrentServer().orElse(null);
       if (currentServer == null) {
         return Result.failure(Type.CURRENT_SERVER, "current");
       }

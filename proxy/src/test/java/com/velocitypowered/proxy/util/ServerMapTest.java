@@ -19,10 +19,14 @@ package com.velocitypowered.proxy.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
 
+import com.velocityctd.api.server.VirtualServerDefinition;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.server.ServerMap;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
+import com.velocitypowered.proxy.server.VelocityVirtualRegisteredServer;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Optional;
@@ -63,5 +67,27 @@ class ServerMapTest {
     ServerInfo info = new ServerInfo("TestServer", TEST_ADDRESS);
     VelocityRegisteredServer connection = map.register(info);
     assertEquals(connection, map.register(info));
+  }
+
+  @Test
+  void registersAndUnregistersVirtualServers() {
+    ServerMap map = new ServerMap(mock(com.velocitypowered.proxy.VelocityServer.class,
+        RETURNS_DEEP_STUBS));
+    VelocityVirtualRegisteredServer virtual = map.registerVirtual(
+        VirtualServerDefinition.builder("Holding").build());
+
+    assertEquals(Optional.of(virtual), map.getServer("holding"));
+    map.unregisterVirtual(virtual);
+    assertEquals(Optional.empty(), map.getServer("holding"));
+  }
+
+  @Test
+  void rejectsVirtualAndBackendNameCollisions() {
+    ServerMap map = new ServerMap(mock(com.velocitypowered.proxy.VelocityServer.class,
+        RETURNS_DEEP_STUBS));
+    map.register(new ServerInfo("holding", TEST_ADDRESS));
+
+    assertThrows(IllegalArgumentException.class, () -> map.registerVirtual(
+        VirtualServerDefinition.builder("HOLDING").build()));
   }
 }

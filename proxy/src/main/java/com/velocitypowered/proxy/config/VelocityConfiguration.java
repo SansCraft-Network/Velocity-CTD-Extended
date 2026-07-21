@@ -248,6 +248,9 @@ public final class VelocityConfiguration implements ProxyConfig {
   @Expose
   private final Map<String, Integer> playerCaps;
 
+  @Expose
+  private final ViaVersionConfig viaVersion;
+
   private VelocityConfiguration(String bind, List<String> motd, List<String> motdHover,
                                 int showMaxPlayers, boolean onlineMode,
                                 boolean preventClientProxyConnections, boolean announceForge,
@@ -268,7 +271,8 @@ public final class VelocityConfiguration implements ProxyConfig {
                                 String maximumVersion,
                                 Redis redis, Queue queue, Map<String, List<String>> slashServers,
                                 Map<String, List<ServerLink>> serverLinks, List<ProxyAddress> proxyAddresses,
-                                DynamicProxyFilterMode dynamicProxyFilter, Map<String, Integer> playerCaps) {
+                                DynamicProxyFilterMode dynamicProxyFilter, Map<String, Integer> playerCaps,
+                                ViaVersionConfig viaVersion) {
     this.bind = bind;
     this.motd = motd;
     this.motdHover = motdHover;
@@ -309,6 +313,23 @@ public final class VelocityConfiguration implements ProxyConfig {
     this.proxyAddresses = proxyAddresses;
     this.dynamicProxyFilter = dynamicProxyFilter;
     this.playerCaps = playerCaps;
+    this.viaVersion = viaVersion != null ? viaVersion : new ViaVersionConfig(false);
+  }
+
+  public ViaVersionConfig getViaVersion() {
+    return viaVersion;
+  }
+
+  public static class ViaVersionConfig {
+    private final boolean enableBackendTranslation;
+
+    public ViaVersionConfig(boolean enableBackendTranslation) {
+      this.enableBackendTranslation = enableBackendTranslation;
+    }
+
+    public boolean isEnableBackendTranslation() {
+      return enableBackendTranslation;
+    }
   }
 
   /**
@@ -1253,6 +1274,13 @@ public final class VelocityConfiguration implements ProxyConfig {
         }
       }
 
+      CommentedConfig viaVersionSection = config.get("viaversion");
+      boolean enableBackendTranslation = false;
+      if (viaVersionSection != null) {
+        enableBackendTranslation = viaVersionSection.getOrElse("enable-backend-translation", false);
+      }
+      ViaVersionConfig viaVersionConfig = new ViaVersionConfig(enableBackendTranslation);
+
       // Throw an exception if the forwarding-secret file is empty and the proxy is using a
       // forwarding mode that requires it.
       if (forwardingSecret.length == 0
@@ -1301,7 +1329,8 @@ public final class VelocityConfiguration implements ProxyConfig {
           links,
           addresses,
           filter,
-          playerCaps
+          playerCaps,
+          viaVersionConfig
       );
     }
   }

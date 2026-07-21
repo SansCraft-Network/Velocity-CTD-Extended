@@ -5,6 +5,9 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral()
         maven("https://repo.papermc.io/repository/maven-public/")
+        maven("https://repo.viaversion.com/everything") {
+            name = "viaversion"
+        }
         maven("https://repo.velocityctd.com/releases") {
             name = "velocityctdReleases"
         }

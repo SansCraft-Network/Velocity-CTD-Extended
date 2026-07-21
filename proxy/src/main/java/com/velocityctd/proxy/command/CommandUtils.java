@@ -31,7 +31,6 @@ import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.CommandMessages;
 import com.velocitypowered.proxy.config.VelocityConfiguration;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.ArrayList;
@@ -79,8 +78,11 @@ public class CommandUtils {
       VelocityConfiguration.Queue queueConfig = server.getConfiguration().getQueue();
 
       List<String> possibilities = server.getAllServers().stream()
+          .filter(s -> allowNonQueueable
+            || s instanceof com.velocitypowered.proxy.server.VelocityVirtualRegisteredServer
+            || !queueConfig.isEnabled()
+            || !queueConfig.getNoQueueServers().contains(s.getServerInfo().getName()))
           .map(s -> s.getServerInfo().getName())
-          .filter(s -> allowNonQueueable || !queueConfig.isEnabled() || !queueConfig.getNoQueueServers().contains(s))
           .collect(Collectors.toList());
 
       possibilities.addAll(Arrays.asList(magicServers));
@@ -127,7 +129,9 @@ public class CommandUtils {
       return null;
     }
 
-    if (!allowNonQueueable && registeredServer.getQueue().getState() == QueueState.INACTIVE) {
+    if (!allowNonQueueable
+      && !(registeredServer instanceof com.velocitypowered.proxy.server.VelocityVirtualRegisteredServer)
+      && registeredServer.getQueue().getState() == QueueState.INACTIVE) {
       ctx.getSource().sendMessage(Component.translatable("velocity.queue.error.server-has-no-queue")
           .arguments(Component.text(serverName)));
       return null;
@@ -245,12 +249,14 @@ public class CommandUtils {
     Objects.requireNonNull(player, "player");
     Objects.requireNonNull(target, "target");
 
-    VelocityServerConnection connection = player.getCurrentServer().orElse(null);
+    com.velocitypowered.api.proxy.ServerConnection connection =
+      player.getCurrentServer().orElse(null);
     if (connection != null && connection.getServerInfo().getName().equalsIgnoreCase(target.getServerInfo().getName())) {
       throw new IllegalArgumentException("Player is already on target server.");
     }
 
-    if (proxyServer.getConfiguration().getQueue().getNoQueueServers().contains(target.getServerInfo().getName())
+    if (target instanceof com.velocitypowered.proxy.server.VelocityVirtualRegisteredServer
+      || proxyServer.getConfiguration().getQueue().getNoQueueServers().contains(target.getServerInfo().getName())
         || !proxyServer.isQueueEnabled()
         || player.hasPermission("velocity.queue.bypass")) {
       player.createConnectionRequest(target).connectWithIndication();

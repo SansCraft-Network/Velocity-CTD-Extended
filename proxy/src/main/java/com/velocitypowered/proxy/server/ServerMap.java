@@ -19,6 +19,8 @@ package com.velocitypowered.proxy.server;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.velocityctd.api.server.VirtualServer;
+import com.velocityctd.api.server.VirtualServerDefinition;
 import com.velocitypowered.api.event.proxy.server.ServerRegisteredEvent;
 import com.velocitypowered.api.event.proxy.server.ServerUnregisteredEvent;
 import com.velocitypowered.api.proxy.server.ServerInfo;
@@ -97,6 +99,29 @@ public class ServerMap {
   }
 
   /**
+   * Registers a virtual server with the proxy.
+   *
+   * @param definition the virtual server definition
+   * @return the registered virtual server
+   */
+  public VelocityVirtualRegisteredServer registerVirtual(
+      VirtualServerDefinition definition) {
+    Preconditions.checkNotNull(definition, "definition");
+    Preconditions.checkState(server != null,
+        "A Velocity proxy instance is required to register a virtual server");
+    String lowerName = definition.getName().toLowerCase(Locale.US);
+    VelocityVirtualRegisteredServer virtualServer =
+        new VelocityVirtualRegisteredServer(server, definition);
+    VelocityRegisteredServer existing = servers.putIfAbsent(lowerName, virtualServer);
+    if (existing != null) {
+      throw new IllegalArgumentException(
+          "Server with name " + definition.getName() + " already registered");
+    }
+    server.getEventManager().fireAndForget(new ServerRegisteredEvent(virtualServer));
+    return virtualServer;
+  }
+
+  /**
    * Unregisters the specified server from the proxy.
    *
    * @param serverInfo the server to unregister
@@ -117,6 +142,25 @@ public class ServerMap {
 
     if (server != null) {
       server.getEventManager().fireAndForget(new ServerUnregisteredEvent(rs));
+    }
+  }
+
+  /**
+   * Unregisters a virtual server from the proxy.
+   *
+   * @param virtualServer the virtual server
+   */
+  public void unregisterVirtual(VirtualServer virtualServer) {
+    Preconditions.checkNotNull(virtualServer, "virtualServer");
+    String name = virtualServer.getServerInfo().getName();
+    String lowerName = name.toLowerCase(Locale.US);
+    VelocityRegisteredServer registered = servers.get(lowerName);
+    Preconditions.checkArgument(registered == virtualServer,
+        "Virtual server with name %s is not registered", name);
+    Preconditions.checkState(servers.remove(lowerName, registered),
+        "Server with name %s replaced whilst unregistering", name);
+    if (server != null) {
+      server.getEventManager().fireAndForget(new ServerUnregisteredEvent(registered));
     }
   }
 }

@@ -28,7 +28,6 @@ import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.permission.Tristate;
 import com.velocitypowered.api.proxy.server.ServerInfo;
 import com.velocitypowered.proxy.VelocityServer;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.Collections;
@@ -93,7 +92,8 @@ public class ServerCommand implements BuiltinCommandDefinition {
                 return 0;
               }
 
-              VelocityServerConnection connection = player.getCurrentServer().orElse(null);
+                com.velocitypowered.api.proxy.ServerConnection connection =
+                  player.getCurrentServer().orElse(null);
               if (connection != null && connection.getServer() == registeredServer) {
                 player.sendMessage(Component.translatable("velocity.error.already-connected"));
                 return 0;
@@ -109,7 +109,7 @@ public class ServerCommand implements BuiltinCommandDefinition {
 
   private static void outputServerInformation(ConnectedPlayer executor, VelocityServer server) {
     String currentServer = executor.getCurrentServer()
-        .map(VelocityServerConnection::getServerInfo)
+      .map(com.velocitypowered.api.proxy.ServerConnection::getServerInfo)
         .map(ServerInfo::getName)
         .orElse("<unknown>");
     executor.sendMessage(Component.translatable(

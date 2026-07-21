@@ -26,7 +26,6 @@ import com.velocitypowered.api.command.BrigadierCommand;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.proxy.VelocityServer;
 import com.velocitypowered.proxy.command.builtin.BuiltinCommandDefinition;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.server.VelocityRegisteredServer;
 import java.util.function.Function;
@@ -70,7 +69,8 @@ public class SlashServerCommand implements BuiltinCommandDefinition {
   private int send(CommandContext<CommandSource> ctx) {
     ConnectedPlayer player = (ConnectedPlayer) ctx.getSource();
 
-    VelocityServerConnection connection = player.getCurrentServer().orElse(null);
+    com.velocitypowered.api.proxy.ServerConnection connection =
+      player.getCurrentServer().orElse(null);
     if (connection != null && connection.getServer() == registeredServer) {
       player.sendMessage(Component.translatable("velocity.command.slashserver.already-connected"));
       return 0;

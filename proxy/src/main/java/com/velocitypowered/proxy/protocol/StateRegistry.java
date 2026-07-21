@@ -122,6 +122,20 @@ import com.velocitypowered.proxy.protocol.packet.title.TitleClearPacket;
 import com.velocitypowered.proxy.protocol.packet.title.TitleSubtitlePacket;
 import com.velocitypowered.proxy.protocol.packet.title.TitleTextPacket;
 import com.velocitypowered.proxy.protocol.packet.title.TitleTimesPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualMovePacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualMovePositionPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualMoveRotationPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualMoveStatusPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualTeleportConfirmPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkCenterPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualDefaultSpawnPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualPlayerPositionPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualTimePacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkBatchStartPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkBatchFinishedPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualChunkBatchReceivedPacket;
+import com.velocitypowered.proxy.protocol.packet.virtual.VirtualGameEventPacket;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import io.netty.util.collection.IntObjectHashMap;
 import io.netty.util.collection.IntObjectMap;
@@ -265,6 +279,109 @@ public enum StateRegistry {
 
   PLAY {
     {
+      serverbound.register(
+          VirtualTeleportConfirmPacket.class, VirtualTeleportConfirmPacket::new,
+          map(0x00, MINECRAFT_1_9, false));
+      serverbound.register(
+          VirtualMoveStatusPacket.class, VirtualMoveStatusPacket::new,
+          map(0x03, MINECRAFT_1_7_2, false),
+          map(0x0F, MINECRAFT_1_9, false),
+          map(0x0D, MINECRAFT_1_12, false),
+          map(0x0C, MINECRAFT_1_12_1, false),
+          map(0x0F, MINECRAFT_1_13, false),
+          map(0x14, MINECRAFT_1_14, false),
+          map(0x15, MINECRAFT_1_16, false),
+          map(0x14, MINECRAFT_1_17, false),
+          map(0x16, MINECRAFT_1_19, false),
+          map(0x17, MINECRAFT_1_19_1, false),
+          map(0x16, MINECRAFT_1_19_3, false),
+          map(0x17, MINECRAFT_1_19_4, false),
+          map(0x19, MINECRAFT_1_20_2, false),
+          map(0x1A, MINECRAFT_1_20_3, false),
+          map(0x1D, MINECRAFT_1_20_5, false),
+          map(0x1F, MINECRAFT_1_21_2, false),
+          map(0x20, MINECRAFT_1_21_6, false),
+          map(0x21, MINECRAFT_26_1, false));
+      serverbound.register(
+          VirtualMovePositionPacket.class, VirtualMovePositionPacket::new,
+          map(0x04, MINECRAFT_1_7_2, false),
+          map(0x0C, MINECRAFT_1_9, false),
+          map(0x0E, MINECRAFT_1_12, false),
+          map(0x0D, MINECRAFT_1_12_1, false),
+          map(0x10, MINECRAFT_1_13, false),
+          map(0x11, MINECRAFT_1_14, false),
+          map(0x12, MINECRAFT_1_16, false),
+          map(0x11, MINECRAFT_1_17, false),
+          map(0x13, MINECRAFT_1_19, false),
+          map(0x14, MINECRAFT_1_19_1, false),
+          map(0x13, MINECRAFT_1_19_3, false),
+          map(0x14, MINECRAFT_1_19_4, false),
+          map(0x16, MINECRAFT_1_20_2, false),
+          map(0x17, MINECRAFT_1_20_3, false),
+          map(0x1A, MINECRAFT_1_20_5, false),
+          map(0x1C, MINECRAFT_1_21_2, false),
+          map(0x1D, MINECRAFT_1_21_6, false),
+          map(0x1E, MINECRAFT_26_1, false));
+      serverbound.register(
+          VirtualMoveRotationPacket.class, VirtualMoveRotationPacket::new,
+          map(0x05, MINECRAFT_1_7_2, false),
+          map(0x0E, MINECRAFT_1_9, false),
+          map(0x10, MINECRAFT_1_12, false),
+          map(0x0F, MINECRAFT_1_12_1, false),
+          map(0x12, MINECRAFT_1_13, false),
+          map(0x13, MINECRAFT_1_14, false),
+          map(0x14, MINECRAFT_1_16, false),
+          map(0x13, MINECRAFT_1_17, false),
+          map(0x15, MINECRAFT_1_19, false),
+          map(0x16, MINECRAFT_1_19_1, false),
+          map(0x15, MINECRAFT_1_19_3, false),
+          map(0x16, MINECRAFT_1_19_4, false),
+          map(0x18, MINECRAFT_1_20_2, false),
+          map(0x19, MINECRAFT_1_20_3, false),
+          map(0x1C, MINECRAFT_1_20_5, false),
+          map(0x1E, MINECRAFT_1_21_2, false),
+          map(0x1F, MINECRAFT_1_21_6, false),
+          map(0x20, MINECRAFT_26_1, false));
+      serverbound.register(
+          VirtualMovePacket.class, VirtualMovePacket::new,
+          map(0x06, MINECRAFT_1_7_2, false),
+          map(0x0D, MINECRAFT_1_9, false),
+          map(0x0F, MINECRAFT_1_12, false),
+          map(0x0E, MINECRAFT_1_12_1, false),
+          map(0x11, MINECRAFT_1_13, false),
+          map(0x12, MINECRAFT_1_14, false),
+          map(0x13, MINECRAFT_1_16, false),
+          map(0x12, MINECRAFT_1_17, false),
+          map(0x14, MINECRAFT_1_19, false),
+          map(0x15, MINECRAFT_1_19_1, false),
+          map(0x14, MINECRAFT_1_19_3, false),
+          map(0x15, MINECRAFT_1_19_4, false),
+          map(0x17, MINECRAFT_1_20_2, false),
+          map(0x18, MINECRAFT_1_20_3, false),
+          map(0x1B, MINECRAFT_1_20_5, false),
+          map(0x1D, MINECRAFT_1_21_2, false),
+          map(0x1E, MINECRAFT_1_21_6, false),
+          map(0x1F, MINECRAFT_26_1, false));
+      clientbound.register(
+          VirtualPlayerPositionPacket.class,
+          () -> new VirtualPlayerPositionPacket(0, 0, 0, 0, 0, 0),
+          map(0x48, MINECRAFT_26_1, false));
+      clientbound.register(
+          VirtualChunkPacket.class, () -> new VirtualChunkPacket(0, 0),
+          map(0x2D, MINECRAFT_26_1, false));
+      clientbound.register(
+          VirtualChunkCenterPacket.class, () -> new VirtualChunkCenterPacket(0, 0),
+          map(0x5E, MINECRAFT_26_1, false));
+      clientbound.register(
+          VirtualDefaultSpawnPacket.class,
+          () -> new VirtualDefaultSpawnPacket("minecraft:overworld", 0, 0, 0, 0),
+          map(0x61, MINECRAFT_26_1, false));
+      clientbound.register(
+          VirtualGameEventPacket.class, () -> new VirtualGameEventPacket(0, 0),
+          map(0x26, MINECRAFT_26_1, false));
+      clientbound.register(
+          VirtualTimePacket.class, () -> new VirtualTimePacket(0, 0),
+          map(0x71, MINECRAFT_26_1, false));
       serverbound.fallback = false;
       clientbound.fallback = false;
 

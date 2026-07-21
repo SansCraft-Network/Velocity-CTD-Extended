@@ -10,6 +10,8 @@ package com.velocitypowered.api.proxy;
 import com.velocityctd.api.cluster.ClusterPlayerService;
 import com.velocityctd.api.cluster.ClusterProxyService;
 import com.velocityctd.api.queue.QueueManager;
+import com.velocityctd.api.server.VirtualServer;
+import com.velocityctd.api.server.VirtualServerDefinition;
 import com.velocitypowered.api.command.CommandManager;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.event.EventManager;
@@ -156,6 +158,21 @@ public interface ProxyServer extends Audience {
    * @param server the server to unregister
    */
   void unregisterServer(ServerInfo server);
+
+  /**
+   * Registers a proxy-managed virtual server.
+   *
+   * @param definition the virtual server definition
+   * @return the newly registered virtual server
+   */
+  VirtualServer registerVirtualServer(VirtualServerDefinition definition);
+
+  /**
+   * Unregisters a proxy-managed virtual server.
+   *
+   * @param server the virtual server
+   */
+  void unregisterVirtualServer(VirtualServer server);
 
   /**
    * Returns an instance of {@link CommandSource} that can be used to determine if the command is

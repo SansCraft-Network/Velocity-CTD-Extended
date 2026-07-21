@@ -478,7 +478,7 @@ public class BungeeCordMessageResponder {
     ByteBuf toForward = in.unwrap().copy();
     ServerInfo currentUserServer = player
         .getCurrentServer()
-        .map(VelocityServerConnection::getServerInfo)
+      .map(com.velocitypowered.api.proxy.ServerConnection::getServerInfo)
         .orElse(null);
     if (target.equals("ALL") || target.equals("ONLINE")) {
       try {

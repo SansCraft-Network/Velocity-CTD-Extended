@@ -223,6 +223,7 @@ dependencies {
     implementation(libs.asm)
     implementation(libs.bundles.flare)
     implementation(libs.uuid.creator)
+    compileOnly(libs.viaversion.api)
     compileOnly(libs.spotbugs.annotations)
     compileOnly(libs.auto.service.annotations)
     testImplementation(libs.mockito)

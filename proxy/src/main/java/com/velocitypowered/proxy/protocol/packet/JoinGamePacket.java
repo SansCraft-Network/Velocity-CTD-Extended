@@ -107,6 +107,10 @@ public class JoinGamePacket implements MinecraftPacket {
     return partialHashedSeed;
   }
 
+  public void setPartialHashedSeed(long partialHashedSeed) {
+    this.partialHashedSeed = partialHashedSeed;
+  }
+
   public short getDifficulty() {
     return difficulty;
   }
@@ -141,6 +145,22 @@ public class JoinGamePacket implements MinecraftPacket {
 
   public boolean isReducedDebugInfo() {
     return reducedDebugInfo;
+  }
+
+  public void setShowRespawnScreen(boolean showRespawnScreen) {
+    this.showRespawnScreen = showRespawnScreen;
+  }
+
+  public void setLevelNames(ImmutableSet<String> levelNames) {
+    this.levelNames = levelNames;
+  }
+
+  public void setRegistry(CompoundBinaryTag registry) {
+    this.registry = registry;
+  }
+
+  public void setCurrentDimensionData(CompoundBinaryTag currentDimensionData) {
+    this.currentDimensionData = currentDimensionData;
   }
 
   public void setReducedDebugInfo(boolean reducedDebugInfo) {

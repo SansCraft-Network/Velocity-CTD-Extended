@@ -19,7 +19,6 @@ package com.velocityctd.proxy.redis.depot.player;
 
 import com.velocityctd.proxy.redis.depot.DepotEntry;
 import com.velocitypowered.api.proxy.server.ServerInfo;
-import com.velocitypowered.proxy.connection.backend.VelocityServerConnection;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.packet.ClientSettingsPacket;
 import java.util.HashMap;
@@ -103,7 +102,7 @@ public final class PlayerEntry extends DepotEntry<UUID, PlayerEntry> {
     this.queueBypass = player.hasPermission("velocity.queue.bypass");
     this.kickBypass = player.hasPermission("velocity.command.gkick.bypass");
     this.serverName = player.getCurrentServer()
-        .map(VelocityServerConnection::getServerInfo)
+      .map(com.velocitypowered.api.proxy.ServerConnection::getServerInfo)
         .map(ServerInfo::getName)
         .orElse(null);
     this.ipAddress = player.getRemoteAddress().getAddress().getHostAddress();

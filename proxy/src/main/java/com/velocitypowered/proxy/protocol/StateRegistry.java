@@ -47,6 +47,7 @@ import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_8;
 import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_9;
 import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_1_9_4;
 import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_26_1;
+import static com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_26_2;
 import static com.velocitypowered.api.network.ProtocolVersion.MINIMUM_VERSION;
 import static com.velocitypowered.api.network.ProtocolVersion.SUPPORTED_VERSIONS;
 import static com.velocitypowered.proxy.connection.PlayerDataForwarding.LEGACY_MODERN_FORWARDING;
@@ -365,23 +366,118 @@ public enum StateRegistry {
       clientbound.register(
           VirtualPlayerPositionPacket.class,
           () -> new VirtualPlayerPositionPacket(0, 0, 0, 0, 0, 0),
-          map(0x48, MINECRAFT_26_1, false));
+          map(0x08, MINECRAFT_1_7_2, true),
+          map(0x2E, MINECRAFT_1_9, true),
+          map(0x2F, MINECRAFT_1_12_1, true),
+          map(0x32, MINECRAFT_1_13, true),
+          map(0x35, MINECRAFT_1_14, true),
+          map(0x36, MINECRAFT_1_15, true),
+          map(0x35, MINECRAFT_1_16, true),
+          map(0x34, MINECRAFT_1_16_2, true),
+          map(0x38, MINECRAFT_1_17, true),
+          map(0x36, MINECRAFT_1_19, true),
+          map(0x39, MINECRAFT_1_19_1, true),
+          map(0x38, MINECRAFT_1_19_3, true),
+          map(0x3C, MINECRAFT_1_19_4, true),
+          map(0x3E, MINECRAFT_1_20_2, true),
+          map(0x40, MINECRAFT_1_20_5, true),
+          map(0x42, MINECRAFT_1_21_2, true),
+          map(0x41, MINECRAFT_1_21_5, true),
+          map(0x48, MINECRAFT_26_1, true));
       clientbound.register(
           VirtualChunkPacket.class, () -> new VirtualChunkPacket(0, 0),
-          map(0x2D, MINECRAFT_26_1, false));
+          map(0x21, MINECRAFT_1_7_2, true),
+          map(0x20, MINECRAFT_1_9, true),
+          map(0x22, MINECRAFT_1_13, true),
+          map(0x21, MINECRAFT_1_14, true),
+          map(0x22, MINECRAFT_1_15, true),
+          map(0x21, MINECRAFT_1_16, true),
+          map(0x20, MINECRAFT_1_16_2, true),
+          map(0x22, MINECRAFT_1_17, true),
+          map(0x1F, MINECRAFT_1_19, true),
+          map(0x21, MINECRAFT_1_19_1, true),
+          map(0x20, MINECRAFT_1_19_3, true),
+          map(0x24, MINECRAFT_1_19_4, true),
+          map(0x25, MINECRAFT_1_20_2, true),
+          map(0x27, MINECRAFT_1_20_5, true),
+          map(0x28, MINECRAFT_1_21_2, true),
+          map(0x27, MINECRAFT_1_21_5, true),
+          map(0x2D, MINECRAFT_26_1, true));
       clientbound.register(
           VirtualChunkCenterPacket.class, () -> new VirtualChunkCenterPacket(0, 0),
-          map(0x5E, MINECRAFT_26_1, false));
+          map(0x40, MINECRAFT_1_14, true),
+          map(0x41, MINECRAFT_1_15, true),
+          map(0x40, MINECRAFT_1_16, true),
+          map(0x49, MINECRAFT_1_17, true),
+          map(0x48, MINECRAFT_1_19, true),
+          map(0x4B, MINECRAFT_1_19_1, true),
+          map(0x4A, MINECRAFT_1_19_3, true),
+          map(0x4E, MINECRAFT_1_19_4, true),
+          map(0x50, MINECRAFT_1_20_2, true),
+          map(0x54, MINECRAFT_1_20_5, true),
+          map(0x58, MINECRAFT_1_21_2, true),
+          map(0x57, MINECRAFT_1_21_5, true),
+          map(0x5E, MINECRAFT_26_1, true));
       clientbound.register(
           VirtualDefaultSpawnPacket.class,
           () -> new VirtualDefaultSpawnPacket("minecraft:overworld", 0, 0, 0, 0),
-          map(0x61, MINECRAFT_26_1, false));
+          map(0x05, MINECRAFT_1_7_2, true),
+          map(0x43, MINECRAFT_1_9, true),
+          map(0x45, MINECRAFT_1_12_1, true),
+          map(0x49, MINECRAFT_1_13, true),
+          map(0x4D, MINECRAFT_1_14, true),
+          map(0x4E, MINECRAFT_1_15, true),
+          map(0x4B, MINECRAFT_1_16, true),
+          map(0x4A, MINECRAFT_1_16_2, true),
+          map(0x4C, MINECRAFT_1_17, true),
+          map(0x4B, MINECRAFT_1_19, true),
+          map(0x4E, MINECRAFT_1_19_1, true),
+          map(0x4D, MINECRAFT_1_19_3, true),
+          map(0x52, MINECRAFT_1_19_4, true),
+          map(0x54, MINECRAFT_1_20_2, true),
+          map(0x5A, MINECRAFT_1_20_5, true),
+          map(0x5E, MINECRAFT_1_21_2, true),
+          map(0x5D, MINECRAFT_1_21_5, true),
+          map(0x61, MINECRAFT_26_1, true));
       clientbound.register(
           VirtualGameEventPacket.class, () -> new VirtualGameEventPacket(0, 0),
-          map(0x26, MINECRAFT_26_1, false));
+          map(0x2B, MINECRAFT_1_7_2, true),
+          map(0x1E, MINECRAFT_1_9, true),
+          map(0x20, MINECRAFT_1_13, true),
+          map(0x1E, MINECRAFT_1_14, true),
+          map(0x1F, MINECRAFT_1_15, true),
+          map(0x1D, MINECRAFT_1_16, true),
+          map(0x1D, MINECRAFT_1_16_2, true),
+          map(0x1E, MINECRAFT_1_17, true),
+          map(0x1B, MINECRAFT_1_19, true),
+          map(0x1D, MINECRAFT_1_19_1, true),
+          map(0x1C, MINECRAFT_1_19_3, true),
+          map(0x1F, MINECRAFT_1_19_4, true),
+          map(0x20, MINECRAFT_1_20_2, true),
+          map(0x22, MINECRAFT_1_20_5, true),
+          map(0x23, MINECRAFT_1_21_2, true),
+          map(0x22, MINECRAFT_1_21_5, true),
+          map(0x26, MINECRAFT_26_1, true));
       clientbound.register(
           VirtualTimePacket.class, () -> new VirtualTimePacket(0, 0),
-          map(0x71, MINECRAFT_26_1, false));
+          map(0x03, MINECRAFT_1_7_2, true),
+          map(0x44, MINECRAFT_1_9, true),
+          map(0x46, MINECRAFT_1_12, true),
+          map(0x47, MINECRAFT_1_12_1, true),
+          map(0x4A, MINECRAFT_1_13, true),
+          map(0x4E, MINECRAFT_1_14, true),
+          map(0x4F, MINECRAFT_1_15, true),
+          map(0x4E, MINECRAFT_1_16, true),
+          map(0x58, MINECRAFT_1_17, true),
+          map(0x59, MINECRAFT_1_18, true),
+          map(0x5C, MINECRAFT_1_19_1, true),
+          map(0x5A, MINECRAFT_1_19_3, true),
+          map(0x5E, MINECRAFT_1_19_4, true),
+          map(0x60, MINECRAFT_1_20_2, true),
+          map(0x64, MINECRAFT_1_20_5, true),
+          map(0x6B, MINECRAFT_1_21_2, true),
+          map(0x6A, MINECRAFT_1_21_5, true),
+          map(0x71, MINECRAFT_26_1, true));
       serverbound.fallback = false;
       clientbound.fallback = false;
 
@@ -1114,7 +1210,7 @@ public enum StateRegistry {
                 "Unknown protocol version " + current.protocolVersion);
           }
 
-          if (registry.packetIdToSupplier.containsKey(current.id)) {
+          if (!current.encodeOnly && registry.packetIdToSupplier.containsKey(current.id)) {
             throw new IllegalArgumentException(
                 "Can not register class "
                     + clazz.getSimpleName()

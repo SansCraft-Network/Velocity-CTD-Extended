@@ -44,12 +44,9 @@ public final class VelocityVirtualConfigSessionHandler implements MinecraftSessi
 
   @Override
   public void activated() {
-    LOGGER.info("[VirtualServer-Debug] VelocityVirtualConfigSessionHandler activated for player {}", player.getUsername());
-    com.velocitypowered.proxy.VelocityServer.setViaVersionServerProtocol(
-        player.getUniqueId(),
-        VirtualProtocolBaseline.CURRENT.getProtocolVersion().getProtocol());
-    player.getConnection().write(new KnownPacksPacket(List.of()));
-    VirtualProtocolBaseline.CURRENT.writeRegistrySync(player.getConnection()::write);
+    LOGGER.info("[VirtualServer-Debug] VelocityVirtualConfigSessionHandler activated for player {} (version {})", player.getUsername(), player.getProtocolVersion());
+    player.getConnection().write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createKnownPacksPacket(player.getProtocolVersion()));
+    com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.sendRegistrySync(player.getConnection()::write, player.getProtocolVersion());
     player.getConnection().write(new TagsUpdatePacket(VirtualProtocolBaseline.CURRENT.getTags()));
     player.getConnection().write(new ActiveFeaturesPacket(
         new Key[]{Key.key("minecraft", "vanilla")}));

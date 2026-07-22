@@ -83,6 +83,8 @@ public final class VelocityVirtualSessionHandler implements MinecraftSessionHand
         player.getUniqueId(),
         com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT
             .getProtocolVersion().getProtocol());
+    player.getConnection().setProtocolVersion(
+        com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT.getProtocolVersion());
     keepAliveTask = player.getConnection().eventLoop().scheduleAtFixedRate(
         player::sendKeepAlive, 10, 10, TimeUnit.SECONDS);
   }

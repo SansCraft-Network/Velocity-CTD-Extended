@@ -81,6 +81,7 @@ public interface VirtualProtocolBaseline {
     join.setSeaLevel(63);
     join.setOnlineMode(isOnlineMode);
     join.setEnforcesSecureChat(false);
+    join.setRegistry(VirtualRegistryData262.createDefaultDimensionCodec());
     return join;
   }
 

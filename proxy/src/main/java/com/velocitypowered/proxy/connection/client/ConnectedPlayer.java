@@ -932,6 +932,7 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     if (current != null) {
       current.close();
     }
+    connection.setProtocolVersion(getProtocolVersion());
   }
 
   public @Nullable VelocityServerConnection getConnectionInFlight() {
@@ -2217,11 +2218,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
     private CompletableFuture<Impl> connectVirtual(
         VelocityVirtualRegisteredServer destination) {
-      if (getProtocolVersion() != com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT.getProtocolVersion()
-          && !server.isViaVersionAvailable()) {
-        return completedFuture(plainResult(
-            ConnectionRequestBuilder.Status.CONNECTION_CANCELLED, destination));
-      }
       VelocityRegisteredServer previous = getCurrentRegisteredServer();
       VelocityVirtualConnection newConnection =
           new VelocityVirtualConnection(destination, ConnectedPlayer.this, previous);
@@ -2261,11 +2257,11 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           LOGGER.info("[VirtualServer-Debug] Executing finishVirtualJoin for player {} on server {}", getUsername(), destination.getServerInfo().getName());
 
           if (previous instanceof VelocityVirtualRegisteredServer) {
-            LOGGER.info("[VirtualServer-Debug] Sending RespawnPacket to player {}", getUsername());
-            connection.write(baseline.createRespawnPacket(definition, isOnlineMode()));
+            LOGGER.info("[VirtualServer-Debug] Sending RespawnPacket to player {} (version {})", getUsername(), getProtocolVersion());
+            connection.write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createRespawnPacket(getProtocolVersion(), definition, isOnlineMode()));
           } else {
-            LOGGER.info("[VirtualServer-Debug] Sending JoinGamePacket (entityId 1) to player {}", getUsername());
-            connection.write(baseline.createJoinGamePacket(definition, isOnlineMode()));
+            LOGGER.info("[VirtualServer-Debug] Sending JoinGamePacket (entityId 1) to player {} (version {})", getUsername(), getProtocolVersion());
+            connection.write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createJoinGamePacket(getProtocolVersion(), definition, isOnlineMode()));
           }
 
           int centerChunkX = Math.floorDiv((int) Math.floor(definition.getSpawnX()), 16);
@@ -2305,10 +2301,6 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
           connection.flush();
 
           LOGGER.info("[VirtualServer-Debug] Completed virtual spawn sequence for player {}", getUsername());
-
-          VelocityServer.setViaVersionServerProtocol(
-            getUniqueId(),
-            baseline.getProtocolVersion().getProtocol());
 
           resumeReadTimeout();
           firstServerConnected = true;

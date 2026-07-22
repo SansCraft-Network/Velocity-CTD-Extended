@@ -198,4 +198,69 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
     }
     throw new IllegalArgumentException("Unsupported registry JSON: " + element);
   }
+
+  public static CompoundBinaryTag createDefaultDimensionCodec() {
+    CompoundBinaryTag overworldElement = CompoundBinaryTag.builder()
+        .putByte("piglin_safe", (byte) 0)
+        .putByte("natural", (byte) 1)
+        .putFloat("ambient_light", 0.0f)
+        .putString("infiniburn", "#minecraft:infiniburn_overworld")
+        .putByte("respawn_anchor_works", (byte) 0)
+        .putByte("has_skylight", (byte) 1)
+        .putByte("bed_works", (byte) 1)
+        .putString("effects", "minecraft:overworld")
+        .putByte("has_raids", (byte) 1)
+        .putInt("min_y", -64)
+        .putInt("height", 384)
+        .putInt("logical_height", 384)
+        .putDouble("coordinate_scale", 1.0)
+        .putByte("ultrawarm", (byte) 0)
+        .putByte("has_ceiling", (byte) 0)
+        .build();
+
+    CompoundBinaryTag dimensionEntry = CompoundBinaryTag.builder()
+        .putString("name", "minecraft:overworld")
+        .putInt("id", 0)
+        .put("element", overworldElement)
+        .build();
+
+    ListBinaryTag dimensionList = ListBinaryTag.from(java.util.List.of(dimensionEntry));
+
+    CompoundBinaryTag dimensionRegistry = CompoundBinaryTag.builder()
+        .putString("type", "minecraft:dimension_type")
+        .put("value", dimensionList)
+        .build();
+
+    CompoundBinaryTag biomeEffects = CompoundBinaryTag.builder()
+        .putInt("fog_color", 12638463)
+        .putInt("sky_color", 7907327)
+        .putInt("water_color", 4159204)
+        .putInt("water_fog_color", 329011)
+        .build();
+
+    CompoundBinaryTag biomeElement = CompoundBinaryTag.builder()
+        .putString("precipitation", "rain")
+        .putFloat("temperature", 0.8f)
+        .putFloat("downfall", 0.4f)
+        .put("effects", biomeEffects)
+        .build();
+
+    CompoundBinaryTag biomeEntry = CompoundBinaryTag.builder()
+        .putString("name", "minecraft:plains")
+        .putInt("id", 0)
+        .put("element", biomeElement)
+        .build();
+
+    ListBinaryTag biomeList = ListBinaryTag.from(java.util.List.of(biomeEntry));
+
+    CompoundBinaryTag biomeRegistry = CompoundBinaryTag.builder()
+        .putString("type", "minecraft:worldgen/biome")
+        .put("value", biomeList)
+        .build();
+
+    return CompoundBinaryTag.builder()
+        .put("minecraft:dimension_type", dimensionRegistry)
+        .put("minecraft:worldgen/biome", biomeRegistry)
+        .build();
+  }
 }

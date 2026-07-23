@@ -44,6 +44,9 @@ public final class VirtualMovePositionPacket implements MinecraftPacket {
     posZ = buf.readDouble();
     movementFlags = buf.readUnsignedByte();
     onGround = (movementFlags & 1) != 0;
+    if (buf.readableBytes() > 0) {
+      buf.skipBytes(buf.readableBytes());
+    }
   }
 
   @Override
@@ -57,6 +60,12 @@ public final class VirtualMovePositionPacket implements MinecraftPacket {
     buf.writeDouble(posZ);
     buf.writeByte(version.lessThan(ProtocolVersion.MINECRAFT_1_21_2)
         ? (onGround ? 1 : 0) : movementFlags);
+  }
+
+  @Override
+  public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction,
+      ProtocolVersion version) {
+    return -1;
   }
 
   @Override

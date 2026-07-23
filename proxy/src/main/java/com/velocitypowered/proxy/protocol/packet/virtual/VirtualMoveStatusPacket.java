@@ -32,12 +32,21 @@ public final class VirtualMoveStatusPacket implements MinecraftPacket {
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
       ProtocolVersion version) {
     movementFlags = buf.readUnsignedByte();
+    if (buf.readableBytes() > 0) {
+      buf.skipBytes(buf.readableBytes());
+    }
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
       ProtocolVersion version) {
     buf.writeByte(movementFlags);
+  }
+
+  @Override
+  public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction,
+      ProtocolVersion version) {
+    return -1;
   }
 
   @Override

@@ -59,8 +59,8 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
         }
         REGISTRIES.put(entry.getKey(), entriesList);
       }
-    } catch (Exception exception) {
-      throw new IllegalStateException("Unable to load virtual registry index", exception);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to load virtual 26.2 registries index", e);
     }
   }
 
@@ -85,6 +85,7 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
   public static void writeTo(java.util.function.Consumer<RegistrySyncPacket> consumer) {
     for (Map.Entry<String, List<String>> registry : REGISTRIES.entrySet()) {
       String regKey = registry.getKey();
+
       List<String> entries = registry.getValue();
       String folderName = regKey.substring("minecraft:".length()).replace('/', '_');
 
@@ -97,13 +98,30 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
         ProtocolUtils.writeString(payload, entryName);
         payload.writeBoolean(true);
 
-        String path = "/com/velocitypowered/proxy/virtual/26.2/registries/"
-            + folderName + "/" + nameWithoutPrefix + ".json";
-        JsonElement element = readJson(path);
+        BinaryTag tag;
+        if (regKey.equals("minecraft:dimension_type") && nameWithoutPrefix.equals("overworld")) {
+          tag = createDefaultOverworldElement();
+        } else if (regKey.equals("minecraft:worldgen/biome") && nameWithoutPrefix.equals("plains")) {
+          tag = createDefaultBiomeElement();
+        } else {
+          String path = "/com/velocitypowered/proxy/virtual/26.2/registries/"
+              + folderName + "/" + nameWithoutPrefix + ".json";
+          JsonElement element = readJson(path);
+          if (element instanceof JsonObject obj && obj.isEmpty()) {
+            tag = CompoundBinaryTag.builder()
+                .putString("asset_id", entryName)
+                .build();
+          } else {
+            tag = toBinaryTag(element);
+            if (tag instanceof CompoundBinaryTag cbt && !cbt.keySet().contains("asset_id")) {
+              tag = cbt.put("asset_id", StringBinaryTag.stringBinaryTag(entryName));
+            }
+          }
+        }
 
         ProtocolUtils.writeBinaryTag(payload,
             com.velocitypowered.api.network.ProtocolVersion.MINECRAFT_26_2,
-            toBinaryTag(element));
+            tag);
       }
 
       RegistrySyncPacket packet = new RegistrySyncPacket();
@@ -130,37 +148,23 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
       if (stream != null) {
         JsonObject root = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
         for (Map.Entry<String, JsonElement> regEntry : root.entrySet()) {
-          String regKey = regEntry.getKey();
-          if (REGISTRIES.containsKey(regKey) || isStaticTagRegistry(regKey)) {
-            Map<String, int[]> tagMap = new HashMap<>();
-            JsonObject tagObj = regEntry.getValue().getAsJsonObject();
-            for (Map.Entry<String, JsonElement> tagElem : tagObj.entrySet()) {
-              tagMap.put(tagElem.getKey(), new int[]{0});
+          Map<String, int[]> tagMap = new HashMap<>();
+          JsonObject tagObj = regEntry.getValue().getAsJsonObject();
+          for (Map.Entry<String, JsonElement> tagEntry : tagObj.entrySet()) {
+            JsonArray arr = tagEntry.getValue().getAsJsonArray();
+            int[] ids = new int[arr.size()];
+            for (int i = 0; i < arr.size(); i++) {
+              ids[i] = arr.get(i).getAsInt();
             }
-            tags.put(regKey, tagMap);
+            tagMap.put(tagEntry.getKey(), ids);
           }
+          tags.put(regEntry.getKey(), tagMap);
         }
       }
-    } catch (Exception exception) {
-      // fallback
+    } catch (Exception e) {
+      // Fallback
     }
-    tags.computeIfAbsent("minecraft:block", ignored -> new HashMap<>())
-        .put("minecraft:infiniburn_overworld", new int[0]);
     return tags;
-  }
-
-  private static boolean isStaticTagRegistry(String regKey) {
-    return regKey.equals("minecraft:block")
-        || regKey.equals("minecraft:item")
-        || regKey.equals("minecraft:entity_type")
-        || regKey.equals("minecraft:fluid")
-        || regKey.equals("minecraft:game_event")
-        || regKey.equals("minecraft:banner_pattern")
-        || regKey.equals("minecraft:cat_variant")
-        || regKey.equals("minecraft:frog_variant")
-        || regKey.equals("minecraft:instrument")
-        || regKey.equals("minecraft:painting_variant")
-        || regKey.equals("minecraft:point_of_interest_type");
   }
 
   private static BinaryTag toBinaryTag(JsonElement element) {
@@ -199,8 +203,16 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
     throw new IllegalArgumentException("Unsupported registry JSON: " + element);
   }
 
-  public static CompoundBinaryTag createDefaultDimensionCodec() {
-    CompoundBinaryTag overworldElement = CompoundBinaryTag.builder()
+  public static CompoundBinaryTag createDefaultOverworldElement() {
+    CompoundBinaryTag monsterSpawnLightLevel = CompoundBinaryTag.builder()
+        .putString("type", "minecraft:uniform")
+        .put("value", CompoundBinaryTag.builder()
+            .putInt("max_inclusive", 7)
+            .putInt("min_inclusive", 0)
+            .build())
+        .build();
+
+    return CompoundBinaryTag.builder()
         .putByte("piglin_safe", (byte) 0)
         .putByte("natural", (byte) 1)
         .putFloat("ambient_light", 0.0f)
@@ -216,7 +228,30 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
         .putDouble("coordinate_scale", 1.0)
         .putByte("ultrawarm", (byte) 0)
         .putByte("has_ceiling", (byte) 0)
+        .putInt("monster_spawn_block_light_limit", 0)
+        .put("monster_spawn_light_level", monsterSpawnLightLevel)
         .build();
+  }
+
+  public static CompoundBinaryTag createDefaultBiomeElement() {
+    CompoundBinaryTag biomeEffects = CompoundBinaryTag.builder()
+        .putInt("fog_color", 12638463)
+        .putInt("sky_color", 7907327)
+        .putInt("water_color", 4159204)
+        .putInt("water_fog_color", 329011)
+        .build();
+
+    return CompoundBinaryTag.builder()
+        .putString("precipitation", "rain")
+        .putByte("has_precipitation", (byte) 1)
+        .putFloat("temperature", 0.8f)
+        .putFloat("downfall", 0.4f)
+        .put("effects", biomeEffects)
+        .build();
+  }
+
+  public static CompoundBinaryTag createDefaultDimensionCodec() {
+    CompoundBinaryTag overworldElement = createDefaultOverworldElement();
 
     CompoundBinaryTag dimensionEntry = CompoundBinaryTag.builder()
         .putString("name", "minecraft:overworld")
@@ -231,19 +266,7 @@ public final class VirtualRegistryData262 implements VirtualProtocolBaseline {
         .put("value", dimensionList)
         .build();
 
-    CompoundBinaryTag biomeEffects = CompoundBinaryTag.builder()
-        .putInt("fog_color", 12638463)
-        .putInt("sky_color", 7907327)
-        .putInt("water_color", 4159204)
-        .putInt("water_fog_color", 329011)
-        .build();
-
-    CompoundBinaryTag biomeElement = CompoundBinaryTag.builder()
-        .putString("precipitation", "rain")
-        .putFloat("temperature", 0.8f)
-        .putFloat("downfall", 0.4f)
-        .put("effects", biomeEffects)
-        .build();
+    CompoundBinaryTag biomeElement = createDefaultBiomeElement();
 
     CompoundBinaryTag biomeEntry = CompoundBinaryTag.builder()
         .putString("name", "minecraft:plains")

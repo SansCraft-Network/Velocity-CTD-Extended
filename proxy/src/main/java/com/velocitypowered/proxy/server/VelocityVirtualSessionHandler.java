@@ -79,12 +79,6 @@ public final class VelocityVirtualSessionHandler implements MinecraftSessionHand
   @Override
   public void activated() {
     LOGGER.info("[VirtualServer-Debug] VelocityVirtualSessionHandler activated in PLAY state for player {}", player.getUsername());
-    VelocityServer.setViaVersionServerProtocol(
-        player.getUniqueId(),
-        com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT
-            .getProtocolVersion().getProtocol());
-    player.getConnection().setProtocolVersion(
-        com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT.getProtocolVersion());
     keepAliveTask = player.getConnection().eventLoop().scheduleAtFixedRate(
         player::sendKeepAlive, 10, 10, TimeUnit.SECONDS);
   }

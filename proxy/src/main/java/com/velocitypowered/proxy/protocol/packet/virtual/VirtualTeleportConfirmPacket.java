@@ -32,12 +32,21 @@ public final class VirtualTeleportConfirmPacket implements MinecraftPacket {
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction,
       ProtocolVersion version) {
     teleportId = ProtocolUtils.readVarInt(buf);
+    if (buf.readableBytes() > 0) {
+      buf.skipBytes(buf.readableBytes());
+    }
   }
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction,
       ProtocolVersion version) {
     ProtocolUtils.writeVarInt(buf, teleportId);
+  }
+
+  @Override
+  public int decodeExpectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction,
+      ProtocolVersion version) {
+    return -1;
   }
 
   @Override

@@ -463,6 +463,7 @@ public class VelocityServer implements ProxyServer, ForwardingAudience {
     commandRateLimiter = Ratelimiters.createWithMilliseconds(configuration.getCommandRatelimit());
     tabCompleteRateLimiter = Ratelimiters.createWithMilliseconds(configuration.getTabCompleteRatelimit());
     loadPlugins();
+    com.velocitypowered.proxy.server.virtual.via.VirtualViaManager.init(java.nio.file.Path.of("."));
 
     // Go ahead and fire the proxy initialization event. We block since plugins should have a chance
     // to fully initialize before we accept any connections to the server.

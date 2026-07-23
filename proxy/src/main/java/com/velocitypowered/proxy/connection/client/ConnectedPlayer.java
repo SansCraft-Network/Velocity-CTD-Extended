@@ -932,6 +932,9 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
     if (current != null) {
       current.close();
     }
+    if (connection.getChannel().pipeline().get(com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC) != null) {
+      connection.getChannel().pipeline().remove(com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC);
+    }
     connection.setProtocolVersion(getProtocolVersion());
   }
 
@@ -2233,6 +2236,58 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             leaveVirtualServer();
             virtualConnection = newConnection;
             destination.addPlayer(ConnectedPlayer.this);
+
+            ProtocolVersion playerVersion = getProtocolVersion();
+            if (playerVersion.noLessThan(ProtocolVersion.MINECRAFT_26_2)) {
+              if (connection.getChannel().pipeline().get(com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC) != null) {
+                connection.getChannel().pipeline().remove(com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC);
+              }
+            } else {
+              int clientProtocol = playerVersion.getProtocol();
+              if (connection.getChannel().pipeline().get(com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC) == null) {
+                com.viaversion.viaversion.api.connection.UserConnection viaUser =
+                    com.viaversion.viaversion.platform.ViaChannelInitializer.createUserConnection(connection.getChannel(), false);
+                boolean supportsConfigState = playerVersion.noLessThan(ProtocolVersion.MINECRAFT_1_20_2);
+                com.viaversion.viaversion.api.protocol.packet.State initialState =
+                    (supportsConfigState && connection.getState() == StateRegistry.CONFIG)
+                        ? com.viaversion.viaversion.api.protocol.packet.State.CONFIGURATION
+                        : com.viaversion.viaversion.api.protocol.packet.State.PLAY;
+                viaUser.getProtocolInfo().setClientState(initialState);
+                viaUser.getProtocolInfo().setServerState(initialState);
+                viaUser.getProtocolInfo().setServerProtocolVersion(
+                    com.velocitypowered.proxy.server.virtual.via.VirtualViaManager.PROTOCOL_26_2);
+                com.viaversion.viaversion.api.protocol.version.ProtocolVersion viaClientVersion =
+                    com.viaversion.viaversion.api.protocol.version.ProtocolVersion.getProtocol(clientProtocol);
+                viaUser.getProtocolInfo().setProtocolVersion(viaClientVersion);
+
+                java.util.List<com.viaversion.viaversion.api.protocol.ProtocolPathEntry> path =
+                    com.viaversion.viaversion.api.Via.getManager().getProtocolManager().getProtocolPath(
+                        clientProtocol,
+                        com.velocitypowered.proxy.server.virtual.via.VirtualViaManager.PROTOCOL_26_2.getVersion());
+                if (path != null) {
+                  for (com.viaversion.viaversion.api.protocol.ProtocolPathEntry entry : path) {
+                    viaUser.getProtocolInfo().getPipeline().add(entry.protocol());
+                    entry.protocol().init(viaUser);
+                  }
+                }
+
+                com.velocitypowered.proxy.server.virtual.via.VirtualViaStateInitializer.initializeUser(viaUser, viaClientVersion);
+
+                if (connection.getChannel().pipeline().get(com.velocitypowered.proxy.network.Connections.COMPRESSION_ENCODER) != null) {
+                  connection.getChannel().pipeline().addAfter(
+                      com.velocitypowered.proxy.network.Connections.COMPRESSION_ENCODER,
+                      com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC,
+                      new com.velocitypowered.proxy.server.virtual.via.VirtualViaCodec(viaUser));
+                } else {
+                  connection.getChannel().pipeline().addAfter(
+                      com.velocitypowered.proxy.network.Connections.MINECRAFT_ENCODER,
+                      com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC,
+                      new com.velocitypowered.proxy.server.virtual.via.VirtualViaCodec(viaUser));
+                }
+              }
+            }
+            connection.setProtocolVersion(ProtocolVersion.MINECRAFT_26_2);
+
             VelocityVirtualSessionHandler playHandler = new VelocityVirtualSessionHandler(
               server, ConnectedPlayer.this, newConnection);
             Runnable finishJoin = () -> finishVirtualJoin(
@@ -2251,17 +2306,20 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
 
         private void finishVirtualJoin(VelocityVirtualRegisteredServer destination,
           VelocityVirtualConnection newConnection, @Nullable VelocityRegisteredServer previous) {
+          connection.setProtocolVersion(ProtocolVersion.MINECRAFT_26_2);
           var definition = destination.getDefinition();
-          var baseline = com.velocitypowered.proxy.server.virtual.VirtualProtocolBaseline.CURRENT;
 
-          LOGGER.info("[VirtualServer-Debug] Executing finishVirtualJoin for player {} on server {}", getUsername(), destination.getServerInfo().getName());
+          com.velocitypowered.proxy.server.virtual.via.VirtualViaManager.getUser(connection).ifPresent(viaUser -> {
+            com.velocitypowered.proxy.server.virtual.via.VirtualViaStateInitializer.initializeUser(
+                viaUser, com.viaversion.viaversion.api.protocol.version.ProtocolVersion.getProtocol(viaUser.getProtocolInfo().getProtocolVersion()));
+          });
 
           if (previous instanceof VelocityVirtualRegisteredServer) {
-            LOGGER.info("[VirtualServer-Debug] Sending RespawnPacket to player {} (version {})", getUsername(), getProtocolVersion());
-            connection.write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createRespawnPacket(getProtocolVersion(), definition, isOnlineMode()));
+            LOGGER.info("[VirtualServer-Debug] Sending RespawnPacket to player {} (version 26.2)", getUsername());
+            connection.write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createRespawnPacket(ProtocolVersion.MINECRAFT_26_2, definition, isOnlineMode()));
           } else {
-            LOGGER.info("[VirtualServer-Debug] Sending JoinGamePacket (entityId 1) to player {} (version {})", getUsername(), getProtocolVersion());
-            connection.write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createJoinGamePacket(getProtocolVersion(), definition, isOnlineMode()));
+            LOGGER.info("[VirtualServer-Debug] Sending JoinGamePacket (entityId 1) to player {} (version 26.2)", getUsername());
+            connection.write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createJoinGamePacket(ProtocolVersion.MINECRAFT_26_2, definition, isOnlineMode()));
           }
 
           int centerChunkX = Math.floorDiv((int) Math.floor(definition.getSpawnX()), 16);
@@ -2276,25 +2334,17 @@ public class ConnectedPlayer implements MinecraftConnectionAssociation, Player, 
             spawnX, spawnY, spawnZ,
             definition.getSpawnYaw(), definition.getSpawnPitch(), 1));
 
-          boolean is1202OrNewer = getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_20_2);
-          boolean is114OrNewer = getProtocolVersion().noLessThan(ProtocolVersion.MINECRAFT_1_14);
-
-          if (is114OrNewer) {
-            connection.write(new VirtualChunkCenterPacket(centerChunkX, centerChunkZ));
-          }
-          if (is1202OrNewer) {
-            connection.write(new VirtualChunkBatchStartPacket());
-          }
+          connection.write(new VirtualChunkCenterPacket(centerChunkX, centerChunkZ));
+          connection.write(new VirtualChunkBatchStartPacket());
           for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
               connection.write(new VirtualChunkPacket(centerChunkX + dx, centerChunkZ + dz));
             }
           }
-          if (is1202OrNewer) {
-            connection.write(new VirtualChunkBatchFinishedPacket(9));
-            LOGGER.info("[VirtualServer-Debug] Sending VirtualGameEventPacket(13: START_WAITING_FOR_LEVEL_CHUNKS)");
-            connection.write(new VirtualGameEventPacket(13, 0.0f));
-          }
+          connection.write(new VirtualChunkBatchFinishedPacket(9));
+          LOGGER.info("[VirtualServer-Debug] Sending VirtualGameEventPacket(13: START_WAITING_FOR_LEVEL_CHUNKS)");
+          connection.write(new VirtualGameEventPacket(13, 0.0f));
+
           connection.write(new VirtualDefaultSpawnPacket("minecraft:overworld",
             (int) spawnX, (int) spawnY, (int) spawnZ, definition.getSpawnYaw()));
           connection.write(new VirtualTimePacket(definition.getWorldTime(), definition.getWorldTime()));

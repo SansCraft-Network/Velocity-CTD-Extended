@@ -37,15 +37,12 @@ public final class VirtualDefaultSpawnPacket implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21_9)) {
-      ProtocolUtils.writeString(buf, dimension);
-    }
+    ProtocolUtils.writeString(buf, dimension);
     long position = ((posX & 0x3FFFFFFL) << 38)
         | ((posZ & 0x3FFFFFFL) << 12) | (posY & 0xFFFL);
-    buf.writeLong(position).writeFloat(yaw);
-    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21_9)) {
-      buf.writeFloat(0);
-    }
+    buf.writeLong(position);
+    buf.writeFloat(yaw);
+    buf.writeFloat(0);
   }
 
   @Override

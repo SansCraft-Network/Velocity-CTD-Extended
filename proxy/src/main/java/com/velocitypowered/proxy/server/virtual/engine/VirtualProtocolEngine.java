@@ -18,10 +18,9 @@ import com.velocitypowered.proxy.protocol.packet.config.KnownPacksPacket;
 import com.velocitypowered.proxy.server.virtual.VirtualRegistryData262;
 import com.velocitypowered.proxy.server.virtual.registry.VirtualDimension;
 import java.util.List;
-import java.util.Set;
 
 /**
- * Version-adaptive VirtualProtocol engine providing native packet serialization across all client versions.
+ * Modern 26.2 VirtualProtocol engine. ViaProxy handles all protocol translations for legacy clients.
  */
 public final class VirtualProtocolEngine {
 
@@ -44,17 +43,12 @@ public final class VirtualProtocolEngine {
     join.setShowRespawnScreen(true);
     join.setDoLimitedCrafting(false);
     join.setLevelNames(com.google.common.collect.ImmutableSet.of("minecraft:overworld"));
-    join.setDimensionInfo(new DimensionInfo("minecraft:overworld", "minecraft:overworld", true, false, version));
+    join.setDimensionInfo(new DimensionInfo("minecraft:overworld", "minecraft:overworld", true, false, ProtocolVersion.MINECRAFT_26_2));
     join.setPartialHashedSeed(0);
     join.setPortalCooldown(0);
     join.setSeaLevel(63);
     join.setOnlineMode(isOnlineMode);
     join.setEnforcesSecureChat(false);
-
-    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_16)) {
-      join.setRegistry(VirtualRegistryData262.createDefaultDimensionCodec());
-    }
-
     return join;
   }
 
@@ -63,50 +57,12 @@ public final class VirtualProtocolEngine {
   }
 
   public static KnownPacksPacket createKnownPacksPacket(ProtocolVersion version) {
-    String versionString = version.getVersionIntroducedIn();
-    if (versionString == null || versionString.isEmpty()) {
-      versionString = "26.2";
-    }
     return new KnownPacksPacket(List.of(
-        new KnownPacksPacket.KnownPack("minecraft", "core", versionString)
+        new KnownPacksPacket.KnownPack("minecraft", "core", "26.2")
     ));
   }
 
   public static void sendRegistrySync(java.util.function.Consumer<com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket> consumer, ProtocolVersion version) {
-    if (version.equals(ProtocolVersion.MINECRAFT_26_2)) {
-      VirtualRegistryData262.INSTANCE.writeRegistrySync(consumer);
-      return;
-    }
-
-    if (version.lessThan(ProtocolVersion.MINECRAFT_1_20_5)) {
-      io.netty.buffer.ByteBuf encodedRegistry = io.netty.buffer.Unpooled.buffer();
-      com.velocitypowered.proxy.protocol.ProtocolUtils.writeBinaryTag(encodedRegistry, version, VirtualRegistryData262.createDefaultDimensionCodec());
-      com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket sync = new com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket();
-      sync.replace(encodedRegistry);
-      consumer.accept(sync);
-      return;
-    }
-
-    net.kyori.adventure.nbt.CompoundBinaryTag codec = VirtualRegistryData262.createDefaultDimensionCodec();
-    for (String key : codec.keySet()) {
-      net.kyori.adventure.nbt.CompoundBinaryTag entry = codec.getCompound(key);
-      String type = entry.getString("type");
-      net.kyori.adventure.nbt.ListBinaryTag values = entry.getList("value", net.kyori.adventure.nbt.BinaryTagTypes.COMPOUND);
-
-      io.netty.buffer.ByteBuf registry = io.netty.buffer.Unpooled.buffer();
-      com.velocitypowered.proxy.protocol.ProtocolUtils.writeString(registry, type);
-      com.velocitypowered.proxy.protocol.ProtocolUtils.writeVarInt(registry, values.size());
-
-      for (net.kyori.adventure.nbt.BinaryTag tag : values) {
-        net.kyori.adventure.nbt.CompoundBinaryTag element = (net.kyori.adventure.nbt.CompoundBinaryTag) tag;
-        com.velocitypowered.proxy.protocol.ProtocolUtils.writeString(registry, element.getString("name"));
-        registry.writeBoolean(true);
-        com.velocitypowered.proxy.protocol.ProtocolUtils.writeBinaryTag(registry, version, element.getCompound("element"));
-      }
-
-      com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket sync = new com.velocitypowered.proxy.protocol.packet.config.RegistrySyncPacket();
-      sync.replace(registry);
-      consumer.accept(sync);
-    }
+    VirtualRegistryData262.INSTANCE.writeRegistrySync(consumer);
   }
 }

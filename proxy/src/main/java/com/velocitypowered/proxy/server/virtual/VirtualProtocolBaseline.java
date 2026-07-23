@@ -27,10 +27,13 @@ import java.util.function.Consumer;
  */
 public interface VirtualProtocolBaseline {
 
-  /**
-   * The active canonical baseline implementation.
-   */
-  VirtualProtocolBaseline CURRENT = VirtualRegistryData262.INSTANCE;
+  class Holder {
+    public static final VirtualProtocolBaseline INSTANCE = VirtualRegistryData262.INSTANCE;
+  }
+
+  static VirtualProtocolBaseline getCurrent() {
+    return Holder.INSTANCE;
+  }
 
   /**
    * Returns the protocol version associated with this baseline.

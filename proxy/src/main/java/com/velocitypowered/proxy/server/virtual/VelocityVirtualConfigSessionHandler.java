@@ -9,6 +9,7 @@
 
 package com.velocitypowered.proxy.server.virtual;
 
+import com.velocitypowered.api.network.ProtocolVersion;
 import com.velocitypowered.proxy.connection.MinecraftSessionHandler;
 import com.velocitypowered.proxy.connection.client.ConnectedPlayer;
 import com.velocitypowered.proxy.protocol.StateRegistry;
@@ -19,14 +20,13 @@ import com.velocitypowered.proxy.protocol.packet.config.FinishedUpdatePacket;
 import com.velocitypowered.proxy.protocol.packet.config.KnownPacksPacket;
 import com.velocitypowered.proxy.protocol.packet.config.TagsUpdatePacket;
 import com.velocitypowered.proxy.server.VelocityVirtualSessionHandler;
-import java.util.List;
 import net.kyori.adventure.key.Key;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  * Completes a no-backend 26.2 configuration sequence.
+ * ViaProxy translates config packets for legacy clients.
  */
 public final class VelocityVirtualConfigSessionHandler implements MinecraftSessionHandler {
   private static final Logger LOGGER = LogManager.getLogger(VelocityVirtualConfigSessionHandler.class);
@@ -45,9 +45,9 @@ public final class VelocityVirtualConfigSessionHandler implements MinecraftSessi
   @Override
   public void activated() {
     LOGGER.info("[VirtualServer-Debug] VelocityVirtualConfigSessionHandler activated for player {} (version {})", player.getUsername(), player.getProtocolVersion());
-    player.getConnection().write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createKnownPacksPacket(player.getProtocolVersion()));
-    com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.sendRegistrySync(player.getConnection()::write, player.getProtocolVersion());
-    player.getConnection().write(new TagsUpdatePacket(VirtualProtocolBaseline.CURRENT.getTags()));
+    player.getConnection().write(com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.createKnownPacksPacket(ProtocolVersion.MINECRAFT_26_2));
+    com.velocitypowered.proxy.server.virtual.engine.VirtualProtocolEngine.sendRegistrySync(player.getConnection()::write, ProtocolVersion.MINECRAFT_26_2);
+    player.getConnection().write(new TagsUpdatePacket(VirtualProtocolBaseline.getCurrent().getTags()));
     player.getConnection().write(new ActiveFeaturesPacket(
         new Key[]{Key.key("minecraft", "vanilla")}));
     player.getConnection().write(FinishedUpdatePacket.INSTANCE);
@@ -74,6 +74,13 @@ public final class VelocityVirtualConfigSessionHandler implements MinecraftSessi
   @Override
   public boolean handle(FinishedUpdatePacket packet) {
     LOGGER.info("[VirtualServer-Debug] Received FinishedUpdatePacket from player {}, switching state to PLAY", player.getUsername());
+    com.velocitypowered.proxy.server.virtual.via.VirtualViaCodec viaCodec =
+        (com.velocitypowered.proxy.server.virtual.via.VirtualViaCodec) player.getConnection().getChannel()
+            .pipeline().get(com.velocitypowered.proxy.network.Connections.VIRTUAL_VIA_CODEC);
+    if (viaCodec != null) {
+      viaCodec.getUser().getProtocolInfo().setClientState(com.viaversion.viaversion.api.protocol.packet.State.PLAY);
+      viaCodec.getUser().getProtocolInfo().setServerState(com.viaversion.viaversion.api.protocol.packet.State.PLAY);
+    }
     player.getConnection().setActiveSessionHandler(StateRegistry.PLAY, playHandler);
     onPlay.run();
     return true;

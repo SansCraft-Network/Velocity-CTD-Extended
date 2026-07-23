@@ -40,7 +40,7 @@ public final class VirtualPlayerPositionPacket implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion version) {
-    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21_2)) {
+    if (version.noLessThan(ProtocolVersion.MINECRAFT_1_21_9)) {
       ProtocolUtils.writeVarInt(buf, teleportId);
       buf.writeDouble(posX).writeDouble(posY).writeDouble(posZ);
       buf.writeDouble(0).writeDouble(0).writeDouble(0);
@@ -48,9 +48,7 @@ public final class VirtualPlayerPositionPacket implements MinecraftPacket {
     } else {
       buf.writeDouble(posX).writeDouble(posY).writeDouble(posZ);
       buf.writeFloat(yaw).writeFloat(pitch).writeByte(0);
-      if (version.noLessThan(ProtocolVersion.MINECRAFT_1_9)) {
-        ProtocolUtils.writeVarInt(buf, teleportId);
-      }
+      ProtocolUtils.writeVarInt(buf, teleportId);
     }
   }
 

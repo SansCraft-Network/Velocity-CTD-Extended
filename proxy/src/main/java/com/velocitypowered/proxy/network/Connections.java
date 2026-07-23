@@ -52,6 +52,8 @@ public final class Connections {
 
   public static final String PLAY_PACKET_QUEUE_INBOUND = "play-packet-queue-inbound";
 
+  public static final String VIRTUAL_VIA_CODEC = "virtual-via-codec";
+
   private Connections() {
     throw new AssertionError();
   }
